@@ -1,0 +1,76 @@
+
+Emacs:
+
+Find:
+C-s     - search, repeat C-s to search again
+C-r     - search backwards
+C-a     - exit search
+M-e     - pause to edit the search string. Resume searching with C-s
+
+
+Search:
+M-x grep        - enter grep mode
+
+
+Open, switch buffers:
+C-x C-f - open file
+        - with tramp, addresses look need a slash: /root@address:/path
+C-x C-s - save file
+C-x C-b - list all buffers
+C-x b   - select named buffer (like select file)
+C-x <left>      - select previous buffer
+C-x <right>     - select next buffer
+C-x k <buffer_name>     -kill buffer (close file)
+
+
+Navigate
+C-n     - next line
+C-p     - previous lne
+C-f     - next character (forward)
+C-b     - previous character (back)
+C-a	- start of line
+C-e	- end of line
+M-b     - backward one word
+M-f     - forward one word
+M-a	- start of phrase
+M-e     - end of phrase
+M-<	- beginning of entire text
+M->	- end of entire text
+C-v	- view next screen (scrolls one page)
+s1M-v	- view previous screen
+
+
+Windows:
+C-x o   - select another window
+C-x 0   - kill current window
+C-x 2   - split one above other (split-window-vertically)
+C-x 5   - split side by side (split-window-horizontally)
+C-M-v
+
+
+Edit:
+C-x u   - undo, further presses will trigger a redo
+C-w     - kill (cut) the selected region (kill-ring)
+M-w     - save the text (kill-ring-save)
+C-k     - kill the rest of the line
+M-k     - kill the rest of the sentence
+C-y     - yank (paste) the last entry from the kill-ring
+M-y     - cycle through the list of killed or copied contents from the kill-ring
+
+
+Start terminals:
+M-x shell       - starts a new shell in a new screen/buffer
+M-x python-shell
+M-x eshell      - Emacs-Lisp shell
+M-!             - run command, output will show in split pane
+C-c C-a         - move to the beginning of shell line
+C-c C-c         - interrupt running command
+C-c C-w         - kill (delete, like pressing backspace) a word before cursor
+
+
+Help:
+C-h b   - list the key bindings applicable in the current buffer
+
+
+Links:
+http://www.emacswiki.org/emacs/IncrementalSearch
