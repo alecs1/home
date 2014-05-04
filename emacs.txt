@@ -37,7 +37,8 @@ M-e     - end of phrase
 M-<	- beginning of entire text
 M->	- end of entire text
 C-v	- view next screen (scrolls one page)
-s1M-v	- view previous screen
+M-v	- view previous screen
+M-g g	- go to line
 
 
 Windows:
@@ -46,6 +47,7 @@ C-x 0   - kill current window
 C-x 2   - split one above other (split-window-vertically)
 C-x 5   - split side by side (split-window-horizontally)
 C-M-v
+M-x desktop-save	- sav destkop session
 
 
 Edit:

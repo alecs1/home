@@ -1,0 +1,17 @@
+Networking:
+nm-tool
+
+dhclient <interface> (dhclient eth0)
+ifconfig
+ifconfig -a
+ifconfig <interface> up <ip> (ifconfig wlan0 up 192.168.0.101)
+ip route add default dev ppp0
+
+
+ip route del default via 192.168.42.129 dev usb0
+ip route add default dev ppp0
+ip route add 130.89.148.0/24 via 192.168.42.129 dev usb0
+
+route -n
+
+find . -iname <name> -print0 | xargs -0 grep -i <expression>
