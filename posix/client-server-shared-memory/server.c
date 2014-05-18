@@ -1,4 +1,5 @@
-#include <unistd.h>
+#include <sys/ioctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -11,9 +12,16 @@
 #include <errno.h>
 #include <string.h>
 
+//to get pipe2 apparently
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <fcntl.h>
+
+#include "common.h"
+
 #define MAX_QUEUE_SIZE 1000
 #define THREAD_COUNT 100
-#define PORT_CHAR "1666"
+#define EPOLL_TIMEOUT 10000
 
 
 //two queues, one of requests, one of replies. 100 worker threads browse like crazy and fill in replies
@@ -27,6 +35,7 @@ struct connection {
 
 struct queue_element {
     int request_type; //0 - sqrt(x), 1 - pow(x, 2), 2 - pow(x, 3), 3 - sin(x), 4 - cos(x), 5 - hang-up
+    char buffer[IN_BUFFER_SIZE];
     double request;
     double result;
     int fd;
@@ -40,11 +49,13 @@ struct thread_args {
     int *s_new_conn_queue;
     struct queue_element* requests_queue;
     pthread_mutex_t* requests_mutex;
+    int *s_requests_queue;
     struct queue_element* replies_queue;
     pthread_mutex_t* replies_mutex;
-    int queue_size;
+    int *s_replies_queue;
     int signals_fd; //main program might signal us to stop
-    int new_conn_fd;
+    int new_conn_fd_read;
+    int new_conn_fd_write;
     int thread_id;
 };
 
@@ -56,8 +67,102 @@ void* workerThread(void* start_args) {
     return 0;
 }
 
+int delQueueElement(struct queue_element* queue, int index, int *size) {
+    if (*size <= 0) {
+        printf("delQueueElement - size <= 0\n");
+        return -1;
+    }
+    if (index >= *size) {
+        printf("qelQueueElement - index >= size\n");
+        return -1;
+    }
+        
+    for(int i = index; i < *size; i++)
+        queue[i] = queue[i+1];
+    *size -= 1;
+    return 0;
+}
+
 void* readerThread(void* start_args) {
     //also listen on a fd on which connectionThread might write
+    struct thread_args *args = (struct thread_args*)start_args;
+    
+    int epoll_fd;
+    struct epoll_event events[10], new_conn_event_descriptor, signals_event_descriptor;
+    new_conn_event_descriptor.events = EPOLLIN;
+    new_conn_event_descriptor.data.fd = args->new_conn_fd_read;
+    signals_event_descriptor.events = EPOLLIN;
+    signals_event_descriptor.data.fd = args->signals_fd;
+
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        printf("readerThread, error at epoll_create1\n");
+        return NULL;
+    }
+
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->new_conn_fd_read, &new_conn_event_descriptor);
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->signals_fd, &signals_event_descriptor);
+
+    while(1) {
+        int nfds = epoll_wait(epoll_fd, events, 100, EPOLL_TIMEOUT);
+        if (nfds == -1) {
+            printf("readerThread - error on epoll_wait\n");
+            return NULL;
+        }
+        else if (nfds == 0)
+            printf("readerThread - wake on timeout\n");
+        
+        for (int i = 0; i < nfds; i++) {
+            if (events[i].data.fd == args->new_conn_fd_read) {
+                pthread_mutex_lock(args->new_conn_mutex);
+                //do stuff here
+                while (*args->s_new_conn_queue > 0) {
+                    printf("readerThread, s_new_conn_queue=%d\n", *args->s_new_conn_queue);
+                    int len = 0;
+                    char buffer[IN_BUFFER_SIZE];
+                    ioctl(args->new_conn_queue[0].fd, FIONREAD, &len);
+                    printf("readerThread, %d bytes on socket\n", len);
+                    if(len == IN_BUFFER_SIZE) {
+                        len = read(args->new_conn_queue[0].fd, buffer, IN_BUFFER_SIZE);
+                        printf("readerThread - read %d bytes from socket\n", len);
+                        pthread_mutex_lock(args->requests_mutex);
+                        if (*args->s_requests_queue < MAX_QUEUE_SIZE) {
+                            printf("readerThread - reading request\n");
+                            args->requests_queue[*args->s_requests_queue].fd = args->new_conn_queue[0].fd;
+                            args->requests_queue[*args->s_requests_queue].peer_info =
+                                args->new_conn_queue[0].peer_info;
+                            memcpy(args->requests_queue[*args->s_requests_queue].buffer, buffer, IN_BUFFER_SIZE);
+                            *args->s_requests_queue += 1;
+
+                            delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
+                        }
+                        else {
+                            printf("readerThread - requests queue full, dropping new connection\n");
+                            close(args->new_conn_queue[0].fd);
+                            delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
+                        }
+                        pthread_mutex_unlock(args->requests_mutex);
+                    }
+                    else {
+                        printf("readerThread - peer only wrote %d bytes in time, hanging up\n", len);
+                        close(args->new_conn_queue[0].fd);
+                        delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
+                    }
+                }
+                pthread_mutex_unlock(args->new_conn_mutex);
+            }
+            else if (events[i].data.fd == args->signals_fd) {
+                printf("readerThread - exiting cleanly on signals_fd\n");
+                return NULL;
+            }
+            else {
+                printf("readerThread - epoll_wait wake on unkown fd\n");
+            }
+        }
+        
+    }
+
+    
     
     return 0;
 }
@@ -127,7 +232,7 @@ void* connectionThread(void* start_args) {
     fd_event_descriptor2.events = EPOLLIN;
     fd_event_descriptor2.data.fd = args->signals_fd;
     epoll_fd = epoll_create1(0);
-    if (epoll_fd == 1) {
+    if (epoll_fd == -1) {
         int error_val = errno;
         printf("Failed epoll_create, errno=%d\n", error_val);
         return 0;
@@ -138,11 +243,13 @@ void* connectionThread(void* start_args) {
 
     for(;;) {
 
-        int nfds = epoll_wait(epoll_fd, events, 100, -1);
+        int nfds = epoll_wait(epoll_fd, events, 100, EPOLL_TIMEOUT);
         if (nfds == -1) {
-            printf("Error on epoll_wait()\n");
+            printf("readerThread error on epoll_wait()\n");
             return NULL;
         }
+        else if (nfds == 0)
+            printf("connectionThread, wake on timeout\n");
 
         for (int i=0; i < nfds; i++) {
             if (events[i].data.fd == listen_socket) {
@@ -153,14 +260,17 @@ void* connectionThread(void* start_args) {
                     printf("Error at connecting to peer\n");
                 }
                 if (*(args->s_new_conn_queue) < MAX_QUEUE_SIZE) {
+                    printf("connectionThread - adding 1 to new_conn_queue, count=%d\n", *args->s_new_conn_queue);
                     pthread_mutex_lock(args->new_conn_mutex);
                     args->new_conn_queue[*(args->s_new_conn_queue)].fd = data_socket;
                     args->new_conn_queue[*(args->s_new_conn_queue)].peer_info = peer_addr;
                     *(args->s_new_conn_queue) += 1;
                     pthread_mutex_unlock(args->new_conn_mutex);
-                    write(args->new_conn_fd, "1", 1);
+                    write(args->new_conn_fd_write, "1", 1);
                 }
-                //do socket stuff
+                else {
+                    printf("connectionThread - new_conn_queue full, dropping\n");
+                }
             }
             else if (events[i].data.fd == args->signals_fd) {
                 printf("Exiting cleanly on a socket signal\n");
@@ -193,11 +303,17 @@ int main(int argc, char* argv[]) {
 
     struct queue_element requests_queue[MAX_QUEUE_SIZE];
     pthread_mutex_t requests_mutex;
+    int s_requests_queue = 0;
 
     struct queue_element replies_queue[MAX_QUEUE_SIZE];
     pthread_mutex_t replies_mutex;
+    int s_replies_queue;
     
     pthread_t threads[THREAD_COUNT];
+
+    int new_conn_pipes[2];
+    int ret = pipe(new_conn_pipes);
+    ret += 0; //avoid compile warning
 
     struct thread_args start_args = {
         .new_conn_queue = new_conn_queue,
@@ -205,9 +321,12 @@ int main(int argc, char* argv[]) {
         .s_new_conn_queue = &s_new_conn_queue,
         .requests_queue = requests_queue,
         .requests_mutex = &requests_mutex,
+        .s_requests_queue = &s_requests_queue,
         .replies_queue = replies_queue,
         .replies_mutex = &replies_mutex,
-        .queue_size = MAX_QUEUE_SIZE,
+        .s_replies_queue = &s_replies_queue,
+        .new_conn_fd_read = new_conn_pipes[0],
+        .new_conn_fd_write = new_conn_pipes[1],
         .thread_id = 0
     };
     pthread_attr_t attr;
