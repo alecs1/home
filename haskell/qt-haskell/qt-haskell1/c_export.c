@@ -1,8 +1,3 @@
-#include <stdio.h>
+#include <QPushButton>
 
-int main(void)
-{
-    printf("Hello World!\n");
-    return 0;
-}
-
+#include "c_export.h"

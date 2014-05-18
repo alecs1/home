@@ -74,5 +74,9 @@ Help:
 C-h b   - list the key bindings applicable in the current buffer
 
 
+Settings:
+M-x column-number-mode  - show column number in the bar
+M-x line-number-mode    - display line number in the mode line
+
 Links:
 http://www.emacswiki.org/emacs/IncrementalSearch
