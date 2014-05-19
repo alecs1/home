@@ -40,8 +40,10 @@ int doSocketOperations(int client_id) {
         value /= 19;
 
     char request_buf[IN_BUFFER_SIZE];
-    memcpy(request_buf, &op, sizeof(int));
-    memcpy(request_buf+sizeof(int), &value, sizeof(value));
+    int buffer_index = 0;
+    memcpy(request_buf, &op, sizeof(op)); buffer_index += sizeof(op);
+    memcpy(request_buf+buffer_index, &value, sizeof(value)); buffer_index += sizeof(value);
+    memcpy(request_buf+buffer_index, &client_id, sizeof(client_id)); buffer_index += sizeof(client_id);
 
     printf("doSocketOperations, read from /dev/urandom: op=%d, value=%g\n", op, value);
     
@@ -109,7 +111,7 @@ int doSocketOperations(int client_id) {
     }
 
     int read_bytes = 0;
-    char reply_buf[IN_BUFFER_SIZE];
+    char reply_buf[OUT_BUFFER_SIZE];
     time_t start_time = time(NULL);
     time_t elapsed_time = 0;
     while ((elapsed_time <= REPLY_TIMEOUT) && (read_bytes < IN_BUFFER_SIZE)) {
@@ -124,7 +126,7 @@ int doSocketOperations(int client_id) {
                 ioctl(socket_fd, FIONREAD, &len);
                 if (len < 0)
                     continue;
-                int max_read_bytes = IN_BUFFER_SIZE - read_bytes;
+                int max_read_bytes = OUT_BUFFER_SIZE - read_bytes;
                 int res = read(socket_fd, reply_buf + read_bytes, max_read_bytes);
                 if (res >= 0)
                     read_bytes += res;
@@ -143,7 +145,7 @@ int doSocketOperations(int client_id) {
     }
     if (read_bytes == 0)
         printf("doSocketOperations - client_id=%d, nothing received on socket\n", client_id);
-    if (read_bytes < IN_BUFFER_SIZE) {
+    if (read_bytes < OUT_BUFFER_SIZE) {
         printf("doSocketOperations - client_id=%d, read only %d bytes\n", client_id, read_bytes);
         printf("doSocketOperations - client_id=%d exiting\n", client_id);
         return -4;

@@ -1,5 +1,7 @@
-#include <sys/ioctl.h>
+//#define _POSIX_C_SOURCE >= 199309L
+#define _GNU_SOURCE
 
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -12,21 +14,33 @@
 #include <errno.h>
 #include <string.h>
 
-//to get pipe2 apparently
-#define _GNU_SOURCE
+#include <math.h>
+
+//#define _POSIX_C_SOURCE >= 200112L
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "common.h"
 
 #define MAX_QUEUE_SIZE 1000
 #define THREAD_COUNT 100
 #define EPOLL_TIMEOUT 10000
+#define WORKER_TIMEOUT 5
+#define WORKER_EXIT_CODE 666
 
 
-//two queues, one of requests, one of replies. 100 worker threads browse like crazy and fill in replies
-//one read thread fills in requests, one write thread writes them
-//inefficient, but triggers all needed functionality
+/*
+  Test usage of many POSIX/Linux basic functionality: pipes, file descriptors, epoll, sockets, threads.
+  To test in the next program: shared memory, further thread functionality (wake, conditions etc), epoll performance.
+*/
+
+/*
+  Three queues, one of new connections, one of requests, one of replies. 100 worker threads browse like crazy and fill in replies
+  One read thread fills in requests, one write thread writes them
+  Inefficient, but triggers all needed functionality
+*/
 
 struct connection {
     int socket_fd;
@@ -36,8 +50,10 @@ struct connection {
 struct queue_element {
     int request_type; //0 - sqrt(x), 1 - pow(x, 2), 2 - pow(x, 3), 3 - sin(x), 4 - cos(x), 5 - hang-up
     char buffer[IN_BUFFER_SIZE];
+    char reply_buffer[OUT_BUFFER_SIZE];
     double request;
     double result;
+    int client_id;
     int fd;
     struct sockaddr peer_info; //is this needed?
     //something about the connection
@@ -56,14 +72,46 @@ struct thread_args {
     int signals_fd; //main program might signal us to stop
     int new_conn_fd_read;
     int new_conn_fd_write;
+    pthread_cond_t *worker_cond;
+    pthread_mutex_t *worker_cond_mutex;
+    int *worker_thread_stop; //tell workers to stop
     int thread_id;
 };
 
-void* workerThread(void* start_args) {
-    struct thread_args* args = (struct thread_args*)start_args;
-    printf("Started thread %d\n", args->thread_id);
-    fflush (stdout);
-    free(start_args);
+int processRequest(struct queue_element *request, int worker_id) {
+    int buffer_index = 0;
+    memcpy(request->buffer + buffer_index, &request->request_type, sizeof(int)); buffer_index += sizeof(int);
+    memcpy(request->buffer + buffer_index, &request->request, sizeof(double)); buffer_index += sizeof(double);
+    memcpy(request->buffer + buffer_index, &request->client_id, sizeof(int)); buffer_index += sizeof(int);
+
+    switch(request->request_type) {
+        case OP_SQRT:
+            request->result = sqrt(request->request);
+            break;
+        case OP_POW2:
+            request->result = pow(request->request, 2);
+            break;
+        case OP_POW3:
+            request->result = pow(request->request, 2);
+            break;
+        case OP_SIN:
+            request->result = sin(request->request);
+            break;
+        case OP_COS:
+            request->result = cos(request->request);
+            break;
+        case OP_HUP:
+            //nothing to do in this case
+            printf("processRequest, client %d called us just to hang up\n", request->client_id);
+            break;
+        default:
+            printf("processRequest, client %d sent uknown request type %d\n", request->client_id, request->request_type);
+            break;
+    }
+    buffer_index = 0;
+    memcpy(request->reply_buffer + buffer_index, &request->result, sizeof(double)); buffer_index += sizeof(double);
+    memcpy(request->reply_buffer + buffer_index, &worker_id, sizeof(int)); buffer_index += sizeof(int);
+
     return 0;
 }
 
@@ -82,6 +130,41 @@ int delQueueElement(struct queue_element* queue, int index, int *size) {
     *size -= 1;
     return 0;
 }
+
+void* workerThread(void* start_args) {
+    struct thread_args* args = (struct thread_args*)start_args;
+    printf("Started thread %d\n", args->thread_id);
+    
+    struct timespec ts;
+
+    while(1) {
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 5;
+        pthread_mutex_lock(args->worker_cond_mutex);
+        pthread_cond_timedwait(args->worker_cond, args->worker_cond_mutex, &ts);
+
+        if (*args->worker_thread_stop == WORKER_EXIT_CODE) {
+            goto cleanup;
+        }
+        if (*args->s_requests_queue > 0) {
+            pthread_mutex_lock(args->requests_mutex);
+            if (*args->s_requests_queue <= 0)
+                continue;
+            struct queue_element request = args->requests_queue[0];
+            delQueueElement(args->requests_queue, 0, args->s_requests_queue);
+            pthread_mutex_unlock(args->requests_mutex);
+            
+            processRequest(&request, args->thread_id);
+        }
+        
+    }
+
+ cleanup:
+    fflush (stdout);
+    free(start_args);
+    return 0;
+ }
+
 
 void* readerThread(void* start_args) {
     //also listen on a fd on which connectionThread might write
@@ -127,13 +210,13 @@ void* readerThread(void* start_args) {
                         printf("readerThread - read %d bytes from socket\n", len);
                         pthread_mutex_lock(args->requests_mutex);
                         if (*args->s_requests_queue < MAX_QUEUE_SIZE) {
-                            printf("readerThread - reading request\n");
                             args->requests_queue[*args->s_requests_queue].fd = args->new_conn_queue[0].fd;
                             args->requests_queue[*args->s_requests_queue].peer_info =
                                 args->new_conn_queue[0].peer_info;
                             memcpy(args->requests_queue[*args->s_requests_queue].buffer, buffer, IN_BUFFER_SIZE);
                             *args->s_requests_queue += 1;
-
+                            
+                            printf("readerThread - read request, s_requests_queue=%d\n", *args->s_requests_queue);
                             delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
                         }
                         else {
@@ -299,14 +382,17 @@ void* writerThread(void* start_arg) {
 int main(int argc, char* argv[]) {
     struct queue_element new_conn_queue[MAX_QUEUE_SIZE];
     pthread_mutex_t new_conn_mutex;
+    pthread_mutex_init(&new_conn_mutex, NULL);
     int s_new_conn_queue = 0; //size of queue
 
     struct queue_element requests_queue[MAX_QUEUE_SIZE];
     pthread_mutex_t requests_mutex;
+    pthread_mutex_init(&requests_mutex, NULL);
     int s_requests_queue = 0;
 
     struct queue_element replies_queue[MAX_QUEUE_SIZE];
     pthread_mutex_t replies_mutex;
+    pthread_mutex_init(&replies_mutex, NULL);
     int s_replies_queue;
     
     pthread_t threads[THREAD_COUNT];
@@ -314,6 +400,11 @@ int main(int argc, char* argv[]) {
     int new_conn_pipes[2];
     int ret = pipe(new_conn_pipes);
     ret += 0; //avoid compile warning
+
+    pthread_cond_t worker_cond;
+    pthread_cond_init(&worker_cond, NULL);
+    pthread_mutex_t worker_cond_mutex;
+    pthread_mutex_init(&worker_cond_mutex, NULL);
 
     struct thread_args start_args = {
         .new_conn_queue = new_conn_queue,
@@ -327,7 +418,9 @@ int main(int argc, char* argv[]) {
         .s_replies_queue = &s_replies_queue,
         .new_conn_fd_read = new_conn_pipes[0],
         .new_conn_fd_write = new_conn_pipes[1],
-        .thread_id = 0
+        .worker_cond = &worker_cond,
+        .worker_cond_mutex = &worker_cond_mutex,
+        .thread_id = 0,
     };
     pthread_attr_t attr;
     pthread_attr_init(&attr);
