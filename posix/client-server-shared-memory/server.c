@@ -25,7 +25,7 @@
 #include "common.h"
 
 #define MAX_QUEUE_SIZE 1000
-#define THREAD_COUNT 100
+#define THREAD_COUNT 5
 #define EPOLL_TIMEOUT 10000
 #define WORKER_TIMEOUT 5
 #define WORKER_EXIT_CODE 666
@@ -80,9 +80,9 @@ struct thread_args {
 
 int processRequest(struct queue_element *request, int worker_id) {
     int buffer_index = 0;
-    memcpy(request->buffer + buffer_index, &request->request_type, sizeof(int)); buffer_index += sizeof(int);
-    memcpy(request->buffer + buffer_index, &request->request, sizeof(double)); buffer_index += sizeof(double);
-    memcpy(request->buffer + buffer_index, &request->client_id, sizeof(int)); buffer_index += sizeof(int);
+    memcpy(&request->request_type, request->buffer + buffer_index, sizeof(int)); buffer_index += sizeof(int);
+    memcpy(&request->request, request->buffer + buffer_index, sizeof(double)); buffer_index += sizeof(double);
+    memcpy(&request->client_id, request->buffer + buffer_index, sizeof(int)); buffer_index += sizeof(int);
 
     switch(request->request_type) {
         case OP_SQRT:
@@ -108,6 +108,10 @@ int processRequest(struct queue_element *request, int worker_id) {
             printf("processRequest, client %d sent uknown request type %d\n", request->client_id, request->request_type);
             break;
     }
+
+   printf("Worker=%d, op=%d, request=%g, result=%g\n", worker_id, request->request_type, request->request, request->result);
+
+
     buffer_index = 0;
     memcpy(request->reply_buffer + buffer_index, &request->result, sizeof(double)); buffer_index += sizeof(double);
     memcpy(request->reply_buffer + buffer_index, &worker_id, sizeof(int)); buffer_index += sizeof(int);
@@ -133,20 +137,28 @@ int delQueueElement(struct queue_element* queue, int index, int *size) {
 
 void* workerThread(void* start_args) {
     struct thread_args* args = (struct thread_args*)start_args;
-    printf("Started thread %d\n", args->thread_id);
+    printf("workerThread - started thread %d\n", args->thread_id);
     
     struct timespec ts;
 
     while(1) {
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += 5;
+        //printf("workerThread, thread_id=%d, lock worker_cond_mutex\n", args->thread_id);
         pthread_mutex_lock(args->worker_cond_mutex);
+        //printf("workerThread, thread_id=%d, locked worker_cond_mutex\n", args->thread_id);
         pthread_cond_timedwait(args->worker_cond, args->worker_cond_mutex, &ts);
+        pthread_mutex_unlock(args->worker_cond_mutex);
+
+
+        //printf("workerThread - thread_id=%d, wake-up with s_requests_queue=%d\n", args->thread_id, *args->s_requests_queue);
 
         if (*args->worker_thread_stop == WORKER_EXIT_CODE) {
             goto cleanup;
         }
+
         if (*args->s_requests_queue > 0) {
+            printf("workerThread - args->s_request_queue=%d\n", *args->s_requests_queue);
             pthread_mutex_lock(args->requests_mutex);
             if (*args->s_requests_queue <= 0)
                 continue;
@@ -159,7 +171,9 @@ void* workerThread(void* start_args) {
         
     }
 
+
  cleanup:
+    printf("workerThread, thread_id=%d exiting\n", args->thread_id);
     fflush (stdout);
     free(start_args);
     return 0;
@@ -186,6 +200,8 @@ void* readerThread(void* start_args) {
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->new_conn_fd_read, &new_conn_event_descriptor);
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->signals_fd, &signals_event_descriptor);
 
+    char null_buf[1];
+
     while(1) {
         int nfds = epoll_wait(epoll_fd, events, 100, EPOLL_TIMEOUT);
         if (nfds == -1) {
@@ -194,17 +210,33 @@ void* readerThread(void* start_args) {
         }
         else if (nfds == 0)
             printf("readerThread - wake on timeout\n");
+        else
+            printf("readerThread - wake with %d fds\n", nfds);
         
         for (int i = 0; i < nfds; i++) {
             if (events[i].data.fd == args->new_conn_fd_read) {
+                printf("readerThread - epoll wake if=new_conn_fd_read=%d\n", events[i].data.fd);
+                read(events[i].data.fd, null_buf, 1);
                 pthread_mutex_lock(args->new_conn_mutex);
                 //do stuff here
                 while (*args->s_new_conn_queue > 0) {
                     printf("readerThread, s_new_conn_queue=%d\n", *args->s_new_conn_queue);
                     int len = 0;
                     char buffer[IN_BUFFER_SIZE];
-                    ioctl(args->new_conn_queue[0].fd, FIONREAD, &len);
-                    printf("readerThread, %d bytes on socket\n", len);
+                    //spin one second, maybe the write will come
+                    struct timespec ts_start;
+                    clock_gettime(CLOCK_REALTIME, &ts_start);
+                    struct timespec ts_current = ts_start;
+                    int spin_count = 0;
+                    while (ts_current.tv_sec - ts_start.tv_sec < 2) {
+                        ioctl(args->new_conn_queue[0].fd, FIONREAD, &len);
+                        if (len == IN_BUFFER_SIZE)
+                            break;
+                        clock_gettime(CLOCK_REALTIME, &ts_current);
+                        spin_count += 1;
+                    }
+                    printf("readerThread - socket read, %d bytes on socket, spin_count=%d\n", len, spin_count);
+
                     if(len == IN_BUFFER_SIZE) {
                         len = read(args->new_conn_queue[0].fd, buffer, IN_BUFFER_SIZE);
                         printf("readerThread - read %d bytes from socket\n", len);
@@ -215,12 +247,16 @@ void* readerThread(void* start_args) {
                                 args->new_conn_queue[0].peer_info;
                             memcpy(args->requests_queue[*args->s_requests_queue].buffer, buffer, IN_BUFFER_SIZE);
                             *args->s_requests_queue += 1;
+
+                            pthread_cond_signal(args->worker_cond);
                             
                             printf("readerThread - read request, s_requests_queue=%d\n", *args->s_requests_queue);
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, args->new_conn_queue[0].fd, NULL);
                             delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
                         }
                         else {
                             printf("readerThread - requests queue full, dropping new connection\n");
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, args->new_conn_queue[0].fd, NULL);
                             close(args->new_conn_queue[0].fd);
                             delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
                         }
@@ -228,6 +264,7 @@ void* readerThread(void* start_args) {
                     }
                     else {
                         printf("readerThread - peer only wrote %d bytes in time, hanging up\n", len);
+                        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, args->new_conn_queue[0].fd, NULL);
                         close(args->new_conn_queue[0].fd);
                         delQueueElement(args->new_conn_queue, 0, args->s_new_conn_queue);
                     }
@@ -239,7 +276,7 @@ void* readerThread(void* start_args) {
                 return NULL;
             }
             else {
-                printf("readerThread - epoll_wait wake on unkown fd\n");
+                printf("readerThread - epoll_wait wake on unknown fd %d\n", events[i].data.fd);
             }
         }
         
@@ -328,11 +365,13 @@ void* connectionThread(void* start_args) {
 
         int nfds = epoll_wait(epoll_fd, events, 100, EPOLL_TIMEOUT);
         if (nfds == -1) {
-            printf("readerThread error on epoll_wait()\n");
+            printf("connectionThread error on epoll_wait() - quiting\n");
             return NULL;
         }
         else if (nfds == 0)
-            printf("connectionThread, wake on timeout\n");
+            printf("connectionThread - wake on timeout\n");
+        else
+            printf("connectionThread - wake with %d fds\n", nfds);
 
         for (int i=0; i < nfds; i++) {
             if (events[i].data.fd == listen_socket) {
@@ -406,6 +445,7 @@ int main(int argc, char* argv[]) {
     pthread_mutex_t worker_cond_mutex;
     pthread_mutex_init(&worker_cond_mutex, NULL);
 
+    int worker_thread_stop = 0;
     struct thread_args start_args = {
         .new_conn_queue = new_conn_queue,
         .new_conn_mutex = &new_conn_mutex,
@@ -420,6 +460,7 @@ int main(int argc, char* argv[]) {
         .new_conn_fd_write = new_conn_pipes[1],
         .worker_cond = &worker_cond,
         .worker_cond_mutex = &worker_cond_mutex,
+        .worker_thread_stop = &worker_thread_stop,
         .thread_id = 0,
     };
     pthread_attr_t attr;

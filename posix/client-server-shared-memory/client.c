@@ -134,7 +134,7 @@ int doSocketOperations(int client_id) {
                     printf("doSocketOperations - read returned %d\n", res);
                     return -1;
                 }
-                printf("doSocketOperations - read %d bytes, remaining %d\n", read_bytes, IN_BUFFER_SIZE - read_bytes);
+                //printf("doSocketOperations - read %d bytes, remaining %d\n", read_bytes, IN_BUFFER_SIZE - read_bytes);
             }
             else {
                 printf("doSocketOperations - epoll_wait woke up on unknown fd\n");
@@ -154,8 +154,8 @@ int doSocketOperations(int client_id) {
     //if everything worked, we can now interpret the buffer
 
 
-
-    return -1;
+    printf("doSocketOperations exiting\n");
+    return 0;
 }
 
 
@@ -170,9 +170,8 @@ int main(int argc, char* argv[]) {
             pids[i] = pid;
         }
         else {
-            doSocketOperations(i);
+            return doSocketOperations(i);
             //open socket, write to it and read from it, then close; write to shared memory that we have finished
-            return -1;
         }
         
     }
@@ -182,6 +181,6 @@ int main(int argc, char* argv[]) {
         int ret = waitpid(pids[i], &status, WUNTRACED|WEXITED|WCONTINUED);
         printf("Child:%d, pid:%d, ret=%d\n", i, pids[i], ret);
     }
-    printf("Program exiting");
+    printf("Program exiting\n");
     return 0;
 }
