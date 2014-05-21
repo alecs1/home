@@ -15,7 +15,7 @@
 
 #include "common.h"
 
-#define NO_OF_REQUESTS 1
+#define NO_OF_REQUESTS 5
 #define REPLY_TIMEOUT 1 //30 seconds
 
 int doSocketOperations(int client_id) {
@@ -149,6 +149,9 @@ int doSocketOperations(int client_id) {
         printf("doSocketOperations - client_id=%d, read only %d bytes\n", client_id, read_bytes);
         printf("doSocketOperations - client_id=%d exiting\n", client_id);
         return -4;
+    }
+    else {
+        printf("doSocketOperation - client_id=%d, read enough bytes, proceding to process them\n", client_id);
     }
 
     //if everything worked, we can now interpret the buffer

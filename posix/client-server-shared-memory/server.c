@@ -16,8 +16,6 @@
 
 #include <math.h>
 
-//#define _POSIX_C_SOURCE >= 200112L
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
@@ -70,8 +68,8 @@ struct thread_args {
     pthread_mutex_t* replies_mutex;
     int *s_replies_queue;
     int signals_fd; //main program might signal us to stop
-    int new_conn_fd_read;
-    int new_conn_fd_write;
+    int new_conn_fd[2];
+    int new_reply_fd[2];
     pthread_cond_t *worker_cond;
     pthread_mutex_t *worker_cond_mutex;
     int *worker_thread_stop; //tell workers to stop
@@ -167,6 +165,18 @@ void* workerThread(void* start_args) {
             pthread_mutex_unlock(args->requests_mutex);
             
             processRequest(&request, args->thread_id);
+
+            pthread_mutex_lock(args->replies_mutex);
+            if (*args->s_replies_queue < MAX_QUEUE_SIZE) {
+                args->replies_queue[*args->s_replies_queue] = request;
+                *args->s_replies_queue += 1;
+                printf("workerThread - s_replies_queue=%d\n", *args->s_replies_queue);
+                write(args->new_reply_fd[1], "1", 1);
+            }
+            else {
+                printf("workerThread - replies queue is full, loosing reply and hanging up\n");
+            }
+            pthread_mutex_unlock(args->replies_mutex);
         }
         
     }
@@ -187,7 +197,7 @@ void* readerThread(void* start_args) {
     int epoll_fd;
     struct epoll_event events[10], new_conn_event_descriptor, signals_event_descriptor;
     new_conn_event_descriptor.events = EPOLLIN;
-    new_conn_event_descriptor.data.fd = args->new_conn_fd_read;
+    new_conn_event_descriptor.data.fd = args->new_conn_fd[0];
     signals_event_descriptor.events = EPOLLIN;
     signals_event_descriptor.data.fd = args->signals_fd;
 
@@ -197,7 +207,7 @@ void* readerThread(void* start_args) {
         return NULL;
     }
 
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->new_conn_fd_read, &new_conn_event_descriptor);
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->new_conn_fd[0], &new_conn_event_descriptor);
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->signals_fd, &signals_event_descriptor);
 
     char null_buf[1];
@@ -214,8 +224,8 @@ void* readerThread(void* start_args) {
             printf("readerThread - wake with %d fds\n", nfds);
         
         for (int i = 0; i < nfds; i++) {
-            if (events[i].data.fd == args->new_conn_fd_read) {
-                printf("readerThread - epoll wake if=new_conn_fd_read=%d\n", events[i].data.fd);
+            if (events[i].data.fd == args->new_conn_fd[0]) {
+                printf("readerThread - epoll wake if=new_conn_fd[0]=%d\n", events[i].data.fd);
                 read(events[i].data.fd, null_buf, 1);
                 pthread_mutex_lock(args->new_conn_mutex);
                 //do stuff here
@@ -388,7 +398,7 @@ void* connectionThread(void* start_args) {
                     args->new_conn_queue[*(args->s_new_conn_queue)].peer_info = peer_addr;
                     *(args->s_new_conn_queue) += 1;
                     pthread_mutex_unlock(args->new_conn_mutex);
-                    write(args->new_conn_fd_write, "1", 1);
+                    write(args->new_conn_fd[1], "1", 1);
                 }
                 else {
                     printf("connectionThread - new_conn_queue full, dropping\n");
@@ -413,9 +423,67 @@ void* connectionThread(void* start_args) {
     return 0;
 }
 
-void* writerThread(void* start_arg) {
+void* writerThread(void* start_args) {
+    struct thread_args *args = (struct thread_args *) start_args;
 
-    return 0;
+    struct epoll_event events[10], new_reply_event_desc, signals_event_desc;
+
+    new_reply_event_desc.data.fd = args->new_reply_fd[0];
+    new_reply_event_desc.events = EPOLLIN;
+    signals_event_desc.data.fd = args->signals_fd;
+    signals_event_desc.events = EPOLLIN;
+
+    int epoll_fd = epoll_create1(0);
+    if (epoll_fd < 0) {
+        printf("writerThread - epoll_create1 error\n");
+    }
+
+    int res = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->new_reply_fd[0], &new_reply_event_desc);
+    if (res != 0) {
+        printf("writerThread - error on epoll_ctl\n");
+        return NULL;
+    }
+
+    res = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, args->signals_fd, &signals_event_desc);
+    if (res != 0) {
+        printf("writerThread - error on epoll_ctl, quitting\n");
+        return NULL;
+    }
+
+    char null_buf[1];
+
+    while(1) {
+        //printf("writerThread - loop\n");
+        int nfds = epoll_wait(epoll_fd, events, 10, EPOLL_TIMEOUT);
+        if (nfds == -1) {
+            printf("writerThread - error on epoll_wait, quitting\n");
+            return NULL;
+        }
+        for (int i = 0; i < nfds; i++) {
+            if (events[i].data.fd == args->new_reply_fd[0]) {
+                read(args->new_reply_fd[0], null_buf, 1);
+                printf("writerThread - new reply, s_replies_queue=%d\n", *args->s_replies_queue);
+                if (*args->s_replies_queue > 0) {
+                    pthread_mutex_lock(args->replies_mutex);
+                    while (*args->s_replies_queue > 0) {
+                        write(args->replies_queue[0].fd, args->replies_queue[0].reply_buffer, OUT_BUFFER_SIZE);
+                        close(args->replies_queue[0].fd);
+                        delQueueElement(args->replies_queue, 0, args->s_replies_queue);
+                    }
+                    pthread_mutex_unlock(args->replies_mutex);
+                }
+            }
+            else if (events[i].data.fd == args->signals_fd) {
+                printf("writerThread - event on signals_fd, assuming it's time to exit\n");
+                return NULL;
+            }
+            else {
+                printf("writerThread - event on fd unknown to us! \n");
+            }
+        }
+
+    }
+    return NULL;
 }
 
 int main(int argc, char* argv[]) {
@@ -436,10 +504,13 @@ int main(int argc, char* argv[]) {
     
     pthread_t threads[THREAD_COUNT];
 
-    int new_conn_pipes[2];
-    int ret = pipe(new_conn_pipes);
+    int new_conn_pipe[2];
+    int ret = pipe(new_conn_pipe);
     ret += 0; //avoid compile warning
 
+    int new_reply_pipe[2];
+    ret = pipe(new_reply_pipe);
+    
     pthread_cond_t worker_cond;
     pthread_cond_init(&worker_cond, NULL);
     pthread_mutex_t worker_cond_mutex;
@@ -456,8 +527,10 @@ int main(int argc, char* argv[]) {
         .replies_queue = replies_queue,
         .replies_mutex = &replies_mutex,
         .s_replies_queue = &s_replies_queue,
-        .new_conn_fd_read = new_conn_pipes[0],
-        .new_conn_fd_write = new_conn_pipes[1],
+        .new_conn_fd[0] = new_conn_pipe[0],
+        .new_conn_fd[1] = new_conn_pipe[1],
+        .new_reply_fd[0] = new_reply_pipe[0],
+        .new_reply_fd[1] = new_reply_pipe[1],
         .worker_cond = &worker_cond,
         .worker_cond_mutex = &worker_cond_mutex,
         .worker_thread_stop = &worker_thread_stop,
@@ -482,6 +555,11 @@ int main(int argc, char* argv[]) {
     struct thread_args *reader_thread_args = malloc(sizeof(struct thread_args));
     *reader_thread_args = start_args;
     pthread_create(&reader_thread, &attr, readerThread, reader_thread_args);
+
+    pthread_t writer_thread;
+    struct thread_args *writer_thread_args = malloc(sizeof(struct thread_args));
+    *writer_thread_args = start_args;
+    pthread_create(&writer_thread, &attr, writerThread, writer_thread_args);
 
     for(int i = 0; i < THREAD_COUNT; i++) {
         pthread_join(threads[i], NULL);
