@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <string.h>
+#include <semaphore.h>
+#include <errno.h>
 
 #include <sys/mman.h>
 
@@ -21,7 +23,7 @@
 
 //worker processes write in a shared memory area, without access control (each writes in his own cell)
 //they also write over a file provided by the parent, with access controlled via a semaphore
-int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, int out_file_fd) {
+int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, char* out_file_name) {
 
 
     //prepare buffer for writing request
@@ -48,7 +50,7 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
     memcpy(request_buf+buffer_index, &value, sizeof(value)); buffer_index += sizeof(value);
     memcpy(request_buf+buffer_index, &client_id, sizeof(client_id)); buffer_index += sizeof(client_id);
 
-    printf("doSocketOperations, read from /dev/urandom: op=%d, value=%g\n", op, value);
+    printf("doSocketOperations - client_id=%d, read from /dev/urandom: op=%d, value=%g\n", client_id, op, value);
     
     //end buffer preparation
 
@@ -62,7 +64,7 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
 
     int res = getaddrinfo(NULL, PORT_CHAR, &hints, &result);
     if (res != 0) {
-        printf("doSocketOperation - getaddrinfo failed\n");
+        printf("doSocketOperation - client_id=%d, getaddrinfo failed\n", client_id);
         return -1;
     }
 
@@ -72,11 +74,11 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
         socket_fd = socket(crt_addr_i->ai_family, crt_addr_i->ai_socktype, crt_addr_i->ai_protocol);
 
         if (socket_fd == -1) {
-            printf("doSocketOperations - socket() failed\n");
+            printf("doSocketOperations - client_id=%d, socket() failed\n", client_id);
             continue;
         }
         if (connect(socket_fd, crt_addr_i->ai_addr, crt_addr_i->ai_addrlen) == 0) {
-            printf("doSocketOperations - successfully connected client_id %d\n", client_id);
+            printf("doSocketOperations - client_id=%d, successfully connected\n", client_id);
             break;
         }
         else {
@@ -93,9 +95,9 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
     }
     freeaddrinfo(result);
 
-    printf("doSocketOperations, client_id=%d, write()\n", client_id);
+    //printf("doSocketOperations - client_id=%d, write()\n", client_id);
     int written_bytes = write(socket_fd, request_buf, IN_BUFFER_SIZE);
-    printf("doSocketOperations, client_id=%d, wrote %d bytes\n", client_id, written_bytes);
+    //printf("doSocketOperations - client_id=%d, wrote %d bytes\n", client_id, written_bytes);
 
     //now wait at most two minutes for a reply
     struct epoll_event event_descriptor, events[10];
@@ -155,7 +157,7 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
         return -4;
     }
     else {
-        printf("doSocketOperation - client_id=%d, read %d bytes, spin_count=%d, proceding to process reply\n", client_id, read_bytes, spin_count);
+        printf("doSocketOperations - client_id=%d, read %d bytes, spin_count=%d, proceding to process reply\n", client_id, read_bytes, spin_count);
     }
 
     //if everything worked, we can now interpret the buffer
@@ -182,13 +184,25 @@ int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, in
 
     printf("doSocketOperations - client_id=%d, waiting for out file semaphore\n", client_id);
     sem_t* file_semaphore = sem_open(semaphore_name, O_CREAT, O_RDWR, 1);
+    if (file_semaphore == SEM_FAILED) {
+        int error_val = errno;
+        printf("doSocketOperations - client_id=%d, sem_open failed, errno=%d - %s\n", client_id, error_val, strerror(error_val));
+        return -1;
+    }
     sem_wait(file_semaphore);
+    int out_file_fd = open(out_file_name, O_RDWR, S_IRWXU);
     printf("doSocketOperations - client_id=%d, took the file\n", client_id);
-    if (lseek(out_file_fd, SEEK_END, 0) == -1)
-        printf("doSocketOperations - client_id=%d, lseek failed\n");
+    int seek_place = lseek(out_file_fd, SEEK_END, 0);
+    if (seek_place == -1) {
+        int errno_val = errno;
+        printf("doSocketOperations - client_id=%d, lseek failed, errno=%d - %s\n", client_id, errno_val, strerror(errno_val));
+    }
+    printf("doSocketOperations - client_id=%d, lseek=%d\n", client_id, seek_place);
     //client_id, 
-    dprintf(out_file_fd, "%d\t %d\t %g\t %g\t\n", client_id, op, value, reply_val)
+    dprintf(out_file_fd, "client_id=%d\t op=%d\t value=%g\t reply_val=%g\t\n", client_id, op, value, reply_val);
+    close(out_file_fd);
     sem_post(file_semaphore);
+    printf("doSocketOperations - client_id=%d, released the file\n", client_id);
 
     printf("doSocketOperations exiting, wrote result at %p\n", write_address);
     return 0;
@@ -208,16 +222,18 @@ int main(int argc, char* argv[]) {
     char semaphore_name[50];
     snprintf(semaphore_name, 50, "/client_sem_%d", getpid());
 
-    sem_t* file_semaphore = sem_open(semaphore_name, O_CREAT, O_RDWR, 1);
+    sem_t* file_semaphore = sem_open(semaphore_name, O_CREAT|O_EXCL|O_RDWR, S_IRWXU, 1);
     if (file_semaphore == SEM_FAILED) {
         printf("client main: could not init semaphore %s, quiting\n", semaphore_name);
         return -1;
     }
     printf("client main, created semaphore name=%s\n", semaphore_name);
 
-    char* file_name[50];
-    snprintf(file_name, 50, "client_out-%s-%d", char_time, getpid());
-    int out_file_fd = open(file_name, O_RDWR, O_CREAT);
+    char file_name[50];
+    snprintf(file_name, 50, "client_out-%s-%d.txt", char_time, getpid());
+    int out_file_fd = open(file_name, O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
+    printf("client main, out_file_fd=%d\n", out_file_fd);
+    close(out_file_fd);
 
     for (int i = 0; i < NO_OF_REQUESTS; i++) {
         //spawn a new child
@@ -226,7 +242,7 @@ int main(int argc, char* argv[]) {
             pids[i] = pid;
         }
         else {
-            return doSocketOperations(i, mapped_mem, semaphore_name, out_file_fd);
+            return doSocketOperations(i, mapped_mem, semaphore_name, file_name);
             //open socket, write to it and read from it, then close; write to shared memory that we have finished
         }
         
@@ -240,7 +256,8 @@ int main(int argc, char* argv[]) {
         printf("Child pid:%d, status=%d, total finished=%d\n", ret, status, stopped_children);
     }
     
-    
+    sem_unlink(semaphore_name);
+    close(out_file_fd);
 
     printf("Program exiting\n");
     return 0;
