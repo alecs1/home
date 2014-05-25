@@ -19,7 +19,9 @@
 #define NO_OF_REQUESTS 5
 #define REPLY_TIMEOUT 1 //30 seconds
 
-int doSocketOperations(int client_id, void* mapped_mem) {
+//worker processes write in a shared memory area, without access control (each writes in his own cell)
+//they also write over a file provided by the parent, with access controlled via a semaphore
+int doSocketOperations(int client_id, void* mapped_mem, char* semaphore_name, int out_file_fd) {
 
 
     //prepare buffer for writing request
@@ -178,6 +180,16 @@ int doSocketOperations(int client_id, void* mapped_mem) {
     memcpy(write_address + write_offset, &reply_val, sizeof(reply_val)); write_offset += sizeof(reply_val);
     memset(write_address + write_offset, 0, 2 * sizeof(struct timespec)); write_offset += 2*sizeof(struct timespec);
 
+    printf("doSocketOperations - client_id=%d, waiting for out file semaphore\n", client_id);
+    sem_t* file_semaphore = sem_open(semaphore_name, O_CREAT, O_RDWR, 1);
+    sem_wait(file_semaphore);
+    printf("doSocketOperations - client_id=%d, took the file\n", client_id);
+    if (lseek(out_file_fd, SEEK_END, 0) == -1)
+        printf("doSocketOperations - client_id=%d, lseek failed\n");
+    //client_id, 
+    dprintf(out_file_fd, "%d\t %d\t %g\t %g\t\n", client_id, op, value, reply_val)
+    sem_post(file_semaphore);
+
     printf("doSocketOperations exiting, wrote result at %p\n", write_address);
     return 0;
 }
@@ -188,6 +200,25 @@ int main(int argc, char* argv[]) {
 
     void* mapped_mem = mmap(NULL, MMAP_HEADER_SIZE + NO_OF_REQUESTS * MMAP_ITEM_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
+    time_t start_time = time(NULL);
+    char char_time[50];
+    snprintf(char_time, 50, "%lld", (long long)start_time);
+
+
+    char semaphore_name[50];
+    snprintf(semaphore_name, 50, "/client_sem_%d", getpid());
+
+    sem_t* file_semaphore = sem_open(semaphore_name, O_CREAT, O_RDWR, 1);
+    if (file_semaphore == SEM_FAILED) {
+        printf("client main: could not init semaphore %s, quiting\n", semaphore_name);
+        return -1;
+    }
+    printf("client main, created semaphore name=%s\n", semaphore_name);
+
+    char* file_name[50];
+    snprintf(file_name, 50, "client_out-%s-%d", char_time, getpid());
+    int out_file_fd = open(file_name, O_RDWR, O_CREAT);
+
     for (int i = 0; i < NO_OF_REQUESTS; i++) {
         //spawn a new child
         int pid = fork();
@@ -195,7 +226,7 @@ int main(int argc, char* argv[]) {
             pids[i] = pid;
         }
         else {
-            return doSocketOperations(i, mapped_mem);
+            return doSocketOperations(i, mapped_mem, semaphore_name, out_file_fd);
             //open socket, write to it and read from it, then close; write to shared memory that we have finished
         }
         
