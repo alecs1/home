@@ -10,7 +10,7 @@
 
 //size of on item put into shared memory:
 //success code, client, worker thread, request type, request value, reply value, open socket timestamp, close socket timestamp
-#define MMAP_ITEM_SIZE (sizeof(int) + sizeof(int) + sizeof(int) + sizeof(int) + sizeof(double) + sizeof(double) + sizeof(struct timespec))
+#define MMAP_ITEM_SIZE (sizeof(int) + sizeof(int) + sizeof(int) + sizeof(int) + sizeof(double) + sizeof(double) + 2*sizeof(struct timespec))
 
 //header of the shared memory, contents:
 //no of currently running processes with access to this memory

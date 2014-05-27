@@ -135,31 +135,35 @@ int delQueueElement(struct queue_element* queue, int index, int *size) {
 
 void* workerThread(void* start_args) {
     struct thread_args* args = (struct thread_args*)start_args;
-    printf("workerThread - started thread %d\n", args->thread_id);
+    printf("workerThread - %d, started thread\n", args->thread_id);
     
     struct timespec ts;
 
     while(1) {
-        clock_gettime(CLOCK_REALTIME, &ts);
-        ts.tv_sec += 5;
-        //printf("workerThread, thread_id=%d, lock worker_cond_mutex\n", args->thread_id);
-        pthread_mutex_lock(args->worker_cond_mutex);
-        //printf("workerThread, thread_id=%d, locked worker_cond_mutex\n", args->thread_id);
-        pthread_cond_timedwait(args->worker_cond, args->worker_cond_mutex, &ts);
-        pthread_mutex_unlock(args->worker_cond_mutex);
+        if (*args->s_requests_queue == 0) {
+            clock_gettime(CLOCK_REALTIME, &ts);
+            ts.tv_sec += 5;
+            //printf("workerThread, thread_id=%d, lock worker_cond_mutex\n", args->thread_id);
+            pthread_mutex_lock(args->worker_cond_mutex);
+            //printf("workerThread, thread_id=%d, locked worker_cond_mutex\n", args->thread_id);
+            pthread_cond_timedwait(args->worker_cond, args->worker_cond_mutex, &ts);
+            pthread_mutex_unlock(args->worker_cond_mutex);
+        }
 
 
-        //printf("workerThread - thread_id=%d, wake-up with s_requests_queue=%d\n", args->thread_id, *args->s_requests_queue);
+        printf("workerThread - %d, wake-up with s_requests_queue~%d, s_replies_queue~%d\n", args->thread_id, *args->s_requests_queue, *args->s_replies_queue);
 
         if (*args->worker_thread_stop == WORKER_EXIT_CODE) {
             goto cleanup;
         }
 
         if (*args->s_requests_queue > 0) {
-            printf("workerThread - args->s_request_queue=%d\n", *args->s_requests_queue);
+            printf("workerThread - %d, s_request_queue=%d, s_replies_queue~%d\n", args->thread_id, *args->s_requests_queue, *args->s_replies_queue);
             pthread_mutex_lock(args->requests_mutex);
-            if (*args->s_requests_queue <= 0)
+            if (*args->s_requests_queue <= 0) {
+                pthread_mutex_unlock(args->requests_mutex);
                 continue;
+            }
             struct queue_element request = args->requests_queue[0];
             delQueueElement(args->requests_queue, 0, args->s_requests_queue);
             pthread_mutex_unlock(args->requests_mutex);
@@ -170,11 +174,11 @@ void* workerThread(void* start_args) {
             if (*args->s_replies_queue < MAX_QUEUE_SIZE) {
                 args->replies_queue[*args->s_replies_queue] = request;
                 *args->s_replies_queue += 1;
-                printf("workerThread - s_replies_queue=%d\n", *args->s_replies_queue);
+                printf("workerThread - %d, s_requests_queue~%d, s_replies_queue=%d\n", args->thread_id, *args->s_requests_queue, *args->s_replies_queue);
                 write(args->new_reply_fd[1], "1", 1);
             }
             else {
-                printf("workerThread - replies queue is full, loosing reply and hanging up\n");
+                printf("workerThread - %d, replies queue is full, loosing reply and hanging up\n", args->thread_id);
             }
             pthread_mutex_unlock(args->replies_mutex);
         }
@@ -183,7 +187,7 @@ void* workerThread(void* start_args) {
 
 
  cleanup:
-    printf("workerThread, thread_id=%d exiting\n", args->thread_id);
+    printf("workerThread - %d exiting\n", args->thread_id);
     fflush (stdout);
     free(start_args);
     return 0;
@@ -462,7 +466,7 @@ void* writerThread(void* start_args) {
         for (int i = 0; i < nfds; i++) {
             if (events[i].data.fd == args->new_reply_fd[0]) {
                 read(args->new_reply_fd[0], null_buf, 1);
-                printf("writerThread - new reply, s_replies_queue=%d\n", *args->s_replies_queue);
+                printf("writerThread - new reply, s_requests_queue~%d, s_replies_queue~%d\n", *args->s_requests_queue, *args->s_replies_queue);
                 if (*args->s_replies_queue > 0) {
                     pthread_mutex_lock(args->replies_mutex);
                     while (*args->s_replies_queue > 0) {

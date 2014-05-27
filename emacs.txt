@@ -1,4 +1,3 @@
-
 Emacs:
 
 Find:
@@ -10,6 +9,7 @@ M-e     - pause to edit the search string. Resume searching with C-s
 
 Search:
 M-x grep        - enter grep mode
+M-x kill-grep	- kill currently running grep
 
 
 Open, switch buffers:
@@ -20,7 +20,8 @@ C-x C-b - list all buffers
 C-x b   - select named buffer (like select file)
 C-x <left>      - select previous buffer
 C-x <right>     - select next buffer
-C-x k <buffer_name>     -kill buffer (close file)
+C-x k <buffer_name>     - kill buffer (close file)
+M-x toggle-read-only	- make buffer readable/writable
 
 
 Navigate
@@ -32,8 +33,8 @@ C-a	- start of line
 C-e	- end of line
 M-b     - backward one word
 M-f     - forward one word
-M-a	- start of phrase
-M-e     - end of phrase
+M-a	- start of paragraph
+M-e     - end of paragraph
 M-<	- beginning of entire text
 M->	- end of entire text
 C-v	- view next screen (scrolls one page)
@@ -47,17 +48,28 @@ C-x 0   - kill current window
 C-x 2   - split one above other (split-window-vertically)
 C-x 5   - split side by side (split-window-horizontally)
 C-M-v
-M-x desktop-save	- sav destkop session
+M-x desktop-save	- save destkop session
 
 
 Edit:
 C-x u   - undo, further presses will trigger a redo
+C-x r s r - copy region into register (copy-to-register) - copy
+C-r r i r - insert from register (insert-register) - paste
 C-w     - kill (cut) the selected region (kill-ring)
-M-w     - save the text (kill-ring-save)
+M-w     - save (copy) the text (kill-ring-save)
 C-k     - kill the rest of the line
 M-k     - kill the rest of the sentence
 C-y     - yank (paste) the last entry from the kill-ring
 M-y     - cycle through the list of killed or copied contents from the kill-ring
+C-d	- delete next character (delete)
+M-\	- delete spaces and tabs around point
+M-<SPC> - delete spaces and tabs around point, leaving one space
+M-;	- 
+
+
+Selection:
+C-<SPC> - set mark (start of selection)
+C-x C-x	- interchange mark and point
 
 
 Start terminals:
@@ -74,9 +86,20 @@ Help:
 C-h b   - list the key bindings applicable in the current buffer
 
 
+Other commands:
+C-g - quit command currently being types
+
 Settings:
 M-x column-number-mode  - show column number in the bar
 M-x line-number-mode    - display line number in the mode line
 
+Packages to install:
+emacs-goodies-el - for session
+
 Links:
 http://www.emacswiki.org/emacs/IncrementalSearch
+
+Definitions:
+point	- the place where insertion and deletion occurs
+mark	- the other end of a selection (selection is between mark and point)
+
