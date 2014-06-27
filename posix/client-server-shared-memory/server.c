@@ -344,6 +344,7 @@ void* connectionThread(void* start_args) {
         else
             printf("Created socket\n");
 
+        //apparently, without calling bind() you would listen on some random port number (which could be found later with getsockname(2)
         if (bind(listen_socket, crt_addr_i->ai_addr, crt_addr_i->ai_addrlen) == 0) {
             printf("Successfully bound to %s\n", printable_addr);
             break;

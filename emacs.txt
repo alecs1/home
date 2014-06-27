@@ -22,6 +22,7 @@ C-x <left>      - select previous buffer
 C-x <right>     - select next buffer
 C-x k <buffer_name>     - kill buffer (close file)
 M-x toggle-read-only	- make buffer readable/writable
+M-x revert-buffer       - one of the ways to reload a file
 
 
 Navigate
@@ -62,6 +63,9 @@ M-k     - kill the rest of the sentence
 C-y     - yank (paste) the last entry from the kill-ring
 M-y     - cycle through the list of killed or copied contents from the kill-ring
 C-d	- delete next character (delete)
+M-d     - delete next word
+backspace        - delete previous character
+M-backspace      - delete previous word
 M-\	- delete spaces and tabs around point
 M-<SPC> - delete spaces and tabs around point, leaving one space
 M-;	- 
@@ -88,6 +92,7 @@ C-h b   - list the key bindings applicable in the current buffer
 
 Other commands:
 C-g - quit command currently being types
+M-x haskell-mode   - load haskell-mode when Emacs is unable to correctly decide the file type (for reasons unknown to me)
 
 Settings:
 M-x column-number-mode  - show column number in the bar
