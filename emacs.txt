@@ -47,7 +47,7 @@ Windows:
 C-x o   - select another window
 C-x 0   - kill current window
 C-x 2   - split one above other (split-window-vertically)
-C-x 5   - split side by side (split-window-horizontally)
+C-x 3   - split side by side (split-window-horizontally)
 C-M-v
 M-x desktop-save	- save destkop session
 
