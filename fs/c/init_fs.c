@@ -2,7 +2,11 @@
 #include "structures.h"
 #include "init_fs.h"
 
-//ls#include <stdint.h>
+#include <stdint.h>
+
+//these are for the printf warnings
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 
 //probably such headers should be missing from low level implementations
@@ -27,7 +31,7 @@ int16_t allocate_partition(uint64_t size, uint8_t* ret_code) {
     uint16_t id = 0;
     char file_name[100];
     sprintf(file_name, "/home/alex/partition.bin.%d", id);
-    printf("init partition in file %s, of size %llu :D\n", file_name, size);
+    printf("init partition in file %s, of size %" PRIu64 " :D\n", file_name, size);
 
     * ret_code = 0;
     return id;
@@ -51,9 +55,9 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t last, uint8_
 
 void printf_units(uint64_t bytes_count) {
     uint64_t KiB = bytes_count / 1024;
-    double MiB = bytes_count / (1024 * 1024);
-    double GiB = bytes_count / (1024 * 1024 * 1024);
-    printf("KiB=%llu, MiB=%g, GiB=%g", KiB, MiB, GiB);
+    double MiB = (double)bytes_count / (1024 * 1024);
+    double GiB = (double)bytes_count / (1024 * 1024 * 1024);
+    printf("KiB=%" PRIu64 ", MiB=%g, GiB=%g", KiB, MiB, GiB);
 }
 
 
@@ -108,29 +112,29 @@ uint64_t create_fs(uint64_t size) {
 
     
     if (pos != START_BLOCK_SIZE) {
-        printf("Error, pos=%llu, START_BLOCK_SIZE=%llu\n", pos, START_BLOCK_SIZE);
+printf("Error, pos=%" PRIu64 ", START_BLOCK_SIZE=%" PRIu64 "\n", pos, (uint64_t)START_BLOCK_SIZE);
     }
 
 
-    printf("Writing block map at address %llu, ", pos); printf_units(pos); printf("\n");
+    printf("Writing block map at address %" PRIu64 ", ", pos); printf_units(pos); printf("\n");
     uint64_t map_size = size / MAP_TO_CONTENTS_RATIO;
     pos += d_write_repeat(id, pos, &zero, 1, map_size);
-    mark_global_block_map(id, pos-1, 1);
+    mark_global_block_map(id, 0,  pos-1, 1);
     printf("Block map size: "); printf_units(map_size); printf("\n");
-    printf("Block map ends at %llu, ", pos); printf_units(pos); printf("\n");
+    printf("Block map ends at %" PRIu64 ", ", pos); printf_units(pos); printf("\n");
 
 
 
     //we can now start writing the first block of metadata
     //say 1% of the whole filesystem size
     uint64_t block_size = size / 100;
-    printf("Init first metadata block at %llu, ", pos); printf_units(pos); printf("\n");
-    printf("Metadata block_size=%llu, ", block_size); printf_units(block_size); printf("\n");
+    printf("Init first metadata block at %" PRIu64 ", ", pos); printf_units(pos); printf("\n");
+    printf("Metadata block_size=%" PRIu64 ", ", block_size); printf_units(block_size); printf("\n");
 
-    uint64_t file_count = init_metadata_batch(id, pos, files_count_hint);
+    uint64_t file_count = init_metadata_batch(id, pos, block_size);
 
-    printf("allocated for the first metadata batch, file_count=%llu, ends at %llu, ", file_count, pos);
-    printf_Units(block_size); printf("\n");
+    printf("allocated for the first metadata batch, file_count=%" PRIu64 ", ends at %" PRIu64 ", ", file_count, pos);
+    printf_units(block_size); printf("\n");
 
 
     //now write / as the first directory
