@@ -73,6 +73,10 @@
 
 
 
+
+//other generic definitions which should stay in their own files:
+#define UNUSED(x) (void)(x)
+
 #endif
 
 

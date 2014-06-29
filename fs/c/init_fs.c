@@ -3,6 +3,9 @@
 #include "init_fs.h"
 
 #include <stdint.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 //these are for the printf warnings
 #define __STDC_FORMAT_MACROS
@@ -12,12 +15,31 @@
 //probably such headers should be missing from low level implementations
 #include <stdio.h>
 
+int static_fd; //this is a copy of the fd, remove it when we implement multiple partitions
+
 //some functions which will pretend to write to an actuall disk, but actually call to seek and write :D
 //move them to another file with primitives
 
+int printf_fd_info(int fd) {
+    struct stat fd_info;
+    fstat(fd, &fd_info);
+    printf("fd=%d, st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
+           fd, fd_info.st_ino, fd_info.st_nlink, fd_info.st_size, fd_info.st_blksize);
+}
+
 //TODO - to simulate some constraints, also split their work into blocks of some limited size
 uint64_t d_write(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
+    UNUSED(id);
+    lseek(static_fd, address, SEEK_SET);
+    uint64_t b_wrote = 0;
+    b_wrote = write(static_fd, bytes, size);
+
+    printf("%s, wrote %" PRIu64 " at %" PRIu64 "\n", __func__, b_wrote, address);
+    printf_fd_info(static_fd);
+    return b_wrote;
 }
+
+
 
 uint64_t d_read(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
 }
@@ -26,14 +48,30 @@ uint64_t d_write_repeat(uint16_t id, uint64_t address, void* bytes, uint64_t siz
 }
 
 //return some partition id
-int16_t allocate_partition(uint64_t size, uint8_t* ret_code) {
+//TODO - it looks like usually return code are "int", do this too
+int16_t allocate_partition(uint64_t size, int* ret_code) {
     //this will become global
     uint16_t id = 0;
     char file_name[100];
     sprintf(file_name, "/home/alex/partition.bin.%d", id);
     printf("init partition in file %s, of size %" PRIu64 " :D\n", file_name, size);
 
-    * ret_code = 0;
+    int fd = creat(file_name, S_IRWXU);
+    static_fd = fd;
+    off_t offset = lseek(fd, size-1, SEEK_END);
+    int zero = 0;
+    write(fd, &zero, 1);
+    printf("%s, lseek off_t = %" PRIu64 "\n", __func__, offset);
+    //close(fd);
+
+    struct stat fd_info;
+    *ret_code = fstat(fd, &fd_info);
+    //these printfs might very well be wrong, bla bla
+    printf("create file: st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
+           fd_info.st_ino, fd_info.st_nlink, fd_info.st_size, fd_info.st_blksize);
+
+
+    ret_code = 0;
     return id;
 }
 
@@ -53,11 +91,12 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t last, uint8_
 }
 
 
-void printf_units(uint64_t bytes_count) {
+int printf_units(uint64_t bytes_count) {
     uint64_t KiB = bytes_count / 1024;
     double MiB = (double)bytes_count / (1024 * 1024);
     double GiB = (double)bytes_count / (1024 * 1024 * 1024);
     printf("KiB=%" PRIu64 ", MiB=%g, GiB=%g", KiB, MiB, GiB);
+    return 0;
 }
 
 
@@ -68,7 +107,7 @@ uint64_t create_fs(uint64_t size) {
 
     size = size - (size % MAP_TO_CONTENTS_RATIO);
     
-    uint8_t ret_code;
+    int ret_code;
     uint16_t id = allocate_partition(size, &ret_code);
     if (ret_code != 0) {
         printf("id < 0\n");
