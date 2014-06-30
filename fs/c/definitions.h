@@ -3,7 +3,13 @@
 
 //TODO TODO TODO - always align to DISK_BLOCK_BYTES addresses
 
+#define ROUND_TO_MULTIPLE_UP(x, m) ((x) + (x) % (m))
+#define ROUND_TO_MULTIPLE_DOWN(x, m) ((x) - (x) % (m))
+
 #define VERSION 1
+
+
+
 
 #define DISK_BLOCK_BYTES 4096 //try to align most address requests at this value
 #define SMALL_FILE_SIZE (2 * DISK_BLOCK_SIZE) //these files should be aligned right after a block of metadata, with a separate free space bitfield; for now all files with take a DISK_BLOCK_BYTES number of bytes
@@ -24,19 +30,25 @@
 
 //free space map, such that we don't have to cross the whole FS to find out which if an area is written or not
 //1 bit for each 4 KiB of disk, ratio map -> storage is 1 -> 2^15
+//1 byte for each 32 KiB of disk, PARTITION_BYTE_MULTIPLE
 //TODO - also align this to a 4096 address
 #define BIT_TABLE_ADDRESS START_BLOCK_SIZE
-#define MAP_TO_CONTENTS_RATIO (DISK_BLOCK_BYTES * 8)
-#define MAP_SIZE_SIZE 8
+#define CONTENTS_TO_MAP_RATIO (DISK_BLOCK_BYTES * 8)
+#define PARTITION_BYTE_MULTIPLE (DISK_BLOCK_BYTES * 8) // choose partition size such that each byte in the contents map is entirely covered with existing partition space
+//#define MAP_SIZE_SIZE 8 //we don't write this down anymore, it's calculated
+#define BYTE_SIZE 8
 
 
 
 //***Batch of metadata***
 //header
-#define ALLOCATED_COUNT_SIZE 8 //metadata follows right away after the header, use this number to know where it ends!
-#define FILES_COUNT_SIZE 8 //
+#define METADATA_BATCH_SIZE 8 //metadata follows right away after the header, use this number to know where it ends!
+#define FILE_CAPACITY_SIZE 8
+#define FILE_COUNT_SIZE 8 //
 #define INDEX_TABLE_SIZE 255 * 8 //255 indexes, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
-#define METADATA_BATCH_HEADER_SIZE (FILES_COUNT_SIZE+INDEX_TABLE_SIZE)
+#define METADATA_BATCH_HEADER_SIZE \
+    ROUND_TO_MULTIPLE_UP( \
+    (METADATA_BATCH_SIZE+FILE_CAPACITY_SIZE + FILE_COUNT_SIZE+INDEX_TABLE_SIZE), DISK_BLOCK_BYTES)
 
 
 //metadata of a single file/directory (should we split to two different definitions?)

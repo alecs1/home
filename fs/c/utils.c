@@ -1,0 +1,29 @@
+#include "utils.h"
+
+#include <sys/stat.h>
+
+#include <stdio.h>
+
+int printf_fd_info(int fd) {
+    struct stat fd_info;
+    fstat(fd, &fd_info);
+    printf("fd=%d, st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
+           fd, fd_info.st_ino, fd_info.st_nlink, fd_info.st_size, fd_info.st_blksize);
+
+    return 0;
+}
+
+int printf_units(uint64_t bytes_count) {
+    uint64_t KiB = bytes_count / 1024;
+    double MiB = (double)bytes_count / (1024 * 1024);
+    double GiB = (double)bytes_count / (1024 * 1024 * 1024);
+    printf("KiB=%" PRIu64 ", MiB=%g, GiB=%g", KiB, MiB, GiB);
+    return 0;
+}
+
+int printf_bits(uint8_t byte) {
+    for(int i = 7; i >= 0; i--) {
+        printf("%d", (byte & (1 << i)) ? 1 : 0);
+    }
+    return 0;
+}
