@@ -26,7 +26,7 @@ typedef struct metadata {
 
 S_metadata* init_metadata_struct();
 S_metadata* init_dir_struct();
-S_metadata* init_file_struct()
+S_metadata* init_file_struct();
 
 
 typedef struct metadata_batch {
