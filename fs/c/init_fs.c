@@ -72,6 +72,38 @@ uint64_t d_write_repeat(uint16_t id, uint64_t address, void* bytes, uint64_t siz
     return b_wrote;
 }
 
+uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t size, uint8_t allocated) {
+    uint64_t a_first = ROUND_TO_MULTIPLE_DOWN(first, DISK_BLOCK_BYTES);
+
+    uint64_t a_last = first + size;
+    a_last = ROUND_TO_MULTIPLE_UP(a_last, DISK_BLOCK_BYTES);
+
+    printf("%s - id=%" PRIu16 ", fist=%" PRIu64 ", last=%" PRIu64 ", allocated=%" PRIu8 "\n",
+           __func__, id, first, a_last, allocated);
+    
+    if ((first != a_first) || (first+size != a_last)) {
+        printf("%s - error: first or last not aligned: %" PRIu64 "->%" PRIu64 ", %" PRIu64 "->%" PRIu64 "\n",
+               __func__, first, a_first, first+size, a_last);
+    }
+
+    //optimise later :D
+    for (uint64_t block_addr = a_first; block_addr < a_last; block_addr += DISK_BLOCK_BYTES) {
+        uint64_t map_byte = block_addr / PARTITION_BYTE_MULTIPLE;
+        uint8_t map_bit = (block_addr % PARTITION_BYTE_MULTIPLE) / DISK_BLOCK_BYTES;
+        if (allocated)
+            fs_defs[id].global_block_map[map_byte] |= (1 << (7 - map_bit)); //fill bytes from "left" to "right"
+        else
+            fs_defs[id].global_block_map[map_byte] &= (0 << (7 - map_bit));
+
+        printf("byte=%" PRIu64 ", bit=%" PRIu8 ", val=%" PRIu8 ", block at %" PRIu64 ", map=",
+               map_byte, map_bit, allocated, block_addr);
+        printf_bits(fs_defs[id].global_block_map[map_byte]); printf("\n");
+    }
+
+    d_write(id, fs_defs[id].block_map_address, fs_defs[id].global_block_map, fs_defs[id].block_map_size);
+    return 0;
+}
+
 //return some partition id
 //TODO - it looks like usually return code are "int", do this too
 int16_t allocate_partition(uint64_t size, int* ret_code) {
@@ -136,12 +168,14 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     fs_defs[id].metadata_batches[batch_index].size = size;
     pos += d_write(id, pos, &size, METADATA_BATCH_SIZE);
 
+
     fs_defs[id].metadata_batches[batch_index].file_capacity = file_capacity;
     pos += d_write(id, pos, &file_capacity, FILE_CAPACITY_SIZE);
 
     fs_defs[id].metadata_batches[batch_index].file_count = 0;
     pos += d_write (id, pos, &fs_defs[id].metadata_batches[batch_index].file_count,
                     FILE_COUNT_SIZE);
+
 
     for(int i = 0; i <= ALLOWED_BYTES_IN_NAME_COUNT; i++) {
         pos += d_write (id, pos, (void*)&u64_zero, 8);
@@ -157,6 +191,7 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     
     
     pos = ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES);
+    fs_defs[id].metadata_batches[batch_index].metadata_start = pos;
     
     if (pos != fs_defs[id].metadata_batch_addresses[batch_index] + METADATA_BATCH_HEADER_SIZE)
         printf("%s - error, pos=%" PRIu64 ", should be %" PRIu64 "\n",
@@ -172,43 +207,51 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
            pos,
            file_capacity);
 
-    size = header_size + metadata_size;
-
+    mark_global_block_map(id, fs_defs[id].metadata_batch_addresses[batch_index], size, 1);
+                          
     return size;
 }
 
-uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t last, uint8_t allocated) {
-    uint64_t a_first = first - first % DISK_BLOCK_BYTES;
-    uint64_t a_last = last + last % DISK_BLOCK_BYTES;
+//assumes everything is precomputed?
+uint8_t write_metadata(uint16_t id, S_metadata* md) {
+    uint64_t pos = md->address;
+    pos += d_write(id, pos, md->name, NAME_SIZE);
+    pos += d_write(id, pos, &md->hl_count, HARDLINK_COUNT_SIZE);
+    pos += d_write(id, pos, &md->type, TYPE_SIZE);
 
-    printf("%s - id=%" PRIu16 ", fist=%" PRIu64 ", last=%" PRIu64 ", allocated=%" PRIu8 "\n",
-           __func__, id, first, last, allocated);
+    if (pos != md->address + METADATA_HEADER_SIZE) {
+        printf("%s - error, pos != address+METADATA_HEADER_SIZE, %" PRIu64 "->%" PRIu64 "\n",
+               __func__, pos, md->address + METADATA_HEADER_SIZE);
+    }
     
-    if ((first != a_first) || (last != a_last)) {
-        printf("%s - error: first or last not aligned: %" PRIu64 "->%" PRIu64 ", %" PRIu64 "->%" PRIu64 "\n",
-               __func__, first, a_first, last, a_last);
+    if (md->type == TYPE_DIR) {
+        S_dir_metadata* dir_md = (S_dir_metadata*)(md->specific);
+
+        pos += d_write(id, pos, &dir_md->child_count, CHILD_COUNT_SIZE);
+        pos += d_write(id, pos, &dir_md->child_list_address, CHILD_LIST_ADDRESS_SIZE);
+    }
+    else {
+        S_file_metadata* file_md = (S_file_metadata*)(md->specific);
+        pos += d_write(id, pos, &file_md->size, SIZE_SIZE);
+        pos += d_write(id, pos, &file_md->fragments_count, CONTENT_FRAGMENTS_COUNT_SIZE);
+        pos += d_write(id, pos, &file_md->first_fragment_address, FIRST_FRAGMENT_ADDRESS_SIZE);
     }
 
-    //optimise later :D
-    for (uint64_t block_addr = a_first; block_addr < a_last; block_addr += DISK_BLOCK_BYTES) {
-        uint64_t map_byte = block_addr / PARTITION_BYTE_MULTIPLE;
-        uint8_t map_bit = (block_addr % PARTITION_BYTE_MULTIPLE) / DISK_BLOCK_BYTES;
-        if (allocated)
-            fs_defs[id].global_block_map[map_byte] |= (1 << (7 - map_bit)); //fill bytes from "left" to "right"
-        else
-            fs_defs[id].global_block_map[map_byte] &= (0 << (7 - map_bit));
-
-        printf("byte=%" PRIu64 ", bit=%" PRIu8 ", val=%" PRIu8 ", block at %" PRIu64 ", map=",
-               map_byte, map_bit, allocated, block_addr);
-        printf_bits(fs_defs[id].global_block_map[map_byte]); printf("\n");
-    }
-
-    d_write(id, fs_defs[id].block_map_address, fs_defs[id].global_block_map, fs_defs[id].block_map_size);
     return 0;
 }
 
 
+//name is empty, first entry in the first batch of metadata
+uint8_t init_root_dir(uint16_t id) {
+    S_metadata* root_metadata = init_dir_struct();
+    root_metadata->address = fs_defs[id].metadata_batches[0].metadata_start;
+  
+    fs_defs[id].root_metadata = root_metadata;
 
+    //write down
+    write_metadata(id, root_metadata);
+    return 0;
+}
 
 
 //TODO - endianess
@@ -284,8 +327,9 @@ uint64_t create_fs(uint64_t size) {
 
 
     //we can now start writing the first block of metadata
-    //say 1% of the whole filesystem size
-    uint64_t block_size = size / 100;
+    //say 2% of the whole filesystem size
+    uint64_t block_size = size / 50;
+    block_size = ROUND_TO_MULTIPLE_UP(block_size, DISK_BLOCK_BYTES);
     printf("Init first metadata block at %" PRIu64 ", ", pos); printf_units(pos); printf("\n");
     printf("Metadata block_size=%" PRIu64 ", ", block_size); printf_units(block_size); printf("\n");
 
@@ -305,6 +349,7 @@ uint64_t create_fs(uint64_t size) {
 
 
     //now write / as the first directory
+    
 
 
     if (success_code == 0)

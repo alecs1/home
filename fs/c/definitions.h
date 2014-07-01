@@ -3,8 +3,11 @@
 
 //TODO TODO TODO - always align to DISK_BLOCK_BYTES addresses
 
+
+//other generic definitions which should stay in their own files:
 #define ROUND_TO_MULTIPLE_UP(x, m)   ( (x)%(m) ? ((x)/(m)+1)*(m) : (x) )
 #define ROUND_TO_MULTIPLE_DOWN(x, m) ( (x)%(m) ? ((x)/(m)-1)*(m) : (x) )
+#define UNUSED(x) (void)(x)
 
 #define VERSION 1
 
@@ -54,24 +57,24 @@
 //metadata of a single file/directory (should we split to two different definitions?)
 //if it starts with zero this is not allocated
 #define NAME_SIZE 256 //TODO - this is wastefull
-#define SIZE_SIZE 8
 #define PARENTS_ADDRESS_SIZE 8 //refers to metadata of parent, of course :)
-#define HARDLINK_COUNT_SIZE 4 //of course, we don't do hard links yet and also don't know how to implement them, but that doesn't stop us
-#define TYPE_SIZE 1 //TODO - this is wastefull, could be packed together with something else
+#define HARDLINK_COUNT_SIZE 4 //we don't do hard links yet and also don't know how to implement them, but that doesn't stop us
+#define TYPE_SIZE 1 //could be packed together with something else; 0 - file, 1 - dir
 //POSIX stuff
 #define POSIX_METADATA_SIZE 0
-#define METADATA_HEADER_SIZE (NAME_SIZE + SIZE_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE)
+#define METADATA_HEADER_SIZE (NAME_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE)
 
-#define METADATA_SIZE 1024 //1 KiB for metadata - how does this correlate with 512/4096 bytes per sector?
+#define METADATA_SIZE 1024 //1 KiB for metadata
 #define REMAINING_SIZE (METADATA_SIZE - MEDATA_HEADER_SIZE) //this data will be available to store children info, in case of a directory, or a part of the contents in case of a file
 
-
+#define TYPE_FILE 0
+#define TYPE_DIR 1
 
 //***Directory***
 //we're going to assume that the list of files in a directory does not need to be split into multiple blocks
-#define CHILDREN_COUNT 4 //2**32 are more than enough files in a directory; lots of tools will start to fail if there exist milions of files in a directory
-#define CHILDREN_LIST_BLOCK_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here
-//the metadata could also stay in another batch of metadata, but some migration should be considered
+#define CHILD_COUNT_SIZE 4 //2**32 are more than enough files in a directory; lots of tools will start to fail if there exist milions of files in a directory
+#define CHILD_LIST_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here
+//these children addresses could also point to another batch of metadata, but some migration should be considered
 //rest is used 8 by 8 to store file addresses
 
 
@@ -80,14 +83,14 @@
 //0 - file fits entirely here
 //1 - what's here plus the block at FIRST_BLOCK_ADDRESS_SIZE contains all the file
 //2 - the file is split into many blocks, their addresses and sizes are defined in the block contained ata FIRST_BLOCK_ADDRESS_SIZE (pairs of 8 bytes address, 8 bytes size)
-#define CONTENT_BLOCKS_COUNT_SIZE 4
-#define FIRST_BLOCK_ADDRESS_SIZE 8 //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
+#define SIZE_SIZE 8
+#define CONTENT_FRAGMENTS_COUNT_SIZE 4 //for now we'll assume this to be 0 or 1
+#define FIRST_FRAGMENT_ADDRESS_SIZE 8 //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
 
 
 
 
-//other generic definitions which should stay in their own files:
-#define UNUSED(x) (void)(x)
+
 
 #endif
 

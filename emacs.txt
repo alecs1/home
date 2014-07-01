@@ -16,7 +16,7 @@ Open, switch buffers:
 C-x C-f - open file
         - with tramp, addresses look need a slash: /root@address:/path
 C-x C-s - save file
-C-x C-b - list all buffers
+C-x C-b - list all buffers in a separate window (with paths)
 C-x b   - select named buffer (like select file)
 C-x <left>      - select previous buffer
 C-x <right>     - select next buffer
