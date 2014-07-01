@@ -21,6 +21,10 @@
 #include "global.h"
 #include "utils.h"
 
+const uint8_t  u8_zero = 0;
+const uint64_t u64_zero = 0;
+
+int verbose; //disable printing in some situations
 
 S_fs_definition fs_defs[MAX_PARTITIONS_COUNT];
 uint16_t part_count = 0;
@@ -40,8 +44,10 @@ uint64_t d_write(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
     uint64_t b_wrote = 0;
     b_wrote = write(fd, bytes, size);
 
-    printf("%s, wrote %" PRIu64 " at %" PRIu64 ". ", __func__, b_wrote, address);
-    printf_fd_info(fd);
+    if (verbose) {
+        printf("%s, wrote %" PRIu64 " at %" PRIu64 ". ", __func__, b_wrote, address);
+        printf_fd_info(fd);
+    }
     return b_wrote;
 }
 
@@ -53,11 +59,16 @@ uint64_t d_read(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
 
 //use it for example to write zeros
 uint64_t d_write_repeat(uint16_t id, uint64_t address, void* bytes, uint64_t size, uint64_t repeat_count) {
+    if (repeat_count > 10)
+        verbose = 0;
+
     uint64_t b_wrote = 0;
     for(uint64_t i = 0; i < repeat_count; i++) {
         b_wrote += d_write(id, address, bytes, size);
         address += size;
     }
+
+    verbose = 1;
     return b_wrote;
 }
 
@@ -72,8 +83,7 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
 
     int fd = creat(file_name, S_IRWXU);
     off_t offset = lseek(fd, size-1, SEEK_END);
-    int zero = 0;
-    write(fd, &zero, 1);
+    write(fd, &u8_zero, 1);
     printf("%s, lseek off_t = %" PRIu64 "\n", __func__, offset);
     //close(fd);
 
@@ -99,12 +109,16 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
 //assumes space is free and overwrites everything
 //TODO - think how to allocate some space for very small files, right after the metadata block
 uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
-    if (size % DISK_BLOCK_BYTES != 0)
-        printf("%s - Warning, allocating metada block not multiple of block size\n", __func__);
+    if (size % DISK_BLOCK_BYTES != 0) {
+        printf("%s - warning, metada block not multiple of block size, size=%" PRIu64 "\n",
+               __func__, size);
+        size = ROUND_TO_MULTIPLE_DOWN(size, DISK_BLOCK_BYTES);
+        printf("%s - rounded to size=%" PRIu64 "\n", __func__, size);
+    }
 
     uint64_t header_size = METADATA_HEADER_SIZE;
     uint64_t metadata_size = size - header_size;
-    metadata_size -= metadata_size % DISK_BLOCK_BYTES;
+    //metadata_size = ROUND_TO_MULTIPLE_DOWN(metadata_size, DISK_BLOCK_BYTES);
 
     uint64_t file_capacity = metadata_size / METADATA_SIZE;
     uint64_t batch_index = fs_defs[id].metadata_batch_count;
@@ -112,8 +126,8 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     fs_defs[id].metadata_batch_count += 1;
     fs_defs[id].metadata_batches =
         (S_metadata_batch*)malloc(fs_defs[id].metadata_batch_count * sizeof(S_metadata_batch));
-    fs_defs[id].metadata_batch_addresses
-        = (uint64_t*) realloc(fs_defs[id].metadata_batch_addresses,
+    fs_defs[id].metadata_batch_addresses =
+        (uint64_t*) realloc(fs_defs[id].metadata_batch_addresses,
                               fs_defs[id].metadata_batch_count * sizeof(uint64_t));
     
     fs_defs[id].metadata_batch_addresses[batch_index] = pos;
@@ -129,6 +143,11 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     pos += d_write (id, pos, &fs_defs[id].metadata_batches[batch_index].file_count,
                     FILE_COUNT_SIZE);
 
+    for(int i = 0; i <= ALLOWED_BYTES_IN_NAME_COUNT; i++) {
+        pos += d_write (id, pos, (void*)&u64_zero, 8);
+        fs_defs[id].metadata_batches[batch_index].index_table[i] = 0;
+    }
+
     printf("%s - pos=%" PRIu64 ", wrote metadata header of size %" PRIu64 " at %" PRIu64 ", unused bytes: %" PRIu64 "\n",
            __func__,
            pos,
@@ -137,19 +156,20 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
            METADATA_BATCH_HEADER_SIZE - (pos - fs_defs[id].metadata_batch_addresses[batch_index]));
     
     
-    
-    pos += pos % DISK_BLOCK_BYTES;
+    pos = ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES);
     
     if (pos != fs_defs[id].metadata_batch_addresses[batch_index] + METADATA_BATCH_HEADER_SIZE)
         printf("%s - error, pos=%" PRIu64 ", should be %" PRIu64 "\n",
-               __func__, pos,
+               __func__,
+               pos,
                fs_defs[id].metadata_batch_addresses[batch_index] + METADATA_BATCH_HEADER_SIZE);
 
     printf("%s, header size=%" PRIu64 ", at %" PRIu64 ", metadata size=%" PRIu64 ", at %" PRIu64 ", file_capacity=%" PRIu64 "\n",
+           __func__,
            header_size,
            fs_defs[id].metadata_batch_addresses[batch_index],
            metadata_size,
-           pos+header_size+metadata_size,
+           pos,
            file_capacity);
 
     size = header_size + metadata_size;
@@ -165,8 +185,8 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t last, uint8_
            __func__, id, first, last, allocated);
     
     if ((first != a_first) || (last != a_last)) {
-        printf("Error: first of last not aligned: %" PRIu64 "->%" PRIu64 ", %" PRIu64 "->%" PRIu64 "\n",
-               first, a_first, last, a_last);
+        printf("%s - error: first or last not aligned: %" PRIu64 "->%" PRIu64 ", %" PRIu64 "->%" PRIu64 "\n",
+               __func__, first, a_first, last, a_last);
     }
 
     //optimise later :D
@@ -219,8 +239,8 @@ uint64_t create_fs(uint64_t size) {
     //skip id generation
 
     printf("Writing start header\n");
-    uint8_t zero = 0;
-    b_wrote = d_write_repeat(id, pos, &zero, 1, ID_SIZE);
+
+    b_wrote = d_write_repeat(id, pos, (void*)&u8_zero, 1, ID_SIZE);
     pos += b_wrote;
     b_wrote = d_write(id, pos, &size, VOLUME_SIZE_SIZE);
     pos += b_wrote;
@@ -229,7 +249,7 @@ uint64_t create_fs(uint64_t size) {
     b_wrote = d_write(id, pos, &metadata_blocks_count, METADATA_BLOCK_COUNT_SIZE);
     pos += b_wrote;
     
-    b_wrote = d_write_repeat(id, pos, &zero, 1, METADATA_ADDRESSES_SIZE);
+    b_wrote = d_write_repeat(id, pos,(void*)&u8_zero, 1, METADATA_ADDRESSES_SIZE);
     pos += b_wrote;
     
     
@@ -271,6 +291,7 @@ uint64_t create_fs(uint64_t size) {
 
     fs_defs[id].metadata_batch_count = 0;
     fs_defs[id].metadata_batch_addresses = NULL;
+    pos = ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES);
     block_size = init_metadata_batch(id, pos, block_size);
     //fs_defs[id].metadata_batch_count = 1;
     //fs_defs[id].metadata_batch_addresses = (uint64_t*) malloc(block_size);

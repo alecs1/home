@@ -9,6 +9,7 @@ typedef struct metadata_batch {
     uint64_t metadata_start;
     uint64_t file_capacity;
     uint64_t file_count;
+    uint64_t index_table[255];
 } S_metadata_batch;
 
 typedef struct fs_definition {

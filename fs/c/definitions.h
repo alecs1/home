@@ -3,13 +3,13 @@
 
 //TODO TODO TODO - always align to DISK_BLOCK_BYTES addresses
 
-#define ROUND_TO_MULTIPLE_UP(x, m) ((x) + (x) % (m))
-#define ROUND_TO_MULTIPLE_DOWN(x, m) ((x) - (x) % (m))
+#define ROUND_TO_MULTIPLE_UP(x, m)   ( (x)%(m) ? ((x)/(m)+1)*(m) : (x) )
+#define ROUND_TO_MULTIPLE_DOWN(x, m) ( (x)%(m) ? ((x)/(m)-1)*(m) : (x) )
 
 #define VERSION 1
 
 
-
+#define ADDRESS_SIZE 8
 
 #define DISK_BLOCK_BYTES 4096 //try to align most address requests at this value
 #define SMALL_FILE_SIZE (2 * DISK_BLOCK_SIZE) //these files should be aligned right after a block of metadata, with a separate free space bitfield; for now all files with take a DISK_BLOCK_BYTES number of bytes
@@ -36,16 +36,16 @@
 #define CONTENTS_TO_MAP_RATIO (DISK_BLOCK_BYTES * 8)
 #define PARTITION_BYTE_MULTIPLE (DISK_BLOCK_BYTES * 8) // choose partition size such that each byte in the contents map is entirely covered with existing partition space
 //#define MAP_SIZE_SIZE 8 //we don't write this down anymore, it's calculated
-#define BYTE_SIZE 8
+#define BYTE_SIZE 8 //8 bits
 
 
-
+#define ALLOWED_BYTES_IN_NAME_COUNT 255 //any byte except NULL
 //***Batch of metadata***
 //header
 #define METADATA_BATCH_SIZE 8 //metadata follows right away after the header, use this number to know where it ends!
 #define FILE_CAPACITY_SIZE 8
 #define FILE_COUNT_SIZE 8 //
-#define INDEX_TABLE_SIZE 255 * 8 //255 indexes, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
+#define INDEX_TABLE_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * 8) //256 indexes, first not used, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
 #define METADATA_BATCH_HEADER_SIZE \
     ROUND_TO_MULTIPLE_UP( \
     (METADATA_BATCH_SIZE+FILE_CAPACITY_SIZE + FILE_COUNT_SIZE+INDEX_TABLE_SIZE), DISK_BLOCK_BYTES)
@@ -90,6 +90,7 @@
 #define UNUSED(x) (void)(x)
 
 #endif
+
 
 
 
