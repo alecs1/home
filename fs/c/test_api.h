@@ -4,13 +4,13 @@
 //a couple of simple test functions, bases on which we'll test functionality and build a real API
 
 //
-int create(char* path, uint8_t type);
+int create(uint16_t id, char* path, uint8_t type);
 
 //write all bytes at time, file already exists and contents will be overwritten
-int write(char* path, void* contents, uint64_t size);
+int write(uint16_t id, char* path, void* contents, uint64_t size);
 
-int delete(char* path);
+int delete(uint16_t id, char* path);
 
-int read(char* path, void* buffer, uint64_t b_size);
+int read(uint16_t id, char* path, void* buffer, uint64_t b_size);
 
 #endif

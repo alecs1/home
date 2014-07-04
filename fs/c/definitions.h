@@ -1,6 +1,8 @@
 #ifndef _DEFINITIONS_H_
 #define _DEFINITIONS_H_
 
+
+#define DEBUG
 //TODO TODO TODO - always align to DISK_BLOCK_BYTES addresses
 
 
@@ -10,6 +12,9 @@
 #define UNUSED(x) (void)(x)
 
 #define VERSION 1
+
+#define ALPHABET_FIRST_BYTE 1
+#define ALPHABET_LAST_BYTE 255
 
 
 #define ADDRESS_SIZE 8
@@ -31,7 +36,7 @@
 #define START_BLOCK_SIZE (ID_SIZE+VERSION_SIZE+VOLUME_SIZE_SIZE+METADATA_BLOCK_COUNT_SIZE+METADATA_ADDRESSES_SIZE)
 
 
-//free space map, such that we don't have to cross the whole FS to find out which if an area is written or not
+//free space map, such that we don't have to cross the whole FS to find out if an area is written or not
 //1 bit for each 4 KiB of disk, ratio map -> storage is 1 -> 2^15
 //1 byte for each 32 KiB of disk, PARTITION_BYTE_MULTIPLE
 //TODO - also align this to a 4096 address
@@ -56,8 +61,9 @@
 
 //metadata of a single file/directory (should we split to two different definitions?)
 //if it starts with zero this is not allocated
-#define NAME_SIZE 256 //TODO - this is wastefull
+#define NAME_SIZE 256 //TODO - this is wasteful
 #define PARENTS_ADDRESS_SIZE 8 //refers to metadata of parent, of course :)
+#define BATCH_ADDRESS_SIZE 8 //address of the batch inside which our structure is
 #define HARDLINK_COUNT_SIZE 4 //we don't do hard links yet and also don't know how to implement them, but that doesn't stop us
 #define TYPE_SIZE 1 //could be packed together with something else; 0 - file, 1 - dir
 //POSIX stuff
@@ -69,13 +75,15 @@
 
 #define TYPE_FILE 0
 #define TYPE_DIR 1
+#define TYPE_ANY 2
 
 //***Directory***
 //we're going to assume that the list of files in a directory does not need to be split into multiple blocks
 #define CHILD_COUNT_SIZE 4 //2**32 are more than enough files in a directory; lots of tools will start to fail if there exist milions of files in a directory
-#define CHILD_LIST_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here
+#define CHILD_LIST_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here; at the moment we don't support having the list of children addresses split
 //these children addresses could also point to another batch of metadata, but some migration should be considered
 //rest is used 8 by 8 to store file addresses
+#define CHILD_LIST_OFFSET (METADATA_HEADER_SIZE + CHILD_COUNT_SIZE + CHILD_LIST_ADDRESS_SIZE)
 
 
 

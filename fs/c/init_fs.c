@@ -18,91 +18,22 @@
 #include "definitions.h"
 #include "structures.h"
 #include "init_fs.h"
+#include "basic_ops.h"
 #include "global.h"
 #include "utils.h"
 
 const uint8_t  u8_zero = 0;
 const uint64_t u64_zero = 0;
 
-int verbose; //disable printing in some situations
 
-S_fs_definition fs_defs[MAX_PARTITIONS_COUNT];
-uint16_t part_count = 0;
+
+
 
 
 //some functions which will pretend to write to an actuall disk, but actually call to seek and write :D
 //move them to another file with primitives
 
 
-
-//TODO - to simulate some constraints, also split their work into blocks of some limited size
-uint64_t d_write(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
-    //UNUSED(id);
-    int fd = fs_defs[id].fd;
-    lseek(fd, address, SEEK_SET);
-    //    lseek(static_fd, address, SEEK_SET);
-    uint64_t b_wrote = 0;
-    b_wrote = write(fd, bytes, size);
-
-    if (verbose) {
-        printf("%s, wrote %" PRIu64 " at %" PRIu64 ". ", __func__, b_wrote, address);
-        printf_fd_info(fd);
-    }
-    return b_wrote;
-}
-
-
-
-uint64_t d_read(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
-}
-
-
-//use it for example to write zeros
-uint64_t d_write_repeat(uint16_t id, uint64_t address, void* bytes, uint64_t size, uint64_t repeat_count) {
-    if (repeat_count > 10)
-        verbose = 0;
-
-    uint64_t b_wrote = 0;
-    for(uint64_t i = 0; i < repeat_count; i++) {
-        b_wrote += d_write(id, address, bytes, size);
-        address += size;
-    }
-
-    verbose = 1;
-    return b_wrote;
-}
-
-uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t size, uint8_t allocated) {
-    uint64_t a_first = ROUND_TO_MULTIPLE_DOWN(first, DISK_BLOCK_BYTES);
-
-    uint64_t a_last = first + size;
-    a_last = ROUND_TO_MULTIPLE_UP(a_last, DISK_BLOCK_BYTES);
-
-    printf("%s - id=%" PRIu16 ", fist=%" PRIu64 ", last=%" PRIu64 ", allocated=%" PRIu8 "\n",
-           __func__, id, first, a_last, allocated);
-    
-    if ((first != a_first) || (first+size != a_last)) {
-        printf("%s - error: first or last not aligned: %" PRIu64 "->%" PRIu64 ", %" PRIu64 "->%" PRIu64 "\n",
-               __func__, first, a_first, first+size, a_last);
-    }
-
-    //optimise later :D
-    for (uint64_t block_addr = a_first; block_addr < a_last; block_addr += DISK_BLOCK_BYTES) {
-        uint64_t map_byte = block_addr / PARTITION_BYTE_MULTIPLE;
-        uint8_t map_bit = (block_addr % PARTITION_BYTE_MULTIPLE) / DISK_BLOCK_BYTES;
-        if (allocated)
-            fs_defs[id].global_block_map[map_byte] |= (1 << (7 - map_bit)); //fill bytes from "left" to "right"
-        else
-            fs_defs[id].global_block_map[map_byte] &= (0 << (7 - map_bit));
-
-        printf("byte=%" PRIu64 ", bit=%" PRIu8 ", val=%" PRIu8 ", block at %" PRIu64 ", map=",
-               map_byte, map_bit, allocated, block_addr);
-        printf_bits(fs_defs[id].global_block_map[map_byte]); printf("\n");
-    }
-
-    d_write(id, fs_defs[id].block_map_address, fs_defs[id].global_block_map, fs_defs[id].block_map_size);
-    return 0;
-}
 
 //return some partition id
 //TODO - it looks like usually return code are "int", do this too
@@ -242,10 +173,10 @@ uint8_t write_metadata(uint16_t id, S_metadata* md) {
 
 
 //name is empty, first entry in the first batch of metadata
-uint8_t init_root_dir(uint16_t id) {
+uint8_t init_root_dir(uint16_t id, S_metadata_batch* parent) {
     S_metadata* root_metadata = init_dir_struct();
     root_metadata->address = fs_defs[id].metadata_batches[0].metadata_start;
-  
+    root_metadata->batch_address = parent->address;
     fs_defs[id].root_metadata = root_metadata;
 
     //write down
@@ -349,7 +280,7 @@ uint64_t create_fs(uint64_t size) {
 
 
     //now write / as the first directory
-    
+    init_root_dir(id, &(fs_defs[id].metadata_batches[0]));
 
 
     if (success_code == 0)
