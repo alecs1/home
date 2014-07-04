@@ -31,8 +31,8 @@ typedef struct metadata {
 } S_metadata;
 
 S_metadata* init_metadata_struct();
-S_metadata* init_dir_struct();
-S_metadata* init_file_struct();
+S_metadata* init_dir_struct(S_metadata* md);
+S_metadata* init_file_struct(S_metadata* md);
 int free_metadata_struct(S_metadata* md);
 int free_dir_struct(S_dir_metadata* dir_md);
 int free_file_struct(S_file_metadata* file_md);

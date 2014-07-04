@@ -81,18 +81,27 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
         expected_max_index =
             parent_mdb->address + METADATA_BATCH_HEADER_SIZE + mdb->file_capacity * METADATA_SIZE - ADDRESS_SIZE;
 
-    //we should generally be in the happy case where the child is inside the metadata at the expected address; only if it's not, start an exhaustive search
+    //we should generally be in the happy case where the child is inside the metadata at the expected address; only if it's not, start an exhaustive search, and also assume these are sorted
     uint64_t children[CHILDREN_ADDRESS_BUFFER];
+    int found = 0;
     do {
         uint32_t count = get_child_addresses(parent, children, CHILDREN_ADDRESS_BUFFER, 0);
         for(uint32_t i = 0; i < count; i++) {
             uint64_t crt_address = children[i];
             if ( (crt_address >= expected_min_index) && (crt_address <= expected_max_index) ) {
                 //read metadata of this child from disk
-                S_metadata *child = read_metadata(parent->part_id, crt_address);
+                S_metadata *child = read_metadata(parent->part_id, crt_address, READ_BASIC_MD);
+                //char* child_name = (char*) md->name;
+                if (strncmp(name, md->name, NAME_SIZE) == 0) {
+                    //found the match
+                    found = 1;
+                }
             }
         }
     }
+    while (found == 0);
+
+    //unhappy case, we have to search everywhere
 }
 
 int create(uint16_t id, char* path, uint8_t type) {

@@ -61,7 +61,7 @@
 
 //metadata of a single file/directory (should we split to two different definitions?)
 //if it starts with zero this is not allocated
-#define NAME_SIZE 256 //TODO - this is wasteful
+#define NAME_SIZE 256 //TODO - this is wasteful, for now assume everything ends with NULL to make it easy
 #define PARENTS_ADDRESS_SIZE 8 //refers to metadata of parent, of course :)
 #define BATCH_ADDRESS_SIZE 8 //address of the batch inside which our structure is
 #define HARDLINK_COUNT_SIZE 4 //we don't do hard links yet and also don't know how to implement them, but that doesn't stop us
@@ -96,7 +96,8 @@
 #define FIRST_FRAGMENT_ADDRESS_SIZE 8 //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
 
 
-
+#define READ_BASIC_MD 0
+#define READ_FULL_MD 1
 
 
 

@@ -13,12 +13,15 @@ S_metadata* init_metadata_struct() {
     memset(md->name, 0, NAME_SIZE);
     md->parent_address = 0;
     md->hl_count = 1;
+    md->specific = NULL;
     return md;
 }
 
-S_metadata* init_dir_struct() {
-    S_metadata *md = init_metadata_struct();
-    md->type = 1;
+S_metadata* init_dir_struct(S_metadata *md) {
+    if (md == NULL) {
+        md = init_metadata_struct();
+        md->type = 1;
+    }
     
     S_dir_metadata *dir_md = (S_dir_metadata*)malloc(sizeof(S_dir_metadata));
     dir_md->child_count = 0;
@@ -31,9 +34,11 @@ S_metadata* init_dir_struct() {
     return md;
 }
 
-S_metadata* init_file_struct() {
-    S_metadata *md = init_metadata_struct();
-    md->type = 0;
+S_metadata* init_file_struct(S_metadata *md) {
+    if (md == NULL) {
+        md = init_metadata_struct();
+        md->type = 0;
+    }
 
     S_file_metadata *file_md = (S_file_metadata*)malloc(sizeof(S_dir_metadata));
     file_md->size = 0;

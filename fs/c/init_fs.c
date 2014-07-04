@@ -174,7 +174,7 @@ uint8_t write_metadata(uint16_t id, S_metadata* md) {
 
 //name is empty, first entry in the first batch of metadata
 uint8_t init_root_dir(uint16_t id, S_metadata_batch* parent) {
-    S_metadata* root_metadata = init_dir_struct();
+    S_metadata* root_metadata = init_dir_struct(NULL);
     root_metadata->address = fs_defs[id].metadata_batches[0].metadata_start;
     root_metadata->batch_address = parent->address;
     fs_defs[id].root_metadata = root_metadata;
