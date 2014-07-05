@@ -15,6 +15,7 @@
 
 #define ALPHABET_FIRST_BYTE 1
 #define ALPHABET_LAST_BYTE 255
+#define ALLOWED_BYTES_IN_NAME_COUNT 255 //any byte except NULL
 
 
 #define ADDRESS_SIZE 8
@@ -47,16 +48,18 @@
 #define BYTE_SIZE 8 //8 bits
 
 
-#define ALLOWED_BYTES_IN_NAME_COUNT 255 //any byte except NULL
+
+
 //***Batch of metadata***
 //header
 #define METADATA_BATCH_SIZE 8 //metadata follows right away after the header, use this number to know where it ends!
 #define FILE_CAPACITY_SIZE 8
 #define FILE_COUNT_SIZE 8 //
-#define INDEX_TABLE_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * 8) //256 indexes, first not used, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
+#define INDEX_TABLE_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * ADDRESS_SIZE) //256 indexes, first not used, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
+#define FILE_COUNT_FOR_INDEX_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * ADDRESS_SIZE)
 #define METADATA_BATCH_HEADER_SIZE \
     ROUND_TO_MULTIPLE_UP( \
-    (METADATA_BATCH_SIZE+FILE_CAPACITY_SIZE + FILE_COUNT_SIZE+INDEX_TABLE_SIZE), DISK_BLOCK_BYTES)
+    (METADATA_BATCH_SIZE+FILE_CAPACITY_SIZE + FILE_COUNT_SIZE+INDEX_TABLE_SIZE+FILE_COUNT_FOR_INDEX_SIZE), DISK_BLOCK_BYTES)
 
 
 //metadata of a single file/directory (should we split to two different definitions?)

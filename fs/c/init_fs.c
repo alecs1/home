@@ -95,6 +95,8 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     
     fs_defs[id].metadata_batch_addresses[batch_index] = pos;
     fs_defs[id].metadata_batches[batch_index].address = pos;
+    fs_defs[id].metadata_batches[batch_index].metadata_start =
+        fs_defs[id].metadata_batches[batch_index].address + METADATA_BATCH_HEADER_SIZE;
 
     fs_defs[id].metadata_batches[batch_index].size = size;
     pos += d_write(id, pos, &size, METADATA_BATCH_SIZE);
@@ -108,9 +110,20 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
                     FILE_COUNT_SIZE);
 
 
+    
+    pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
+    fs_defs[id].metadata_batches[batch_index].index_table[0] = 0;
+
+    uint64_t crt_index_address = fs_defs[id].metadata_batches[batch_index].metadata_start;
+    for(int i = ALPHABET_FIRST_BYTE; i <= ALPHABET_LAST_BYTE; i++) {
+        pos += d_write(id, pos, (void*)&crt_index_address, ADDRESS_SIZE);
+        fs_defs[id].metadata_batches[batch_index].index_table[i] = crt_index_address;
+        crt_index_address += METADATA_SIZE;
+    }
+    
     for(int i = 0; i <= ALLOWED_BYTES_IN_NAME_COUNT; i++) {
-        pos += d_write (id, pos, (void*)&u64_zero, 8);
-        fs_defs[id].metadata_batches[batch_index].index_table[i] = 0;
+        pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
+        fs_defs[id].metadata_batches[batch_index].file_count_for_index[i] = 0;
     }
 
     printf("%s - pos=%" PRIu64 ", wrote metadata header of size %" PRIu64 " at %" PRIu64 ", unused bytes: %" PRIu64 "\n",
@@ -122,13 +135,15 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     
     
     pos = ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES);
-    fs_defs[id].metadata_batches[batch_index].metadata_start = pos;
-    
-    if (pos != fs_defs[id].metadata_batch_addresses[batch_index] + METADATA_BATCH_HEADER_SIZE)
+    //fs_defs[id].metadata_batches[batch_index].metadata_start = pos;
+
+    //checks    
+    if (pos != fs_defs[id].metadata_batches[batch_index].metadata_start)
         printf("%s - error, pos=%" PRIu64 ", should be %" PRIu64 "\n",
                __func__,
                pos,
                fs_defs[id].metadata_batch_addresses[batch_index] + METADATA_BATCH_HEADER_SIZE);
+
 
     printf("%s, header size=%" PRIu64 ", at %" PRIu64 ", metadata size=%" PRIu64 ", at %" PRIu64 ", file_capacity=%" PRIu64 "\n",
            __func__,
@@ -137,6 +152,7 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
            metadata_size,
            pos,
            file_capacity);
+    
 
     mark_global_block_map(id, fs_defs[id].metadata_batch_addresses[batch_index], size, 1);
                           

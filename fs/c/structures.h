@@ -16,7 +16,7 @@ typedef struct dir_metadata {
     uint64_t child_list_address; //non-zero if the list of children addresses does not fit in the remaining space
     //TODO - in this structure we could also temporarily store some of the children addresses
     uint32_t in_mem_addresses_count;
-    uint64_t* in_mem_addresses; //this this in at initialisation, if they are not too many
+    uint64_t* in_mem_addresses; //fill this in at initialisation, if they are not too many
 } S_dir_metadata;
 
 typedef struct metadata {
@@ -44,7 +44,8 @@ typedef struct metadata_batch {
     uint64_t metadata_start;
     uint64_t file_capacity;
     uint64_t file_count;
-    uint64_t index_table[256]; //first is 0x0, which is not used in file names, but present here for ease of addressing
+    uint64_t index_table[ALLOWED_BYTES_IN_NAME_COUNT+1]; //first is 0x0, which is not used in file names, but present here for ease of addressing
+    uint64_t file_count_for_index[ALLOWED_BYTES_IN_NAME_COUNT+1];
 } S_metadata_batch;
 
 typedef struct fs_definition {
