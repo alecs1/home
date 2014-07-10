@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-int printf_fd_info(int fd) {
+int print_fd_info(int fd) {
     struct stat fd_info;
     fstat(fd, &fd_info);
     printf("fd=%d, st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
@@ -13,7 +13,7 @@ int printf_fd_info(int fd) {
     return 0;
 }
 
-int printf_units(uint64_t bytes_count) {
+int print_units(uint64_t bytes_count) {
     uint64_t KiB = bytes_count / 1024;
     double MiB = (double)bytes_count / (1024 * 1024);
     double GiB = (double)bytes_count / (1024 * 1024 * 1024);
@@ -21,9 +21,16 @@ int printf_units(uint64_t bytes_count) {
     return 0;
 }
 
-int printf_bits(uint8_t byte) {
+int print_bits(uint8_t byte) {
     for(int i = 7; i >= 0; i--) {
         printf("%d", (byte & (1 << i)) ? 1 : 0);
+    }
+    return 0;
+}
+
+int print_bytes(uint8_t* bytes, uint64_t size) {
+    for(uint64_t i = 0; i < size; i++) {
+        printf("%c", (char)bytes[i]);
     }
     return 0;
 }

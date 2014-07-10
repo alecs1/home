@@ -3,11 +3,13 @@
 
 #include <inttypes.h>
 
-int printf_fd_info(int fd);
+int print_fd_info(int fd);
 
-int printf_units(uint64_t bytes_count);
+int print_units(uint64_t bytes_count);
 
-int printf_bits(uint8_t byte);
+int print_bits(uint8_t byte);
+
+int print_bytes(uint8_t* bytes, uint64_t size);
 
 #endif
 

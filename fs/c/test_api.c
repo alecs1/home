@@ -201,6 +201,11 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
     printf("%s - parent_md: ", __func__); print_metadata(parent_md);
     printf("%s - name=%s\n", __func__, name);
 
+    if (check_metadata_struct(parent_md) != 0) {
+        printf("%s - invalid parent_md\n", __func__);
+        return NULL;
+    }
+
     int error = 0;
     //steps: establish where in the metadata it's created, write down
     S_metadata* md = NULL;

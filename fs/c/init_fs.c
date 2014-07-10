@@ -66,7 +66,7 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
     sprintf(file_name, "/home/alex/partition.bin.%d", id);
     printf("init partition in file %s, of size %" PRIu64 " :D\n", file_name, size);
 
-    int fd = creat(file_name, S_IRWXU);
+    int fd = open(file_name, O_CREAT|O_RDWR|O_TRUNC, S_IRWXU);
     off_t offset = lseek(fd, size-1, SEEK_END);
     write(fd, &u8_zero, 1);
     printf("%s, lseek off_t = %" PRIu64 "\n", __func__, offset);
@@ -75,8 +75,8 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
     struct stat fd_info;
     *ret_code = fstat(fd, &fd_info);
     //these printfs might very well be wrong, bla bla
-    printf("create file: st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
-           fd_info.st_ino, fd_info.st_nlink, fd_info.st_size, fd_info.st_blksize);
+    printf("%s - create file: fd=%d, st_ino=%" PRIu64 ", st_nlink=%d, st_size=%" PRIu64 ", st_blksize=%" PRIu64 "\n",
+           __func__, fd, fd_info.st_ino, fd_info.st_nlink, fd_info.st_size, fd_info.st_blksize);
 
     fs_defs[id].size = size;
     fs_defs[id].fd = fd;
@@ -237,7 +237,7 @@ uint64_t create_fs(uint64_t size) {
     if (ret_code != 0) {
         printf("id < 0\n");
     }
-    printf("allocate_partition, size: "); printf_units(size); printf("\n");
+    printf("allocate_partition, size: "); print_units(size); printf("\n");
 
 
     uint16_t version = VERSION;
@@ -284,7 +284,7 @@ uint64_t create_fs(uint64_t size) {
     pos += pos % DISK_BLOCK_BYTES;
     
     printf("%s - writing block map at address %" PRIu64 ", ", __func__, pos);
-    printf_units(pos); printf("\n");
+    print_units(pos); printf("\n");
 
     fs_defs[id].block_map_address = pos;
     fs_defs[id].block_map_size = size/CONTENTS_TO_MAP_RATIO;
@@ -296,8 +296,8 @@ uint64_t create_fs(uint64_t size) {
 
     //pos += d_write_repeat(id, pos, &zero, 1, map_size);
     mark_global_block_map(id, 0,  pos-1, 1);
-    printf("%s - block map size: ", __func__); printf_units(fs_defs[id].block_map_size); printf("\n");
-    printf("%s - block map ends at %" PRIu64 ", ", __func__, pos); printf_units(pos); printf("\n");
+    printf("%s - block map size: ", __func__); print_units(fs_defs[id].block_map_size); printf("\n");
+    printf("%s - block map ends at %" PRIu64 ", ", __func__, pos); print_units(pos); printf("\n");
 
 
 
@@ -305,8 +305,8 @@ uint64_t create_fs(uint64_t size) {
     //say 2% of the whole filesystem size
     uint64_t block_size = size / 50;
     block_size = ROUND_TO_MULTIPLE_UP(block_size, DISK_BLOCK_BYTES);
-    printf("%s - init first metadata block at %" PRIu64 ", ", __func__, pos); printf_units(pos); printf("\n");
-    printf("%s - metadata block_size=%" PRIu64 ", ", __func__, block_size); printf_units(block_size); printf("\n");
+    printf("%s - init first metadata block at %" PRIu64 ", ", __func__, pos); print_units(pos); printf("\n");
+    printf("%s - metadata block_size=%" PRIu64 ", ", __func__, block_size); print_units(block_size); printf("\n");
 
     fs_defs[id].metadata_batch_count = 0;
     fs_defs[id].metadata_batch_addresses = NULL;
@@ -320,7 +320,7 @@ uint64_t create_fs(uint64_t size) {
 
     printf("%s - allocated for the first metadata batch, file_capacity=%" PRIu64 ", ends at %" PRIu64 ", ",
            __func__, fs_defs[id].metadata_batches[0].file_capacity, pos);
-    printf_units(block_size); printf("\n");
+    print_units(block_size); printf("\n");
 
 
     //now write / as the first directory
