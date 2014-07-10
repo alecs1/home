@@ -22,15 +22,16 @@ typedef struct dir_metadata {
 typedef struct metadata {
     uint16_t part_id;
     uint64_t address;
-    uint64_t batch_address;
-    uint8_t type;
     uint8_t name[NAME_SIZE];
     uint64_t parent_address;
+    uint64_t batch_address;
+    uint8_t type;
     uint32_t hl_count;
     void* specific; //specific metadata, pointer to a file_metadata or dir_metadata
 } S_metadata;
 
-S_metadata* init_metadata_struct();
+//TODO - change to init_metadata_struct(type)
+S_metadata* init_metadata_struct(uint8_t type);
 S_metadata* init_dir_struct(S_metadata* md);
 S_metadata* init_file_struct(S_metadata* md);
 int free_metadata_struct(S_metadata* md);
@@ -69,6 +70,8 @@ typedef struct fs_definition {
 } S_fs_definition;
 
 
-
+//printing them
+int print_metadata(S_metadata* md);
+int print_path(S_metadata* md);
 
 #endif

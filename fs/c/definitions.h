@@ -34,7 +34,7 @@
 
 //TODO - which parts of the data and metadata should have some error correction?
 
-#define START_BLOCK_SIZE (ID_SIZE+VERSION_SIZE+VOLUME_SIZE_SIZE+METADATA_BLOCK_COUNT_SIZE+METADATA_ADDRESSES_SIZE)
+#define START_BLOCK_SIZE (VERSION_SIZE+ID_SIZE+VOLUME_SIZE_SIZE+METADATA_BLOCK_COUNT_SIZE+METADATA_ADDRESSES_SIZE+FREE_SPACE_SIZE)
 
 
 //free space map, such that we don't have to cross the whole FS to find out if an area is written or not
@@ -65,7 +65,7 @@
 //metadata of a single file/directory (should we split to two different definitions?)
 //if it starts with zero this is not allocated
 #define NAME_SIZE 256 //TODO - this is wasteful, for now assume everything ends with NULL to make it easy
-#define PARENTS_ADDRESS_SIZE 8 //refers to metadata of parent, of course :)
+#define PARENT_ADDRESS_SIZE 8 //refers to metadata of parent, of course :)
 #define BATCH_ADDRESS_SIZE 8 //address of the batch inside which our structure is
 #define HARDLINK_COUNT_SIZE 4 //we don't do hard links yet and also don't know how to implement them, but that doesn't stop us
 #define TYPE_SIZE 1 //could be packed together with something else; 0 - file, 1 - dir
@@ -79,6 +79,7 @@
 #define TYPE_FILE 0
 #define TYPE_DIR 1
 #define TYPE_ANY 2
+#define TYPE_NONE 3
 
 //***Directory***
 //we're going to assume that the list of files in a directory does not need to be split into multiple blocks

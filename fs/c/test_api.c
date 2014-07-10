@@ -131,6 +131,7 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
 }
 
 S_metadata* create(uint16_t id, char* path, uint8_t type) {
+    printf("%s - id=%" PRIu16 ", path=%s, type=%" PRIu8 "\n", __func__, id, path, type);
     //TODO - how about some sanitisation on path?
     
     S_metadata *md = NULL;
@@ -152,12 +153,17 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
 
     S_metadata* parent_dir = fs_defs[id].root_metadata;
 
+    printf("%s - parent_dir:", __func__); print_metadata(parent_dir);
+
     crt_name = NULL;
     next_name = strtok_r(aux_path, "/", &saveptr);
+
+    printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
 
     while (next_name != NULL) {
         crt_name = next_name;
         next_name = strtok_r(NULL, "/", &saveptr);
+        printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
         if (next_name != NULL) {
             //next_name is the next child
             //crt_dir is the directory we're going to find now in parent_dir
@@ -177,6 +183,11 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
         next_name = crt_name;
         md = create_child(parent_dir, next_name, type);
     }
+    else {
+        printf("%s - error, parent_dir = NULL\n", __func__);
+    }
+
+
     
     
     //tok = NULL, prev_tok = our name, parent_dir
@@ -186,12 +197,77 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
 }
 
 S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
+
+    printf("%s - parent_md: ", __func__); print_metadata(parent_md);
+    printf("%s - name=%s\n", __func__, name);
+
+    int error = 0;
     //steps: establish where in the metadata it's created, write down
-    S_dir_metadata *dir_md = (S_dir_metadata*)parent_md->specific;
+    S_metadata* md = NULL;
+    //S_dir_metadata *dir_md = (S_dir_metadata*)parent_md->specific;
 
     S_metadata_batch *mdb = get_metadata_batch(parent_md->part_id, parent_md->batch_address);
-    //uint64_t area_for_index = 
-    return NULL;
+
+    uint8_t first_char = (uint8_t)name[0];
+    uint64_t md_address = 0;
+    uint64_t start_address_for_index = mdb->index_table[first_char];
+    uint64_t end_address_for_index = 0;
+    if (name[0] < ALPHABET_LAST_BYTE)
+        end_address_for_index = mdb->index_table[first_char+1];
+    else {
+        end_address_for_index = mdb->address + mdb->size;
+    }
+
+    printf("%s - start_address_for_index=%" PRIu64 ", end_address_for_index=%" PRIu64 "\n",
+           __func__, start_address_for_index, end_address_for_index);
+
+    if ( (start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE) < end_address_for_index) {
+        printf("%s - writing directly\n", __func__);
+        md_address = start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE;
+        
+        //some more checks:
+        if (md_address % METADATA_SIZE != 0) {
+            printf("%s - error, computed address %" PRIu64 " not multiple of %u\n",
+                   __func__, md_address, METADATA_SIZE);
+            error = 1;
+            goto cleanup;
+        }
+        
+        if (end_address_for_index - md_address < METADATA_SIZE) {
+            printf("%s - error, computed address %" PRIu64 " does not have enough space before next filled element at %" PRIu64 "\n",
+                   __func__, md_address, end_address_for_index);
+            error = 1;
+            goto cleanup;
+        }
+
+        //now we can proceed to write it
+        md = init_metadata_struct(type);
+        md->part_id = parent_md->part_id;
+        md->address = md_address;
+        memcpy(md->name, name, NAME_SIZE);
+        md->parent_address = parent_md->address;
+        md->batch_address = parent_md->batch_address;
+      
+    }
+    else if ( (mdb->index_table[ALPHABET_LAST_BYTE] +
+               mdb->file_count_for_index[ALPHABET_LAST_BYTE]*METADATA_SIZE) <
+               mdb->address + mdb->size ){
+        //there is free space in this metadata batch, just need to make it available by moving things around
+        printf("%s - need to make space inside the metadata batch\n", __func__);
+    }
+    else {
+        //need to move to another metadata batch (possibly allocating it), or maybe resize this one
+        printf("%s - need to write this metadata to another batch or extend this one\n", __func__);
+    }
+        
+        
+cleanup:
+    if (error == 0) {
+        write_metadata(md);
+        return md;
+    }
+    else
+        return NULL;
 }
 
 //write all bytes at time, file already exists and contents will be overwritten
