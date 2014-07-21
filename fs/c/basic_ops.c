@@ -116,6 +116,24 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t size, uint8_
     return 0;
 }
 
+int mark_md_block_map(uint16_t id, uint64_t bm_address, uint64_t first, uint64_t size, uint8_t allocated){
+    int ret_val = 0;
+    if (first%METADATA_SIZE != 0) {
+        printf("%s - error - first = %" PRIu64 " not aligned to %d\n",
+               __func__, first, METADATA_SIZE);
+        return -1;
+    }
+
+    if (size%METADATA_SIZE != 0) {
+        printf("%s - error - size =%" PRIu64 " not aligned to %d\n",
+               __func__, size, METADATA_SIZE);
+        return -1;
+    }
+
+    
+
+}
+
 
 S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     //some basic checks: address aligned at 1024, address inside an allocated batch area
@@ -144,7 +162,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     memcpy(&md->type, bytes+pos, TYPE_SIZE);  pos += TYPE_SIZE;
     pos += POSIX_METADATA_SIZE;
 
-    printf("%s - md until now: ", __func__); print_metadata(md);
+    //printf("%s - md until now: ", __func__); print_metadata(md); 
     
     md->part_id = id;
     md->address = address;
@@ -160,22 +178,29 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     //we now already have enough data to do useful stuff with this item
     if (full == READ_FULL_MD) {
         if (md->type == TYPE_FILE) {
-            //TODO - implement
-            init_file_struct(md);
 
-            printf("%s - error, READ_FULL_MD file not implemented\n", __func__);
+            init_file_struct(md);
+            S_file_metadata* f_md = (S_file_metadata*)md->specific;
+            memcpy(&f_md->size, bytes+pos, SIZE_SIZE); pos += SIZE_SIZE;
+            memcpy(&f_md->fragments_count, bytes+pos, CONTENT_FRAGMENTS_COUNT_SIZE);
+            pos += CONTENT_FRAGMENTS_COUNT_SIZE;
+            memcpy(&f_md->first_fragment_address, bytes+pos, FIRST_FRAGMENT_ADDRESS_SIZE);
+            pos += FIRST_FRAGMENT_ADDRESS_SIZE;
+            //printf("%s - read file=%s, size=%" PRIu64 "\n", __func__, md->name, f_md->size);
+
         }
         else if (md->type == TYPE_DIR) {
-            //TODO - implement
+
             init_dir_struct(md);
             S_dir_metadata *d_md = (S_dir_metadata*)md->specific;
             memcpy(&d_md->child_count, bytes+pos, CHILD_COUNT_SIZE); pos += CHILD_COUNT_SIZE;
             memcpy(&d_md->child_list_address, bytes+pos, CHILD_LIST_ADDRESS_SIZE);
             pos += CHILD_LIST_ADDRESS_SIZE;
             
-            if (pos != address + CHILD_LIST_OFFSET) {
-                printf("%s - error, pos=%" PRIu64 ", address+CHILD_LIST_OFFSET: %" PRIu64 "+%" PRIu64 "=%" PRIu64 "\n",
-                       __func__, pos, address, (uint64_t)CHILD_LIST_OFFSET, address+CHILD_LIST_OFFSET);
+            pos = ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE);
+            if (pos != CHILD_LIST_OFFSET) {
+                printf("%s - error, pos=%" PRIu64 ", CHILD_LIST_OFFSET: %" PRIu64 "\n",
+                       __func__, pos, (uint64_t)CHILD_LIST_OFFSET);
             }
             
             if (d_md->child_list_address == 0) {
@@ -184,13 +209,17 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
                 memcpy(d_md->in_mem_addresses, bytes+pos, d_md->child_count * sizeof(uint64_t));
                 d_md->in_mem_addresses_count = d_md->child_count;
             }
-            printf("%s - error, READ_FULL_MD directory not implemented\n", __func__);
+            else {
+                printf("%s - error, reading the list of many children not implemented\n", __func__);
+            }
+            
         }
         else {
             printf("%s - error, wrong fs object type %" PRIu8 ", at address %" PRIu64 "\n",
                __func__, md->type, address);
             goto finish;
         }
+        printf("%s - metadata: ", __func__); print_metadata(md);
     }
     
 finish:
@@ -252,8 +281,28 @@ uint64_t write_metadata(S_metadata* md) {
         memcpy(buffer+pos, &d_md->child_list_address, CHILD_LIST_ADDRESS_SIZE);
         pos += CHILD_LIST_ADDRESS_SIZE;
 
-        if (d_md->child_count > 0)
-            printf("%s - error, dir contents writing not yet implemented\n", __func__);
+        if (d_md->child_count > 0) {
+            //printf("%s - error, dir contents writing not yet implemented\n", __func__);
+            if (d_md->child_count <= LOCAL_CHILDREN_CAPACITY) {
+                if (d_md->child_list_address != 0) {
+                    printf("%s - error - TODO - implement deleting of space allocated for list of children metadata\n",
+                           __func__);
+                }
+                else {
+                    memcpy(buffer+pos, &d_md->in_mem_addresses, d_md->child_count*sizeof(uint64_t));
+                }
+            }
+            else {
+                if (d_md->child_list_address != 0) {
+                    printf("%s -error - TODO - implement writing outside the local metadata space\n",
+                           __func__);
+                }
+                else {
+                    printf("%s -error - TODO - allocated and write outside the local metadata space\n",
+                           __func__);
+                }
+            }
+        }
     }
     
     uint64_t b_wrote = d_write(md->part_id, md->address, buffer, METADATA_SIZE);

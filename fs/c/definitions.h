@@ -52,14 +52,17 @@
 
 //***Batch of metadata***
 //header
-#define METADATA_BATCH_SIZE 8 //metadata follows right away after the header, use this number to know where it ends!
+#define METADATA_BATCH_SIZE 8 //metadata follows right away after the header and bit table, use this number to know where it ends!
+#define MD_BATCH_BIT_TABLE_SIZE 8 //
 #define FILE_CAPACITY_SIZE 8
 #define FILE_COUNT_SIZE 8 //
 #define INDEX_TABLE_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * ADDRESS_SIZE) //256 indexes, first not used, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
-#define FILE_COUNT_FOR_INDEX_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * ADDRESS_SIZE)
+#define FILE_COUNT_FOR_INDEX_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * FILE_COUNT_SIZE)
+#define CAPACITY_FOR_INDEX_SIZE ((1+ALLOWED+BYTES_IN_NAME_COUNT) * FILE_COUNT_SIZE)
 #define METADATA_BATCH_HEADER_SIZE \
     ROUND_TO_MULTIPLE_UP( \
-    (METADATA_BATCH_SIZE+FILE_CAPACITY_SIZE + FILE_COUNT_SIZE+INDEX_TABLE_SIZE+FILE_COUNT_FOR_INDEX_SIZE), DISK_BLOCK_BYTES)
+    (METADATA_BATCH_SIZE + FILE_CAPACITY_SIZE + FILE_COUNT_SIZE + INDEX_TABLE_SIZE + \
+     FILE_COUNT_FOR_INDEX_SIZE + CAPACITY_FOR_INDEX_SIZE), DISK_BLOCK_BYTES)
 
 
 //metadata of a single file/directory (should we split to two different definitions?)
@@ -71,7 +74,8 @@
 #define TYPE_SIZE 1 //could be packed together with something else; 0 - file, 1 - dir
 //POSIX stuff
 #define POSIX_METADATA_SIZE 0
-#define METADATA_HEADER_SIZE (NAME_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE)
+#define METADATA_HEADER_SIZE (NAME_SIZE + PARENT_ADDRESS_SIZE + BATCH_ADDRESS_SIZE + \
+                              HARDLINK_COUNT_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE)
 
 #define METADATA_SIZE 1024 //1 KiB for metadata
 #define REMAINING_SIZE (METADATA_SIZE - MEDATA_HEADER_SIZE) //this data will be available to store children info, in case of a directory, or a part of the contents in case of a file
@@ -87,7 +91,10 @@
 #define CHILD_LIST_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here; at the moment we don't support having the list of children addresses split
 //these children addresses could also point to another batch of metadata, but some migration should be considered
 //rest is used 8 by 8 to store file addresses
-#define CHILD_LIST_OFFSET (METADATA_HEADER_SIZE + CHILD_COUNT_SIZE + CHILD_LIST_ADDRESS_SIZE)
+#define CHILD_LIST_OFFSET (ROUND_TO_MULTIPLE_UP( \
+                          (METADATA_HEADER_SIZE + CHILD_COUNT_SIZE + CHILD_LIST_ADDRESS_SIZE), \
+                          ADDRESS_SIZE))
+#define LOCAL_CHILDREN_CAPACITY ( (METADATA_SIZE - CHILD_LIST_OFFSET)/ADDRESS_SIZE )
 
 
 
@@ -97,7 +104,7 @@
 //2 - the file is split into many blocks, their addresses and sizes are defined in the block contained ata FIRST_BLOCK_ADDRESS_SIZE (pairs of 8 bytes address, 8 bytes size)
 #define SIZE_SIZE 8
 #define CONTENT_FRAGMENTS_COUNT_SIZE 4 //for now we'll assume this to be 0 or 1
-#define FIRST_FRAGMENT_ADDRESS_SIZE 8 //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
+#define FIRST_FRAGMENT_ADDRESS_SIZE ADDRESS_SIZE //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
 
 
 #define READ_BASIC_MD 0

@@ -103,6 +103,7 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
 
     do {
         uint32_t count = get_child_addresses(parent, children, CHILDREN_ADDRESS_BUFFER, index);
+        printf("%s - count=%" PRIu32 "\n", __func__, count);
         index += count;
         for(uint32_t i = 0; i < count; i++) {
             uint64_t crt_address = children[i];
@@ -126,6 +127,9 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
     if (ret_val == 0) {
         //unhappy case, we have to search everywhere
     }
+
+    printf("%s - error, could not find child %s, type%" PRIu8 " in ", __func__, name, type);
+    print_metadata(parent);
 
     return ret_val;
 }
@@ -168,15 +172,21 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
             //next_name is the next child
             //crt_dir is the directory we're going to find now in parent_dir
             uint64_t crt_dir_addr = find_child(parent_dir, crt_name, TYPE_DIR);
+            printf("%s - crt_name=%s, crt_dir_addr=%" PRIu64 "\n", __func__, crt_name, crt_dir_addr);
             if (crt_dir_addr != 0) {
                 if (parent_dir != fs_defs[id].root_metadata)
                     free_metadata_struct(parent_dir);
                 parent_dir = read_metadata(id, crt_dir_addr, READ_FULL_MD);
             }
+            else {
+                printf("%s - error, could not find correctly read dir %s\n", __func__, crt_name);
+            }
         }
         else
             break;
     }
+
+    printf("%s - parent_dir for %s: ", __func__, path); print_metadata(parent_dir);
 
 
     if (parent_dir != NULL) {
@@ -216,12 +226,8 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
     uint8_t first_char = (uint8_t)name[0];
     uint64_t md_address = 0;
     uint64_t start_address_for_index = mdb->index_table[first_char];
-    uint64_t end_address_for_index = 0;
-    if (name[0] < ALPHABET_LAST_BYTE)
-        end_address_for_index = mdb->index_table[first_char+1];
-    else {
-        end_address_for_index = mdb->address + mdb->size;
-    }
+    uint64_t end_address_for_index = mdb->index_table[first_char] + mdb->length_for_index[first_char];
+
 
     printf("%s - start_address_for_index=%" PRIu64 ", end_address_for_index=%" PRIu64 "\n",
            __func__, start_address_for_index, end_address_for_index);
@@ -229,6 +235,7 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
     if ( (start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE) < end_address_for_index) {
         printf("%s - writing directly\n", __func__);
         md_address = start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE;
+        mdb->file_count_for_index[first_char] += 1;
         
         //some more checks:
         if (md_address % METADATA_SIZE != 0) {
@@ -254,21 +261,43 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
         md->batch_address = parent_md->batch_address;
       
     }
-    else if ( (mdb->index_table[ALPHABET_LAST_BYTE] +
-               mdb->file_count_for_index[ALPHABET_LAST_BYTE]*METADATA_SIZE) <
-               mdb->address + mdb->size ){
-        //there is free space in this metadata batch, just need to make it available by moving things around
-        printf("%s - need to make space inside the metadata batch\n", __func__);
-    }
     else {
-        //need to move to another metadata batch (possibly allocating it), or maybe resize this one
-        printf("%s - need to write this metadata to another batch or extend this one\n", __func__);
+        //need to move this around, also increase it
+        uint64_t space_needed = 
+            ROUND_TO_MULTIPLE_UP( (mdb->file_count_for_index[first_char]+1) * 1.5 * METADATA_SIZE,
+                                  METADATA_SIZE);
+        //now this is n**2 if we don't hold a bitmap
     }
         
         
 cleanup:
     if (error == 0) {
         write_metadata(md);
+        //the parent also needs to be updated!!!
+        if (parent_md->specific == NULL) {
+            printf("%s - error, please use fully populated S_dir_metadata structures, parent_md=%s, name=%s\n",
+                   __func__, parent_md->name, name);
+        }
+        S_dir_metadata* parent_dir_md = (S_dir_metadata*) parent_md->specific;
+
+        parent_dir_md->child_count+=1;
+        parent_dir_md->in_mem_addresses_count += 1;
+
+        if (parent_dir_md->in_mem_addresses == NULL)
+            parent_dir_md->in_mem_addresses =
+                malloc(parent_dir_md->in_mem_addresses_count*sizeof(uint64_t));
+        else 
+            parent_dir_md->in_mem_addresses =
+                (uint64_t*)realloc(parent_dir_md->in_mem_addresses,
+                               (parent_dir_md->in_mem_addresses_count)*sizeof(uint64_t));
+        parent_dir_md->in_mem_addresses[parent_dir_md->in_mem_addresses_count-1] = md->address;
+        write_metadata(parent_md);
+
+        printf("%s - parent_dir_md %s at %" PRIu64 ", in_mem_addresses_count=%" PRIu32 ", in_mem_addresses=%p\n",
+               __func__, parent_md->name, parent_md->address,
+               parent_dir_md->in_mem_addresses_count,
+               parent_dir_md->in_mem_addresses);
+
         return md;
     }
     else

@@ -101,6 +101,10 @@ M-x line-number-mode    - display line number in the mode line
 Packages to install:
 emacs-goodies-el - for session
 
+Other features:
+M-x semantic-mode       - emacs will start parsing the files
+
+
 Links:
 http://www.emacswiki.org/emacs/IncrementalSearch
 

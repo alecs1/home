@@ -14,7 +14,7 @@ S_metadata* init_metadata_struct(uint8_t type) {
     S_metadata* md = (S_metadata*)malloc(sizeof(S_metadata));
     md->part_id = 0;
     md->address = 0;
-    md->type = 0;
+    md->type = type;
     memset(md->name, 0, NAME_SIZE);
     md->parent_address = 0;
     md->hl_count = 1;
@@ -29,7 +29,7 @@ S_metadata* init_metadata_struct(uint8_t type) {
 S_metadata* init_dir_struct(S_metadata *md) {
     if (md == NULL) {
         md = init_metadata_struct(TYPE_NONE);
-        md->type = 1;
+        md->type = TYPE_DIR;
     }
     
     S_dir_metadata *dir_md = (S_dir_metadata*)malloc(sizeof(S_dir_metadata));
@@ -46,7 +46,7 @@ S_metadata* init_dir_struct(S_metadata *md) {
 S_metadata* init_file_struct(S_metadata *md) {
     if (md == NULL) {
         md = init_metadata_struct(TYPE_NONE);
-        md->type = 0;
+        md->type = TYPE_FILE;
     }
 
     S_file_metadata *file_md = (S_file_metadata*)malloc(sizeof(S_dir_metadata));
@@ -80,9 +80,24 @@ int print_metadata(S_metadata* md) {
                ", parent_address=%" PRIu64
                ", batch_address=%" PRIu64
                ", type=%" PRIu8
-               ", hl_count=%" PRIu32 "\n",
+               ", hl_count=%" PRIu32 " - ",
                md->part_id, md->address, md->name,
                md->parent_address, md->batch_address, md->type, md->hl_count);
+        if (md->specific != NULL) {
+            if (md->type == TYPE_DIR) {
+                S_dir_metadata *d_md = (S_dir_metadata*)md->specific;
+                printf("child_count=%" PRIu32 ", child_list_address=%" PRIu64 "\n",
+                       d_md->child_count, d_md->child_list_address);
+            }
+            else {
+                S_file_metadata *f_md = (S_file_metadata*)md->specific;
+                printf("size=%" PRIu64 ", fragments_count=%" PRIu32 ", first_fragment_address=%" PRIu64 "\n",
+                       f_md->size, f_md->fragments_count, f_md->first_fragment_address);
+            }
+        }
+        else {
+            printf("\n");
+        }
     }
     else {
         printf("%s - error, can't print NULL struct\n", __func__);
@@ -98,13 +113,18 @@ int print_path(S_metadata* md) {
     memcpy(path[0], md->name, NAME_SIZE);
     
     for(int i = 1; i < 1000; i++) {
-        path[0] = NULL;
+        path[i] = NULL;
     }
     
     S_metadata* aux_md = read_metadata(md->part_id, md->address, READ_FULL_MD);
-        
+
+    printf("%s - aux_md->name=%s\n", __func__, md->name);
+    printf("%s - aux_md->parent_address=%" PRIu64 ", root_metadata->address=%" PRIu64 "\n",
+           __func__, aux_md->parent_address, fs_defs[aux_md->part_id].root_metadata->address);
+
     while(aux_md->parent_address != fs_defs[aux_md->part_id].root_metadata->address) {
         S_metadata* parent_md = read_metadata(aux_md->part_id, aux_md->parent_address, READ_FULL_MD);
+        //        printf("%s - parent_md->name=%s\n", __func__, parent_md->name);
         path[path_count]= (char*)malloc(NAME_SIZE);
         memcpy(path[path_count], parent_md->name, NAME_SIZE);
         path_count += 1;
