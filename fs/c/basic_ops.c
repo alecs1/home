@@ -57,7 +57,7 @@ uint64_t d_read(uint16_t id, uint64_t address, void* bytes, uint64_t size) {
         //return 0;
     }
 
-    verbose = 1;
+    verbose = 0;
     if (verbose) {
         printf("%s, id=%" PRIu16 ", fd=%d, read %" PRIu64 " from %" PRIu64 ".\n",
                __func__, id, fd, b_read, address);
@@ -307,6 +307,20 @@ uint64_t write_metadata(S_metadata* md) {
     uint64_t b_wrote = d_write(md->part_id, md->address, buffer, METADATA_SIZE);
     free(buffer);
     return b_wrote;
+}
+
+int write_metadata_batch(S_metadata_batch* mdb) {
+    uint16_t part_id = mdb->part_id;
+    uint64_t pos = mdb->address;
+    pos += d_write(part_id, pos, &mdb->size, METADATA_BATCH_SIZE);
+    pos += d_write(part_id, pos, &mdb->file_capacity, FILE_CAPACITY_SIZE);
+    pos += d_write(part_id, pos, &mdb->file_count, FILE_COUNT_SIZE);
+
+    for(int i = 0; i < ALPHABET_LAST_BYTE; i++) {
+        pos += d_write(part_id, pos, mdb->file_capacity_for_index[i]);
+    }
+    
+
 }
 
 S_metadata_batch* get_metadata_batch(uint16_t id, uint64_t address) {

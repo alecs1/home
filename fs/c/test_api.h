@@ -8,6 +8,11 @@
 S_metadata* create(uint16_t id, char* path, uint8_t type);
 S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type);
 
+uint32_t load_partition(char* file_name, int* err_code);
+
+int unload_partition(uint16_t part_id);
+
+
 //write all bytes at time, file already exists and contents will be overwritten
 int sfs_write(uint16_t id, char* path, void* contents, uint64_t size);
 

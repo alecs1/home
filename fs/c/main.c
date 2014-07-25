@@ -1,12 +1,16 @@
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+
+
 #include "init_fs.h"
 #include "test_api.h"
 #include "global.h"
 
 
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdio.h>
 
 int main(int argc, char* argv[]) {
 
@@ -50,6 +54,21 @@ int main(int argc, char* argv[]) {
         print_path(usr_bin_gcc); print_metadata(usr_bin_gcc);
         printf("\n\n\n");
     }
+
+    S_metadata *yyy = create(part_count-1, "/yyy", TYPE_FILE);
+    S_metadata *zzz = create(part_count-1, "/zzz", TYPE_FILE);
+
+    char first_char_name[20];
+    memset(&first_char_name, ALPHABET_FIRST_BYTE, 10);
+    first_char_name[0] = '/';
+    first_char_name[10] = 0;
+    char last_char_name[20];
+    memset(&last_char_name, ALPHABET_LAST_BYTE, 10);
+    last_char_name[0] = '/';
+    last_char_name[10] = 0;
+
+    S_metadata* first_char = create(part_count-1, first_char_name, TYPE_FILE);
+    S_metadata* last_char = create(part_count-1, last_char_name, TYPE_FILE);
 
 ///printf("Rest of pointers: %p %p %p %p %p\n", usr_bin, bin, initrd_img, bin_bash, usr_bin_gcc);
 

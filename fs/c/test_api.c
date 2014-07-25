@@ -135,7 +135,7 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
 }
 
 S_metadata* create(uint16_t id, char* path, uint8_t type) {
-    //printf("%s - id=%" PRIu16 ", path=%s, type=%" PRIu8 "\n", __func__, id, path, type);
+    printf("%s - id=%" PRIu16 ", path=%s, type=%" PRIu8 "\n", __func__, id, path, type);
     //TODO - how about some sanitisation on path?
     
     S_metadata *md = NULL;
@@ -153,7 +153,7 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
     crt_name = NULL;
     next_name = strtok_r(aux_path, "/", &saveptr);
 
-    printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
+    //printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
 
     while (next_name != NULL) {
         crt_name = next_name;
@@ -170,7 +170,7 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
                 parent_dir = read_metadata(id, crt_dir_addr, READ_FULL_MD);
             }
             else {
-                printf("%s - error, could not find correctly read dir %s\n", __func__, crt_name);
+                printf("%s - error, could not correctly read dir %s\n", __func__, crt_name);
             }
         }
         else
@@ -290,6 +290,13 @@ int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_bat
 
     old_mdb->index_table[first_char] = new_addr;
     old_mdb->file_capacity_for_index[first_char] = new_size/METADATA_SIZE;
+
+
+
+    uint64_t root_addr = fs_defs[part_id].root_metadata->address;
+    free_metadata_struct(fs_defs[part_id].root_metadata);
+
+    fs_defs[part_id].root_metadata = read_metadata(part_id, root_addr, READ_FULL_MD);
 
     return 0;
 }
