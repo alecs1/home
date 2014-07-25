@@ -19,6 +19,8 @@
 
 
 #define ADDRESS_SIZE 8
+#define ADDRESS_FFFF ((uint64_t)0xFFFFFFFFFFFFFFFF)
+#define ADDRESS_ZERO ((uint64_t)0x0)
 
 #define DISK_BLOCK_BYTES 4096 //try to align most address requests at this value
 #define SMALL_FILE_SIZE (2 * DISK_BLOCK_SIZE) //these files should be aligned right after a block of metadata, with a separate free space bitfield; for now all files with take a DISK_BLOCK_BYTES number of bytes
@@ -53,12 +55,11 @@
 //***Batch of metadata***
 //header
 #define METADATA_BATCH_SIZE 8 //metadata follows right away after the header and bit table, use this number to know where it ends!
-#define MD_BATCH_BIT_TABLE_SIZE 8 //
 #define FILE_CAPACITY_SIZE 8
 #define FILE_COUNT_SIZE 8 //
 #define INDEX_TABLE_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * ADDRESS_SIZE) //256 indexes, first not used, one for each byte that may represent the first symbol in the name of a file, such that a fast jump can be done in the sorted names
+#define CAPACITY_FOR_INDEX_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * FILE_COUNT_SIZE)
 #define FILE_COUNT_FOR_INDEX_SIZE ((1+ALLOWED_BYTES_IN_NAME_COUNT) * FILE_COUNT_SIZE)
-#define CAPACITY_FOR_INDEX_SIZE ((1+ALLOWED+BYTES_IN_NAME_COUNT) * FILE_COUNT_SIZE)
 #define METADATA_BATCH_HEADER_SIZE \
     ROUND_TO_MULTIPLE_UP( \
     (METADATA_BATCH_SIZE + FILE_CAPACITY_SIZE + FILE_COUNT_SIZE + INDEX_TABLE_SIZE + \

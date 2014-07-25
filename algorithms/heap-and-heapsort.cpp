@@ -47,6 +47,19 @@ std::vector<T> addElement(std::vector<T> v, T el) {
     return v;
 }
 
+template <typename T>
+std::vector<T> remElement2(std::vector<T> V, unsigned int index) {
+    for(unsigned int i = 0; i < v.size(); i++)
+        printf("%d ", v[i]);
+    printf("%s - v[%d]=%d\n", __func__, index, v[index]);
+
+    if (index == v.size()-1) {
+        v.pop_back();
+        return v;
+    }    
+
+}
+
 // a complicated two stage task
 template <typename T>
 std::vector<T> remElement(std::vector<T> v, unsigned int index) {

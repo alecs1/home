@@ -46,8 +46,8 @@ typedef struct metadata_batch {
     uint64_t file_capacity;
     uint64_t file_count;
     uint64_t index_table[ALLOWED_BYTES_IN_NAME_COUNT+1]; //first is 0x0, which is not used in file names, but present here for ease of addressing
+    uint64_t file_capacity_for_index[ALLOWED_BYTES_IN_NAME_COUNT+1]; //length of each such area
     uint64_t file_count_for_index[ALLOWED_BYTES_IN_NAME_COUNT+1];
-    uint64_t capacity_for_index[ALLOWED_BYTES_IN_NAME_COUNT+1]; //length of each such area
 } S_metadata_batch;
 
 typedef struct fs_definition {
@@ -59,7 +59,7 @@ typedef struct fs_definition {
     uint8_t *global_block_map; //this will get large, work on it in chunks later
     uint64_t free_blocks;
 
-    //TODO - at some point we should no longer store all these batches in memory, should they be too many?
+    //TODO - maybe, at some point we should no longer store all these batches in memory, should they be too many?
     uint64_t metadata_batch_count;
     uint64_t *metadata_batch_addresses;
 

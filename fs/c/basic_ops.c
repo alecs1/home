@@ -116,6 +116,8 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t size, uint8_
     return 0;
 }
 
+
+/*
 int mark_md_block_map(uint16_t id, uint64_t bm_address, uint64_t first, uint64_t size, uint8_t allocated){
     int ret_val = 0;
     if (first%METADATA_SIZE != 0) {
@@ -129,10 +131,8 @@ int mark_md_block_map(uint16_t id, uint64_t bm_address, uint64_t first, uint64_t
                __func__, size, METADATA_SIZE);
         return -1;
     }
-
-    
-
 }
+*/
 
 
 S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
@@ -151,7 +151,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     uint8_t bytes[METADATA_SIZE];
     d_read(id, address, bytes, METADATA_SIZE);
 
-    printf("%s - bytes at %" PRIu64 ":\n", __func__, address);
+    //printf("%s - bytes at %" PRIu64 ":\n", __func__, address);
     print_bytes(bytes, METADATA_SIZE); printf("\n");
     
     uint64_t pos = 0;
@@ -232,7 +232,6 @@ finish:
 
 }
 
-//TODO_PERF - serialise in a buffer before writing
 uint64_t write_metadata(S_metadata* md) {
     uint64_t pos = 0;
 

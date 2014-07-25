@@ -24,6 +24,7 @@
 
 const uint8_t  u8_zero = 0;
 const uint64_t u64_zero = 0;
+const uint64_t u64_ffff = 0xFFFFFFFFFFFFFFFF;
 
 
 int generate_id(uint8_t* buffer) {
@@ -89,7 +90,6 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
 
 
 //assumes space is free and overwrites everything
-//TODO - think how to allocate some space for very small files, right after the metadata block
 uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     printf("%s - start\n", __func__);
 
@@ -135,17 +135,32 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
     fs_defs[id].metadata_batches[batch_index].index_table[0] = 0;
 
+    //INDEX_TABLE
+    //space for one name in each area
+    pos += d_write(id, pos, (void*)&u64_ffff, ADDRESS_SIZE);
+
+    uint64_t preallocated_count = 1;
     uint64_t crt_index_address = fs_defs[id].metadata_batches[batch_index].metadata_start;
     for(int i = ALPHABET_FIRST_BYTE; i <= ALPHABET_LAST_BYTE; i++) {
         pos += d_write(id, pos, (void*)&crt_index_address, ADDRESS_SIZE);
         fs_defs[id].metadata_batches[batch_index].index_table[i] = crt_index_address;
-        crt_index_address += METADATA_SIZE;
+        crt_index_address += preallocated_count*METADATA_SIZE;
+    }
+
+    //CAPACITY_FOR_INDEX
+    pos += d_write(id, pos, (void*)&u64_zero, FILE_COUNT_SIZE);
+    for(int i = ALPHABET_FIRST_BYTE; i < ALPHABET_LAST_BYTE; i++) {
+        pos += d_write(id, pos, (void*)&preallocated_count, FILE_COUNT_SIZE);
+        fs_defs[id].metadata_batches[batch_index].file_capacity_for_index[i] = preallocated_count;
     }
     
+    //FILE_COUNT_FOR_INDEX
+    pos += d_write(id, pos, (void*)&u64_zero, FILE_COUNT_SIZE);
     for(int i = 0; i <= ALLOWED_BYTES_IN_NAME_COUNT; i++) {
         pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
         fs_defs[id].metadata_batches[batch_index].file_count_for_index[i] = 0;
     }
+
 
     printf("%s - pos=%" PRIu64 ", wrote metadata header of size %" PRIu64 " at %" PRIu64 ", unused bytes: %" PRIu64 "\n",
            __func__,

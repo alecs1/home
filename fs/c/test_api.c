@@ -135,21 +135,12 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
 }
 
 S_metadata* create(uint16_t id, char* path, uint8_t type) {
-    printf("%s - id=%" PRIu16 ", path=%s, type=%" PRIu8 "\n", __func__, id, path, type);
+    //printf("%s - id=%" PRIu16 ", path=%s, type=%" PRIu8 "\n", __func__, id, path, type);
     //TODO - how about some sanitisation on path?
     
     S_metadata *md = NULL;
 
-    /*
-    if (type == TYPE_FILE) {
-        md = init_file_struct();
-    }
-    else if (type == TYPE_DIR) {
-        md = init_dir_struct();
-    }
-    md->part_id = id;
-    */
-
+    
     //split the path and search for the parent
     char *aux_path = (char*)malloc((strlen(path)+1) * sizeof(char));
     char *saveptr, *next_name, *crt_name;
@@ -167,12 +158,12 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
     while (next_name != NULL) {
         crt_name = next_name;
         next_name = strtok_r(NULL, "/", &saveptr);
-        printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
+        //printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
         if (next_name != NULL) {
             //next_name is the next child
             //crt_dir is the directory we're going to find now in parent_dir
             uint64_t crt_dir_addr = find_child(parent_dir, crt_name, TYPE_DIR);
-            printf("%s - crt_name=%s, crt_dir_addr=%" PRIu64 "\n", __func__, crt_name, crt_dir_addr);
+            //printf("%s - crt_name=%s, crt_dir_addr=%" PRIu64 "\n", __func__, crt_name, crt_dir_addr);
             if (crt_dir_addr != 0) {
                 if (parent_dir != fs_defs[id].root_metadata)
                     free_metadata_struct(parent_dir);
@@ -206,10 +197,107 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
     return md;
 }
 
+//update the address of one child
+int update_child_address(S_metadata* parent, uint64_t addr, uint64_t new_addr) {
+    int ret_val = -1;
+    S_dir_metadata* dir_md = (S_dir_metadata*)parent->specific;
+
+    if (dir_md->in_mem_addresses_count == dir_md->child_count) {
+        for(uint32_t i = 0; i < dir_md->in_mem_addresses_count; i++) {
+            if (dir_md->in_mem_addresses[i] == addr) {
+                dir_md->in_mem_addresses[i] = new_addr;
+                ret_val = 0;
+                break;
+            }
+        }
+    }
+    else {
+        printf("%s - updating for addresses not already loaded not implemented\n", __func__);
+        ret_val = -2;
+    }
+
+    if (ret_val == 0) {
+        write_metadata(parent);
+    }
+    else {
+        printf("%s - child addr %" PRIu64 " not found for parent %s addr %" PRIu64 "\n",
+               __func__, addr, parent->name, parent->address);
+    }
+
+    return ret_val;
+}
+
+//update the parent address of all children
+int update_parent_address(S_metadata* parent, uint64_t new_addr) {
+    int ret_val = -1;
+    S_dir_metadata* dir_md = (S_dir_metadata*)parent->specific;
+
+    if (dir_md->in_mem_addresses_count == dir_md->child_count) {
+        for(uint32_t i = 0; i < dir_md-> in_mem_addresses_count; i++) {
+            S_metadata* child_md = read_metadata(parent->part_id,
+                                             dir_md->in_mem_addresses[i], READ_FULL_MD);
+            child_md->parent_address = new_addr;
+            write_metadata(child_md);
+            free_metadata_struct(child_md);
+        }
+        ret_val = 0;
+    }
+    else {
+        printf("%s - updating for addresses not already loaded not implemented\n", __func__);
+        ret_val = -2;
+    }
+
+    return ret_val;
+}
+
+//migrate the metadata of all file with names starting with first_char
+//new_mdb may be null, in case we don't move to another mdb
+//TODO - this is a complicated operation which whould be hard to journal
+int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_batch* new_mdb,
+                     uint8_t first_char, uint64_t new_addr, uint64_t new_size) {
+
+    printf("%s - part_id=%" PRIu16 ", old_mdb=%" PRIu64 ", new_mdb=%p, first_char=%c, new_addr=%"
+           PRIu64 ", new_size=%" PRIu64 "\n",
+           __func__, part_id, old_mdb->address, new_mdb, first_char, new_addr, new_size);
+
+
+    if (new_mdb != NULL) {
+        printf("%s - migrating to new mdb no implemented\n", __func__);
+        return -1;
+    }
+    uint64_t read_addr = old_mdb->index_table[first_char];
+    uint64_t write_addr = new_addr;
+    for(uint64_t i = 0; i < old_mdb->file_count_for_index[first_char]; i++) {
+        S_metadata* crt_md = read_metadata(part_id, read_addr, READ_FULL_MD);
+        crt_md->address = write_addr;
+        S_metadata* parent_md = read_metadata(part_id, crt_md->parent_address, READ_FULL_MD);
+        //find the current child and update it
+        update_child_address(parent_md, read_addr, write_addr);
+        free_metadata_struct(parent_md);
+
+        if (crt_md->type == TYPE_DIR) {
+            update_parent_address(crt_md, write_addr);
+        }
+
+        uint32_t  fill_bytes = 0x89ABCDEF;
+        d_write_repeat(part_id, read_addr, &fill_bytes, sizeof(uint32_t),
+                     METADATA_SIZE/sizeof(uint32_t));
+
+        write_metadata(crt_md);
+        read_addr += METADATA_SIZE;
+        write_addr += METADATA_SIZE;
+    }
+
+    old_mdb->index_table[first_char] = new_addr;
+    old_mdb->file_capacity_for_index[first_char] = new_size/METADATA_SIZE;
+
+    return 0;
+}
+
 S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
 
-    printf("%s - parent_md: ", __func__); print_metadata(parent_md);
-    printf("%s - name=%s\n", __func__, name);
+    //printf("%s - parent_md: ", __func__); print_metadata(parent_md);
+    //printf("%s - name=%s\n", __func__, name);
 
     if (check_metadata_struct(parent_md) != 0) {
         printf("%s - invalid parent_md\n", __func__);
@@ -217,27 +305,61 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
     }
 
     int error = 0;
-    //steps: establish where in the metadata it's created, write down
     S_metadata* md = NULL;
-    //S_dir_metadata *dir_md = (S_dir_metadata*)parent_md->specific;
 
     S_metadata_batch *mdb = get_metadata_batch(parent_md->part_id, parent_md->batch_address);
 
     uint8_t first_char = (uint8_t)name[0];
     uint64_t md_address = 0;
-    uint64_t start_address_for_index = mdb->index_table[first_char];
-    uint64_t end_address_for_index = mdb->index_table[first_char] + mdb->length_for_index[first_char];
 
+    if (mdb->file_capacity_for_index[first_char] - mdb->file_count_for_index[first_char] > 0) {
+        md_address = mdb->index_table[first_char] + 
+            mdb->file_count_for_index[first_char] * METADATA_SIZE;
 
-    printf("%s - start_address_for_index=%" PRIu64 ", end_address_for_index=%" PRIu64 "\n",
-           __func__, start_address_for_index, end_address_for_index);
+        //TODO - some checks
+    }
+    else {
+        //check if we have space inside this md batch
+        //check at the end, then check if there is any index which has too much space compared to its necesities
+        uint64_t GROWTH_FACTOR = 2;
+        uint64_t count_needed = (mdb->file_capacity_for_index[first_char] + 1) * GROWTH_FACTOR;
 
-    if ( (start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE) < end_address_for_index) {
-        printf("%s - writing directly\n", __func__);
-        md_address = start_address_for_index + mdb->file_count_for_index[first_char]*METADATA_SIZE;
-        mdb->file_count_for_index[first_char] += 1;
+        int last_index = ALPHABET_FIRST_BYTE;
+        for(int i = ALPHABET_FIRST_BYTE; i < ALPHABET_LAST_BYTE; i++)
+            if ( (mdb->index_table[i] != ADDRESS_FFFF) && 
+                 (mdb->index_table[i] > mdb->index_table[last_index]) )
+                last_index = i;
         
-        //some more checks:
+        uint64_t md_end = mdb->address + mdb->size;
+
+        printf("%s - need to make space, md_end=%" PRIu64 ", start of unallocated space=%" PRIu64
+               ", free space=%" PRIu64 ", count_needed=%" PRIu64 ", space needed=%" PRIu64 "\n",
+               __func__, md_end,
+               mdb->index_table[last_index] + mdb->file_capacity_for_index[last_index] * METADATA_SIZE,
+               md_end -
+               mdb->index_table[last_index] + mdb->file_capacity_for_index[last_index] * METADATA_SIZE,
+               count_needed, count_needed * METADATA_SIZE);
+
+        if (md_end - 
+            (mdb->index_table[last_index] + mdb->file_capacity_for_index[last_index] * METADATA_SIZE) >=
+            count_needed * METADATA_SIZE ) {
+            //migrate metadata index to address
+            //also modify all children and parents!
+
+            uint64_t new_addr = mdb->index_table[last_index] +
+                mdb->file_capacity_for_index[last_index] * METADATA_SIZE;
+
+            migrate_md_index(parent_md->part_id, mdb, NULL, first_char, new_addr, count_needed*METADATA_SIZE);
+
+            md_address = new_addr + mdb->file_count_for_index[first_char] * METADATA_SIZE;
+        }
+        else {
+            printf("%s - need to migrate to another mdb, not implemented\n", __func__);
+            return NULL;
+        }
+    }
+
+    if (md_address != 0) {
         if (md_address % METADATA_SIZE != 0) {
             printf("%s - error, computed address %" PRIu64 " not multiple of %u\n",
                    __func__, md_address, METADATA_SIZE);
@@ -245,29 +367,15 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
             goto cleanup;
         }
         
-        if (end_address_for_index - md_address < METADATA_SIZE) {
-            printf("%s - error, computed address %" PRIu64 " does not have enough space before next filled element at %" PRIu64 "\n",
-                   __func__, md_address, end_address_for_index);
-            error = 1;
-            goto cleanup;
-        }
-
-        //now we can proceed to write it
         md = init_metadata_struct(type);
         md->part_id = parent_md->part_id;
         md->address = md_address;
         memcpy(md->name, name, NAME_SIZE);
         md->parent_address = parent_md->address;
         md->batch_address = parent_md->batch_address;
-      
+        mdb->file_count_for_index[first_char] += 1;
     }
-    else {
-        //need to move this around, also increase it
-        uint64_t space_needed = 
-            ROUND_TO_MULTIPLE_UP( (mdb->file_count_for_index[first_char]+1) * 1.5 * METADATA_SIZE,
-                                  METADATA_SIZE);
-        //now this is n**2 if we don't hold a bitmap
-    }
+
         
         
 cleanup:
