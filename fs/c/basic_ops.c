@@ -117,24 +117,6 @@ uint8_t mark_global_block_map(uint16_t id, uint64_t first, uint64_t size, uint8_
 }
 
 
-/*
-int mark_md_block_map(uint16_t id, uint64_t bm_address, uint64_t first, uint64_t size, uint8_t allocated){
-    int ret_val = 0;
-    if (first%METADATA_SIZE != 0) {
-        printf("%s - error - first = %" PRIu64 " not aligned to %d\n",
-               __func__, first, METADATA_SIZE);
-        return -1;
-    }
-
-    if (size%METADATA_SIZE != 0) {
-        printf("%s - error - size =%" PRIu64 " not aligned to %d\n",
-               __func__, size, METADATA_SIZE);
-        return -1;
-    }
-}
-*/
-
-
 S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     //some basic checks: address aligned at 1024, address inside an allocated batch area
     int success = 1;
@@ -163,7 +145,6 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     pos += POSIX_METADATA_SIZE;
     pos = ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE);
 
-    //printf("%s - md until now: ", __func__); print_metadata(md); 
     
     md->part_id = id;
     md->address = address;
@@ -196,6 +177,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
             init_dir_struct(md);
             S_dir_metadata *d_md = (S_dir_metadata*)md->specific;
             memcpy(&d_md->child_count, bytes+pos, CHILD_COUNT_SIZE); pos += CHILD_COUNT_SIZE;
+            printf("%s - read dir %s has %u children\n", __func__, md->name, d_md->child_count);
             pos += DIR_4_BYTES_PLACEHOLDER_1;
             memcpy(&d_md->child_list_address, bytes+pos, CHILD_LIST_ADDRESS_SIZE);
             pos += CHILD_LIST_ADDRESS_SIZE;
@@ -262,6 +244,8 @@ uint64_t write_metadata(S_metadata* md) {
     memcpy(buffer+pos, &md->batch_address, BATCH_ADDRESS_SIZE);    pos += BATCH_ADDRESS_SIZE;
     memcpy(buffer+pos, &md->hl_count, HARDLINK_COUNT_SIZE);        pos += HARDLINK_COUNT_SIZE;
     memcpy(buffer+pos, &md->type, TYPE_SIZE);      pos += TYPE_SIZE;
+    memset(buffer+pos, PLACEHOLDER_3B_FILLER,
+           ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE) - pos);
     pos = ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE);
     
     if (md->type == TYPE_FILE) {
@@ -316,6 +300,12 @@ uint64_t write_metadata(S_metadata* md) {
                 }
             }
         }
+        else {
+            memset(buffer+pos, (int)EMPTY_CHILDREN_ADDRESSES_FILLER, METADATA_SIZE-pos);
+        }
+    }
+    else {
+        printf("%s - error - invalid type\n", __func__);
     }
     
     uint64_t b_wrote = d_write(md->part_id, md->address, buffer, METADATA_SIZE);

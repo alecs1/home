@@ -58,17 +58,27 @@ int main(int argc, char* argv[]) {
     }
 
     S_metadata *usr_bin_file = create(part_count-1, "/usr/bin/file", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *usr_bin_git = create(part_count-1, "/usr/bin/git", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *usr_bin_kate = create(part_count-1, "/usr/bin/kate", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *usr_bin_opera = create(part_count-1, "/usr/bin/opera", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *usr_bin_ssh = create(part_count-1, "/usr/bin/ssh", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *home_alex_github_home_fs_c_super_fs =
         create(part_count-1, "/home/alex/github/home/fs/c/super_fs", TYPE_FILE);
+    printf("\n\n\n");
 
     S_metadata *www = create(part_count-1, "/www", TYPE_DIR);
+    printf("\n\n\n");
     S_metadata *xxx = create(part_count-1, "/xxx", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *yyy = create(part_count-1, "/yyy", TYPE_FILE);
+    printf("\n\n\n");
     S_metadata *zzz = create(part_count-1, "/zzz", TYPE_FILE);
+    printf("\n\n\n");
 
     char first_char_name[20];
     memset(&first_char_name, ALPHABET_FIRST_BYTE, 10);
@@ -81,6 +91,9 @@ int main(int argc, char* argv[]) {
 
     S_metadata* first_char = create(part_count-1, first_char_name, TYPE_FILE);
     S_metadata* last_char = create(part_count-1, last_char_name, TYPE_FILE);
+    UNUSED(usr_bin_file); UNUSED(usr_bin_git); UNUSED(usr_bin_kate); UNUSED(usr_bin_opera);
+    UNUSED(usr_bin_ssh); UNUSED(home_alex_github_home_fs_c_super_fs); UNUSED(www);
+    UNUSED(xxx); UNUSED(yyy); UNUSED(zzz); UNUSED(last_char); UNUSED(first_char); UNUSED(bin_cat);
 
 ///printf("Rest of pointers: %p %p %p %p %p\n", usr_bin, bin, initrd_img, bin_bash, usr_bin_gcc);
 

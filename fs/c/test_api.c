@@ -35,7 +35,7 @@ uint32_t get_child_addresses(S_metadata* parent, uint64_t* buffer, const uint32_
     if (dir_md->in_mem_addresses_count == dir_md->child_count) {
 
         for (uint32_t i = index; i < index + capacity && i < dir_md->child_count; i++) {
-            buffer[i - index] = dir_md->in_mem_addresses[index];
+            buffer[i - index] = dir_md->in_mem_addresses[i];
             write_count += 1;
         }
     }
@@ -89,13 +89,13 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
     
 
     uint64_t expected_min_index = parent_mdb->index_table[(uint8_t)name[0]];
-    uint64_t expected_max_index = 0;
-    if (name[0] < ALPHABET_LAST_BYTE)
-        expected_max_index = parent_mdb->index_table[(uint8_t)(name[0]+1)];
-    else
-        expected_max_index =
-            parent_mdb->address + METADATA_BATCH_HEADER_SIZE +
-            parent_mdb->file_capacity * METADATA_SIZE - ADDRESS_SIZE;
+    uint64_t expected_max_index = parent_mdb->index_table[(uint8_t)name[0]] +
+        parent_mdb->file_count_for_index[(uint8_t)name[0]] * METADATA_SIZE;
+    printf("%s - dir=%s, expected_min_index=%" PRIu64 ", expected_max_index=%" PRIu64 
+           ", range=%" PRIu64 ", enough for %" PRIu64 " files\n",
+           __func__, parent->name, expected_min_index, expected_max_index,
+           expected_max_index-expected_min_index,
+           (expected_max_index-expected_min_index)/METADATA_SIZE);
 
     //we should generally be in the happy case where the child is inside the metadata at the expected address; only if it's not, start an exhaustive search (also assume these are sorted)
     uint64_t children[CHILDREN_ADDRESS_BUFFER];
@@ -107,6 +107,7 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
         index += count;
         for(uint32_t i = 0; i < count; i++) {
             uint64_t crt_address = children[i];
+            printf("%s - crt_address=%" PRIu64 "\n", __func__, crt_address);
             if ( (crt_address >= expected_min_index) && (crt_address <= expected_max_index) ) {
                 //read metadata of this child from disk
                 S_metadata *child = read_metadata(parent->part_id, crt_address, READ_BASIC_MD);
@@ -131,7 +132,8 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
     }
 
     if (ret_val == 0) {
-        printf("%s - error, could not find child %s, type%" PRIu8 " in ", __func__, name, type);
+        printf("%s - error, could not find child=%s, type=%" PRIu8
+               " in parent=%s\n", __func__, name, type, parent->name);
     }
 
     return ret_val;
@@ -161,7 +163,7 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
     while (next_name != NULL) {
         crt_name = next_name;
         next_name = strtok_r(NULL, "/", &saveptr);
-        //printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
+        printf("%s - crt_name=%s, next_name=%s\n", __func__, crt_name, next_name);
         if (next_name != NULL) {
             //next_name is the next child
             //crt_dir is the directory we're going to find now in parent_dir
@@ -170,10 +172,11 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
             if (crt_dir_addr != 0) {
                 if (parent_dir != fs_defs[id].root_metadata)
                     free_metadata_struct(parent_dir);
+                
                 parent_dir = read_metadata(id, crt_dir_addr, READ_FULL_MD);
             }
             else {
-                printf("%s - error, could not correctly read dir %s\n", __func__, crt_name);
+                printf("%s - error, could not correctly read dir=%s\n", __func__, crt_name);
             }
         }
         else
@@ -186,6 +189,8 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
     if (parent_dir != NULL) {
         next_name = crt_name;
         md = create_child(parent_dir, next_name, type);
+        if (parent_dir->address != fs_defs[id].root_metadata->address)
+            free_metadata_struct(parent_dir);
     }
     else {
         printf("%s - error, parent_dir = NULL\n", __func__);
@@ -210,7 +215,8 @@ int update_child_address(S_metadata* parent, uint64_t addr, uint64_t new_addr) {
 
     if (dir_md->in_mem_addresses_count == dir_md->child_count) {
         for(uint32_t i = 0; i < dir_md->in_mem_addresses_count; i++) {
-            printf("%s - child %u, addr=%" PRIu64 "\n", __func__, i, new_addr);
+            //printf("%s - parent=%s, child %u, addr=%" PRIu64 "\n",
+            //__func__, parent->name, i, new_addr);
 
             if (dir_md->in_mem_addresses[i] == addr) {
                 dir_md->in_mem_addresses[i] = new_addr;
@@ -220,7 +226,7 @@ int update_child_address(S_metadata* parent, uint64_t addr, uint64_t new_addr) {
         }
     }
     else {
-        printf("%s - updating for addresses not already loaded not implemented\n", __func__);
+        printf("%s - error - updating for addresses not already loaded not implemented\n", __func__);
         ret_val = -2;
     }
 
@@ -228,7 +234,7 @@ int update_child_address(S_metadata* parent, uint64_t addr, uint64_t new_addr) {
         write_metadata(parent);
     }
     else {
-        printf("%s - child addr %" PRIu64 " not found for parent %s addr %" PRIu64 "\n",
+        printf("%s - error - child addr %" PRIu64 " not found for parent %s addr %" PRIu64 "\n",
                __func__, addr, parent->name, parent->address);
     }
 
@@ -258,7 +264,7 @@ int update_parent_address(S_metadata* parent, uint64_t new_addr) {
     return ret_val;
 }
 
-//migrate the metadata of all file with names starting with first_char
+//migrate the metadata of all files with names starting with first_char
 //new_mdb may be null, in case we don't move to another mdb
 //TODO - this is a complicated operation which whould be hard to journal
 int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_batch* new_mdb,
@@ -275,13 +281,22 @@ int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_bat
     }
     uint64_t read_addr = old_mdb->index_table[first_char];
     uint64_t write_addr = new_addr;
+    uint64_t root_addr = fs_defs[part_id].root_metadata->address;
     for(uint64_t i = 0; i < old_mdb->file_count_for_index[first_char]; i++) {
         S_metadata* crt_md = read_metadata(part_id, read_addr, READ_FULL_MD);
         crt_md->address = write_addr;
-        S_metadata* parent_md = read_metadata(part_id, crt_md->parent_address, READ_FULL_MD);
+        S_metadata *parent_md = NULL;
+        printf("%s - parent_md addr=%" PRIu64 ", root_md addr=%" PRIu64 "\n",
+               __func__, crt_md->parent_address, root_addr);
+        if (crt_md->parent_address != root_addr)
+            parent_md = read_metadata(part_id, crt_md->parent_address, READ_FULL_MD);
+        else
+            parent_md = fs_defs[part_id].root_metadata;
+
         //find the current child and update it
         update_child_address(parent_md, read_addr, write_addr);
-        free_metadata_struct(parent_md);
+        if (parent_md->address != root_addr)
+            free_metadata_struct(parent_md);
 
         if (crt_md->type == TYPE_DIR) {
             update_parent_address(crt_md, write_addr);
@@ -301,9 +316,9 @@ int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_bat
     write_metadata_batch(old_mdb);
 
 
-    uint64_t root_addr = fs_defs[part_id].root_metadata->address;
-    free_metadata_struct(fs_defs[part_id].root_metadata);
-    fs_defs[part_id].root_metadata = read_metadata(part_id, root_addr, READ_FULL_MD);
+    //uint64_t root_addr = fs_defs[part_id].root_metadata->address;
+    //free_metadata_struct(fs_defs[part_id].root_metadata);
+    //fs_defs[part_id].root_metadata = read_metadata(part_id, root_addr, READ_FULL_MD);
 
     return 0;
 }
@@ -395,7 +410,7 @@ S_metadata* create_child(S_metadata* parent_md, char* name, uint8_t type) {
 cleanup:
     if (error == 0) {
         write_metadata(md);
-        //the parent also needs to be updated!!!
+
         if (parent_md->specific == NULL) {
             printf("%s - error, please use fully populated S_dir_metadata structures, parent_md=%s, name=%s\n",
                    __func__, parent_md->name, name);
@@ -415,17 +430,19 @@ cleanup:
         parent_dir_md->in_mem_addresses[parent_dir_md->in_mem_addresses_count-1] = md->address;
         write_metadata(parent_md);
 
-        printf("%s - parent_dir %s at %" PRIu64 ", in_mem_addresses_count=%" PRIu32 ", in_mem_addresses=%p, newly created child addr=%" PRIu64 "\n",
+        printf("%s - parent_dir %s at %" PRIu64 ", in_mem_addresses_count=%" PRIu32
+               ", newly created child addr=%" PRIu64 "\n",
                __func__, parent_md->name, parent_md->address,
                parent_dir_md->in_mem_addresses_count,
-               parent_dir_md->in_mem_addresses,
                parent_dir_md->in_mem_addresses[parent_dir_md->in_mem_addresses_count-1]);
         
 
         return md;
     }
-    else
+    else {
+        printf("%s - failed\n", __func__);
         return NULL;
+    }
 }
 
 //write all bytes at time, file already exists and contents will be overwritten
