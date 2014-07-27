@@ -29,6 +29,7 @@ uint64_t write_metadata(S_metadata* md);
 
 S_metadata_batch* get_metadata_batch(uint16_t id, uint64_t address);
 
+uint64_t write_metadata_batch(S_metadata_batch* mdb);
 
 //checks
 int check_metadata_batch_address(uint16_t id, uint64_t address);

@@ -15,12 +15,13 @@
 int main(int argc, char* argv[]) {
 
     //let's say we init 50 MiB
-    printf("%s - part_count=%d\n", __func__, part_count);
+    //printf("%s - part_count=%d\n", __func__, part_count);
     create_fs(50 * 1024 * 1024);
-    printf("%s - part_count=%d\n", __func__, part_count);
+    //printf("%s - part_count=%d\n", __func__, part_count);
+
+    printf("\n\n");
 
     
-    printf("/usr\n");
     S_metadata *usr = create(part_count-1, "/usr", TYPE_DIR);
     print_path(usr); print_metadata(usr);
     printf("\n\n\n");
@@ -49,12 +50,23 @@ int main(int argc, char* argv[]) {
         printf("\n\n\n");
     }
 
+    S_metadata *bin_cat = create(part_count-1, "/bin/cat", TYPE_FILE);
     S_metadata *usr_bin_gcc = create(part_count-1, "/usr/bin/gcc", TYPE_FILE);
     if (usr_bin_gcc != NULL) {
         print_path(usr_bin_gcc); print_metadata(usr_bin_gcc);
         printf("\n\n\n");
     }
 
+    S_metadata *usr_bin_file = create(part_count-1, "/usr/bin/file", TYPE_FILE);
+    S_metadata *usr_bin_git = create(part_count-1, "/usr/bin/git", TYPE_FILE);
+    S_metadata *usr_bin_kate = create(part_count-1, "/usr/bin/kate", TYPE_FILE);
+    S_metadata *usr_bin_opera = create(part_count-1, "/usr/bin/opera", TYPE_FILE);
+    S_metadata *usr_bin_ssh = create(part_count-1, "/usr/bin/ssh", TYPE_FILE);
+    S_metadata *home_alex_github_home_fs_c_super_fs =
+        create(part_count-1, "/home/alex/github/home/fs/c/super_fs", TYPE_FILE);
+
+    S_metadata *www = create(part_count-1, "/www", TYPE_DIR);
+    S_metadata *xxx = create(part_count-1, "/xxx", TYPE_FILE);
     S_metadata *yyy = create(part_count-1, "/yyy", TYPE_FILE);
     S_metadata *zzz = create(part_count-1, "/zzz", TYPE_FILE);
 

@@ -152,7 +152,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     d_read(id, address, bytes, METADATA_SIZE);
 
     //printf("%s - bytes at %" PRIu64 ":\n", __func__, address);
-    print_bytes(bytes, METADATA_SIZE); printf("\n");
+    //print_bytes(bytes, METADATA_SIZE); printf("\n");
     
     uint64_t pos = 0;
     memcpy(md->name, bytes+pos, NAME_SIZE);   pos += NAME_SIZE;
@@ -161,6 +161,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
     memcpy(&md->hl_count, bytes+pos, HARDLINK_COUNT_SIZE);       pos += HARDLINK_COUNT_SIZE;
     memcpy(&md->type, bytes+pos, TYPE_SIZE);  pos += TYPE_SIZE;
     pos += POSIX_METADATA_SIZE;
+    pos = ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE);
 
     //printf("%s - md until now: ", __func__); print_metadata(md); 
     
@@ -184,6 +185,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
             memcpy(&f_md->size, bytes+pos, SIZE_SIZE); pos += SIZE_SIZE;
             memcpy(&f_md->fragments_count, bytes+pos, CONTENT_FRAGMENTS_COUNT_SIZE);
             pos += CONTENT_FRAGMENTS_COUNT_SIZE;
+            pos += FILE_4_BYTES_PLACEHOLDER_1;
             memcpy(&f_md->first_fragment_address, bytes+pos, FIRST_FRAGMENT_ADDRESS_SIZE);
             pos += FIRST_FRAGMENT_ADDRESS_SIZE;
             //printf("%s - read file=%s, size=%" PRIu64 "\n", __func__, md->name, f_md->size);
@@ -194,6 +196,7 @@ S_metadata* read_metadata(uint16_t id, uint64_t address, uint8_t full) {
             init_dir_struct(md);
             S_dir_metadata *d_md = (S_dir_metadata*)md->specific;
             memcpy(&d_md->child_count, bytes+pos, CHILD_COUNT_SIZE); pos += CHILD_COUNT_SIZE;
+            pos += DIR_4_BYTES_PLACEHOLDER_1;
             memcpy(&d_md->child_list_address, bytes+pos, CHILD_LIST_ADDRESS_SIZE);
             pos += CHILD_LIST_ADDRESS_SIZE;
             
@@ -251,7 +254,7 @@ uint64_t write_metadata(S_metadata* md) {
     memcpy(buffer+pos, md->name, NAME_SIZE);       pos += NAME_SIZE;
     
 #ifdef DEBUG
-    memset(buffer+strlen((char*)md->name)+1, 0xAA, NAME_SIZE-(strlen((char*)md->name)+1) );
+    memset(buffer+strlen((char*)md->name)+1, (int)NAME_FILLER, NAME_SIZE-(strlen((char*)md->name)+1) );
 #endif
     
 
@@ -259,7 +262,7 @@ uint64_t write_metadata(S_metadata* md) {
     memcpy(buffer+pos, &md->batch_address, BATCH_ADDRESS_SIZE);    pos += BATCH_ADDRESS_SIZE;
     memcpy(buffer+pos, &md->hl_count, HARDLINK_COUNT_SIZE);        pos += HARDLINK_COUNT_SIZE;
     memcpy(buffer+pos, &md->type, TYPE_SIZE);      pos += TYPE_SIZE;
-
+    pos = ROUND_TO_MULTIPLE_UP(pos, ADDRESS_SIZE);
     
     if (md->type == TYPE_FILE) {
         //pos += d_write(id, pos, 
@@ -268,8 +271,12 @@ uint64_t write_metadata(S_metadata* md) {
         memcpy(buffer+pos, &f_md->size, SIZE_SIZE); pos += SIZE_SIZE;
         memcpy(buffer+pos, &f_md->fragments_count, CONTENT_FRAGMENTS_COUNT_SIZE);
         pos += CONTENT_FRAGMENTS_COUNT_SIZE;
+        memset(buffer+pos, PLACEHOLDER_4B_FILLER, FILE_4_BYTES_PLACEHOLDER_1);
+        pos += FILE_4_BYTES_PLACEHOLDER_1;
         memcpy(buffer+pos, &f_md->first_fragment_address, FIRST_FRAGMENT_ADDRESS_SIZE);
         pos += FIRST_FRAGMENT_ADDRESS_SIZE;
+
+        memset(buffer+pos, (int)FILE_CONTENTS_FILLER, METADATA_SIZE-pos);
         
         if (f_md->fragments_count > 0)
             printf("%s - error, file contents writing not yet implemented\n", __func__);
@@ -277,18 +284,25 @@ uint64_t write_metadata(S_metadata* md) {
     else if (md->type == TYPE_DIR) {
         S_dir_metadata *d_md = (S_dir_metadata*)md->specific;
         memcpy(buffer+pos, &d_md->child_count, CHILD_COUNT_SIZE); pos += CHILD_COUNT_SIZE;
+        memset(buffer+pos, PLACEHOLDER_4B_FILLER, DIR_4_BYTES_PLACEHOLDER_1);
+        pos += DIR_4_BYTES_PLACEHOLDER_1;
         memcpy(buffer+pos, &d_md->child_list_address, CHILD_LIST_ADDRESS_SIZE);
         pos += CHILD_LIST_ADDRESS_SIZE;
 
         if (d_md->child_count > 0) {
-            //printf("%s - error, dir contents writing not yet implemented\n", __func__);
+
             if (d_md->child_count <= LOCAL_CHILDREN_CAPACITY) {
                 if (d_md->child_list_address != 0) {
                     printf("%s - error - TODO - implement deleting of space allocated for list of children metadata\n",
                            __func__);
                 }
                 else {
-                    memcpy(buffer+pos, &d_md->in_mem_addresses, d_md->child_count*sizeof(uint64_t));
+                    memcpy(buffer+pos, d_md->in_mem_addresses, d_md->child_count*sizeof(uint64_t));
+                    //for(uint32_t i = 0; i < d_md->child_count; i++) {
+                    //memcpy(buffer+pos, &d_md->in_mem_addresses[i], ADDRESS_SIZE);
+                    //}
+                    pos += d_md->child_count*sizeof(uint64_t);
+                    memset(buffer+pos, (int)CHILDREN_ADDRESSES_FILLER, METADATA_SIZE-pos);
                 }
             }
             else {
@@ -309,18 +323,45 @@ uint64_t write_metadata(S_metadata* md) {
     return b_wrote;
 }
 
-int write_metadata_batch(S_metadata_batch* mdb) {
+uint64_t write_metadata_batch(S_metadata_batch* mdb) {
     uint16_t part_id = mdb->part_id;
-    uint64_t pos = mdb->address;
-    pos += d_write(part_id, pos, &mdb->size, METADATA_BATCH_SIZE);
-    pos += d_write(part_id, pos, &mdb->file_capacity, FILE_CAPACITY_SIZE);
-    pos += d_write(part_id, pos, &mdb->file_count, FILE_COUNT_SIZE);
+    uint64_t pos = 0;
 
-    for(int i = 0; i < ALPHABET_LAST_BYTE; i++) {
-        pos += d_write(part_id, pos, mdb->file_capacity_for_index[i]);
-    }
+    void* buffer = malloc(METADATA_BATCH_HEADER_SIZE);
+    memcpy(buffer+pos, &mdb->size, METADATA_BATCH_SIZE);
+    pos += METADATA_BATCH_SIZE;
+    memcpy(buffer+pos, &mdb->file_capacity, FILE_CAPACITY_SIZE);
+    pos += FILE_CAPACITY_SIZE;
+    memcpy(buffer+pos, &mdb->file_count, FILE_COUNT_SIZE);
+    pos += FILE_CAPACITY_SIZE;
+
+    memcpy(buffer+pos, mdb->index_table,
+                  (1+ALLOWED_BYTES_IN_NAME_COUNT)*ADDRESS_SIZE);
+    pos += (1+ALLOWED_BYTES_IN_NAME_COUNT)*ADDRESS_SIZE;
+
+    memcpy(buffer+pos, mdb->file_capacity_for_index,
+                  (1+ALLOWED_BYTES_IN_NAME_COUNT)*FILE_CAPACITY_SIZE);
+    pos += (1+ALLOWED_BYTES_IN_NAME_COUNT)*FILE_CAPACITY_SIZE;
+
+    memcpy(buffer+pos, mdb->file_count_for_index,
+                  (1+ALLOWED_BYTES_IN_NAME_COUNT)*FILE_COUNT_SIZE);
+    pos += (1+ALLOWED_BYTES_IN_NAME_COUNT)*FILE_COUNT_SIZE;
+
     
 
+    if (ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES) != METADATA_BATCH_HEADER_SIZE) {
+        printf("%s - error pos=%" PRIu64 " different from expected size=%" PRIu64 "\n",
+               __func__, pos, (uint64_t)METADATA_BATCH_HEADER_SIZE);
+        pos = 0;
+        goto cleanup;
+    }
+    
+    d_write(part_id, mdb->address, buffer, METADATA_BATCH_HEADER_SIZE);
+
+    
+ cleanup:
+    free(buffer);
+    return pos;
 }
 
 S_metadata_batch* get_metadata_batch(uint16_t id, uint64_t address) {

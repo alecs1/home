@@ -40,6 +40,7 @@ int free_file_struct(S_file_metadata* file_md);
 
 
 typedef struct metadata_batch {
+    uint16_t part_id;
     uint64_t address;
     uint64_t size;
     uint64_t metadata_start;

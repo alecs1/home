@@ -91,7 +91,7 @@ int16_t allocate_partition(uint64_t size, int* ret_code) {
 
 //assumes space is free and overwrites everything
 uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
-    printf("%s - start\n", __func__);
+    //printf("%s - start\n", __func__);
 
     if (size % DISK_BLOCK_BYTES != 0) {
         printf("%s - warning, metada block not multiple of block size, size=%" PRIu64 "\n",
@@ -119,30 +119,22 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     fs_defs[id].metadata_batches[batch_index].metadata_start =
         fs_defs[id].metadata_batches[batch_index].address + METADATA_BATCH_HEADER_SIZE;
 
-    fs_defs[id].metadata_batches[batch_index].size = size;
-    pos += d_write(id, pos, &size, METADATA_BATCH_SIZE);
 
+    fs_defs[id].metadata_batches[batch_index].size = size;
 
     fs_defs[id].metadata_batches[batch_index].file_capacity = file_capacity;
-    pos += d_write(id, pos, &file_capacity, FILE_CAPACITY_SIZE);
 
     fs_defs[id].metadata_batches[batch_index].file_count = 0;
-    pos += d_write (id, pos, &fs_defs[id].metadata_batches[batch_index].file_count,
-                    FILE_COUNT_SIZE);
-
 
     
-    pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
     fs_defs[id].metadata_batches[batch_index].index_table[0] = 0;
 
     //INDEX_TABLE
     //space for one name in each area
-    pos += d_write(id, pos, (void*)&u64_ffff, ADDRESS_SIZE);
 
     uint64_t preallocated_count = 1;
     uint64_t crt_index_address = fs_defs[id].metadata_batches[batch_index].metadata_start;
     for(int i = ALPHABET_FIRST_BYTE; i <= ALPHABET_LAST_BYTE; i++) {
-        pos += d_write(id, pos, (void*)&crt_index_address, ADDRESS_SIZE);
         fs_defs[id].metadata_batches[batch_index].index_table[i] = crt_index_address;
         crt_index_address += preallocated_count*METADATA_SIZE;
     }
@@ -150,17 +142,17 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     //CAPACITY_FOR_INDEX
     pos += d_write(id, pos, (void*)&u64_zero, FILE_COUNT_SIZE);
     for(int i = ALPHABET_FIRST_BYTE; i < ALPHABET_LAST_BYTE; i++) {
-        pos += d_write(id, pos, (void*)&preallocated_count, FILE_COUNT_SIZE);
         fs_defs[id].metadata_batches[batch_index].file_capacity_for_index[i] = preallocated_count;
     }
     
     //FILE_COUNT_FOR_INDEX
     pos += d_write(id, pos, (void*)&u64_zero, FILE_COUNT_SIZE);
     for(int i = 0; i <= ALLOWED_BYTES_IN_NAME_COUNT; i++) {
-        pos += d_write(id, pos, (void*)&u64_zero, ADDRESS_SIZE);
         fs_defs[id].metadata_batches[batch_index].file_count_for_index[i] = 0;
     }
 
+    uint64_t wrote = write_metadata_batch(&(fs_defs[id].metadata_batches[batch_index]));
+    pos += wrote;
 
     printf("%s - pos=%" PRIu64 ", wrote metadata header of size %" PRIu64 " at %" PRIu64 ", unused bytes: %" PRIu64 "\n",
            __func__,
@@ -171,7 +163,6 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
     
     
     pos = ROUND_TO_MULTIPLE_UP(pos, DISK_BLOCK_BYTES);
-    //fs_defs[id].metadata_batches[batch_index].metadata_start = pos;
 
     //checks    
     if (pos != fs_defs[id].metadata_batches[batch_index].metadata_start)
@@ -192,39 +183,10 @@ uint64_t init_metadata_batch(uint16_t id, uint64_t pos, uint64_t size) {
 
     mark_global_block_map(id, fs_defs[id].metadata_batch_addresses[batch_index], size, 1);
 
-    printf("%s - end\n", __func__);
+    //printf("%s - end\n", __func__);
     return size;
 }
 
-/*
-//assumes everything is precomputed?
-uint8_t write_metadata(uint16_t id, S_metadata* md) {
-    uint64_t pos = md->address;
-    pos += d_write(id, pos, md->name, NAME_SIZE);
-    pos += d_write(id, pos, &md->hl_count, HARDLINK_COUNT_SIZE);
-    pos += d_write(id, pos, &md->type, TYPE_SIZE);
-
-    if (pos != md->address + METADATA_HEADER_SIZE) {
-        printf("%s - error, pos != address+METADATA_HEADER_SIZE, %" PRIu64 "->%" PRIu64 "\n",
-               __func__, pos, md->address + METADATA_HEADER_SIZE);
-    }
-    
-    if (md->type == TYPE_DIR) {
-        S_dir_metadata* dir_md = (S_dir_metadata*)(md->specific);
-
-        pos += d_write(id, pos, &dir_md->child_count, CHILD_COUNT_SIZE);
-        pos += d_write(id, pos, &dir_md->child_list_address, CHILD_LIST_ADDRESS_SIZE);
-    }
-    else {
-        S_file_metadata* file_md = (S_file_metadata*)(md->specific);
-        pos += d_write(id, pos, &file_md->size, SIZE_SIZE);
-        pos += d_write(id, pos, &file_md->fragments_count, CONTENT_FRAGMENTS_COUNT_SIZE);
-        pos += d_write(id, pos, &file_md->first_fragment_address, FIRST_FRAGMENT_ADDRESS_SIZE);
-    }
-
-    return 0;
-}
-*/
 
 //name is empty, first entry in the first batch of metadata
 uint8_t init_root_dir(uint16_t id, S_metadata_batch* parent) {

@@ -22,6 +22,17 @@
 #define ADDRESS_FFFF ((uint64_t)0xFFFFFFFFFFFFFFFF)
 #define ADDRESS_ZERO ((uint64_t)0x0)
 
+//various fillers
+#define NAME_FILLER ((uint64_t)0xAAAAAAAAAAAAAAAA)
+#define CHILDREN_ADDRESSES_FILLER ((uint64_t)0xADADADADADADADAD)
+#define FILE_CONTENTS_FILLER ((uint64_t)0xAFAFAFAFAFAFAFAF)
+#define MIGRATED_METADATA_FILLER ((uint64_t)0x89ABCDEF89ABCDEF)
+#define PLACEHOLDER_1B_FILLER ((uint8_t)0x11)
+#define PLACEHOLDER_2B_FILLER ((uint16_t)0x2222)
+#define PLACEHOLDER_4B_FILLER ((uint32_t)0x44444444)
+#define PLACEHOLDER_8B_FILLER ((uint64_t)0x8888888888888888)
+
+
 #define DISK_BLOCK_BYTES 4096 //try to align most address requests at this value
 #define SMALL_FILE_SIZE (2 * DISK_BLOCK_SIZE) //these files should be aligned right after a block of metadata, with a separate free space bitfield; for now all files with take a DISK_BLOCK_BYTES number of bytes
 
@@ -75,8 +86,9 @@
 #define TYPE_SIZE 1 //could be packed together with something else; 0 - file, 1 - dir
 //POSIX stuff
 #define POSIX_METADATA_SIZE 0
-#define METADATA_HEADER_SIZE (NAME_SIZE + PARENT_ADDRESS_SIZE + BATCH_ADDRESS_SIZE + \
-                              HARDLINK_COUNT_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE)
+#define METADATA_HEADER_SIZE ROUND_TO_MULTIPLE_UP( \
+    (NAME_SIZE + PARENT_ADDRESS_SIZE + BATCH_ADDRESS_SIZE +             \
+     HARDLINK_COUNT_SIZE + TYPE_SIZE + POSIX_METADATA_SIZE), ADDRESS_SIZE)
 
 #define METADATA_SIZE 1024 //1 KiB for metadata
 #define REMAINING_SIZE (METADATA_SIZE - MEDATA_HEADER_SIZE) //this data will be available to store children info, in case of a directory, or a part of the contents in case of a file
@@ -89,12 +101,14 @@
 //***Directory***
 //we're going to assume that the list of files in a directory does not need to be split into multiple blocks
 #define CHILD_COUNT_SIZE 4 //2**32 are more than enough files in a directory; lots of tools will start to fail if there exist milions of files in a directory
+#define DIR_4_BYTES_PLACEHOLDER_1 4
 #define CHILD_LIST_ADDRESS_SIZE 8 //address of the block of children addresses (that is, metadata addresses), 0x0 if all the chidlren fit inside here; at the moment we don't support having the list of children addresses split
 //these children addresses could also point to another batch of metadata, but some migration should be considered
 //rest is used 8 by 8 to store file addresses
 #define CHILD_LIST_OFFSET (ROUND_TO_MULTIPLE_UP( \
-                          (METADATA_HEADER_SIZE + CHILD_COUNT_SIZE + CHILD_LIST_ADDRESS_SIZE), \
-                          ADDRESS_SIZE))
+    (METADATA_HEADER_SIZE + CHILD_COUNT_SIZE \
+     + DIR_4_BYTES_PLACEHOLDER_1 + CHILD_LIST_ADDRESS_SIZE),    \
+    ADDRESS_SIZE))
 #define LOCAL_CHILDREN_CAPACITY ( (METADATA_SIZE - CHILD_LIST_OFFSET)/ADDRESS_SIZE )
 
 
@@ -105,6 +119,7 @@
 //2 - the file is split into many blocks, their addresses and sizes are defined in the block contained ata FIRST_BLOCK_ADDRESS_SIZE (pairs of 8 bytes address, 8 bytes size)
 #define SIZE_SIZE 8
 #define CONTENT_FRAGMENTS_COUNT_SIZE 4 //for now we'll assume this to be 0 or 1
+#define FILE_4_BYTES_PLACEHOLDER_1 4
 #define FIRST_FRAGMENT_ADDRESS_SIZE ADDRESS_SIZE //address of the file contents or to the split definition, if the file is split into more), 0x0 if it fits entirely here
 
 

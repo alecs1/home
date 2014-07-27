@@ -103,14 +103,16 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
 
     do {
         uint32_t count = get_child_addresses(parent, children, CHILDREN_ADDRESS_BUFFER, index);
-        printf("%s - count=%" PRIu32 "\n", __func__, count);
+        printf("%s - parent=%s, count=%" PRIu32 "\n", __func__, parent->name, count);
         index += count;
         for(uint32_t i = 0; i < count; i++) {
             uint64_t crt_address = children[i];
             if ( (crt_address >= expected_min_index) && (crt_address <= expected_max_index) ) {
                 //read metadata of this child from disk
                 S_metadata *child = read_metadata(parent->part_id, crt_address, READ_BASIC_MD);
-                //char* child_name = (char*) md->name;
+                
+                printf("%s - child %u, addr=%" PRIu64 ", name=%s\n",
+                       __func__, i, crt_address, child->name);
                 if (strncmp(name, (char*)child->name, NAME_SIZE) == 0) {
                     //found the match
                     ret_val = child->address;
@@ -128,8 +130,9 @@ uint64_t find_child(S_metadata* parent, char* name, uint8_t type) {
         //unhappy case, we have to search everywhere
     }
 
-    printf("%s - error, could not find child %s, type%" PRIu8 " in ", __func__, name, type);
-    print_metadata(parent);
+    if (ret_val == 0) {
+        printf("%s - error, could not find child %s, type%" PRIu8 " in ", __func__, name, type);
+    }
 
     return ret_val;
 }
@@ -199,11 +202,16 @@ S_metadata* create(uint16_t id, char* path, uint8_t type) {
 
 //update the address of one child
 int update_child_address(S_metadata* parent, uint64_t addr, uint64_t new_addr) {
+    printf("%s - parent=%s, parent addr=%" PRIu64 ", old child addr=%" PRIu64 ", new addr=%" PRIu64 "\n",
+           __func__, parent->name, parent->address, addr, new_addr);
+
     int ret_val = -1;
     S_dir_metadata* dir_md = (S_dir_metadata*)parent->specific;
 
     if (dir_md->in_mem_addresses_count == dir_md->child_count) {
         for(uint32_t i = 0; i < dir_md->in_mem_addresses_count; i++) {
+            printf("%s - child %u, addr=%" PRIu64 "\n", __func__, i, new_addr);
+
             if (dir_md->in_mem_addresses[i] == addr) {
                 dir_md->in_mem_addresses[i] = new_addr;
                 ret_val = 0;
@@ -279,7 +287,7 @@ int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_bat
             update_parent_address(crt_md, write_addr);
         }
 
-        uint32_t  fill_bytes = 0x89ABCDEF;
+        uint32_t  fill_bytes = (uint32_t)MIGRATED_METADATA_FILLER;
         d_write_repeat(part_id, read_addr, &fill_bytes, sizeof(uint32_t),
                      METADATA_SIZE/sizeof(uint32_t));
 
@@ -290,12 +298,11 @@ int migrate_md_index(uint16_t part_id, S_metadata_batch* old_mdb, S_metadata_bat
 
     old_mdb->index_table[first_char] = new_addr;
     old_mdb->file_capacity_for_index[first_char] = new_size/METADATA_SIZE;
-
+    write_metadata_batch(old_mdb);
 
 
     uint64_t root_addr = fs_defs[part_id].root_metadata->address;
     free_metadata_struct(fs_defs[part_id].root_metadata);
-
     fs_defs[part_id].root_metadata = read_metadata(part_id, root_addr, READ_FULL_MD);
 
     return 0;
@@ -408,10 +415,12 @@ cleanup:
         parent_dir_md->in_mem_addresses[parent_dir_md->in_mem_addresses_count-1] = md->address;
         write_metadata(parent_md);
 
-        printf("%s - parent_dir_md %s at %" PRIu64 ", in_mem_addresses_count=%" PRIu32 ", in_mem_addresses=%p\n",
+        printf("%s - parent_dir %s at %" PRIu64 ", in_mem_addresses_count=%" PRIu32 ", in_mem_addresses=%p, newly created child addr=%" PRIu64 "\n",
                __func__, parent_md->name, parent_md->address,
                parent_dir_md->in_mem_addresses_count,
-               parent_dir_md->in_mem_addresses);
+               parent_dir_md->in_mem_addresses,
+               parent_dir_md->in_mem_addresses[parent_dir_md->in_mem_addresses_count-1]);
+        
 
         return md;
     }
