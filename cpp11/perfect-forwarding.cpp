@@ -5,6 +5,7 @@
 class ResArg {
 public:
     std::string name;
+    int val;
 public:
     ResArg(std::string aName):
         name(aName)
@@ -35,7 +36,7 @@ public:
     int id;
 
 public:
-    Resource(ResArg & arg) {
+    Resource(ResArg const & arg) {
         id = init_id;
         name = arg.name;
         init_id += 1;
@@ -51,9 +52,18 @@ public:
 int Resource::init_id = 0;
 std::vector<int> Resource::instance_count;
 
+//the only special thing is: arg cannot be modified now
 template <typename T, typename Arg>
-std::shared_ptr<T> factory(Arg arg) {
+std::shared_ptr<T> factory(Arg const & arg) {
+    //arg.val = 5;
     return std::shared_ptr<T>(new T(arg));
+}
+
+//the special thing here is that can be both modified and constant :))
+template <typename T, typename Arg>
+std::shared_ptr<T> factory2(Arg&& arg) {
+    //    arg.val = 5;
+    return std::shared_ptr<T>(new T(std::forward<Arg>(arg)));
 }
 
 int main() {
