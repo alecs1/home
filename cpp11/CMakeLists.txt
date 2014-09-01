@@ -8,6 +8,7 @@ add_executable(features features.cpp)
 add_executable(shared_ptr shared_ptr.cpp)
 add_executable(perfect-forwarding perfect-forwarding.cpp)
 add_executable(lambda lambda.cpp)
+add_executable(lambda-complex lambda-complex.cpp)
 
 
 
