@@ -17,11 +17,11 @@ public:
         std::stringstream s;
         s << id;
         strId = s.str();
-        printf("Resource(), id=%s\n", strId.c_str());
+        printf("Resource(), id=%d, strId=%s\n", id, strId.c_str());
     }
 
     ~Resource() {
-        printf("~Resource(), id=%s\n", strId.c_str());
+        printf("~Resource(), id=%d, strId=%s\n", id, strId.c_str());
     }
 
 private:
@@ -62,4 +62,68 @@ int main() {
     printf("\n\n");
 
 
+    //weak_ptr
+    printf("\n\nweak_ptr\n");
+
+    std::shared_ptr<Resource> sP10(new Resource);
+    auto sP10a = sP10;
+    
+    std::weak_ptr<Resource> wP10 = sP10;
+    std::weak_ptr<Resource> wP10a = sP10;
+    auto wP10b = wP10;
+
+    printf("sP10=%p, ->strId=%s, .use_count=%d; wP10.use_count=%d; wP10a.use_count=%d, wP10b.use_count=%d\n",
+           sP10.get(), sP10->strId.c_str(), sP10.use_count(),
+           wP10.use_count(),
+           wP10a.use_count(),
+           wP10b.use_count());
+
+    auto sP10b = wP10.lock();
+    printf("auto sP10b = wP10.lock();\n");
+    printf("sP10=%p, ->strId=%s, .use_count=%d; wP10.use_count=%d; wP10a.use_count=%d, wP10b.use_count=%d\n",
+           sP10.get(), sP10->strId.c_str(), sP10.use_count(),
+           wP10.use_count(),
+           wP10a.use_count(),
+           wP10b.use_count());
+
+    //delete instance
+    sP10b->strId = "modified via sP10b\n";
+    std::shared_ptr<Resource> *aux10 = new std::shared_ptr<Resource>;
+    swap(sP10a, *aux10);
+    delete aux10;
+    printf("swap(sP10a, aux10), delete aux10\n");
+    printf("sP10=%p, ->strId=%s, .use_count=%d; sP10b.use_count=%d, wP10.use_count=%d; wP10a.use_count=%d, wP10b.use_count=%d\n",
+           sP10.get(), sP10->strId.c_str(), sP10.use_count(),
+           sP10b.use_count(),
+           wP10.use_count(),
+           wP10a.use_count(),
+           wP10b.use_count());
+
+    //delete instance
+    aux10 = new std::shared_ptr<Resource>;
+    swap(sP10b, *aux10);
+    delete aux10;
+    printf("swap(sP10b, aux10), delete aux10\n");
+    printf("sP10=%p, ->strId=%s, .use_count=%d; sP10b.use_count=%d, wP10.use_count=%d; wP10a.use_count=%d, wP10b.use_count=%d\n",
+           sP10.get(), sP10->strId.c_str(), sP10.use_count(),
+           sP10b.use_count(),
+           wP10.use_count(),
+           wP10a.use_count(),
+           wP10b.use_count());
+
+
+    //delete last instance
+    aux10 = new std::shared_ptr<Resource>;
+    swap(sP10, *aux10);
+    delete aux10;
+    printf("swap(sP10b, aux10), delete aux10\n");
+    printf("sP10=%p, .use_count=%d; sP10b.use_count=%d, wP10.use_count=%d; wP10a.use_count=%d, wP10b.use_count=%d\n",
+           sP10.get(), sP10.use_count(),
+           sP10b.use_count(),
+           wP10.use_count(),
+           wP10a.use_count(),
+           wP10b.use_count());
+
+    printf("\n\nmain()-exit\n\n");
+    return 0;
 }
