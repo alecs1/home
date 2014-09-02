@@ -9,6 +9,7 @@ add_executable(shared_ptr shared_ptr.cpp)
 add_executable(perfect-forwarding perfect-forwarding.cpp)
 add_executable(lambda lambda.cpp)
 add_executable(lambda-complex lambda-complex.cpp)
-add_executable(decltype-retvalsyntax decltype-retvalsyntax.cpp) 
+add_executable(decltype-retvalsyntax decltype-retvalsyntax.cpp)
+add_executable(unique_ptr unique_ptr.cpp) 
 
 
