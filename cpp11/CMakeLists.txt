@@ -3,6 +3,8 @@ project (cpp11)
 
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+add_subdirectory(boost)
+
 add_executable(map map.cpp)
 add_executable(features features.cpp)
 add_executable(shared_ptr shared_ptr.cpp)
