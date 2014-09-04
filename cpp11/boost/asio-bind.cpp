@@ -32,14 +32,10 @@ auto strDate = []() {
         return ss.str();
 };
 
-//TODO - use bind to assign parameters
 auto fPrint = [] (std::string const & str) { printf("%s\n", str.c_str()); };
 void fPrint4(const boost::system::error_code& /*e*/) {
     fPrint(std::string("fPrint4 - ") + strDate());
 }
-
-//TODO - this still cannot be used as param to async_wait()
-auto fPrint5 = [] (const boost::system::error_code& /*e*/) { fPrint(std::string("fPrint5 - ") + strDate()); };
 
 void fPrint6(const boost::system::error_code& /*e*/,
              boost::asio::deadline_timer* t, int* count)
