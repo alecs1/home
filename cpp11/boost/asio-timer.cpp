@@ -49,6 +49,7 @@ int main() {
     }
 
     std::cout << "calling io.run() - " << strDate() << "\n";
+    io.reset();
     io.run();
     std::cout << "after io.run() - " << strDate() << "\n\n\n";
 

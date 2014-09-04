@@ -9,3 +9,6 @@ target_link_libraries(asio-timer boost_system)
 
 add_executable(asio-bind asio-bind.cpp)
 target_link_libraries(asio-bind boost_system)
+
+add_executable(bind bind.cpp)
+target_link_libraries(bind boost_system)
