@@ -6,3 +6,6 @@ SET (CMAKE_VERBOSE_MAKEFILE ON)
 
 add_executable(asio-timer asio-timer.cpp)
 target_link_libraries(asio-timer boost_system)
+
+add_executable(asio-bind asio-bind.cpp)
+target_link_libraries(asio-bind boost_system)

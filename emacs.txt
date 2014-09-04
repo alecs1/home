@@ -74,6 +74,8 @@ M-;	-
 Selection:
 C-<SPC> - set mark (start of selection)
 C-x C-x	- interchange mark and point
+C-x h   - select all (region contain entire buffer)
+M-h     - select current paragraph
 
 
 Start terminals:
@@ -99,7 +101,7 @@ M-x column-number-mode  - show column number in the bar
 M-x line-number-mode    - display line number in the mode line
 
 Packages to install:
-emacs-goodies-el - for session
+emacs-goodies-el - for session (Debian)
 
 Other features:
 M-x semantic-mode       - emacs will start parsing the files
@@ -107,6 +109,7 @@ M-x semantic-mode       - emacs will start parsing the files
 
 Links:
 http://www.emacswiki.org/emacs/IncrementalSearch
+https://www.gnu.org/software/emacs/tour/
 
 Definitions:
 point	- the place where insertion and deletion occurs
