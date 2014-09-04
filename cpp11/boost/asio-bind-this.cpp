@@ -36,10 +36,15 @@ public:
             return;
 
         std::cout << __func__ << ", m_count=" << m_count << " - " << strDate() << "\n";
+
+        m_count += 1;
+        m_timer.expires_at( m_timer.expires_at() + boost::posix_time::seconds(1) );
+        m_timer.async_wait(boost::bind(&MyClass::print, this));
+        //m_timer.async_wait(boost::bind(&My
     }
     
     /*
-    apparently no lambda function here :)
+    apparently no lambda function allowed here :)
     auto print2 = [] (std::string anotherStr) {
         std::cout << __func__ << " " << anotherStr << " " << m_count << " - "  << strDate() << "\n";
     };

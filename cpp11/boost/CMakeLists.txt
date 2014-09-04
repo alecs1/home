@@ -15,3 +15,6 @@ target_link_libraries(asio-bind-this boost_system)
 
 add_executable(bind bind.cpp)
 target_link_libraries(bind boost_system)
+
+add_executable(thread thread.cpp)
+target_link_libraries(thread boost_system)
