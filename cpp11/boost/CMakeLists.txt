@@ -17,4 +17,7 @@ add_executable(bind bind.cpp)
 target_link_libraries(bind boost_system)
 
 add_executable(thread thread.cpp)
-target_link_libraries(thread boost_system)
+target_link_libraries(thread boost_system boost_thread)
+
+add_executable(sync-tcp-dt-client sync-tcp-dt-client.cpp)
+target_link_libraries(sync-tcp-dt-client boost_system)
