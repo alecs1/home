@@ -24,3 +24,6 @@ target_link_libraries(sync-tcp-dt-client boost_system)
 
 add_executable(sync-tcp-dt-server sync-tcp-dt-server.cpp)
 target_link_libraries(sync-tcp-dt-server boost_system)
+
+add_executable(async-tcp-dt-server async-tcp-dt-server.cpp)
+target_link_libraries(async-tcp-dt-server boost_system)
