@@ -4,7 +4,13 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
+
+#include <thread>
+#include <chrono>
+
 std::string make_daytime_string() {
+    //pretend that this takes a lot of time, so we can't really serve requests efficiently
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     time_t now = time(0);
     return ctime(&now);
 }
