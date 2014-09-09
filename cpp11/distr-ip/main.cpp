@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <memory>
 
-//using namespace std;
+#include <boost/asio.hpp>
+
 
 int PORT = 8123;
 
@@ -27,8 +29,17 @@ struct WorkBatchDef {
 };
 
 struct ConnDef {
-    boost::asio::op::tcp::socket sock;
+public:
+    ConnDef(/*boost::asio::ip::tcp::socket* aSock*/) :
+        sock(new boost::asio::ip::tcp::socket)
+    { }
+
+    std::shared_ptr<boost::asio::ip::tcp::socket> sock;
 };
+
+void acceptConn(std::shared_ptr<ConnDef> conn, const boost::system::error_code& error /*, WorkBatchDef */) {
+
+}
 
 
 void mainLoop() {
@@ -42,7 +53,9 @@ void mainLoop() {
     bool stop = false;
 
     while (!stop) {
-        
+        std::shared_ptr<ConnDef> newConn(new ConnDef);
+        acceptor.async_accept(newConn->sock,
+                              boost::bind(&acceptConn, newConn, boost::asio::placeholders::error));
     }
 }
 
