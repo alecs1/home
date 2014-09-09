@@ -19,11 +19,18 @@ target_link_libraries(bind boost_system)
 add_executable(thread thread.cpp)
 target_link_libraries(thread boost_system boost_thread)
 
+
+#paired time client/server
 add_executable(sync-tcp-dt-client sync-tcp-dt-client.cpp)
 target_link_libraries(sync-tcp-dt-client boost_system)
 
 add_executable(sync-tcp-dt-server sync-tcp-dt-server.cpp)
 target_link_libraries(sync-tcp-dt-server boost_system)
 
-add_executable(async-tcp-dt-server async-tcp-dt-server.cpp)
-target_link_libraries(async-tcp-dt-server boost_system boost_thread)
+
+#paired echo client/server
+add_executable(echo-server-stackful-coroutines echo-server-stackful-coroutines.cpp)
+target_link_libraries(echo-server-stackful-coroutines boost_system boost_coroutine boost_thread) 
+
+add_executable(echo-client-tcp-blocking echo-client-tcp-blocking.cpp)
+target_link_libraries(echo-client-tcp-blocking boost_system) 
