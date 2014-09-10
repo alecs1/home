@@ -7,7 +7,10 @@
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
 
-int PORT = 8123;
+#include <stdio.h>
+
+#include "defines.h"
+
 
 auto hourThreadFunc = [] () {
     return std::string("do implement\n");
@@ -58,7 +61,12 @@ public:
 //never yelds, holds the statefull connection details
 void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
     std::cout << hourThreadFunc() << "\n";
-
+    std::cout << __func__ << "\n";
+    
+    boost::system::error_code ignoredError;
+    boost::asio::write(conn->sock, boost::asio::buffer("hello!-this is server!"),
+                       boost::asio::transfer_all(), ignoredError);
+    std::cout << "done write()\n";
 }
 
 void acceptConn(std::shared_ptr<ConnDef> conn,
@@ -74,6 +82,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
 
 
 void mainLoop() {
+    printf("%s()\n", __func__);
     //read work definition
     std::vector<TaskDef> allWork;
 
@@ -101,7 +110,8 @@ void mainLoop() {
                               boost::bind(&acceptConn, newConn, newWork, boost::asio::placeholders::error));
     }
 
-        pool.join_all();
+    pool.join_all();
+    printf("%s()-done\n", __func__);
 }
 
 int main()
