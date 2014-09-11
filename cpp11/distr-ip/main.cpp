@@ -1,6 +1,10 @@
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <memory>
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 #include <boost/asio.hpp>
 //#include <boost/asio/spawn.hpp>
@@ -9,24 +13,32 @@
 
 #include <stdio.h>
 
-#include "defines.h"
+#include "global_defines.h"
+#include "definitions.h"
 
 
-auto hourThreadFunc = [] () {
-    return std::string("do implement\n");
+auto hourAndThread = [] () {
+    auto now = std::chrono::system_clock::now();
+    //auto tt = std::chrono::system_clock::to_time_t(now);
+    //auto lt = 
+    //char fTime[100];
+    //std::strftime(fTime, 100, "%H:%M:%S", &tt);
+    std::stringstream ss;
+    ss << std::this_thread::get_id();
+    return ss.str();
 };
 
-
-//no kernel since that requires serialisation
-enum class OpDef {
-    BW,
-    Sharpen,
-    Smoothen
+auto printFuncInfo = [] (const char* func) {
+    std::stringstream ss;
+    ss << hourAndThread();
+    ss << " " << func;
+    std::cout << ss.str() << "\n";
 };
+
 
 struct TaskDef {
     std::string filePath;
-    OpDef op;
+    OpType op;
     bool done; //done when the output file is confirmed to be written
 };
 
@@ -57,22 +69,33 @@ public:
     boost::asio::ip::tcp::socket sock;
 };
 
+struct MainLoopState {
+    std::atomic<int> acceptSlots;
+};
+
 
 //never yelds, holds the statefull connection details
 void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
-    std::cout << hourThreadFunc() << "\n";
-    std::cout << __func__ << "\n";
+    //std::cout << __func__ << "\n";
     
-    boost::system::error_code ignoredError;
+    boost::system::error_code err;
     boost::asio::write(conn->sock, boost::asio::buffer("hello!-this is server!"),
-                       boost::asio::transfer_all(), ignoredError);
+                       boost::asio::transfer_all(), err);
     std::cout << "done write()\n";
+
+    std::array<char, 10000> buf;
+    size_t len = conn->sock.read_some(boost::asio::buffer(buf), err);
+    std::cout.write(buf.data(), len);
 }
 
 void acceptConn(std::shared_ptr<ConnDef> conn,
                 std::shared_ptr<WorkBatchDef> work,
+                MainLoopState& mlState,
                 const boost::system::error_code& err)
 {
+    printFuncInfo(__func__);
+    mlState.acceptSlots--;
+    std::cout << "accept slots: " << mlState.acceptSlots << "\n";
     if (!err) {
         //check stuff, then start
         work->io_service.post(boost::bind(&workerLoop, conn, work));
@@ -82,7 +105,8 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
 
 
 void mainLoop() {
-    printf("%s()\n", __func__);
+    printFuncInfo(__func__);
+
     //read work definition
     std::vector<TaskDef> allWork;
 
@@ -99,24 +123,39 @@ void mainLoop() {
     boost::asio::ip::tcp::acceptor acceptor(io_service,
                                             boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT));
 
+    MainLoopState mlState;
+    mlState.acceptSlots = 0;
     bool stop = false;
-
+    int loopCount = 0;
     while (!stop) {
         //compute work batch
-        std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, 0, 0, allWork));
-
-        std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
-        acceptor.async_accept(newConn->sock,
-                              boost::bind(&acceptConn, newConn, newWork, boost::asio::placeholders::error));
+        if (mlState.acceptSlots < 1) {
+            std::cout << "accept slots: " << mlState.acceptSlots << "\n";
+            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, 0, 0, allWork));
+            std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
+            acceptor.async_accept(newConn->sock,
+                                  boost::bind(&acceptConn,
+                                              newConn,
+                                              newWork,
+                                              boost::ref(mlState),
+                                              boost::asio::placeholders::error));
+            mlState.acceptSlots++;
+        }
+        loopCount += 1;
+        printf("%s - %d\n", __func__, loopCount);
+        //sleep to make debugging easier
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     pool.join_all();
-    printf("%s()-done\n", __func__);
+
+
+    printFuncInfo(__func__);
 }
 
 int main()
 {
-    std::cout << "Hello World!" << "\n";
+    printFuncInfo(__func__);
     mainLoop();
     return 0;
 }

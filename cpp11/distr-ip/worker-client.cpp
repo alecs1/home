@@ -3,7 +3,7 @@
 
 #include <boost/asio.hpp>
 
-#include "defines.h"
+#include "global_defines.h"
 
 #define SRV "10.58.10.224"
 
@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     boost::asio::ip::tcp::socket sock(ioServ);
     sock.connect(endPoint);
 
+    int loopCount = 0;
     bool stop = false();
     while (!stop) {
         std::array<char, 10000> buf;
@@ -44,6 +45,12 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout.write(buf.data(), len);
+
+        boost::asio::write(sock, boost::asio::buffer("hello!-this is client!"),
+                       boost::asio::transfer_all(), err);
+
+        loopCount+=1;
+        printf("%s - %d\n", __func__, loopCount);
     }
     return 0;
 }
