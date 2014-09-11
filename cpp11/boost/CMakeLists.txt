@@ -34,3 +34,8 @@ target_link_libraries(echo-server-stackful-coroutines boost_system boost_corouti
 
 add_executable(echo-client-tcp-blocking echo-client-tcp-blocking.cpp)
 target_link_libraries(echo-client-tcp-blocking boost_system) 
+
+
+#filesystem
+add_executable(file-size file-size.cpp)
+target_link_libraries(file-size boost_system boost_filesystem)
