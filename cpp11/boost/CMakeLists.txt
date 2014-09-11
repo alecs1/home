@@ -39,3 +39,10 @@ target_link_libraries(echo-client-tcp-blocking boost_system)
 #filesystem
 add_executable(file-size file-size.cpp)
 target_link_libraries(file-size boost_system boost_filesystem)
+
+add_executable(file-exist-type file-exist-type.cpp)
+target_link_libraries(file-exist-type boost_system boost_filesystem)
+
+add_executable(dir-iteration dir-iteration.cpp)
+target_link_libraries(dir-iteration boost_system boost_filesystem)
+
