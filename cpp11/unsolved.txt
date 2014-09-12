@@ -1,0 +1,17 @@
+1. 
+http://codequality.gameloft.org//celeven.html
+"also if you had many overloads combinations of const/non-const reference, you would have to provide overloads for all." - don't understand why we'd need const/non-const reference combinations. 
+Relevant code in perfect-forwarding.cpp
+    std::shared_ptr<Resource> sp0 = factory<Resource>(ResArg("R0"));
+    printf("temporary - done\n\n");
+
+
+    //return by value
+    std::shared_ptr<Resource> sp1 = factory<Resource>(DefaultResArg());
+    printf("return by value function - done\n\n");
+
+    //lvalue
+    ResArg rA2("R2");
+    std::shared_ptr<Resource> sp2 = factory<Resource>(rA2); //one ResArg copy constructor here
+    printf("lvalue - done\n\n");
+    
