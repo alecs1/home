@@ -145,10 +145,10 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
 
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
-        std::ifstream fileSIn(work->work.at(crtWork).filePath,
-            std::ifstream::in | std::ios::binary);
+        std::ifstream fileSIn(taskDef.filePath, std::ifstream::in | std::ios::binary);
 
         uint64_t totalWrote = 0;
+        uint64_t wrote = 0;
         uint64_t bytes = 0;
         while (1) {
             if (fileSIn.eof() == false) {
@@ -159,16 +159,20 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
                     std::cout << "ifstream.read() error\n";
                 }
 
-                totalWrote += boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
+                wrote = boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
+                totalWrote += wrote;
                 if (err) {
                     std::cout << "boost::asio::write() error\n";
                 }
-                if (totalWrote != def.dataSize) {
-                    std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
+                if (wrote != bytes) {
+                    std::cout << "wrote=" << wrote << ", expected=" << bytes << "\n";
                 }
             }
             else
                 break;
+        }
+        if (totalWrote != def.dataSize) {
+            std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
         }
 
     }

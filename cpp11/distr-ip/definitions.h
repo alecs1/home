@@ -44,6 +44,10 @@ struct ClientWorkDef {
 
         if (pos != S_HEADER_CLIENTWORKDEF)
             std::cout << "Error deserialising" << pos << ", " << S_HEADER_CLIENTWORKDEF << "\n";
+
+        if (strcmp("CLIENTWORKDEF", firstBytes) != 0)
+            std::cout << "Error deserialising, got wrong header signature:" << firstBytes << "\n";
+
         std::cout << "ClientWorkDef " << firstBytes << ", " << (uint8_t)op << ", " << (uint8_t)transmit << ", "
             << (uint8_t)compression << ", " << w << ", " << h << ", " << dataSize << "\n";
     }
