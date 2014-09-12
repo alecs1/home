@@ -128,6 +128,9 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     while (!stop) {
         TaskDef taskDef = work->work.at(crtWork);
         crtWork += 1;
+        if (crtWork > work->rangeEnd)
+            stop = true;
+
         ClientWorkDef def;
         def.op = taskDef.op;
         def.transmit = TransmitType::FullFile;

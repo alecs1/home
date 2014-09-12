@@ -74,12 +74,9 @@ int main(int argc, char* argv[]) {
             std::cout << "Read " << readBytes << ", remaining " << def.dataSize - readBytes << "\n";
         }
 
-        //size_t len = boo
-
-
 
         //don't read further for now.
-        //std::this_thread::sleep_for(std::chrono::seconds(20));
+        //std::this_thread::sleep_for(std::chrono::seconds(10));
         loopCount += 1;
         printf("%s - %d\n", __func__, loopCount);
     }
