@@ -1,3 +1,4 @@
+#include <cstring>
 
 //#include "stdafx.h"
 #include "TGA.h"
@@ -168,6 +169,63 @@ char * LoadTGA( const char * szFileName, int * width, int * height, int * bpp )
         break;
     case IT_COMPRESSED:
         LoadCompressedImage( pOutBuffer, pBuffer, &header );
+        break;
+    }
+
+    delete[] pBuffer;
+
+    return pOutBuffer;
+}
+
+
+char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * height, int * bpp)
+{
+
+    //FILE * f = fopen(szFileName, "rb");
+
+    //if (f == NULL)
+    //    return NULL;
+    uint64_t pos = 0;
+
+    TGA_HEADER header;
+    //fread(&header, sizeof(header), 1, f);
+    memcpy(&header, data + pos, sizeof(header)); pos += sizeof(header);
+
+    //fseek(f, 0, SEEK_END);
+    int fileLen = size;
+    //fseek(f, sizeof(header) + header.identsize, SEEK_SET);
+    pos = sizeof(header) + header.identsize;
+
+    if (header.imagetype != IT_COMPRESSED && header.imagetype != IT_UNCOMPRESSED)
+    {
+        //fclose(f);
+        return NULL;
+    }
+
+    if (header.bits != 24 && header.bits != 32)
+    {
+        //fclose(f);
+        return NULL;
+    }
+
+    int bufferSize = fileLen - sizeof(header) - header.identsize;
+    char * pBuffer = new char[bufferSize];
+    //fread(pBuffer, 1, bufferSize, f);
+    //fclose(f);
+    memcpy(pBuffer, data + pos, bufferSize);
+
+    *width = header.width;
+    *height = header.height;
+    *bpp = header.bits;
+    char * pOutBuffer = new char[header.width * header.height * header.bits / 8];
+
+    switch (header.imagetype)
+    {
+    case IT_UNCOMPRESSED:
+        LoadUncompressedImage(pOutBuffer, pBuffer, &header);
+        break;
+    case IT_COMPRESSED:
+        LoadCompressedImage(pOutBuffer, pBuffer, &header);
         break;
     }
 

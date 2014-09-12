@@ -111,6 +111,8 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     //std::cout << __func__ << "\n";
     
     boost::system::error_code err;
+    
+    /*
     boost::asio::write(conn->sock, boost::asio::buffer("hello!-this is server!"),
                        boost::asio::transfer_all(), err);
     std::cout << "done write()\n";
@@ -118,12 +120,14 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     std::array<char, 10000> buf;
     size_t len = conn->sock.read_some(boost::asio::buffer(buf), err);
     std::cout.write(buf.data(), len);
+    */
 
     bool stop = false;
     
     int crtWork = work->rangeStart;
     while (!stop) {
         TaskDef taskDef = work->work.at(crtWork);
+        crtWork += 1;
         ClientWorkDef def;
         def.op = taskDef.op;
         def.transmit = TransmitType::FullFile;
@@ -132,22 +136,35 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
         def.h = 0;
         def.dataSize = boost::filesystem::file_size(taskDef.filePath);
 
+        std::cout << "sending file: " << taskDef.filePath << " of size " << def.dataSize << "\n";
+
+        std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
+        def.serialise(headerBuf.data());
+
+        boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
+
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
         std::ifstream fileSIn(work->work.at(crtWork).filePath,
             std::ifstream::in | std::ios::binary);
 
+        uint64_t totalWrote = 0;
+        uint64_t bytes = 0;
         while (1) {
             if (fileSIn.eof() == false) {
                 fileSIn.read(buf.data(), buf.size());
-                if (fileSIn.gcount() <= 0) {
+                bytes = fileSIn.gcount();
+                if (bytes <= 0) {
                     //read error
                     std::cout << "ifstream.read() error\n";
                 }
-                boost::asio::write(conn->sock, boost::asio::buffer(buf),
-                    err);
+
+                totalWrote += boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
                 if (err) {
                     std::cout << "boost::asio::write() error\n";
+                }
+                if (totalWrote != def.dataSize) {
+                    std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
                 }
             }
             else
@@ -212,7 +229,7 @@ void mainLoop() {
             mlState.acceptSlots++;
         }
         loopCount += 1;
-        printf("%s - %d\n", __func__, loopCount);
+        //printf("%s - %d\n", __func__, loopCount);
         //sleep to make debugging easier
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
