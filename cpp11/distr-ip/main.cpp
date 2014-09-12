@@ -118,6 +118,43 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     std::array<char, 10000> buf;
     size_t len = conn->sock.read_some(boost::asio::buffer(buf), err);
     std::cout.write(buf.data(), len);
+
+    bool stop = false;
+    
+    int crtWork = work->rangeStart;
+    while (!stop) {
+        TaskDef taskDef = work->work.at(crtWork);
+        ClientWorkDef def;
+        def.op = taskDef.op;
+        def.transmit = TransmitType::FullFile;
+        def.compression = CompressionType::None;
+        def.w = 0;
+        def.h = 0;
+        def.dataSize = boost::filesystem::file_size(taskDef.filePath);
+
+        const int bufSize = 10000;
+        std::array<char, bufSize> buf;
+        std::ifstream fileSIn(work->work.at(crtWork).filePath,
+            std::ifstream::in | std::ios::binary);
+
+        while (1) {
+            if (fileSIn.eof() == false) {
+                fileSIn.read(buf.data(), buf.size());
+                if (fileSIn.gcount() <= 0) {
+                    //read error
+                    std::cout << "ifstream.read() error\n";
+                }
+                boost::asio::write(conn->sock, boost::asio::buffer(buf),
+                    err);
+                if (err) {
+                    std::cout << "boost::asio::write() error\n";
+                }
+            }
+            else
+                break;
+        }
+
+    }
 }
 
 void acceptConn(std::shared_ptr<ConnDef> conn,

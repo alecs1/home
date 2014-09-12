@@ -27,6 +27,9 @@ enum class CompressionType : uint8_t {
 
 //TODO - try to use a bit less direct memory access
 struct ClientWorkDef {
+    ClientWorkDef() {
+    }
+
     ClientWorkDef(uint8_t* header) {
         uint32_t pos = 0;
         memcpy(&op, header+pos, S_OP); pos += S_OP;
@@ -51,5 +54,5 @@ struct ClientWorkDef {
     TransmitType transmit;
     CompressionType compression;
     uint32_t w, h; //0 and irelevant if TransmitType is FullFile
-    uint32_t dataSize; //4 Gib max file size
+    uint64_t dataSize; //4 Gib max file size
 };
