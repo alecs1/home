@@ -14,12 +14,16 @@ set (CMAKE_SHARED_LINKER_FLAGS " /machine:X64 ")
 
 add_library(tgafunctions SHARED TGA.cpp TGA.h)
 
-add_executable(distr-ip main.cpp global_defines.h)
+add_executable(distr-ip main.cpp global_defines.h definitions.h)
 target_link_libraries(distr-ip tgafunctions)
 
-add_executable(worker-client worker-client.cpp global_defines.h)
+add_executable(worker-client worker-client.cpp global_defines.h definitions.h)
 target_link_libraries(worker-client tgafunctions)
 
+
+
+#a couple of test programs
 add_executable(example-server example-server.cpp)
 add_executable(example-server2 example-server2.cpp)
-
+add_executable(fs-ops fs-ops.cpp)
+#target_link_libraries(fs-ops boost_system boos_filesystem)

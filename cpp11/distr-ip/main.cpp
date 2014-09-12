@@ -11,6 +11,9 @@
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
 
+#define BOOST_FILESYSTEM_NO_DEPRECATED
+#include <boost/filesystem.hpp>
+
 #include <stdio.h>
 
 #include "global_defines.h"
@@ -37,6 +40,10 @@ auto printFuncInfo = [] (const char* func) {
 
 
 struct TaskDef {
+	TaskDef(std::string path, OpType operation):
+        filePath(path),
+        op(operation)
+    {}
     std::string filePath;
     OpType op;
     bool done; //done when the output file is confirmed to be written
@@ -74,6 +81,31 @@ struct MainLoopState {
 };
 
 
+void readWork(std::vector<TaskDef> &allWork) {
+    boost::filesystem::path path("D:\\tmp\\tga-in");
+
+    try {
+        if (boost::filesystem::exists(path)) {
+            for (auto iter = boost::filesystem::directory_iterator(path);
+                 iter != boost::filesystem::directory_iterator();
+                 iter++) 
+			{
+				//prone do fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
+				std::string fName = iter->path().string();
+				if ((fName.rfind(".tga") != std::string::npos)
+					|| (fName.rfind(".TGA") != std::string::npos)) {
+                    allWork.push_back(TaskDef(fName, OpType::BW));
+                    std::cout << fName << "\n";
+				}
+            }
+        }
+    }
+	catch (std::exception& ex) {
+		std::cout << ex.what() << "\n";
+	}
+
+}
+
 //never yelds, holds the statefull connection details
 void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
     //std::cout << __func__ << "\n";
@@ -109,6 +141,7 @@ void mainLoop() {
 
     //read work definition
     std::vector<TaskDef> allWork;
+    readWork(allWork);
 
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
