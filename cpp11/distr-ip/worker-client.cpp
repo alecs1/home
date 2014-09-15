@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <thread>
 
 #include <boost/asio.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 
 #include "global_defines.h"
 #include "definitions.h"
@@ -10,12 +12,66 @@
 
 #define SRV "10.58.10.224"
 
+bool startNewInstance() {
+    /*
+    BOOL WINAPI CreateProcess(
+        _In_opt_     LPCTSTR lpApplicationName,
+        _Inout_opt_  LPTSTR lpCommandLine,
+        _In_opt_     LPSECURITY_ATTRIBUTES lpProcessAttributes,
+        _In_opt_     LPSECURITY_ATTRIBUTES lpThreadAttributes,
+        _In_         BOOL bInheritHandles,
+        _In_         DWORD dwCreationFlags,
+        _In_opt_     LPVOID lpEnvironment,
+        _In_opt_     LPCTSTR lpCurrentDirectory,
+        _In_         LPSTARTUPINFO lpStartupInfo,
+        _Out_        LPPROCESS_INFORMATION lpProcessInformation
+        );
+    */
+    STARTUPINFO startupInfo;
+    PROCESS_INFORMATION procInfo;
+    memset(&startupInfo, 0, sizeof(startupInfo));
+    startupInfo.cb = sizeof(startupInfo);
+    memset(&procInfo, 0, sizeof(procInfo));
+    BOOL created = CreateProcess(
+        NULL, //lpApplicationName
+        ".\\worker-client.exe", //lpCommandLine
+        NULL, //lpProcessAttributes
+        NULL, //lpThreadAttributes
+        FALSE, //bInheritHandles
+        CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW | DETACHED_PROCESS, //dwCreationFlags
+        NULL, //lpEnvironment
+        NULL, //lpCurrentDirectory
+        &startupInfo, //lpStartupInfo
+        &procInfo); //lpProcessInformation
+    std::cout << "new instance is started: " << created << "\n";
+
+    if (!created) {
+        auto createError = GetLastError();
+        std::cout << "CreateProcessW error: " << createError << "\n";
+    }
+    return created;
+}
+
 
 int main(int argc, char* argv[]) {
+    boost::interprocess::permissions p;
+    p.set_unrestricted();
+    boost::interprocess::named_mutex instMaxMutex(boost::interprocess::open_or_create_t(),
+        "worker-client",
+        p);
+
+    if (instMaxMutex.try_lock()) {
+        std::ifstream fInstMax("instances-max.txt", std::ifstream::in | std::ios::binary);
+        int instMax;
+        fInstMax.seekg(0);
+        fInstMax >> instMax;
+        std::cout << __func__ << " - no. of instances to start:" << instMax << "\n";
+    }
+
+    std::fstream instCount("instances-count.txt", std::ios_base::in | std::ios_base::out | std::ios::binary);
+
 
     boost::asio::io_service ioServ;
-
-
     boost::asio::ip::tcp::endpoint endPoint;
     endPoint.address(boost::asio::ip::address::from_string(SRV));
     endPoint.port(PORT);
@@ -101,50 +157,8 @@ int main(int argc, char* argv[]) {
     }
 
     //start new instance before exiting
-    std::cout << "starting new instance\n";
-#ifdef WIN32
-    //system("worker-client.exe");
-    /*
-    BOOL WINAPI CreateProcess(
-    _In_opt_     LPCTSTR lpApplicationName,
-    _Inout_opt_  LPTSTR lpCommandLine,
-    _In_opt_     LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    _In_opt_     LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    _In_         BOOL bInheritHandles,
-    _In_         DWORD dwCreationFlags,
-    _In_opt_     LPVOID lpEnvironment,
-    _In_opt_     LPCTSTR lpCurrentDirectory,
-    _In_         LPSTARTUPINFO lpStartupInfo,
-    _Out_        LPPROCESS_INFORMATION lpProcessInformation
-    );
-    */
-    STARTUPINFO startupInfo;
-    PROCESS_INFORMATION procInfo;
-    memset(&startupInfo, 0, sizeof(startupInfo));
-    startupInfo.cb = sizeof(startupInfo);
-    memset(&procInfo, 0, sizeof(procInfo));
-    BOOL created = CreateProcess(
-        NULL, //lpApplicationName
-        ".\\worker-client.exe", //lpCommandLine
-        NULL, //lpProcessAttributes
-        NULL, //lpThreadAttributes
-        FALSE, //bInheritHandles
-        CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW | DETACHED_PROCESS, //dwCreationFlags
-        NULL, //lpEnvironment
-        NULL, //lpCurrentDirectory
-        &startupInfo, //lpStartupInfo
-        &procInfo); //lpProcessInformation
-    std::cout << "new instance is started: " << created << "\n";
-    
-    if (!created) {
-        auto createError = GetLastError();
-        std::cout << "CreateProcessW error: " << createError << "\n";
-    }
-
-    //system("start worker-client.exe");
-#else
-    //
-#endif
+    std::cout << "starting new instances\n";
+    startNewInstance();
 
 
     return 0;
