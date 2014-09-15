@@ -126,25 +126,31 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     
     int crtWork = work->rangeStart;
     while (!stop) {
-        TaskDef taskDef = work->work.at(crtWork);
-        crtWork += 1;
-        if (crtWork > work->rangeEnd)
-            stop = true;
 
         ClientWorkDef def;
-        def.op = taskDef.op;
-        def.transmit = TransmitType::FullFile;
-        def.compression = CompressionType::None;
-        def.w = 0;
-        def.h = 0;
-        def.dataSize = boost::filesystem::file_size(taskDef.filePath);
+        TaskDef taskDef("", OpType::Stop);
+        if (crtWork > work->rangeEnd) {
+            stop = true;
+        }
+        else {
+            taskDef = work->work.at(crtWork);
+            def.op = taskDef.op;
+            def.transmit = TransmitType::FullFile;
+            def.compression = CompressionType::None;
+            def.w = 0;
+            def.h = 0;
+            def.dataSize = boost::filesystem::file_size(taskDef.filePath);
 
-        std::cout << "sending file: " << taskDef.filePath << " of size " << def.dataSize << "\n";
+            std::cout << "sending file: " << taskDef.filePath << " of size " << def.dataSize << "\n";
+        }
 
         std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
         def.serialise(headerBuf.data());
 
         boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
+
+        if (stop)
+            break;
 
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
@@ -198,6 +204,7 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
         }
 
         std::cout << "Done reading reply, will start over\n";
+        crtWork += 1;
     }
     std::cout << __func__ << " - done\n\n\n";
 }

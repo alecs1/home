@@ -1,8 +1,9 @@
 //no kernel application since that requires serialisation
 enum class OpType : uint8_t {
-    BW = 0,
-    Sharpen = 1,
-    Smoothen = 2
+    Stop = 0,
+    BW = 1,
+    Sharpen = 2,
+    Smoothen = 3
 };
 
 enum class TransmitType : uint8_t  {
