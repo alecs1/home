@@ -30,9 +30,10 @@ enum class CompressionType : uint8_t {
 //TODO - try to use a bit less direct memory access
 struct ClientWorkDef {
     ClientWorkDef() {
+        reqId = 13;
     }
 
-    ClientWorkDef(/*uint8_t* */ char* header) {
+    ClientWorkDef(/*uint8_t* */ const char* header) {
         char sigBytes[S_SIG_BYTES];
         uint32_t pos = 0;
         memcpy(sigBytes, header + pos, S_SIG_BYTES); pos += S_SIG_BYTES;
@@ -45,12 +46,12 @@ struct ClientWorkDef {
         memcpy(&reqId, header + pos, S_REQ_ID); pos += S_REQ_ID;
 
         if (pos != S_HEADER_CLIENTWORKDEF)
-            std::cout << "Error deserialising" << pos << ", " << S_HEADER_CLIENTWORKDEF << "\n";
+            std::cout << __func__ << " - error deserialising" << pos << ", " << S_HEADER_CLIENTWORKDEF << "\n";
 
         if (strcmp("CLIENTWORKDEF", sigBytes) != 0)
-            std::cout << "Error deserialising, got wrong header signature:" << sigBytes << "\n";
+            std::cout << __func__ << "- error deserialising, got wrong header signature:" << sigBytes << "\n";
 
-        std::cout << "ClientWorkDef " << sigBytes << ", " << (uint8_t)op << ", " << (uint8_t)transmit << ", "
+        std::cout << "ClientWorkDef: " << sigBytes << ", " << (uint8_t)op << ", " << (uint8_t)transmit << ", "
             << (uint8_t)compression << ", " << w << ", " << h << ", " << dataSize << ", " << reqId << "\n";
     }
 
@@ -81,8 +82,47 @@ struct ClientWorkDef {
     uint64_t reqId;
 };
 
+
+#define S_HEADER_SERVERREQDEF (S_SIG_BYTES + S_COMPRESSION + S_DATASIZE + S_REQ_ID)
 struct ServerReqDef {
     CompressionType compression;
     uint64_t dataSize;
     uint64_t reqId;
+
+    ServerReqDef() {
+    }
+    
+    ServerReqDef(const char* header) {
+        char sigBytes[S_SIG_BYTES];
+        uint32_t pos = 0;
+        memcpy(sigBytes, header + pos, S_SIG_BYTES); pos += S_SIG_BYTES;
+        memcpy(&compression, header + pos, S_SIG_BYTES); pos += S_COMPRESSION;
+        memcpy(&dataSize, header + pos, S_DATASIZE); pos += S_DATASIZE;
+        memcpy(&reqId, header + pos, S_REQ_ID); pos += S_REQ_ID;
+
+        if (pos != S_HEADER_SERVERREQDEF)
+            std::cout << __func__ << " - error deserialising" << pos << ", " << S_HEADER_SERVERREQDEF << "\n";
+
+        if (strcmp("SERVERREQDEF", sigBytes) != 0)
+            std::cout << __func__ << " - error deserialising, got wrong header signature:" << sigBytes << "\n";
+
+        std::cout << "ServerReqDef: " << sigBytes << ", " << (uint8_t)compression << ", " <<
+            dataSize << ", " << reqId << "\n";
+    }
+
+    int serialise(char* header) {
+        uint32_t pos = 0;
+        char sigBytes[] = "SERVERREQDEF\0";
+        memcpy(header + pos, sigBytes, S_SIG_BYTES); pos += S_SIG_BYTES;
+        memcpy(header + pos, &compression, S_COMPRESSION); pos += S_COMPRESSION;
+        memcpy(header + pos, &dataSize, S_DATASIZE); pos += S_DATASIZE;
+        memcpy(header + pos, &reqId, S_REQ_ID); pos += S_REQ_ID;
+
+        if (pos != S_HEADER_SERVERREQDEF)
+            std::cout << __func__ << "- error serialising" << pos << ", " << S_HEADER_SERVERREQDEF << "\n";
+
+        std::cout << "\n";
+        return 0;
+    }
+
 };

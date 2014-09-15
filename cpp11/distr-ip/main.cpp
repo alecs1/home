@@ -178,7 +178,28 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
             std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
         }
 
+        std::cout << __func__ << " - sent " << taskDef.filePath << ", " << totalWrote << " bytes\n";
+
+
+        //we're now expecting the data back
+        std::array<char, S_HEADER_SERVERREQDEF> replyHeaderBuf;
+        size_t len = boost::asio::read(conn->sock,
+            boost::asio::buffer(replyHeaderBuf, replyHeaderBuf.size()));
+
+        if (len != S_HEADER_SERVERREQDEF) {
+            std::cout << "Error reading header\n";
+        }
+        ServerReqDef reply(replyHeaderBuf.data());
+        std::shared_ptr<char> pImgData = std::shared_ptr<char>(new char[reply.dataSize]);
+        uint64_t readBytes = 0;
+        while (readBytes < reply.dataSize) {
+            readBytes += conn->sock.read_some(boost::asio::buffer(pImgData.get() + readBytes, reply.dataSize - readBytes));
+            std::cout << "Read " << readBytes << ", remaining " << reply.dataSize - readBytes << "\n";
+        }
+
+        std::cout << "Done reading reply, will start over\n";
     }
+    std::cout << __func__ << " - done\n\n\n";
 }
 
 void acceptConn(std::shared_ptr<ConnDef> conn,
@@ -225,7 +246,7 @@ void mainLoop() {
         //compute work batch
         if (mlState.acceptSlots < 1) {
             std::cout << "accept slots: " << mlState.acceptSlots << "\n";
-            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, 0, 0, allWork));
+            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, 0, 5, allWork));
             std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
             acceptor.async_accept(newConn->sock,
                                   boost::bind(&acceptConn,
