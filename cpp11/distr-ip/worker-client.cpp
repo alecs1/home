@@ -115,7 +115,7 @@ int manageInstances(bool increase) {
 
 int main(int argc, char* argv[]) {
 
-    manageInstances(true);
+    //manageInstances(true);
 
     int loopCount = 0;
     bool stop = false;
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
     //start new instance before exiting
     std::cout << "starting new instances\n";
     startNewInstance();
-    manageInstances(false);
+    //manageInstances(false);
 
     return 0;
 }
