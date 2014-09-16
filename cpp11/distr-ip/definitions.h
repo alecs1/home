@@ -31,7 +31,8 @@ enum class CompressionType : uint8_t {
 //TODO - try to use a bit less direct memory access
 struct ClientWorkDef {
     ClientWorkDef() {
-        reqId = 13;
+        op = OpType::Stop;
+        reqId = 0xAAA;
     }
 
     ClientWorkDef(/*uint8_t* */ const char* header) {
@@ -91,6 +92,7 @@ struct ServerReqDef {
     uint64_t reqId;
 
     ServerReqDef() {
+        reqId = 0xBBB;
     }
     
     ServerReqDef(const char* header) {

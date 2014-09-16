@@ -40,11 +40,21 @@ auto printFuncInfo = [] (const char* func) {
 
 
 struct TaskDef {
-	TaskDef(std::string path, OpType operation):
-        filePath(path),
+	TaskDef(std::string dPath, std::string fName, std::string oPath, OpType operation):
+        dir(dPath),
+        fileName(fName),
+        outDir(oPath),
         op(operation)
     {}
-    std::string filePath;
+    std::string filePath() {
+        return dir + "/" + fileName;
+    }
+    std::string outFilePath() {
+        return outDir + "/" + fileName;
+    }
+    std::string dir;
+    std::string fileName;
+    std::string outDir;
     OpType op;
     bool done; //done when the output file is confirmed to be written
 };
@@ -82,6 +92,7 @@ struct MainLoopState {
 
 
 void readWork(std::vector<TaskDef> &allWork) {
+    std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
 
     try {
@@ -91,10 +102,11 @@ void readWork(std::vector<TaskDef> &allWork) {
                  iter++) 
 			{
 				//prone do fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
-				std::string fName = iter->path().string();
+				std::string fName = iter->path().filename().string();
+                std::string dName = path.string();
 				if ((fName.rfind(".tga") != std::string::npos)
 					|| (fName.rfind(".TGA") != std::string::npos)) {
-                    allWork.push_back(TaskDef(fName, OpType::BW));
+                    allWork.push_back(TaskDef(dName, fName, outDir, OpType::BW));
                     std::cout << fName << "\n";
 				}
             }
@@ -106,47 +118,43 @@ void readWork(std::vector<TaskDef> &allWork) {
 
 }
 
-//never yelds, holds the statefull connection details
+//does not yeld until exit, holds the state of the current communication
 void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
     //std::cout << __func__ << "\n";
     
     boost::system::error_code err;
     
-    /*
-    boost::asio::write(conn->sock, boost::asio::buffer("hello!-this is server!"),
-                       boost::asio::transfer_all(), err);
-    std::cout << "done write()\n";
-
-    std::array<char, 10000> buf;
-    size_t len = conn->sock.read_some(boost::asio::buffer(buf), err);
-    std::cout.write(buf.data(), len);
-    */
-
-    bool stop = false;
+    //bool stop = false;
     
     int crtWork = work->rangeStart;
-    while (!stop) {
+    while (true) {
+
+
+        //TaskDef taskDef("", "", "", OpType::Stop);
+        if (crtWork > work->rangeEnd) {
+            ClientWorkDef def;
+            def.op = OpType::Stop;
+            //stop = true;
+            std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
+            def.serialise(headerBuf.data());
+            boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
+            break;
+        }
 
         ClientWorkDef def;
-        TaskDef taskDef("", OpType::Stop);
-        if (crtWork > work->rangeEnd) {
-            stop = true;
-        }
-        else {
-            taskDef = work->work.at(crtWork);
-            def.op = taskDef.op;
-            def.transmit = TransmitType::FullFile;
-            def.compression = CompressionType::None;
-            def.w = 0;
-            def.h = 0;
-            def.dataSize = boost::filesystem::file_size(taskDef.filePath);
+        TaskDef& taskDef = work->work.at(crtWork);
+        def.reqId = crtWork;
+        def.op = taskDef.op;
+        def.transmit = TransmitType::FullFile;
+        def.compression = CompressionType::None;
+        def.w = 0;
+        def.h = 0;
+        def.dataSize = boost::filesystem::file_size(taskDef.filePath());
+        std::cout << "sending file: " << filePath << " of size " << def.dataSize << "\n";
 
-            std::cout << "sending file: " << taskDef.filePath << " of size " << def.dataSize << "\n";
-        }
 
         std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
         def.serialise(headerBuf.data());
-
         boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
 
         if (stop)
@@ -154,7 +162,7 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
 
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
-        std::ifstream fileSIn(taskDef.filePath, std::ifstream::in | std::ios::binary);
+        std::ifstream fileSIn(taskDef.filePath(), std::ifstream::in | std::ios::binary);
 
         uint64_t totalWrote = 0;
         uint64_t wrote = 0;
@@ -164,17 +172,16 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
                 fileSIn.read(buf.data(), buf.size());
                 bytes = fileSIn.gcount();
                 if (bytes <= 0) {
-                    //read error
-                    std::cout << "ifstream.read() error\n";
+                    std::cout << __func__ << " - std::ifstream::read() error\n";
                 }
 
                 wrote = boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
                 totalWrote += wrote;
                 if (err) {
-                    std::cout << "boost::asio::write() error\n";
+                    std::cout << __func__ << " - boost::asio::write() error\n";
                 }
                 if (wrote != bytes) {
-                    std::cout << "wrote=" << wrote << ", expected=" << bytes << "\n";
+                    std::cout << __func__ << " - wrote=" << wrote << ", expected=" << bytes << "\n";
                 }
             }
             else
@@ -184,7 +191,7 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
             std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
         }
 
-        std::cout << __func__ << " - sent " << taskDef.filePath << ", " << totalWrote << " bytes\n";
+        std::cout << __func__ << " - sent " << taskDef.filePath() << ", " << totalWrote << " bytes\n";
 
 
         //we're now expecting the data back
@@ -202,6 +209,10 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
             readBytes += conn->sock.read_some(boost::asio::buffer(pImgData.get() + readBytes, reply.dataSize - readBytes));
             std::cout << "Read " << readBytes << ", remaining " << reply.dataSize - readBytes << "\n";
         }
+
+        //write down the file
+
+        //std::fstream
 
         std::cout << "Done reading reply, will start over\n";
         crtWork += 1;

@@ -34,7 +34,7 @@ bool startNewInstance() {
     memset(&procInfo, 0, sizeof(procInfo));
     BOOL created = CreateProcess(
         NULL, //lpApplicationName
-        ".\\worker-client.exe", //lpCommandLine
+        "worker-client.exe", //lpCommandLine
         NULL, //lpProcessAttributes
         NULL, //lpThreadAttributes
         FALSE, //bInheritHandles
@@ -52,36 +52,82 @@ bool startNewInstance() {
     return created;
 }
 
+//increase: true-new instance is starting, false-instance is finishing
+int manageInstances(bool increase) {
+    std::cout << __func__ << " - start\n";
 
-int main(int argc, char* argv[]) {
+    int instCount = 1;
     boost::interprocess::permissions p;
     p.set_unrestricted();
-    boost::interprocess::named_mutex instMaxMutex(boost::interprocess::open_or_create_t(),
-        "worker-client",
+
+    //these mutex resources remain aquired if unlock is not run.
+    boost::interprocess::named_mutex instMutex(boost::interprocess::open_or_create,
+        "worker-client2",
         p);
 
-    if (instMaxMutex.try_lock()) {
-        std::ifstream fInstMax("instances-max.txt", std::ifstream::in | std::ios::binary);
+    instMutex.lock();
+    {
+        std::fstream fInstCount;
+
+        fInstCount.open("D:\\instances-count.txt", std::ios::in | std::ios::binary);
+        if (fInstCount.rdstate() == std::ios::goodbit) {
+            std::cout << "D:\\instances-count.txt already exists :) \n";
+            fInstCount.seekg(0);
+            fInstCount >> instCount;
+            instCount += 1;
+            fInstCount.close();
+        }
+        else {
+            std::cout << "D:\\instances-count.txt to be created \n";
+        }
+
+        fInstCount.open("D:\\instances-count.txt", std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!increase) {
+            instCount -= 1;
+        }
+        fInstCount << instCount;
+        fInstCount.close();
+
+
+        std::ifstream fInstMax("D:\\instances-max.txt", std::ifstream::in | std::ios::binary);
         int instMax;
         fInstMax.seekg(0);
         fInstMax >> instMax;
-        std::cout << __func__ << " - no. of instances to start:" << instMax << "\n";
+        fInstMax.close();
+        std::cout << __func__ << " - no. of instances to be running in parallel:" << instMax << "\n";
+        std::cout << __func__ << " - no. of instances to start:" << instMax - instCount << "\n";
+
+        //newly created processes will wait for this function to finish
+        for ( ; instCount <= instMax; instCount++) {
+            if (startNewInstance()) {
+                std::cout << "started instance: " << instCount << "\n";
+            }
+            else {
+                std::cout << "failed to start instance: " << instCount << "\n";
+            }
+        }
     }
+    instMutex.unlock();
+    std::cout << __func__ << " - end\n";
+    return instCount;
+}
 
-    std::fstream instCount("instances-count.txt", std::ios_base::in | std::ios_base::out | std::ios::binary);
 
+int main(int argc, char* argv[]) {
 
-    boost::asio::io_service ioServ;
-    boost::asio::ip::tcp::endpoint endPoint;
-    endPoint.address(boost::asio::ip::address::from_string(SRV));
-    endPoint.port(PORT);
-    boost::asio::ip::tcp::socket sock(ioServ);
-    sock.connect(endPoint);
+    manageInstances(true);
 
     int loopCount = 0;
     bool stop = false;
 
     try {
+        boost::asio::io_service ioServ;
+        boost::asio::ip::tcp::endpoint endPoint;
+        endPoint.address(boost::asio::ip::address::from_string(SRV));
+        endPoint.port(PORT);
+        boost::asio::ip::tcp::socket sock(ioServ);
+        sock.connect(endPoint);
+
         while (!stop) {
 
             boost::system::error_code err;
@@ -159,7 +205,7 @@ int main(int argc, char* argv[]) {
     //start new instance before exiting
     std::cout << "starting new instances\n";
     startNewInstance();
-
+    manageInstances(false);
 
     return 0;
 }
