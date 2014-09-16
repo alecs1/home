@@ -7,9 +7,10 @@
 #include <chrono>
 
 #include <boost/asio.hpp>
-//#include <boost/asio/spawn.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/lockfree/queue.hpp>
+
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
@@ -59,20 +60,19 @@ struct TaskDef {
     bool done; //done when the output file is confirmed to be written
 };
 
+
 struct WorkBatchDef {
 public:
-    WorkBatchDef(boost::asio::io_service &io_s, int aRangeStart, int aRangeEnd, std::vector<TaskDef> &aWork):
+    WorkBatchDef(boost::asio::io_service &io_s, std::vector<TaskDef*> aWork, boost::lockfree::queue<TaskDef*>& aFailedQueue) :
         io_service(io_s),
-        rangeStart(aRangeStart),
-        rangeEnd(aRangeEnd),
-        work(aWork)
+        work(aWork),
+        failedQueue(aFailedQueue)
     {
     }
 public:
     boost::asio::io_service &io_service;
-    int rangeStart;
-    int rangeEnd;
-    std::vector<TaskDef> &work;
+    std::vector<TaskDef*> work;
+    boost::lockfree::queue<TaskDef*> &failedQueue;
 };
 
 struct ConnDef {
@@ -90,62 +90,52 @@ struct MainLoopState {
     std::atomic<int> acceptSlots;
 };
 
-
-void readWork(std::vector<TaskDef> &allWork) {
+void readWork2(boost::lockfree::queue<TaskDef*>& workQueue) {
     std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
 
     try {
         if (boost::filesystem::exists(path)) {
             for (auto iter = boost::filesystem::directory_iterator(path);
-                 iter != boost::filesystem::directory_iterator();
-                 iter++) 
-			{
-				//prone do fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
-				std::string fName = iter->path().filename().string();
+                iter != boost::filesystem::directory_iterator();
+                iter++)
+            {
+                //will fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
+                std::string fName = iter->path().filename().string();
                 std::string dName = path.string();
-				if ((fName.rfind(".tga") != std::string::npos)
-					|| (fName.rfind(".TGA") != std::string::npos)) {
-                    allWork.push_back(TaskDef(dName, fName, outDir, OpType::BW));
-                    std::cout << allWork.back().filePath() << "\n";
-				}
+                if ((fName.rfind(".tga") != std::string::npos)
+                    || (fName.rfind(".TGA") != std::string::npos))
+                {
+                    workQueue.push(new TaskDef(dName, fName, outDir, OpType::BW));
+                    std::cout << __func__ << fName << "\n";
+                }
             }
         }
     }
-	catch (std::exception& ex) {
-		std::cout << ex.what() << "\n";
-	}
-
+    catch (std::exception& ex) {
+        std::cout << ex.what() << "\n";
+    }
 }
 
 //does not yeld until exit, holds the state of the current communication
-void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
+void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
     //std::cout << __func__ << "\n";
-    
+
     boost::system::error_code err;
-    
-    int crtWork = work->rangeStart;
-    while (true) {
-
-        if (crtWork > work->rangeEnd) {
-            ClientWorkDef def;
-            def.op = OpType::Stop;
-            std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
-            def.serialise(headerBuf.data());
-            boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-            break;
-        }
-
+    uint32_t loopCount = 0;
+    while (work->work.size() > 0)
+    {
+        TaskDef* taskDef = work->work.back();
         ClientWorkDef def;
-        TaskDef& taskDef = work->work.at(crtWork);
-        def.reqId = crtWork;
-        def.op = taskDef.op;
+
+        def.reqId = loopCount;
+        def.op = taskDef->op;
         def.transmit = TransmitType::FullFile;
         def.compression = CompressionType::None;
         def.w = 0;
         def.h = 0;
-        def.dataSize = boost::filesystem::file_size(taskDef.filePath());
-        std::cout << "sending file: " << taskDef.filePath() << " of size " << def.dataSize << "\n";
+        def.dataSize = boost::filesystem::file_size(taskDef->filePath());
+        std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
 
 
         std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
@@ -154,7 +144,7 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
 
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
-        std::ifstream fileSIn(taskDef.filePath(), std::ifstream::in | std::ios::binary);
+        std::ifstream fileSIn(taskDef->filePath(), std::ifstream::in | std::ios::binary);
 
         uint64_t totalWrote = 0;
         uint64_t wrote = 0;
@@ -183,7 +173,7 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
             std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
         }
 
-        std::cout << __func__ << " - sent " << taskDef.filePath() << ", " << totalWrote << " bytes\n";
+        std::cout << __func__ << " - sent " << taskDef->filePath() << ", " << totalWrote << " bytes\n";
 
 
         //we're now expecting the data back
@@ -205,15 +195,33 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
         //write down the file
 
         std::fstream outStream;
-        outStream.open(taskDef.outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
+        outStream.open(taskDef->outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
         if (outStream.rdstate() == std::ios::goodbit) {
             outStream.write(pImgData.get(), reply.dataSize);
         }
         outStream.close();
+        delete taskDef;
+        work->work.pop_back();
+
+        //at this point we're done with the TaskDef, delete forever
 
         std::cout << "Done reading reply, will start over\n";
-        crtWork += 1;
+
     }
+
+    //now close the connection
+    ClientWorkDef def;
+    def.op = OpType::Stop;
+    std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
+    def.serialise(headerBuf.data());
+    boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
+
+    //whatever task was has not finished will be put back to the fail queue
+    while (work->work.size() > 0) {
+        work->failedQueue.push(work->work.back());
+        work->work.pop_back();
+    }
+
     std::cout << __func__ << " - done\n\n\n";
 }
 
@@ -227,7 +235,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
     std::cout << "accept slots: " << mlState.acceptSlots << "\n";
     if (!err) {
         //check stuff, then start
-        work->io_service.post(boost::bind(&workerLoop, conn, work));
+        work->io_service.post(boost::bind(&workerLoop2, conn, work));
     }
     
 }
@@ -237,8 +245,8 @@ void mainLoop() {
     printFuncInfo(__func__);
 
     //read work definition
-    std::vector<TaskDef> allWork;
-    readWork(allWork);
+    boost::lockfree::queue<TaskDef*> allWork2(10000);
+    readWork2(allWork2);
 
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
@@ -247,8 +255,6 @@ void mainLoop() {
     for(int i = 0; i < threadCount; i++) {
         pool.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
     }
-
-    //init acceptor and spawn one worker per new connection
 
     boost::asio::ip::tcp::acceptor acceptor(io_service,
                                             boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT));
@@ -264,23 +270,23 @@ void mainLoop() {
         //compute work batch
         if (mlState.acceptSlots < 1) {
 
-            if (rangeStart >= allWork.size()) {
-                std::cout << __func__ << "All work has been asigned\n";
-                break;
+            std::vector<TaskDef*> taskList;
+            for (int i = 0; i < 5; i++) {
+                TaskDef* newTask;
+                if (allWork2.pop(newTask))
+                    taskList.push_back(newTask);
             }
-
-            rangeEnd = rangeStart + 5;
-            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, rangeStart, rangeEnd, allWork));
-            rangeStart = rangeEnd + 1;
+            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, taskList, allWork2));
 
 
             std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
             acceptor.async_accept(newConn->sock,
-                                  boost::bind(&acceptConn,
-                                              newConn,
-                                              newWork,
-                                              boost::ref(mlState),
-                                              boost::asio::placeholders::error));
+                boost::bind(&acceptConn,
+                newConn,
+                newWork,
+                boost::ref(mlState),
+                boost::asio::placeholders::error));
+
             mlState.acceptSlots++;
             std::cout << "accept slots: " << mlState.acceptSlots << "\n";
         }
@@ -291,6 +297,11 @@ void mainLoop() {
     }
 
     pool.join_all();
+
+
+    if (!allWork2.empty()) {
+        std::cout << __func__ << " - error work queue is not empty\n";
+    }
 
 
     printFuncInfo(__func__);
