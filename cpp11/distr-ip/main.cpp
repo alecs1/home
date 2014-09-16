@@ -123,100 +123,105 @@ void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wo
 
     boost::system::error_code err;
     uint32_t loopCount = 0;
-    while (work->work.size() > 0)
-    {
-        TaskDef* taskDef = work->work.back();
+    try {
+        while (work->work.size() > 0)
+        {
+            TaskDef* taskDef = work->work.back();
+            ClientWorkDef def;
+
+            def.reqId = loopCount;
+            def.op = taskDef->op;
+            def.transmit = TransmitType::FullFile;
+            def.compression = CompressionType::None;
+            def.w = 0;
+            def.h = 0;
+            def.dataSize = boost::filesystem::file_size(taskDef->filePath());
+            std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
+
+
+            std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
+            def.serialise(headerBuf.data());
+            boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
+
+            const int bufSize = 10000;
+            std::array<char, bufSize> buf;
+            std::ifstream fileSIn(taskDef->filePath(), std::ifstream::in | std::ios::binary);
+
+            uint64_t totalWrote = 0;
+            uint64_t wrote = 0;
+            uint64_t bytes = 0;
+            while (1) {
+                if (fileSIn.eof() == false) {
+                    fileSIn.read(buf.data(), buf.size());
+                    bytes = fileSIn.gcount();
+                    if (bytes <= 0) {
+                        std::cout << __func__ << " - std::ifstream::read() error\n";
+                    }
+
+                    wrote = boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
+                    totalWrote += wrote;
+                    if (err) {
+                        std::cout << __func__ << " - boost::asio::write() error\n";
+                    }
+                    if (wrote != bytes) {
+                        std::cout << __func__ << " - wrote=" << wrote << ", expected=" << bytes << "\n";
+                    }
+                }
+                else
+                    break;
+            }
+            if (totalWrote != def.dataSize) {
+                std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
+            }
+
+            std::cout << __func__ << " - sent " << taskDef->filePath() << ", " << totalWrote << " bytes\n";
+
+
+            //we're now expecting the data back
+            std::array<char, S_HEADER_SERVERREQDEF> replyHeaderBuf;
+            size_t len = boost::asio::read(conn->sock,
+                boost::asio::buffer(replyHeaderBuf, replyHeaderBuf.size()));
+
+            if (len != S_HEADER_SERVERREQDEF) {
+                std::cout << "Error reading header\n";
+            }
+            ServerReqDef reply(replyHeaderBuf.data());
+            std::shared_ptr<char> pImgData = std::shared_ptr<char>(new char[reply.dataSize]);
+            uint64_t readBytes = 0;
+            while (readBytes < reply.dataSize) {
+                readBytes += conn->sock.read_some(boost::asio::buffer(pImgData.get() + readBytes, reply.dataSize - readBytes));
+                std::cout << "Read " << readBytes << ", remaining " << reply.dataSize - readBytes << "\n";
+            }
+
+            //write down the file
+
+            std::fstream outStream;
+            outStream.open(taskDef->outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
+            if (outStream.rdstate() == std::ios::goodbit) {
+                outStream.write(pImgData.get(), reply.dataSize);
+            }
+            outStream.close();
+            delete taskDef;
+            work->work.pop_back();
+
+            //at this point we're done with the TaskDef, delete forever
+
+            std::cout << "Done reading reply, will start over\n";
+        }
+
+        //now close the connection
         ClientWorkDef def;
-
-        def.reqId = loopCount;
-        def.op = taskDef->op;
-        def.transmit = TransmitType::FullFile;
-        def.compression = CompressionType::None;
-        def.w = 0;
-        def.h = 0;
-        def.dataSize = boost::filesystem::file_size(taskDef->filePath());
-        std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
-
-
+        def.op = OpType::Stop;
         std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
         def.serialise(headerBuf.data());
         boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-
-        const int bufSize = 10000;
-        std::array<char, bufSize> buf;
-        std::ifstream fileSIn(taskDef->filePath(), std::ifstream::in | std::ios::binary);
-
-        uint64_t totalWrote = 0;
-        uint64_t wrote = 0;
-        uint64_t bytes = 0;
-        while (1) {
-            if (fileSIn.eof() == false) {
-                fileSIn.read(buf.data(), buf.size());
-                bytes = fileSIn.gcount();
-                if (bytes <= 0) {
-                    std::cout << __func__ << " - std::ifstream::read() error\n";
-                }
-
-                wrote = boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
-                totalWrote += wrote;
-                if (err) {
-                    std::cout << __func__ << " - boost::asio::write() error\n";
-                }
-                if (wrote != bytes) {
-                    std::cout << __func__ << " - wrote=" << wrote << ", expected=" << bytes << "\n";
-                }
-            }
-            else
-                break;
-        }
-        if (totalWrote != def.dataSize) {
-            std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
-        }
-
-        std::cout << __func__ << " - sent " << taskDef->filePath() << ", " << totalWrote << " bytes\n";
-
-
-        //we're now expecting the data back
-        std::array<char, S_HEADER_SERVERREQDEF> replyHeaderBuf;
-        size_t len = boost::asio::read(conn->sock,
-            boost::asio::buffer(replyHeaderBuf, replyHeaderBuf.size()));
-
-        if (len != S_HEADER_SERVERREQDEF) {
-            std::cout << "Error reading header\n";
-        }
-        ServerReqDef reply(replyHeaderBuf.data());
-        std::shared_ptr<char> pImgData = std::shared_ptr<char>(new char[reply.dataSize]);
-        uint64_t readBytes = 0;
-        while (readBytes < reply.dataSize) {
-            readBytes += conn->sock.read_some(boost::asio::buffer(pImgData.get() + readBytes, reply.dataSize - readBytes));
-            std::cout << "Read " << readBytes << ", remaining " << reply.dataSize - readBytes << "\n";
-        }
-
-        //write down the file
-
-        std::fstream outStream;
-        outStream.open(taskDef->outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
-        if (outStream.rdstate() == std::ios::goodbit) {
-            outStream.write(pImgData.get(), reply.dataSize);
-        }
-        outStream.close();
-        delete taskDef;
-        work->work.pop_back();
-
-        //at this point we're done with the TaskDef, delete forever
-
-        std::cout << "Done reading reply, will start over\n";
-
+    }
+    catch (std::exception ex) {
+        std::cout << __func__ << " - exception:" << e.what() << "\n";
+        std::cout << __func__ << " - will push to fail queue " << work->work.size() << " elements\n";
     }
 
-    //now close the connection
-    ClientWorkDef def;
-    def.op = OpType::Stop;
-    std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
-    def.serialise(headerBuf.data());
-    boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-
-    //whatever task was has not finished will be put back to the fail queue
+    //whatever task was not finished will be put back to the fail queue
     while (work->work.size() > 0) {
         work->failedQueue.push(work->work.back());
         work->work.pop_back();
