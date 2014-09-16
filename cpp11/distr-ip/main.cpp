@@ -107,7 +107,7 @@ void readWork(std::vector<TaskDef> &allWork) {
 				if ((fName.rfind(".tga") != std::string::npos)
 					|| (fName.rfind(".TGA") != std::string::npos)) {
                     allWork.push_back(TaskDef(dName, fName, outDir, OpType::BW));
-                    std::cout << fName << "\n";
+                    std::cout << allWork.back().filePath() << "\n";
 				}
             }
         }
@@ -124,17 +124,12 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
     
     boost::system::error_code err;
     
-    //bool stop = false;
-    
     int crtWork = work->rangeStart;
     while (true) {
 
-
-        //TaskDef taskDef("", "", "", OpType::Stop);
         if (crtWork > work->rangeEnd) {
             ClientWorkDef def;
             def.op = OpType::Stop;
-            //stop = true;
             std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
             def.serialise(headerBuf.data());
             boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
@@ -150,15 +145,12 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
         def.w = 0;
         def.h = 0;
         def.dataSize = boost::filesystem::file_size(taskDef.filePath());
-        std::cout << "sending file: " << filePath << " of size " << def.dataSize << "\n";
+        std::cout << "sending file: " << taskDef.filePath() << " of size " << def.dataSize << "\n";
 
 
         std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
         def.serialise(headerBuf.data());
         boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-
-        if (stop)
-            break;
 
         const int bufSize = 10000;
         std::array<char, bufSize> buf;
@@ -212,7 +204,12 @@ void workerLoop(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wor
 
         //write down the file
 
-        //std::fstream
+        std::fstream outStream;
+        outStream.open(taskDef.outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
+        if (outStream.rdstate() == std::ios::goodbit) {
+            outStream.write(pImgData.get(), reply.dataSize);
+        }
+        outStream.close();
 
         std::cout << "Done reading reply, will start over\n";
         crtWork += 1;
@@ -260,11 +257,23 @@ void mainLoop() {
     mlState.acceptSlots = 0;
     bool stop = false;
     int loopCount = 0;
+
+    uint64_t rangeStart = 0;
+    uint64_t rangeEnd = 0;
     while (!stop) {
         //compute work batch
         if (mlState.acceptSlots < 1) {
-            std::cout << "accept slots: " << mlState.acceptSlots << "\n";
-            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, 0, 5, allWork));
+
+            if (rangeStart >= allWork.size()) {
+                std::cout << __func__ << "All work has been asigned\n";
+                break;
+            }
+
+            rangeEnd = rangeStart + 5;
+            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, rangeStart, rangeEnd, allWork));
+            rangeStart = rangeEnd + 1;
+
+
             std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
             acceptor.async_accept(newConn->sock,
                                   boost::bind(&acceptConn,
@@ -273,6 +282,7 @@ void mainLoop() {
                                               boost::ref(mlState),
                                               boost::asio::placeholders::error));
             mlState.acceptSlots++;
+            std::cout << "accept slots: " << mlState.acceptSlots << "\n";
         }
         loopCount += 1;
         //printf("%s - %d\n", __func__, loopCount);
