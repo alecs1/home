@@ -20,6 +20,8 @@
 #include "global_defines.h"
 #include "definitions.h"
 
+#define S_TASK_BATCH 5
+
 
 auto hourAndThread = [] () {
     auto now = std::chrono::system_clock::now();
@@ -189,9 +191,9 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
 
     if (conn->fileBufPos == 0) {
         conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
-        if (conn->inS.rdstate() == std::ios::goodbit) {
+        if (conn->inS.rdstate() != std::ios::goodbit) {
             std::cout << __func__ << " - std::fstream::open failed: " <<
-                work->work.back()->filePath() << "\n";
+                work->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
             return;
         }
     }
@@ -242,6 +244,7 @@ void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
 
     //keep buffer alive, maybe even reuse it!
     conn->fileBufPos = 0;
+    conn->lastOpExpectedBytes = S_HEADER_CLIENTWORKDEF;
     def.serialise(conn->buf);
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, S_HEADER_CLIENTWORKDEF),
         boost::bind(&sendNextChunk, conn, work,
@@ -273,9 +276,9 @@ void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
 
     conn->outS.open(work->work.back()->outFilePath(),
                     std::ios::binary | std::ios::trunc | std::ios::out);
-    if (conn->outS.rdstate() == std::ios::goodbit) {
+    if (conn->outS.rdstate() != std::ios::goodbit) {
         std::cout << __func__ << " - std::fstream::open failed: " <<
-                  work->work.back()->outFilePath() << "\n";
+            work->work.back()->outFilePath() << ", " << conn->outS.rdstate() << "\n";
         return;
     }
 
@@ -305,13 +308,26 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         return;
     }
 
+    //Write those f** bytes now.
+
     conn->fileBufPos += bytes;
 
     if (conn->fileBufPos == conn->sBackFile) {
         conn->outS.close();
         delete work->work.back();
         work->work.pop_back();
-        sendNextHeader(conn, work);
+        if (work->work.size() > 0) {
+            sendNextHeader(conn, work);
+        }
+        else {
+            std::cout << "Finished a batch of jobs, will take another one\n\n\n";
+            for (int i = 0; i < S_TASK_BATCH; i++) {
+                TaskDef *taskDef;
+                if (work->failedQueue.pop(taskDef)) {
+                    work->work.push_back(taskDef);
+                }
+            }
+        }
     }
     else {
         conn->lastOpExpectedBytes = conn->sBackFile - conn->fileBufPos;
@@ -453,7 +469,8 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
     std::cout << "accept slots: " << mlState.acceptSlots << "\n";
     if (!err) {
         //check stuff, then start
-        work->io_service.post(boost::bind(&workerLoop2, conn, work));
+        //work->io_service.post(boost::bind(&workerLoop2, conn, work));
+        work->io_service.post(boost::bind(&sendNextHeader, conn, work));
     }
     
 }
@@ -489,7 +506,7 @@ void mainLoop() {
         if (mlState.acceptSlots < 1) {
 
             std::vector<TaskDef*> taskList;
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < S_TASK_BATCH; i++) {
                 TaskDef* newTask;
                 if (allWork2.pop(newTask))
                     taskList.push_back(newTask);
