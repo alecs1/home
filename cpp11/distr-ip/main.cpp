@@ -112,26 +112,23 @@ public:
     ConnDef(boost::asio::io_service& io_service):
         sock(io_service)
     {
-        //sSmallBuf = S_HEADER_CLIENTWORKDEF;
-        //smallBuf = new char[sSmallBuf];
         sBuf = 10000;
         buf = new char[sBuf];
     }
 
     ~ConnDef() {
-        //delete[] smallBuf;
-        delete[] buf;
+         delete[] buf;
     }
 
 public:
-    //std::shared_ptr<boost::asio::ip::tcp::socket> sock;
     boost::asio::ip::tcp::socket sock;
-    //char* smallBuf;
-    //uint32_t sSmallBuf;
     char* buf;
     uint64_t sBuf;
+
     uint64_t lastOpExpectedBytes;
-    uint64_t outBufPos;
+    uint64_t fileBufPos;
+    uint64_t sBackFile;
+
     std::fstream inS;
     std::fstream outS;
 };
@@ -190,9 +187,15 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         return;
     }
 
-    if (conn->outBufPos == 0) {
+    if (conn->fileBufPos == 0) {
         conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
+        if (conn->inS.rdstate() == std::ios::goodbit) {
+            std::cout << __func__ << " - std::fstream::open failed: " <<
+                work->work.back()->filePath() << "\n";
+            return;
+        }
     }
+
     if (conn->inS.eof() == false) {
         conn->inS.read(conn->buf, conn->sBuf);
         bytes = conn->inS.gcount();
@@ -203,7 +206,7 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
             return;
         }
         conn->lastOpExpectedBytes = bytes;
-        conn->outBufPos += bytes;
+        conn->fileBufPos += bytes;
 
         boost::asio::async_write(conn->sock,
                                  boost::asio::buffer(conn->buf, bytes),
@@ -238,7 +241,7 @@ void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
     std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
 
     //keep buffer alive, maybe even reuse it!
-    conn->outBufPos = 0;
+    conn->fileBufPos = 0;
     def.serialise(conn->buf);
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, S_HEADER_CLIENTWORKDEF),
         boost::bind(&sendNextChunk, conn, work,
@@ -247,25 +250,24 @@ void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
 }
 
 
+void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+    const boost::system::error_code& err, size_t bytes);
 void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                     const boost::system::error_code& err, size_t bytes)
 {
     if (err != boost::system::errc::success) {
         std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
-        //pushBackTasks(work.get());
         return;
     }
 
     if (bytes != S_HEADER_SERVERREQDEF) {
         std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
             S_HEADER_SERVERREQDEF << "\n\n\n";
-        //pushBackTasks(work.get());
         return;
     }
 
     ServerReqDef reply(conn->buf);
     if (!reply.valid) {
-        //pushBackTasks(work.get());
         return;
     }
 
@@ -276,10 +278,51 @@ void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
                   work->work.back()->outFilePath() << "\n";
         return;
     }
+
+    conn->fileBufPos = 0;
+    conn->sBackFile = reply.dataSize;
+    conn->lastOpExpectedBytes = conn->sBackFile;
+    if (conn->lastOpExpectedBytes > conn->sBuf)
+        conn->lastOpExpectedBytes = conn->sBuf;
+
+    boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
+        boost::bind(&readNextChunk, conn, work,
+        boost::asio::placeholders::error,
+        boost::asio::placeholders::bytes_transferred));
 }
 
-void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
+void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+    const boost::system::error_code& err, size_t bytes)
+{
+    if (err != boost::system::errc::success) {
+        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
+        return;
+    }
 
+    if (bytes != conn->lastOpExpectedBytes) {
+        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
+            conn->lastOpExpectedBytes << "\n\n\n";
+        return;
+    }
+
+    conn->fileBufPos += bytes;
+
+    if (conn->fileBufPos == conn->sBackFile) {
+        conn->outS.close();
+        delete work->work.back();
+        work->work.pop_back();
+        sendNextHeader(conn, work);
+    }
+    else {
+        conn->lastOpExpectedBytes = conn->sBackFile - conn->fileBufPos;
+        if (conn->lastOpExpectedBytes > conn->sBuf)
+            conn->lastOpExpectedBytes = conn->sBuf;
+
+        boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
+            boost::bind(&readNextChunk, conn, work,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
+    }
 }
 
 void initClientCom(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
