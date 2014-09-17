@@ -90,24 +90,31 @@ struct ServerReqDef {
     CompressionType compression;
     uint64_t dataSize;
     uint64_t reqId;
+    bool valid;
 
     ServerReqDef() {
         reqId = 0xBBB;
+        valid = false;
     }
     
     ServerReqDef(const char* header) {
         char sigBytes[S_SIG_BYTES];
         uint32_t pos = 0;
+        valid = true;
         memcpy(sigBytes, header + pos, S_SIG_BYTES); pos += S_SIG_BYTES;
         memcpy(&compression, header + pos, S_SIG_BYTES); pos += S_COMPRESSION;
         memcpy(&dataSize, header + pos, S_DATASIZE); pos += S_DATASIZE;
         memcpy(&reqId, header + pos, S_REQ_ID); pos += S_REQ_ID;
 
-        if (pos != S_HEADER_SERVERREQDEF)
+        if (pos != S_HEADER_SERVERREQDEF) {
+            valid = false;
             std::cout << __func__ << " - error deserialising" << pos << ", " << S_HEADER_SERVERREQDEF << "\n";
+        }
 
-        if (strcmp("SERVERREQDEF", sigBytes) != 0)
+        if (strcmp("SERVERREQDEF", sigBytes) != 0) {
+            valid = false;
             std::cout << __func__ << " - error deserialising, got wrong header signature:" << sigBytes << "\n";
+        }
 
         std::cout << "ServerReqDef: " << sigBytes << ", " << (uint8_t)compression << ", " <<
             dataSize << ", " << reqId << "\n";

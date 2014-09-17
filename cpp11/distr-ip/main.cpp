@@ -63,6 +63,11 @@ struct TaskDef {
 };
 
 
+struct WorkBatchDef;
+void pushBackTasks(WorkBatchDef* work);
+
+//TODO - non-trivial destructor which may allocate!
+//idea: the destructor pushes back all elements from "work" that were not deleted, but it looks like a hidden kind of crap that happens behind your back.
 struct WorkBatchDef {
 public:
     WorkBatchDef(boost::asio::io_service &io_s, std::vector<TaskDef*> aWork, boost::lockfree::queue<TaskDef*>& aFailedQueue) :
@@ -71,11 +76,35 @@ public:
         failedQueue(aFailedQueue)
     {
     }
+
+    ~WorkBatchDef() {
+        if (work.size() > 0) {
+            std::cout << __func__ << " - FIXME, pushing back tasks was left to the destructor\n";
+        }
+        pushBackTasks(this);
+    }
 public:
     boost::asio::io_service &io_service;
     std::vector<TaskDef*> work;
     boost::lockfree::queue<TaskDef*> &failedQueue;
 };
+
+void pushBackTasks(WorkBatchDef* work) {
+    if (work->work.size() > 0)
+        std::cout << __func__ << " - will push to fail queue " << work->work.size() << " elements\n";
+
+    while (work->work.size() > 0) {
+        work->failedQueue.push(work->work.back());
+        work->work.pop_back();
+    }
+}
+
+/**
+enum class ProtoState {
+    SendHeader,
+    Send
+};
+/**/
 
 //socket and other stuff reused during connection to a client
 struct ConnDef {
@@ -83,38 +112,36 @@ public:
     ConnDef(boost::asio::io_service& io_service):
         sock(io_service)
     {
-        sSmallBuf = S_HEADER_CLIENTWORKDEF;
-        smallBuf = new char[sSmallBuf];
-        sLargeBuf = 10000;
-        largeBuf = new char[sLargeBuf];
+        //sSmallBuf = S_HEADER_CLIENTWORKDEF;
+        //smallBuf = new char[sSmallBuf];
+        sBuf = 10000;
+        buf = new char[sBuf];
     }
 
     ~ConnDef() {
-        delete[] smallBuf;
-        delete[] largeBuf;
+        //delete[] smallBuf;
+        delete[] buf;
     }
 
 public:
     //std::shared_ptr<boost::asio::ip::tcp::socket> sock;
     boost::asio::ip::tcp::socket sock;
-    char* smallBuf;
-    uint32_t sSmallBuf;
-    char* largeBuf;
-    uint64_t sLargeBuf;
-    uint64_t lastWriteExpectedBytes;
+    //char* smallBuf;
+    //uint32_t sSmallBuf;
+    char* buf;
+    uint64_t sBuf;
+    uint64_t lastOpExpectedBytes;
+    uint64_t outBufPos;
+    std::fstream inS;
+    std::fstream outS;
 };
 
 struct MainLoopState {
     std::atomic<int> acceptSlots;
 };
 
-void pushBackTasks(std::shared_ptr<WorkBatchDef> work) {
-    std::cout << __func__ << " - will push to fail queue " << work->work.size() << " elements\n";
-    while (work->work.size() > 0) {
-        work->failedQueue.push(work->work.back());
-        work->work.pop_back();
-    }
-}
+void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                    const boost::system::error_code& err, size_t bytes);
 
 void readWork2(boost::lockfree::queue<TaskDef*>& workQueue) {
     std::string outDir("D:\\tmp\\tga-out");
@@ -151,16 +178,48 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
 {
     if (err != boost::system::errc::success) {
         std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
-        pushBackTasks(work);
+        //pushBackTasks(work.get());
         return; //safe to exit, connection and all memory will be deallocated via the shared pointers destruction
     }
 
-    //check if there's any case when write_async has no error, but sends fewer byts
-    if (bytes != conn->lastWriteExpectedBytes) {
+    //check if there's any case when write_async has no error but sends fewer byts
+    if (bytes != conn->lastOpExpectedBytes) {
         std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
-            conn->lastWriteExpectedBytes << "\n\n\n";
-        pushBackTasks(work);
+            conn->lastOpExpectedBytes << "\n\n\n";
+        //pushBackTasks(work.get());
         return;
+    }
+
+    if (conn->outBufPos == 0) {
+        conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
+    }
+    if (conn->inS.eof() == false) {
+        conn->inS.read(conn->buf, conn->sBuf);
+        bytes = conn->inS.gcount();
+
+        if (bytes <= 0) {
+            std::cout << __func__ << " - std::ifstream::read() error\n";
+            //pushBackTasks(work.get());
+            return;
+        }
+        conn->lastOpExpectedBytes = bytes;
+        conn->outBufPos += bytes;
+
+        boost::asio::async_write(conn->sock,
+                                 boost::asio::buffer(conn->buf, bytes),
+                                 boost::bind(&sendNextChunk, conn, work,
+                                             boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+    }
+    else {
+        conn->inS.close();
+        //conn->lastOpExpectedBytes = S_HEADER_SERVERREQDEF; //superfluous
+        //we're done sending the file, start receiving
+        boost::asio::async_read(conn->sock,
+                                boost::asio::buffer(conn->buf, S_HEADER_SERVERREQDEF),
+                                boost::bind(&readNextHeader, conn, work,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
     }
 }
 
@@ -179,16 +238,45 @@ void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
     std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
 
     //keep buffer alive, maybe even reuse it!
-
-    def.serialise(conn->smallBuf);
-    boost::asio::async_write(conn->sock, boost::asio::buffer(conn->smallBuf, S_HEADER_CLIENTWORKDEF),
+    conn->outBufPos = 0;
+    def.serialise(conn->buf);
+    boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, S_HEADER_CLIENTWORKDEF),
         boost::bind(&sendNextChunk, conn, work,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
 }
 
 
+void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                    const boost::system::error_code& err, size_t bytes)
+{
+    if (err != boost::system::errc::success) {
+        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
+        //pushBackTasks(work.get());
+        return;
+    }
 
+    if (bytes != S_HEADER_SERVERREQDEF) {
+        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
+            S_HEADER_SERVERREQDEF << "\n\n\n";
+        //pushBackTasks(work.get());
+        return;
+    }
+
+    ServerReqDef reply(conn->buf);
+    if (!reply.valid) {
+        //pushBackTasks(work.get());
+        return;
+    }
+
+    conn->outS.open(work->work.back()->outFilePath(),
+                    std::ios::binary | std::ios::trunc | std::ios::out);
+    if (conn->outS.rdstate() == std::ios::goodbit) {
+        std::cout << __func__ << " - std::fstream::open failed: " <<
+                  work->work.back()->outFilePath() << "\n";
+        return;
+    }
+}
 
 void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
 
