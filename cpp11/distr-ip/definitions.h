@@ -17,6 +17,8 @@ enum class CompressionType : uint8_t {
     Zlib = 1
 };
 
+#define S_MIN_FILE_SIZE_FOR_SPLITTING 20000000 //20 MB (not MiB)
+
 //what we're sending to the client
 #define S_SIG_BYTES 14 //some easily identifiable bytes at the start (signature)
 #define S_OP sizeof(uint8_t)

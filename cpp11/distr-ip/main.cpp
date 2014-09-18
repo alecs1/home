@@ -5,11 +5,13 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <mutex>
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/lockfree/queue.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -19,6 +21,7 @@
 
 #include "global_defines.h"
 #include "definitions.h"
+#include "TGA.h"
 
 #define S_TASK_BATCH 5
 
@@ -41,6 +44,15 @@ auto printFuncInfo = [] (const char* func) {
     std::cout << ss.str() << "\n";
 };
 
+struct SubTaskDef {
+    std::atomic<uint32_t>& workerCount;
+    //global mutex protected
+    boost::iostreams::mapped_file_source* inFile;
+    boost::iostreams::mapped_file_sink* outFile;
+    TGA_HEADER* header;
+    //end global mutex protected
+    uint32_t x, y, w, h;
+};
 
 struct TaskDef {
 	TaskDef(std::string dPath, std::string fName, std::string oPath, OpType operation, uint32_t aId):
@@ -49,7 +61,9 @@ struct TaskDef {
         outDir(oPath),
         op(operation),
         id(aId)
-    {}
+    {
+        subTask = NULL;
+    }
     std::string filePath() {
         return dir + "/" + fileName;
     }
@@ -61,13 +75,14 @@ struct TaskDef {
     std::string outDir;
     OpType op;
     uint32_t id;
+    SubTaskDef* subTask; //should this be NULL the task is not split
 };
 
 
 struct WorkBatchDef;
 void pushBackTasks(WorkBatchDef* work);
 
-//TODO - non-trivial destructor which may allocate!
+//TODO - has a non-trivial destructor which may allocate!
 //idea: the destructor pushes back all elements from "work" that were not deleted, but it looks like a hidden kind of crap that happens behind your back.
 struct WorkBatchDef {
 public:
@@ -110,9 +125,10 @@ enum class ProtoState {
 //socket and other stuff reused during connection to a client
 struct ConnDef {
 public:
-    ConnDef(boost::asio::io_service& ioService, std::atomic<uint32_t>& aRemainingTasks):
+    ConnDef(boost::asio::io_service& ioService, std::atomic<uint32_t>& aRemainingTasks, std::mutex& aGlobalMutex):
         sock(ioService),
-        remainingTasks(aRemainingTasks)
+        remainingTasks(aRemainingTasks),
+        globalMutex(aGlobalMutex)
     {
         sBuf = 10000;
         buf = new char[sBuf];
@@ -134,6 +150,7 @@ public:
 
     std::fstream inS;
     std::fstream outS;
+    std::mutex& globalMutex;
 };
 
 void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
@@ -151,6 +168,7 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
                 iter != boost::filesystem::directory_iterator();
                 iter++)
             {
+                //aici: read size of the file and decide its splitting
                 //will fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
                 std::string fName = iter->path().filename().string();
                 std::string dName = path.string();
@@ -470,6 +488,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
 
     //take references to needed variable before posting the new thread
     boost::lockfree::queue<TaskDef*> &workQueue = work->failedQueue;
+    std::mutex& globalMutex = conn->globalMutex;
     std::atomic<uint32_t>& remainingTasks = conn->remainingTasks;
 
     if ( (!err) && (work->work.size() > 0) ) {
@@ -488,7 +507,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
             taskList.push_back(newTask);
     }
     std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(ioService, taskList, workQueue));
-    std::shared_ptr<ConnDef> newConn(new ConnDef(ioService, remainingTasks));
+    std::shared_ptr<ConnDef> newConn(new ConnDef(ioService, remainingTasks, globalMutex));
     acceptor.async_accept(newConn->sock,
         boost::bind(&acceptConn,
         newConn,
@@ -527,8 +546,8 @@ void mainLoop() {
     }
     std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, taskList, allWork));
 
-
-    std::shared_ptr<ConnDef> newConn(new ConnDef(io_service, taskCount));
+    std::mutex globalMutex;
+    std::shared_ptr<ConnDef> newConn(new ConnDef(io_service, taskCount, globalMutex));
     acceptor.async_accept(newConn->sock,
         boost::bind(&acceptConn,
         newConn,
@@ -556,6 +575,8 @@ void mainLoop() {
 
 
     printFuncInfo(__func__);
+
+    //pwrite();
 }
 
 int main()

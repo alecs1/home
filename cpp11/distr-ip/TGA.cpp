@@ -15,32 +15,6 @@
 
 #endif
 
-#pragma pack(push,x1)					// Byte alignment (8-bit)
-#pragma pack(1)
-
-typedef struct
-{
-    unsigned char  identsize;			// size of ID field that follows 18 byte header (0 usually)
-    unsigned char  colourmaptype;		// type of colour map 0=none, 1=has palette
-    unsigned char  imagetype;			// type of image 2=rgb uncompressed, 10 - rgb rle compressed
-
-    short colourmapstart;				// first colour map entry in palette
-    short colourmaplength;				// number of colours in palette
-    unsigned char  colourmapbits;		// number of bits per palette entry 15,16,24,32
-
-    short xstart;						// image x origin
-    short ystart;						// image y origin
-    short width;						// image width in pixels
-    short height;						// image height in pixels
-    unsigned char  bits;				// image bits per pixel 24,32
-    unsigned char  descriptor;			// image descriptor bits (vh flip bits)
-
-    // pixel data follows header
-
-} TGA_HEADER;
-
-#pragma pack(pop,x1)
-
 const int IT_COMPRESSED = 10;
 const int IT_UNCOMPRESSED = 2;
 
@@ -120,6 +94,44 @@ void LoadUncompressedImage( char* pDest, char * pSrc, TGA_HEADER * pHeader )
                 *pDest ++ = pSrcRow[1];
                 *pDest ++ = pSrcRow[0];
                 *pDest ++ = pSrcRow[3];
+                pSrcRow += 4;
+            }
+        }
+    }
+}
+
+//void LoadUncompressedImage(char* pDest, char * pSrc, TGA_HEADER * pHeader)
+uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* dest)
+{
+    int w = header->width;
+    int h = header->height;
+    int rowSize = w * header->bits / 8;
+    bool bInverted = ((header->descriptor & (1 << 5)) != 0);
+
+    //skip header
+
+    for (int i = yR; i < yR+hR; i++)
+    {
+        char * pSrcRow = pSrc +
+            (bInverted ? (h - i - 1) * rowSize : i * rowSize);
+        if (header->bits == 24)
+        {
+            for (int j = 0; j < w; j++)
+            {
+                *pDest++ = pSrcRow[2];
+                *pDest++ = pSrcRow[1];
+                *pDest++ = pSrcRow[0];
+                pSrcRow += 3;
+            }
+        }
+        else
+        {
+            for (int j = 0; j < w; j++)
+            {
+                *pDest++ = pSrcRow[2];
+                *pDest++ = pSrcRow[1];
+                *pDest++ = pSrcRow[0];
+                *pDest++ = pSrcRow[3];
                 pSrcRow += 4;
             }
         }
