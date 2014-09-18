@@ -111,8 +111,8 @@ enum class ProtoState {
 //socket and other stuff reused during connection to a client
 struct ConnDef {
 public:
-    ConnDef(boost::asio::io_service& io_service):
-        sock(io_service)
+    ConnDef(boost::asio::io_service& ioService):
+        sock(ioService)
     {
         sBuf = 10000;
         buf = new char[sBuf];
@@ -124,6 +124,7 @@ public:
 
 public:
     boost::asio::ip::tcp::socket sock;
+    //boost::asio::io_service& ioService;
     char* buf;
     uint64_t sBuf;
 
@@ -133,10 +134,6 @@ public:
 
     std::fstream inS;
     std::fstream outS;
-};
-
-struct MainLoopState {
-    std::atomic<int> acceptSlots;
 };
 
 void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
@@ -466,18 +463,38 @@ void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> wo
 
 void acceptConn(std::shared_ptr<ConnDef> conn,
                 std::shared_ptr<WorkBatchDef> work,
-                MainLoopState& mlState,
+                boost::asio::io_service& ioService,
+                boost::asio::ip::tcp::acceptor& acceptor,
                 const boost::system::error_code& err)
 {
+    //take references to needed variable before posting the new thread
+    boost::lockfree::queue<TaskDef*> &workQueue = work->failedQueue;
     printFuncInfo(__func__);
-    mlState.acceptSlots--;
-    std::cout << "accept slots: " << mlState.acceptSlots << "\n";
-    if (!err) {
-        //check stuff, then start
-        //work->io_service.post(boost::bind(&workerLoop2, conn, work));
+
+    if ( (!err) && (work->work.size() > 0) ) {
         work->io_service.post(boost::bind(&sendNextHeader, conn, work));
     }
-    
+    else {
+        //std::cout << __func__ << "dropping connection just accepted, err:" << err.message()
+        //    << ", queue length: " << work->work.size() << "\n";
+    }
+
+
+    std::vector<TaskDef*> taskList;
+    for (int i = 0; i < S_TASK_BATCH; i++) {
+        TaskDef* newTask;
+        if (workQueue.pop(newTask))
+            taskList.push_back(newTask);
+    }
+    std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(ioService, taskList, workQueue));
+    std::shared_ptr<ConnDef> newConn(new ConnDef(ioService));
+    acceptor.async_accept(newConn->sock,
+        boost::bind(&acceptConn,
+        newConn,
+        newWork,
+        boost::ref(ioService),
+        boost::ref(acceptor),
+        boost::asio::placeholders::error));
 }
 
 
@@ -485,8 +502,8 @@ void mainLoop() {
     printFuncInfo(__func__);
 
     //read work definition
-    boost::lockfree::queue<TaskDef*> allWork2(10000);
-    readWork2(allWork2);
+    boost::lockfree::queue<TaskDef*> allWork(10000);
+    readWork2(allWork);
 
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
@@ -499,47 +516,29 @@ void mainLoop() {
     boost::asio::ip::tcp::acceptor acceptor(io_service,
                                             boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT));
 
-    MainLoopState mlState;
-    mlState.acceptSlots = 0;
-    bool stop = false;
-    int loopCount = 0;
 
-    uint64_t rangeStart = 0;
-    uint64_t rangeEnd = 0;
-    while (!stop) {
-        //compute work batch
-        if (mlState.acceptSlots < 1) {
-
-            std::vector<TaskDef*> taskList;
-            for (int i = 0; i < S_TASK_BATCH; i++) {
-                TaskDef* newTask;
-                if (allWork2.pop(newTask))
-                    taskList.push_back(newTask);
-            }
-            std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, taskList, allWork2));
-
-
-            std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
-            acceptor.async_accept(newConn->sock,
-                boost::bind(&acceptConn,
-                newConn,
-                newWork,
-                boost::ref(mlState),
-                boost::asio::placeholders::error));
-
-            mlState.acceptSlots++;
-            std::cout << "accept slots: " << mlState.acceptSlots << "\n";
-        }
-        loopCount += 1;
-        //printf("%s - %d\n", __func__, loopCount);
-        //sleep to make debugging easier
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::vector<TaskDef*> taskList;
+    for (int i = 0; i < S_TASK_BATCH; i++) {
+        TaskDef* newTask;
+        if (allWork.pop(newTask))
+            taskList.push_back(newTask);
     }
+    std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, taskList, allWork));
+
+
+    std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
+    acceptor.async_accept(newConn->sock,
+        boost::bind(&acceptConn,
+        newConn,
+        newWork,
+        boost::ref(io_service),
+        boost::ref(acceptor),
+        boost::asio::placeholders::error));
 
     pool.join_all();
 
 
-    if (!allWork2.empty()) {
+    if (!allWork.empty()) {
         std::cout << __func__ << " - error work queue is not empty\n";
     }
 
