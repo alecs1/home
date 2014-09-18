@@ -1,7 +1,8 @@
 #include <cstring>
 #include <iostream>
 
-//#include "stdafx.h"
+#include <boost/iostreams/device/mapped_file.hpp>
+
 #include "TGA.h"
 #include "global_defines.h"
 
@@ -9,10 +10,7 @@
 	// if windows use standard C I/O
 	#include <stdio.h>
 #elif defined __ANDROID__
-
 	#include "module.lala"
-	
-
 #endif
 
 const int IT_COMPRESSED = 10;
@@ -107,35 +105,42 @@ uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
     int h = header->height;
     int rowSize = w * header->bits / 8;
     bool bInverted = ((header->descriptor & (1 << 5)) != 0);
+    const char* origDest = dest;
 
     //skip header
+    uint32_t startOffset = sizeof(*header) + header->identsize;
+    const char* src = inFile->data();
+    src += startOffset;
 
     for (int i = yR; i < yR+hR; i++)
     {
-        char * pSrcRow = pSrc +
+        const char * srcRow = src +
             (bInverted ? (h - i - 1) * rowSize : i * rowSize);
         if (header->bits == 24)
         {
-            for (int j = 0; j < w; j++)
+            for (int j = xR; j < xR + wR; j++)
             {
-                *pDest++ = pSrcRow[2];
-                *pDest++ = pSrcRow[1];
-                *pDest++ = pSrcRow[0];
-                pSrcRow += 3;
+                dest[0] = srcRow[2];
+                dest[1] = srcRow[1];
+                dest[2] = srcRow[0];
+                srcRow += 3;
+                dest += 3;
             }
         }
         else
         {
             for (int j = 0; j < w; j++)
             {
-                *pDest++ = pSrcRow[2];
-                *pDest++ = pSrcRow[1];
-                *pDest++ = pSrcRow[0];
-                *pDest++ = pSrcRow[3];
-                pSrcRow += 4;
+                dest[0] = srcRow[2];
+                dest[1] = srcRow[1];
+                dest[2] = srcRow[0];
+                dest[3] = srcRow[3];
+                srcRow += 4;
+                dest += 4;
             }
         }
     }
+    return dest - origDest;
 }
 
 
