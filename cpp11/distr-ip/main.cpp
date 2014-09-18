@@ -82,8 +82,8 @@ public:
     ~WorkBatchDef() {
         if (work.size() > 0) {
             std::cout << __func__ << " - FIXME, pushing back tasks was left to the destructor\n";
+            pushBackTasks(this);
         }
-        pushBackTasks(this);
     }
 public:
     boost::asio::io_service &io_service;
@@ -308,7 +308,11 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         return;
     }
 
-    //Write those f** bytes now.
+    conn->outS.write(conn->buf, bytes);
+    if (conn->outS.rdstate() != std::ios::goodbit) {
+        std::cout << __func__ << "std::fstream::write faled:" << conn->inS.rdstate() << "\n\n\n";
+        return;
+    }
 
     conn->fileBufPos += bytes;
 
@@ -316,11 +320,8 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         conn->outS.close();
         delete work->work.back();
         work->work.pop_back();
-        if (work->work.size() > 0) {
-            sendNextHeader(conn, work);
-        }
-        else {
-            std::cout << "Finished a batch of jobs, will take another one\n\n\n";
+        if (work->work.size() == 0) {
+            std::cout << "Finished a batch of jobs, will take another one\n\n";
             for (int i = 0; i < S_TASK_BATCH; i++) {
                 TaskDef *taskDef;
                 if (work->failedQueue.pop(taskDef)) {
@@ -328,6 +329,10 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
                 }
             }
         }
+        if (work->work.size() > 0) {
+            sendNextHeader(conn, work);
+        }
+        std::cout << __func__ << " - finishing comm with the current client\n\n\n";
     }
     else {
         conn->lastOpExpectedBytes = conn->sBackFile - conn->fileBufPos;
