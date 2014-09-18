@@ -43,7 +43,7 @@ auto printFuncInfo = [] (const char* func) {
 
 
 struct TaskDef {
-	TaskDef(std::string dPath, std::string fName, std::string oPath, OpType operation, uint64_t aId):
+	TaskDef(std::string dPath, std::string fName, std::string oPath, OpType operation, uint32_t aId):
         dir(dPath),
         fileName(fName),
         outDir(oPath),
@@ -60,8 +60,7 @@ struct TaskDef {
     std::string fileName;
     std::string outDir;
     OpType op;
-    uint64_t id;
-    bool done; //done when the output file is confirmed to be written
+    uint32_t id;
 };
 
 
@@ -111,8 +110,9 @@ enum class ProtoState {
 //socket and other stuff reused during connection to a client
 struct ConnDef {
 public:
-    ConnDef(boost::asio::io_service& ioService):
-        sock(ioService)
+    ConnDef(boost::asio::io_service& ioService, std::atomic<uint32_t>& aRemainingTasks):
+        sock(ioService),
+        remainingTasks(aRemainingTasks)
     {
         sBuf = 10000;
         buf = new char[sBuf];
@@ -124,7 +124,7 @@ public:
 
 public:
     boost::asio::ip::tcp::socket sock;
-    //boost::asio::io_service& ioService;
+    std::atomic<uint32_t>& remainingTasks;
     char* buf;
     uint64_t sBuf;
 
@@ -139,11 +139,11 @@ public:
 void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                     const boost::system::error_code& err, size_t bytes);
 
-void readWork2(boost::lockfree::queue<TaskDef*>& workQueue) {
+uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
 
-    uint64_t id = 0;
+    uint32_t id = 0;
 
     try {
         if (boost::filesystem::exists(path)) {
@@ -166,7 +166,9 @@ void readWork2(boost::lockfree::queue<TaskDef*>& workQueue) {
     }
     catch (std::exception& ex) {
         std::cout << ex.what() << "\n";
+        return 0;
     }
+    return id;
 }
 
 void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
@@ -317,6 +319,7 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         conn->outS.close();
         delete work->work.back();
         work->work.pop_back();
+        conn->remainingTasks -= 1;
         if (work->work.size() == 0) {
             std::cout << "Finished a batch of jobs, will take another one\n\n";
             for (int i = 0; i < S_TASK_BATCH; i++) {
@@ -343,12 +346,8 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
     }
 }
 
-void initClientCom(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
-    //actually nothing special to do for now, start sending the header
-    sendNextHeader(conn, work);
-}
 
-//does not yeld until exit, holds the state of the current communication
+//old implementation, does not yeld until exit, holds the state of the current communication
 void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
     //std::cout << __func__ << "\n";
 
@@ -467,9 +466,11 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
                 boost::asio::ip::tcp::acceptor& acceptor,
                 const boost::system::error_code& err)
 {
+    printFuncInfo(__func__);
+
     //take references to needed variable before posting the new thread
     boost::lockfree::queue<TaskDef*> &workQueue = work->failedQueue;
-    printFuncInfo(__func__);
+    std::atomic<uint32_t>& remainingTasks = conn->remainingTasks;
 
     if ( (!err) && (work->work.size() > 0) ) {
         work->io_service.post(boost::bind(&sendNextHeader, conn, work));
@@ -487,7 +488,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
             taskList.push_back(newTask);
     }
     std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(ioService, taskList, workQueue));
-    std::shared_ptr<ConnDef> newConn(new ConnDef(ioService));
+    std::shared_ptr<ConnDef> newConn(new ConnDef(ioService, remainingTasks));
     acceptor.async_accept(newConn->sock,
         boost::bind(&acceptConn,
         newConn,
@@ -503,12 +504,13 @@ void mainLoop() {
 
     //read work definition
     boost::lockfree::queue<TaskDef*> allWork(10000);
-    readWork2(allWork);
+    std::atomic<uint32_t> taskCount = readWork(allWork);
+    std::cout << __func__ << " - number of tasks: " << taskCount << "\n";
 
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
     boost::thread_group pool;
-    int threadCount = 20;
+    int threadCount = 4;
     for(int i = 0; i < threadCount; i++) {
         pool.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
     }
@@ -526,7 +528,7 @@ void mainLoop() {
     std::shared_ptr<WorkBatchDef> newWork(new WorkBatchDef(io_service, taskList, allWork));
 
 
-    std::shared_ptr<ConnDef> newConn(new ConnDef(io_service));
+    std::shared_ptr<ConnDef> newConn(new ConnDef(io_service, taskCount));
     acceptor.async_accept(newConn->sock,
         boost::bind(&acceptConn,
         newConn,
@@ -534,6 +536,16 @@ void mainLoop() {
         boost::ref(io_service),
         boost::ref(acceptor),
         boost::asio::placeholders::error));
+
+    //check for termination condition here instead of inside acceptConn
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(4));
+        if (taskCount == 0) {
+            io_service.stop();
+            break;
+        }
+        std::cout << __func__ << " - remaining tasks: " << taskCount << "\n";
+    }
 
     pool.join_all();
 

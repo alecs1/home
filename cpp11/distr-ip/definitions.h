@@ -24,7 +24,7 @@ enum class CompressionType : uint8_t {
 #define S_COMPRESSION sizeof(uint8_t)
 #define S_DIMENSION sizeof(uint32_t)
 #define S_DATASIZE sizeof(uint64_t)
-#define S_REQ_ID sizeof(uint64_t) //some unique id of this request, used when replying
+#define S_REQ_ID sizeof(uint32_t) //some unique id of this request, used when replying
 #define S_HEADER_CLIENTWORKDEF (S_SIG_BYTES + S_OP + S_TRANSMIT + S_COMPRESSION + S_DIMENSION + S_DIMENSION + S_DATASIZE + S_REQ_ID)
 
 
@@ -81,7 +81,7 @@ struct ClientWorkDef {
     CompressionType compression;
     uint32_t w, h; //0 and irelevant if TransmitType is FullFile
     uint64_t dataSize;
-    uint64_t reqId;
+    uint32_t reqId;
 };
 
 
@@ -89,7 +89,7 @@ struct ClientWorkDef {
 struct ServerReqDef {
     CompressionType compression;
     uint64_t dataSize;
-    uint64_t reqId;
+    uint32_t reqId;
     bool valid;
 
     ServerReqDef() {
