@@ -36,9 +36,6 @@ typedef struct
 #pragma pack(pop,x1)
 
 EXPORT_DLL
-int GetTGAHeader(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* outHeader);
-
-EXPORT_DLL
 char * LoadTGA(const char * szFileName, int * width, int * height, int * bpp);
 
 EXPORT_DLL
@@ -56,10 +53,11 @@ namespace boost {
     }
 }
 EXPORT_DLL
-uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t x, uint32_t y, uint32_t w, uint32_t h, char* dest);
+uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t x, uint32_t y, uint32_t w, uint32_t h, char* dest);
 EXPORT_DLL
 uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER* header, uint32_t x, uint32_t y, uint32_t w, uint32_t h, char* src);
-
+EXPORT_DLL
+int GetTGAHeader(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* outHeader);
 
 //For now we assume bpp
 struct RGBRect{

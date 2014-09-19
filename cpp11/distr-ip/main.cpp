@@ -90,7 +90,7 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
 
             //the tricky bit here: we check if the initialisation is done outside of a lock, thus we have to make sure that setting initialised is under no circumstances optimised to happen outside
             if (subTask.inFile && subTask.outFile && subTask.inHeader && subTask.outHeader) {
-                subTask.initialised = true;
+                *subTask.initialised = true;
             }
             else {
                 std::cout << __func__ << " - failed to initialise structures for file: " << inFPath << "\n";
@@ -98,7 +98,7 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
         }
     }
     catch (std::exception ex) {
-        std::cout << __func__ << " - some exception: " << e.what << "\n, just caught to ensure we release mutex\n";
+        std::cout << __func__ << " - some exception: " << ex.what() << "\n, just caught to ensure we release mutex\n";
     }
 
     mutex.unlock();
@@ -205,19 +205,21 @@ public:
 int splitWork(boost::filesystem::path& inPath,
               boost::lockfree::queue<TaskDef*>& workQueue,
               std::string outDir,
-              int& id)
+              uint32_t& id)
 {
-    std::string fName = iter->path().filename().string();
-    std::string dName = path.string();
+    std::string fName = inPath.filename().string();
+    std::string dName = "invalid-fill-this-in";
     //TODO - check those inversion bits
-    TGA_HEADER inHeader = new TGA_HEADER;
+    TGA_HEADER inHeader;
     std::atomic<uint32_t>* remaining = new std::atomic<uint32_t>;
     bool* initialised = new bool;
     *initialised = false;
     *remaining = 0;
     boost::iostreams::mapped_file_source inFile(inPath.string());
     GetTGAHeader(&inFile, &inHeader);
-    *outHeader = *inHeader;
+
+    int taskCount = 0;
+
     for(int y = 0; y < inHeader.height; y += 100) {
         for(int x = 0; x < inHeader.width; x += 100) {
             int h = 100;
@@ -227,13 +229,15 @@ int splitWork(boost::filesystem::path& inPath,
             if (inHeader.width - x < 100)
                 w = inHeader.width - w;
             (*remaining) += 1;
-            SubTaskDef* subTask = new SubTaskDef(*remaining, intialised, x, y, w, h);
+            SubTaskDef* subTask = new SubTaskDef(*remaining, initialised, x, y, w, h);
             TaskDef* task = new TaskDef(dName, fName, outDir, OpType::BW, id);
             task->subTask = subTask;
             workQueue.push(task);
             id += 1;
+            taskCount += 1;
         }
     }
+    return taskCount;
 }
 
 uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
@@ -250,12 +254,13 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
             {
                 //aici: read size of the file and decide its splitting
                 //will fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
-
+                std::string fName = iter->path().filename().string();
+                std::string dName = path.string();
                 if ((fName.rfind(".tga") != std::string::npos)
                     || (fName.rfind(".TGA") != std::string::npos))
                 {
                     if (boost::filesystem::file_size(iter->path()) > S_MIN_FILE_SIZE_FOR_SPLITTING) {
-                        splitWork(iter->path(), workQueue, outDir, &id);
+                        splitWork(iter->path().filename(), workQueue, outDir, id);
                     }
                     else {
                         workQueue.push(new TaskDef(dName, fName, outDir, OpType::BW, id));
@@ -345,8 +350,8 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
 
     SubTaskDef* subTask = taskDef->subTask;
     if (subTask->initialised == false) {
-        initSubTaskSharedData(subTask, conn->globalMutex,
-                              taskDef->inFilePath(), taskDefoutFilePath());
+        initSubTaskSharedData(*subTask, conn->globalMutex,
+                              taskDef->filePath(), taskDef->outFilePath());
     }
     def.reqId = taskDef->id;
     def.op = taskDef->op;
@@ -359,7 +364,7 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     def.bpp = subTask->inHeader->bits;
     def.dataSize = def.h * def.w * def.bpp;
     def.serialise(conn->buf);
-    bytes = getRectFromFile(subTask->inFile, subTask->inHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
+    uint64_t bytes = getRectFromFile(subTask->inFile, subTask->inHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
         boost::bind(&sendNextChunk, conn, work,
@@ -619,7 +624,7 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
     std::atomic<uint32_t>& remainingTasks = conn->remainingTasks;
 
     if ( (!err) && (work->work.size() > 0) ) {
-        if (work->back()->subTask == NULL) {
+        if (work->work.back()->subTask == NULL) {
             work->io_service.post(boost::bind(&sendNextHeader, conn, work));
         }
         else {

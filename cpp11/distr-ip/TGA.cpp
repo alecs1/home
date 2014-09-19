@@ -98,7 +98,7 @@ void LoadUncompressedImage( char* pDest, char * pSrc, TGA_HEADER * pHeader )
     }
 }
 
-uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* dest)
+uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* dest)
 {
     int w = header->width;
     int h = header->height;
@@ -111,13 +111,13 @@ uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
     const char* src = inFile->data();
     src += startOffset;
 
-    for (int i = yR; i < yR+hR; i++)
+    for (unsigned int i = yR; i < yR+hR; i++)
     {
         const char * srcRow = src +
             (bInverted ? (h - i - 1) * rowSize : i * rowSize);
         if (header->bits == 24)
         {
-            for (int j = xR; j < xR + wR; j++)
+            for (unsigned int j = xR; j < xR + wR; j++)
             {
                 dest[0] = srcRow[2];
                 dest[1] = srcRow[1];
@@ -128,7 +128,7 @@ uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
         }
         else
         {
-            for (int j = 0; j < w; j++)
+            for (unsigned int j = xR; j < xR + wR; j++)
             {
                 dest[0] = srcRow[2];
                 dest[1] = srcRow[1];
@@ -154,12 +154,12 @@ uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER
     char* dest = outFile->data();
     dest += startOffset;
 
-    for (int i = yR; i < yR+hR; i++)
+    for (unsigned int i = yR; i < yR+hR; i++)
     {
-        char * destRow = i * rowSize + (header->bits/8) * xR;
+        char * destRow = dest + i * rowSize + (header->bits/8) * xR;
         if (header->bits == 24)
         {
-            for (int j = xR; j < xR + wR; j++)
+            for (unsigned int j = xR; j < xR + wR; j++)
             {
                 destRow[2] = src[0];
                 destRow[1] = src[1];
@@ -170,7 +170,7 @@ uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER
         }
         else
         {
-            for (int j = 0; j < w; j++)
+            for (int j = xR; j < xR + wR; j++)
             {
                 destRow[2] = src[0];
                 destRow[1] = src[1];
