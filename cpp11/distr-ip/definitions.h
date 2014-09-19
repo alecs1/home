@@ -9,7 +9,7 @@ enum class OpType : uint8_t {
 enum class TransmitType : uint8_t  {
     FullFile = 0,
     FullImageData = 1,
-    PartialImageData = 2
+    Bloc100x100 = 2
 };
 
 enum class CompressionType : uint8_t {
@@ -25,9 +25,10 @@ enum class CompressionType : uint8_t {
 #define S_TRANSMIT sizeof(uint8_t)
 #define S_COMPRESSION sizeof(uint8_t)
 #define S_DIMENSION sizeof(uint32_t)
+#define S_BPP sizeof(uint8_t)
 #define S_DATASIZE sizeof(uint64_t)
 #define S_REQ_ID sizeof(uint32_t) //some unique id of this request, used when replying
-#define S_HEADER_CLIENTWORKDEF (S_SIG_BYTES + S_OP + S_TRANSMIT + S_COMPRESSION + S_DIMENSION + S_DIMENSION + S_DATASIZE + S_REQ_ID)
+#define S_HEADER_CLIENTWORKDEF (S_SIG_BYTES + S_OP + S_TRANSMIT + S_COMPRESSION + S_DIMENSION + S_DIMENSION + S_DIMENSION + S_DIMENSION + S_BPP + S_DATASIZE + S_REQ_ID)
 
 
 //TODO - try to use a bit less direct memory access
@@ -44,8 +45,11 @@ struct ClientWorkDef {
         memcpy(&op, header+pos, S_OP); pos += S_OP;
         memcpy(&transmit, header+pos, S_TRANSMIT); pos += S_TRANSMIT;
         memcpy(&compression, header+pos, S_COMPRESSION); pos += S_COMPRESSION;
+        memcpy(&x, header+pos, S_DIMENSION); pos += S_DIMENSION;
+        memcpy(&y, header+pos, S_DIMENSION); pos += S_DIMENSION;
         memcpy(&w, header+pos, S_DIMENSION); pos += S_DIMENSION;
         memcpy(&h, header+pos, S_DIMENSION); pos += S_DIMENSION;
+        memcpy(&bpp, header+pos, S_BPP); pos += S_BPP;
         memcpy(&dataSize, header+pos, S_DATASIZE); pos += S_DATASIZE;
         memcpy(&reqId, header + pos, S_REQ_ID); pos += S_REQ_ID;
 
@@ -66,8 +70,11 @@ struct ClientWorkDef {
         memcpy(header+pos, &op, S_OP); pos += S_OP;
         memcpy(header+pos, &transmit, S_TRANSMIT); pos += S_TRANSMIT;
         memcpy(header+pos, &compression, S_COMPRESSION); pos += S_COMPRESSION;
+        memcpy(header+pos, &x, S_DIMENSION); pos += S_DIMENSION;
+        memcpy(header+pos, &y, S_DIMENSION); pos += S_DIMENSION;
         memcpy(header+pos, &w, S_DIMENSION); pos += S_DIMENSION;
         memcpy(header+pos, &h, S_DIMENSION); pos += S_DIMENSION;
+        memcpy(header+pos, &bpp, S_BPP); pos += S_BPP;
         memcpy(header+pos, &dataSize, S_DATASIZE); pos += S_DATASIZE;
         memcpy(header + pos, &reqId, S_REQ_ID); pos += S_REQ_ID;
         if (pos != S_HEADER_CLIENTWORKDEF)
@@ -81,7 +88,9 @@ struct ClientWorkDef {
     OpType op;
     TransmitType transmit;
     CompressionType compression;
+    uint32_t x, y; //irelevant for now
     uint32_t w, h; //0 and irelevant if TransmitType is FullFile
+    uint8_t bpp;
     uint64_t dataSize;
     uint32_t reqId;
 };
