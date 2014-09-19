@@ -179,7 +179,7 @@ public:
         remainingTasks(aRemainingTasks),
         globalMutex(aGlobalMutex)
     {
-        sBuf = 40000; //able to hold 100*100 32 bit pixels
+        sBuf = 4 * 100 * 100 + S_HEADER_CLIENTWORKDEF; //able to hold 100*100 32 bit pixels + its header
         buf = new char[sBuf];
     }
 
@@ -293,14 +293,14 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         return;
     }
 
-    if (conn->fileBufPos == 0) {
-        conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
-        if (conn->inS.rdstate() != std::ios::goodbit) {
-            std::cout << __func__ << " - std::fstream::open failed: " <<
-                work->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
-            return;
+        if (conn->fileBufPos == 0) {
+            conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
+            if (conn->inS.rdstate() != std::ios::goodbit) {
+                std::cout << __func__ << " - std::fstream::open failed: " <<
+                    work->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
+                return;
+            }
         }
-    }
 
     if (conn->inS.eof() == false) {
         conn->inS.read(conn->buf, conn->sBuf);
@@ -332,37 +332,59 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
     }
 }
 
+void singleRequestWritten(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                       const boost::system::error_code& err, size_t bytes)
+{
+    //just call read_async
+}
+
+void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+{
+    TaskDef* taskDef = work->work.back();
+    ClientWorkDef def;
+
+    SubTaskDef* subTask = taskDef->subTask;
+    if (subTask->initialised == false) {
+        initSubTaskSharedData(subTask, conn->globalMutex,
+                              taskDef->inFilePath(), taskDefoutFilePath());
+    }
+    def.reqId = taskDef->id;
+    def.op = taskDef->op;
+    def.compression = CompressionType::None;
+    def.transmit = TransmitType::Bloc100x100;
+    def.x = subTask->x;
+    def.y = subTask->y;
+    def.w = subTask->w;
+    def.h = subTask->h;
+    def.bpp = subTask->inHeader->bits;
+    def.dataSize = def.h * def.w * def.bpp;
+    def.serialise(conn->buf);
+    bytes = getRectFromFile(subTask->inFile, subTask->inHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
+    conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
+    boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
+        boost::bind(&sendNextChunk, conn, work,
+                    boost::asio::placeholders::error,
+                    boost::asio::placeholders::bytes_transferred));
+
+}
+
 //sendNextHeader -> sendNextChunk -> readNextChunk >>
-void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
+void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+{
     TaskDef* taskDef = work->work.back();
     ClientWorkDef def;
 
     def.reqId = taskDef->id;
     def.op = taskDef->op;
     def.compression = CompressionType::None;
-    if (taskDef->subTask == NULL) {
-        def.transmit = TransmitType::FullFile;
-        def.x = 0;
-        def.y = 0;
-        def.w = 0;
-        def.h = 0;
-        def.dataSize = boost::filesystem::file_size(taskDef->filePath());
-        std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
-    }
-    else {
-        SubTaskDef* subTask = taskDef->subTask;
-        if (subTask->initialised == false) {
-            initSubTaskSharedData(subTask, conn->globalMutex,
-                                  taskDef->inFilePath(), taskDefoutFilePath());
-        }
-        def.transmit = TransmitType::Bloc100x100;
-        def.x = subTask->x;
-        def.y = subTask->y;
-        def.w = subTask->w;
-        def.h = subTask->h;
-        def.bpp = subTask->inHeader->bits;
-        def.dataSize = def.h * def.w * def.bpp;
-    }
+    def.transmit = TransmitType::FullFile;
+    def.x = 0;
+    def.y = 0;
+    def.w = 0;
+    def.h = 0;
+    def.dataSize = boost::filesystem::file_size(taskDef->filePath());
+    std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
+
 
     //keep buffer alive, maybe even reuse it!
     conn->fileBufPos = 0;
@@ -597,7 +619,12 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
     std::atomic<uint32_t>& remainingTasks = conn->remainingTasks;
 
     if ( (!err) && (work->work.size() > 0) ) {
-        work->io_service.post(boost::bind(&sendNextHeader, conn, work));
+        if (work->back()->subTask == NULL) {
+            work->io_service.post(boost::bind(&sendNextHeader, conn, work));
+        }
+        else {
+            work->io_service.post(boost::bind(&sendSingleRequest, conn, work));
+        }
     }
     else {
         //std::cout << __func__ << "dropping connection just accepted, err:" << err.message()
