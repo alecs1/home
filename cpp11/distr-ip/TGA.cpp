@@ -98,7 +98,6 @@ void LoadUncompressedImage( char* pDest, char * pSrc, TGA_HEADER * pHeader )
     }
 }
 
-//void LoadUncompressedImage(char* pDest, char * pSrc, TGA_HEADER * pHeader)
 uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* dest)
 {
     int w = header->width;
@@ -143,6 +142,53 @@ uint32_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
     return dest - origDest;
 }
 
+uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* src)
+{
+    int w = header->width;
+    int h = header->height;
+    int rowSize = w * header->bits / 8;
+    uint32_t wrote = 0;
+
+    //skip header
+    uint32_t startOffset = sizeof(*header) + header->identsize;
+    char* dest = outFile->data();
+    dest += startOffset;
+
+    for (int i = yR; i < yR+hR; i++)
+    {
+        char * destRow = i * rowSize + (header->bits/8) * xR;
+        if (header->bits == 24)
+        {
+            for (int j = xR; j < xR + wR; j++)
+            {
+                destRow[2] = src[0];
+                destRow[1] = src[1];
+                destRow[0] = src[2];
+                src += 3;
+                destRow += 3;
+            }
+        }
+        else
+        {
+            for (int j = 0; j < w; j++)
+            {
+                destRow[2] = src[0];
+                destRow[1] = src[1];
+                destRow[0] = src[2];
+                destRow[3] = src[3];
+                src += 4;
+                destRow += 4;
+            }
+        }
+        wrote += wR * (header->bits/8);
+    }
+    return wrote;
+}
+
+int GetTGAHeader(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* outHeader) {
+    memcpy(outHeader, inFile->data(), sizeof(*outHeader));
+    return sizeof(*outHeader);
+}
 
 char * LoadTGA( const char * szFileName, int * width, int * height, int * bpp )
 {
@@ -200,30 +246,24 @@ char * LoadTGA( const char * szFileName, int * width, int * height, int * bpp )
 char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * height, int * bpp)
 {
 
-    //FILE * f = fopen(szFileName, "rb");
 
-    //if (f == NULL)
-    //    return NULL;
     uint64_t pos = 0;
 
     TGA_HEADER header;
-    //fread(&header, sizeof(header), 1, f);
+
     memcpy(&header, data + pos, sizeof(header)); pos += sizeof(header);
 
-    //fseek(f, 0, SEEK_END);
+
     int fileLen = size;
-    //fseek(f, sizeof(header) + header.identsize, SEEK_SET);
     pos = sizeof(header) + header.identsize;
 
     if (header.imagetype != IT_COMPRESSED && header.imagetype != IT_UNCOMPRESSED)
     {
-        //fclose(f);
         return NULL;
     }
 
     if (header.bits != 24 && header.bits != 32)
     {
-        //fclose(f);
         return NULL;
     }
 

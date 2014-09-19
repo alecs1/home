@@ -45,11 +45,22 @@ auto printFuncInfo = [] (const char* func) {
 };
 
 struct SubTaskDef {
-    std::atomic<uint32_t>& workerCount;
+    SubTaskDef(std::atomic<uint32_t>& aremainingTasksCount, TGA_HEADER* aInHeader, TGA_HEADER* aOutHeader,
+               uint32_t aX, uint32_t aY, uint32_t aW, uint32_t aH):
+        remainingTasksCount(aremainingTasksCount),
+        inHeader(aInHeader), outHeader(aOutHeader),
+        x(aX), y(aY), w(aW), h(aH)
+    {
+        inFile = NULL;
+        outFile = NULL;
+    }
+
+    std::atomic<uint32_t>& remainingTasksCount;
     //global mutex protected
     boost::iostreams::mapped_file_source* inFile;
     boost::iostreams::mapped_file_sink* outFile;
-    TGA_HEADER* header;
+    TGA_HEADER* inHeader;
+    TGA_HEADER* outHeader;
     //end global mutex protected
     uint32_t x, y, w, h;
 };
@@ -153,8 +164,29 @@ public:
     std::mutex& globalMutex;
 };
 
-void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
-                    const boost::system::error_code& err, size_t bytes);
+int splitWork(boost::filesystem::path& inPath, boost::lockfree::queue<TaskDef*>& workQueue) {
+    TGA_HEADER* inHeader = new TGA_HEADER;
+    TGA_HEADER* outHeader = new TGA_HEADER;
+    std::atomic<uint32>* remaining;
+    *remaining = 0;
+    boost::iostreams::mapped_file_source inFile(inPath.string());
+    GetTGAHeader(&inFile, inHeader);
+    outHeader = inHeader;
+    for(int y = 0; y < inHeader.height; y += 100) {
+        for(int x = 0; x < inHeader.width; x += 100) {
+            int h = 100;
+            if (inHeader.height - y < 100)
+                h = inHeader.height - y;
+            int w = 100;
+            if (inHeader.width - x < 100)
+                w = inHeader.width - w;
+            (*remaining) += 1;
+            SubTaskDef* subTask = new SubTaskDef(*remaining, &inHeader, &outHeader, x, y, w, h);
+        }
+    }
+    //TODO - check those inversion bits
+    //outHeader.
+}
 
 uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     std::string outDir("D:\\tmp\\tga-out");
@@ -168,6 +200,9 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
                 iter != boost::filesystem::directory_iterator();
                 iter++)
             {
+                if (boost::filesystem::file_size(iter->path()) > S_MIN_FILE_SIZE_FOR_SPLITTING) {
+                    splitWork(iter->path(), workQueue);
+                }
                 //aici: read size of the file and decide its splitting
                 //will fail at least with: directories name "*.tga*", files named "*.tga<*>", fs races
                 std::string fName = iter->path().filename().string();
@@ -188,6 +223,9 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     }
     return id;
 }
+
+void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                    const boost::system::error_code& err, size_t bytes);
 
 void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                    const boost::system::error_code& err, size_t bytes)

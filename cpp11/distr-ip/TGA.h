@@ -35,6 +35,8 @@ typedef struct
 
 #pragma pack(pop,x1)
 
+EXPORT_DLL
+int GetTGAHeader(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* outHeader);
 
 EXPORT_DLL
 char * LoadTGA(const char * szFileName, int * width, int * height, int * bpp);
