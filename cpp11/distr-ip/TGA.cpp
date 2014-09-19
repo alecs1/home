@@ -245,14 +245,10 @@ char * LoadTGA( const char * szFileName, int * width, int * height, int * bpp )
 
 char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * height, int * bpp)
 {
-
-
     uint64_t pos = 0;
-
     TGA_HEADER header;
 
     memcpy(&header, data + pos, sizeof(header)); pos += sizeof(header);
-
 
     int fileLen = size;
     pos = sizeof(header) + header.identsize;
@@ -281,6 +277,7 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
     switch (header.imagetype)
     {
     case IT_UNCOMPRESSED:
+        //LoadUncompressedImage(pOutBuffer, pBuffer, &header);
         LoadUncompressedImage(pOutBuffer, pBuffer, &header);
         break;
     case IT_COMPRESSED:
@@ -293,13 +290,19 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
     return pOutBuffer;
 }
 
-/*
-TGADef* ToBW(TGADef& img) {
-    std::cout << __func__ << " - implement\n";
-
-    return new TGADef(0, 0, 0, NULL);
+void ToBWImg(char*data, uint8_t bpp, int w, int h) {
+    char* crtPix = data;
+    unsigned int val;
+    for (unsigned int i = 0; i < h; i++) {
+        for (unsigned int j = 0; j < w; j++) {
+            val = (crtPix[0] + crtPix[1] + crtPix[2]) / 3;
+            crtPix[0] = crtPix[1] = crtPix[2] = val;
+            crtPix += bpp / 8;
+        }
+    }
 }
-*/
+
+//char* TGATOBW()
 
 EXPORT_DLL
 char * ToBW(const char * fData, uint64_t size, uint64_t * newSize) {
