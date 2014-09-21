@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <memory>
 #include <thread>
@@ -202,7 +203,7 @@ public:
     std::mutex& globalMutex;
 };
 
-int splitWork(boost::filesystem::path& inPath,
+int splitWork(const boost::filesystem::path& inPath,
               boost::lockfree::queue<TaskDef*>& workQueue,
               std::string outDir,
               uint32_t& id)
@@ -660,7 +661,8 @@ void mainLoop() {
 
     //read work definition
     boost::lockfree::queue<TaskDef*> allWork(10000);
-    std::atomic<uint32_t> taskCount = readWork(allWork);
+    std::atomic<uint32_t> taskCount;
+    taskCount = readWork(allWork);
     std::cout << __func__ << " - number of tasks: " << taskCount << "\n";
 
     boost::asio::io_service io_service;

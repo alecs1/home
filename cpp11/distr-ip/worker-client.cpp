@@ -4,7 +4,11 @@
 #include <thread>
 
 #include <boost/asio.hpp>
+
+//could not get this thing to link on Debian
+//#ifdef WIN32
 #include <boost/interprocess/sync/named_mutex.hpp>
+//#endif
 
 #include "global_defines.h"
 #include "definitions.h"
@@ -13,6 +17,7 @@
 #define SRV "10.58.10.224"
 
 bool startNewInstance() {
+#ifdef WIN32
     /*
     BOOL WINAPI CreateProcess(
         _In_opt_     LPCTSTR lpApplicationName,
@@ -50,10 +55,16 @@ bool startNewInstance() {
         std::cout << "CreateProcessW error: " << createError << "\n";
     }
     return created;
+#else
+    std::cout << __func__ << " - not implemented on Unix systems\n";
+    return false;
+#endif
+
 }
 
 //increase: true-new instance is starting, false-instance is finishing
 int manageInstances(bool increase) {
+#ifdef WIN32
     std::cout << __func__ << " - start\n";
 
     int instCount = 1;
@@ -110,6 +121,10 @@ int manageInstances(bool increase) {
     instMutex.unlock();
     std::cout << __func__ << " - end\n";
     return instCount;
+#else
+    std::cout << __func__ << " - not implemented on Unix systems\n";
+    return -1;
+#endif
 }
 
 

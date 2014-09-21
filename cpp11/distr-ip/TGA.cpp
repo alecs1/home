@@ -145,7 +145,7 @@ uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
 uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* src)
 {
     int w = header->width;
-    int h = header->height;
+    //int h = header->height;
     int rowSize = w * header->bits / 8;
     uint32_t wrote = 0;
 
@@ -170,7 +170,7 @@ uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER
         }
         else
         {
-            for (int j = xR; j < xR + wR; j++)
+            for (unsigned int j = xR; j < xR + wR; j++)
             {
                 destRow[2] = src[0];
                 destRow[1] = src[1];
