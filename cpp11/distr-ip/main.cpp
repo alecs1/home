@@ -72,18 +72,27 @@ struct SubTaskDef {
 };
 
 void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::string& inFPath, const std::string& outFPath) {
-    if (subTask.initialised)
+    std::cout << __func__ << " - " << subTask.initialised << ", " << inFPath << ", " << outFPath << "\n";
+
+    if (*subTask.initialised)
         return;
 
     mutex.lock();
-    try {
-        if (!subTask.initialised) {
+    //try {
+        if (!(*subTask.initialised)) {
             subTask.inFile = new boost::iostreams::mapped_file_source(inFPath);
 
             std::fstream file;
-            file.open(inFPath, std::ios::binary | std::ios::trunc | std::ios::out);
+            file.open(outFPath, std::ios::binary | std::ios::trunc | std::ios::out);
+            file.close();
 
-            subTask.outFile = new boost::iostreams::mapped_file_sink(outFPath);
+            uint64_t fSize = boost::filesystem::file_size(boost::filesystem::path(inFPath));
+            std::cout << __func__ << " - new fSize=" << fSize << "\n";
+
+            boost::iostreams::mapped_file_params sinkParams;
+            sinkParams.path = inFPath;
+            sinkParams.new_file_size = fSize;
+            subTask.outFile = new boost::iostreams::mapped_file_sink(sinkParams);
             subTask.inHeader = new TGA_HEADER;
             subTask.outHeader = new TGA_HEADER;
             GetTGAHeader(subTask.inFile, subTask.inHeader);
@@ -97,10 +106,11 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
                 std::cout << __func__ << " - failed to initialise structures for file: " << inFPath << "\n";
             }
         }
-    }
-    catch (std::exception ex) {
-        std::cout << __func__ << " - some exception: " << ex.what() << "\n, just caught to ensure we release mutex\n";
-    }
+//    }
+//    catch (std::exception ex) {
+//        std::cout << __func__ << " - some exception: " << ex.what() << "\n, we could release mutex, but let's just crash, can't recover\n";
+//        abort();
+//    }
 
     mutex.unlock();
 }
@@ -203,20 +213,21 @@ public:
     std::mutex& globalMutex;
 };
 
-int splitWork(const boost::filesystem::path& inPath,
-              boost::lockfree::queue<TaskDef*>& workQueue,
+int splitWork(std::string inDir,
+              std::string fName,
               std::string outDir,
+              boost::lockfree::queue<TaskDef*>& workQueue,
               uint32_t& id)
 {
-    std::string fName = inPath.filename().string();
-    std::string dName = "invalid-fill-this-in";
+    std::cout << __func__ << " - inPath=" << inDir << ", fName=" << fName << ", outDir=" << outDir << "\n";
+
     //TODO - check those inversion bits
     TGA_HEADER inHeader;
     std::atomic<uint32_t>* remaining = new std::atomic<uint32_t>;
     bool* initialised = new bool;
     *initialised = false;
     *remaining = 0;
-    boost::iostreams::mapped_file_source inFile(inPath.string());
+    boost::iostreams::mapped_file_source inFile(inDir + "/" + fName);
     GetTGAHeader(&inFile, &inHeader);
 
     int taskCount = 0;
@@ -228,22 +239,28 @@ int splitWork(const boost::filesystem::path& inPath,
                 h = inHeader.height - y;
             int w = 100;
             if (inHeader.width - x < 100)
-                w = inHeader.width - w;
+                w = inHeader.width - x;
             (*remaining) += 1;
             SubTaskDef* subTask = new SubTaskDef(*remaining, initialised, x, y, w, h);
-            TaskDef* task = new TaskDef(dName, fName, outDir, OpType::BW, id);
+            TaskDef* task = new TaskDef(inDir, fName, outDir, OpType::BW, id);
             task->subTask = subTask;
             workQueue.push(task);
             id += 1;
             taskCount += 1;
+            std::cout << __func__ << " - " << inDir << "/" << fName << ": " << x << ", " << y << ", " << w << ", " << h << "\n";
         }
     }
     return taskCount;
 }
 
 uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
+#ifdef WIN32
     std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
+#else
+    std::string outDir("/home/alex/tmp/tga/tga-out");
+    boost::filesystem::path path("/home/alex/tmp/tga/tga-in");
+#endif
 
     uint32_t id = 0;
 
@@ -261,7 +278,7 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
                     || (fName.rfind(".TGA") != std::string::npos))
                 {
                     if (boost::filesystem::file_size(iter->path()) > S_MIN_FILE_SIZE_FOR_SPLITTING) {
-                        splitWork(iter->path().filename(), workQueue, outDir, id);
+                        splitWork(dName, fName, outDir, workQueue, id);
                     }
                     else {
                         workQueue.push(new TaskDef(dName, fName, outDir, OpType::BW, id));
@@ -350,7 +367,7 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     ClientWorkDef def;
 
     SubTaskDef* subTask = taskDef->subTask;
-    if (subTask->initialised == false) {
+    if ( *subTask->initialised == false) {
         initSubTaskSharedData(*subTask, conn->globalMutex,
                               taskDef->filePath(), taskDef->outFilePath());
     }

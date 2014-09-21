@@ -14,7 +14,11 @@
 #include "definitions.h"
 #include "TGA.h"
 
+#ifdef WIN32
 #define SRV "10.58.10.224"
+#else
+#define SRV "127.0.0.1"
+#endif
 
 bool startNewInstance() {
 #ifdef WIN32
