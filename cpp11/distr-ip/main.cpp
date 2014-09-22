@@ -23,6 +23,7 @@
 #include "global_defines.h"
 #include "definitions.h"
 #include "TGA.h"
+#include "distr-ip.h"
 
 #define S_TASK_BATCH 5
 
@@ -45,33 +46,9 @@ auto printFuncInfo = [] (const char* func) {
     std::cout << ss.str() << "\n";
 };
 
-struct SubTaskDef {
-    SubTaskDef(std::atomic<uint32_t>& aRemainingTasksCount, bool* aInitialised,
-               uint32_t aX, uint32_t aY, uint32_t aW, uint32_t aH):
-        remainingTasksCount(aRemainingTasksCount),
-        x(aX), y(aY), w(aW), h(aH)
-    {
-        initialised = aInitialised;
-        inFile = NULL;
-        outFile = NULL;
-    }
 
-
-    //TODO - all these are shared - correctly handle deletion with mutex protection
-    std::atomic<uint32_t>& remainingTasksCount;
-    //global mutex protected
-    bool* initialised;
-    boost::iostreams::mapped_file_source* inFile;
-    boost::iostreams::mapped_file_sink* outFile;
-    TGA_HEADER* inHeader;
-    TGA_HEADER* outHeader;
-    //end global mutex protected
-
-
-    uint32_t x, y, w, h;
-};
-
-void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::string& inFPath, const std::string& outFPath) {
+void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::string& inFPath, const std::string& outFPath)
+{
     std::cout << __func__ << " - " << subTask.initialised << ", " << inFPath << ", " << outFPath << "\n";
 
     if (*subTask.initialised)
@@ -85,20 +62,20 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
             std::fstream file;
             file.open(outFPath, std::ios::binary | std::ios::trunc | std::ios::out);
             file.close();
-
             uint64_t fSize = boost::filesystem::file_size(boost::filesystem::path(inFPath));
             std::cout << __func__ << " - new fSize=" << fSize << "\n";
-
             boost::iostreams::mapped_file_params sinkParams;
-            sinkParams.path = inFPath;
+            sinkParams.path = outFPath;
             sinkParams.new_file_size = fSize;
             subTask.outFile = new boost::iostreams::mapped_file_sink(sinkParams);
+
             subTask.inHeader = new TGA_HEADER;
             subTask.outHeader = new TGA_HEADER;
             GetTGAHeader(subTask.inFile, subTask.inHeader);
             *(subTask.outHeader) = *(subTask.inHeader);
 
-            //the tricky bit here: we check if the initialisation is done outside of a lock, thus we have to make sure that setting initialised is under no circumstances optimised to happen outside
+            memcpy(subTask.outFile->data(), subTask.outHeader, sizeof(*subTask.outHeader));
+            //the tricky bit here: we check if the initialisation is done outside of a lock, thus we have to make sure that setting initialised is under no circumstances optimised to happen before everything is done
             if (subTask.inFile && subTask.outFile && subTask.inHeader && subTask.outHeader) {
                 *subTask.initialised = true;
             }
@@ -115,62 +92,12 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
     mutex.unlock();
 }
 
+void deinitSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex) {
+    mutex.lock();
+    //aici
+    mutex.unlock();
+}
 
-struct TaskDef {
-	TaskDef(std::string dPath, std::string fName, std::string oPath, OpType operation, uint32_t aId):
-        dir(dPath),
-        fileName(fName),
-        outDir(oPath),
-        op(operation),
-        id(aId)
-    {
-        subTask = NULL;
-    }
-    ~TaskDef() {
-        if (subTask != NULL)
-            delete subTask;
-    }
-
-    std::string filePath() {
-        return dir + "/" + fileName;
-    }
-    std::string outFilePath() {
-        return outDir + "/" + fileName;
-    }
-    std::string dir;
-    std::string fileName;
-    std::string outDir;
-    OpType op;
-    uint32_t id;
-    SubTaskDef* subTask; //should this be NULL the task is not split
-};
-
-
-struct WorkBatchDef;
-void pushBackTasks(WorkBatchDef* work);
-
-//TODO - has a non-trivial destructor which may allocate!
-//idea: the destructor pushes back all elements from "work" that were not deleted, but it looks like a hidden kind of crap that happens behind your back.
-struct WorkBatchDef {
-public:
-    WorkBatchDef(boost::asio::io_service &io_s, std::vector<TaskDef*> aWork, boost::lockfree::queue<TaskDef*>& aFailedQueue) :
-        io_service(io_s),
-        work(aWork),
-        failedQueue(aFailedQueue)
-    {
-    }
-
-    ~WorkBatchDef() {
-        if (work.size() > 0) {
-            std::cout << __func__ << " - FIXME, pushing back tasks was left to the destructor\n";
-            pushBackTasks(this);
-        }
-    }
-public:
-    boost::asio::io_service &io_service;
-    std::vector<TaskDef*> work;
-    boost::lockfree::queue<TaskDef*> &failedQueue;
-};
 
 void pushBackTasks(WorkBatchDef* work) {
     if (work->work.size() > 0)
@@ -182,36 +109,6 @@ void pushBackTasks(WorkBatchDef* work) {
     }
 }
 
-//socket and other stuff reused during connection to a client
-struct ConnDef {
-public:
-    ConnDef(boost::asio::io_service& ioService, std::atomic<uint32_t>& aRemainingTasks, std::mutex& aGlobalMutex):
-        sock(ioService),
-        remainingTasks(aRemainingTasks),
-        globalMutex(aGlobalMutex)
-    {
-        sBuf = 4 * 100 * 100 + S_HEADER_CLIENTWORKDEF; //able to hold 100*100 32 bit pixels + its header
-        buf = new char[sBuf];
-    }
-
-    ~ConnDef() {
-         delete[] buf;
-    }
-
-public:
-    boost::asio::ip::tcp::socket sock;
-    std::atomic<uint32_t>& remainingTasks;
-    char* buf;
-    uint64_t sBuf;
-
-    uint64_t lastOpExpectedBytes;
-    uint64_t fileBufPos;
-    uint64_t sBackFile;
-
-    std::fstream inS;
-    std::fstream outS;
-    std::mutex& globalMutex;
-};
 
 int splitWork(std::string inDir,
               std::string fName,
@@ -229,6 +126,8 @@ int splitWork(std::string inDir,
     *remaining = 0;
     boost::iostreams::mapped_file_source inFile(inDir + "/" + fName);
     GetTGAHeader(&inFile, &inHeader);
+
+    std::cout << __func__ << " - " << inDir << "/" << fName << ": " << inHeader.width << ", " << inHeader.height << "\n";
 
     int taskCount = 0;
 
@@ -291,13 +190,10 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     }
     catch (std::exception& ex) {
         std::cout << ex.what() << "\n";
-        return 0;
+        abort();
     }
     return id;
 }
-
-void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
-                    const boost::system::error_code& err, size_t bytes);
 
 void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                    const boost::system::error_code& err, size_t bytes)
@@ -355,10 +251,49 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
     }
 }
 
-void singleRequestWritten(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+int manageNextTask(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
+    if (work->work.size() == 0) {
+        std::cout << "Finished a batch of jobs, will take another one\n\n";
+        for (int i = 0; i < S_TASK_BATCH; i++) {
+            TaskDef *taskDef;
+            if (work->failedQueue.pop(taskDef)) {
+                work->work.push_back(taskDef);
+            }
+        }
+    }
+
+    if (work->work.size() > 0) {
+        if (work->work.back()->subTask == NULL) {
+            sendNextHeader(conn, work);
+        }
+        else {
+            sendSingleRequest(conn, work);
+        }
+    }
+    else {
+        std::cout << __func__ << " - finishing comm with the current client\n\n\n";
+    }
+    return work->work.size();
+}
+
+void readSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                        const boost::system::error_code& err, size_t bytes)
 {
-    //just call read_async
+    if (err != boost::system::errc::success) {
+        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
+        return;
+    }
+
+    if (bytes != conn->lastOpExpectedBytes) {
+        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
+            conn->lastOpExpectedBytes << "\n\n\n";
+        return;
+    }
+    conn->lastOpExpectedBytes = conn->lastOpExpectedBytes - S_HEADER_CLIENTWORKDEF + S_HEADER_SERVERREQDEF; //size of data + reply header
+    boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
+                            boost::bind(&processSingleReply, conn, work,
+                                        boost::asio::placeholders::error,
+                                        boost::asio::placeholders::bytes_transferred));
 }
 
 void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
@@ -383,12 +318,46 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     def.dataSize = def.h * def.w * def.bpp;
     def.serialise(conn->buf);
     uint64_t bytes = getRectFromFile(subTask->inFile, subTask->inHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
+    std::cout << __func__ << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << def.dataSize << ", " << bytes << "\n";
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
-        boost::bind(&sendNextChunk, conn, work,
+        boost::bind(&readSingleReply, conn, work,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
 
+}
+
+void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                       const boost::system::error_code& err, size_t bytes)
+{
+    if (err != boost::system::errc::success) {
+        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
+        return;
+    }
+
+    if (bytes != conn->lastOpExpectedBytes) {
+        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
+            conn->lastOpExpectedBytes << "\n\n\n";
+        return;
+    }
+    TaskDef* taskDef = work->work.back();
+    SubTaskDef* subTask = taskDef->subTask;
+    bytes = writeRectToFile(subTask->outFile, subTask->outHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_SERVERREQDEF);
+    if (bytes != (subTask->outHeader->bits/8) * subTask->w * subTask->h) {
+        std::cout << __func__ << " - wrote to file: " << bytes << ", expected: " << (subTask->outHeader->bits/8) * subTask->w * subTask->h << "\n";
+    }
+
+    subTask->remainingTasksCount -= 1;
+    if (subTask->remainingTasksCount) {
+        //deinit shared data
+        deinitSubTaskSharedData(*subTask, conn->globalMutex);
+    }
+
+    delete work->work.back();
+    work->work.pop_back();
+    conn->remainingTasks -= 1;
+
+    manageNextTask(conn, work);
 }
 
 //sendNextHeader -> sendNextChunk -> readNextChunk >>
@@ -498,9 +467,16 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
             }
         }
         if (work->work.size() > 0) {
-            sendNextHeader(conn, work);
+            if (work->work.back()->subTask == NULL) {
+                sendNextHeader(conn, work);
+            }
+            else {
+                sendSingleRequest(conn, work);
+            }
         }
-        std::cout << __func__ << " - finishing comm with the current client\n\n\n";
+        else {
+            std::cout << __func__ << " - finishing comm with the current client\n\n\n";
+        }
     }
     else {
         conn->lastOpExpectedBytes = conn->sBackFile - conn->fileBufPos;
@@ -516,7 +492,8 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
 
 
 //old implementation, does not yeld until exit, holds the state of the current communication
-void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
+void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+{
     //std::cout << __func__ << "\n";
 
     boost::system::error_code err;

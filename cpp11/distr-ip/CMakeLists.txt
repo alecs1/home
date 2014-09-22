@@ -30,7 +30,7 @@ find_package( Boost REQUIRED COMPONENTS system filesystem thread iostreams corou
 
 add_library(tgafunctions SHARED TGA.cpp TGA.h)
 
-add_executable(distr-ip main.cpp global_defines.h definitions.h TGA.h)
+add_executable(distr-ip main.cpp global_defines.h definitions.h TGA.h distr-ip.h)
 target_link_libraries(distr-ip tgafunctions ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_IOSTREAMS_LIBRARY})
 
 
