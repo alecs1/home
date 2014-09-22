@@ -7,6 +7,8 @@ set(Boost_USE_MULTITHREADED      ON)
 
 #platform specific stuff
 IF (${CMAKE_SYSTEM_NAME} MATCHES "Win")
+	set (BOOST_ROOT "C:\\local\\boost_1_56_0")
+	set (BOOST_LIBRARYDIR "C:\\local\\boost_1_56_0\\lib64-msvc-12.0")
     include_directories("C:\\local\\boost_1_56_0")
     link_directories("C:\\local\\boost_1_56_0\\lib64-msvc-12.0")
     set (CMAKE_EXE_LINKER_FLAGS " /machine:X64 ")
