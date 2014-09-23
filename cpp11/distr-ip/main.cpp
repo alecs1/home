@@ -49,15 +49,17 @@ auto printFuncInfo = [] (const char* func) {
 
 void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::string& inFPath, const std::string& outFPath)
 {
-    std::cout << __func__ << " - " << subTask.initialised << ", " << inFPath << ", " << outFPath << "\n";
+    std::cout << __func__ << " - " << subTask.shared->initialised << ", " << inFPath << ", " << outFPath << "\n";
 
-    if (*subTask.initialised)
+    SubTaskShared* shared = subTask.shared;
+
+    if (shared->initialised)
         return;
 
     mutex.lock();
     //try {
-        if (!(*subTask.initialised)) {
-            subTask.inFile = new boost::iostreams::mapped_file_source(inFPath);
+        if (!(shared->initialised)) {
+            shared->inFile = new boost::iostreams::mapped_file_source(inFPath);
 
             std::fstream file;
             file.open(outFPath, std::ios::binary | std::ios::trunc | std::ios::out);
@@ -67,17 +69,17 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
             boost::iostreams::mapped_file_params sinkParams;
             sinkParams.path = outFPath;
             sinkParams.new_file_size = fSize;
-            subTask.outFile = new boost::iostreams::mapped_file_sink(sinkParams);
+            shared->outFile = new boost::iostreams::mapped_file_sink(sinkParams);
 
-            subTask.inHeader = new TGA_HEADER;
-            subTask.outHeader = new TGA_HEADER;
-            GetTGAHeader(subTask.inFile, subTask.inHeader);
-            *(subTask.outHeader) = *(subTask.inHeader);
+            shared->inHeader = new TGA_HEADER;
+            shared->outHeader = new TGA_HEADER;
+            GetTGAHeader(shared->inFile, shared->inHeader);
+            *(shared->outHeader) = *(shared->inHeader);
 
-            memcpy(subTask.outFile->data(), subTask.outHeader, sizeof(*subTask.outHeader));
+            memcpy(shared->outFile->data(), shared->outHeader, sizeof(*shared->outHeader));
             //the tricky bit here: we check if the initialisation is done outside of a lock, thus we have to make sure that setting initialised is under no circumstances optimised to happen before everything is done
-            if (subTask.inFile && subTask.outFile && subTask.inHeader && subTask.outHeader) {
-                *subTask.initialised = true;
+            if (shared->inFile && shared->outFile && shared->inHeader && shared->outHeader) {
+                shared->initialised = true;
             }
             else {
                 std::cout << __func__ << " - failed to initialise structures for file: " << inFPath << "\n";
@@ -121,8 +123,17 @@ int splitWork(std::string inDir,
     //TODO - check those inversion bits
     TGA_HEADER inHeader;
     std::atomic<uint32_t>* remaining = new std::atomic<uint32_t>;
-    bool* initialised = new bool;
-    *initialised = false;
+
+    SubTaskShared* shared = new SubTaskShared;
+    shared->initialised = false;
+    shared->inFile = NULL;
+    shared->outFile = NULL;
+    shared->inHeader = NULL;
+    shared->outHeader = NULL;
+
+    //bool* initialised = new bool;
+    //*initialised = false;
+
     *remaining = 0;
     boost::iostreams::mapped_file_source inFile(inDir + "/" + fName);
     GetTGAHeader(&inFile, &inHeader);
@@ -140,7 +151,7 @@ int splitWork(std::string inDir,
             if (inHeader.width - x < 100)
                 w = inHeader.width - x;
             (*remaining) += 1;
-            SubTaskDef* subTask = new SubTaskDef(*remaining, initialised, x, y, w, h);
+            SubTaskDef* subTask = new SubTaskDef(*remaining, shared, x, y, w, h);
             TaskDef* task = new TaskDef(inDir, fName, outDir, OpType::BW, id);
             task->subTask = subTask;
             workQueue.push(task);
@@ -271,7 +282,7 @@ int manageNextTask(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         }
     }
     else {
-        std::cout << __func__ << " - finishing comm with the current client\n\n\n";
+        std::cout << __func__ << " - finishing comm with the current client, there were not tasks to take.\n\n\n";
     }
     return work->work.size();
 }
@@ -299,13 +310,15 @@ void readSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef
 void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
 {
     TaskDef* taskDef = work->work.back();
-    ClientWorkDef def;
-
     SubTaskDef* subTask = taskDef->subTask;
-    if ( *subTask->initialised == false) {
+    SubTaskShared* shared = subTask->shared;
+
+    if ( shared->initialised == false) {
         initSubTaskSharedData(*subTask, conn->globalMutex,
                               taskDef->filePath(), taskDef->outFilePath());
     }
+
+    ClientWorkDef def;
     def.reqId = taskDef->id;
     def.op = taskDef->op;
     def.compression = CompressionType::None;
@@ -314,11 +327,12 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     def.y = subTask->y;
     def.w = subTask->w;
     def.h = subTask->h;
-    def.bpp = subTask->inHeader->bits;
-    def.dataSize = def.h * def.w * def.bpp;
+    def.bpp = subTask->shared->inHeader->bits;
+    def.dataSize = def.h * def.w * (def.bpp/8);
     def.serialise(conn->buf);
-    uint64_t bytes = getRectFromFile(subTask->inFile, subTask->inHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
-    std::cout << __func__ << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << def.dataSize << ", " << bytes << "\n";
+    uint64_t bytes = getRectFromFile(shared->inFile, shared->inHeader,
+                                     subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
+    std::cout << __func__ << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << ", " << def.dataSize << ", " << bytes << "\n";
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
         boost::bind(&readSingleReply, conn, work,
@@ -342,9 +356,11 @@ void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatch
     }
     TaskDef* taskDef = work->work.back();
     SubTaskDef* subTask = taskDef->subTask;
-    bytes = writeRectToFile(subTask->outFile, subTask->outHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_SERVERREQDEF);
-    if (bytes != (subTask->outHeader->bits/8) * subTask->w * subTask->h) {
-        std::cout << __func__ << " - wrote to file: " << bytes << ", expected: " << (subTask->outHeader->bits/8) * subTask->w * subTask->h << "\n";
+    SubTaskShared* shared = subTask->shared;
+
+    bytes = writeRectToFile(shared->outFile, shared->outHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_SERVERREQDEF);
+    if (bytes != (shared->outHeader->bits/8) * subTask->w * subTask->h) {
+        std::cout << __func__ << " - wrote to file: " << bytes << ", expected: " << (shared->outHeader->bits/8) * subTask->w * subTask->h << "\n";
     }
 
     subTask->remainingTasksCount -= 1;

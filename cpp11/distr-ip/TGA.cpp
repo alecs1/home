@@ -290,7 +290,7 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
     return pOutBuffer;
 }
 
-void ToBWImg(char*data, uint8_t bpp, int w, int h) {
+void ToBWBlock(char*data, uint8_t bpp, uint32_t w, uint32_t h) {
     char* crtPix = data;
     unsigned int val;
     for (unsigned int i = 0; i < h; i++) {
@@ -305,7 +305,7 @@ void ToBWImg(char*data, uint8_t bpp, int w, int h) {
 //char* TGATOBW()
 
 EXPORT_DLL
-char * ToBW(const char * fData, uint64_t size, uint64_t * newSize) {
+char * ToBWFullFile(const char * fData, uint64_t size, uint64_t * newSize) {
 
     //FILE * f = fopen(szFileName, "rb");
 

@@ -35,6 +35,13 @@ typedef struct
 
 #pragma pack(pop,x1)
 
+namespace boost {
+    namespace iostreams {
+        class mapped_file_source;
+        class mapped_file_sink;
+    }
+}
+
 EXPORT_DLL
 char * LoadTGA(const char * szFileName, int * width, int * height, int * bpp);
 
@@ -43,49 +50,17 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
 
 //processes file directly
 EXPORT_DLL
-char * ToBW(const char * fData, uint64_t size, uint64_t * newSize);
+char * ToBWFullFile(const char * fData, uint64_t size, uint64_t * newSize);
 
-//fwd
-namespace boost {
-    namespace iostreams {
-        class mapped_file_source;
-        class mapped_file_sink;
-    }
-}
+EXPORT_DLL
+void ToBWBlock(char*data, uint8_t bpp, uint32_t w, uint32_t h);
+
+
 EXPORT_DLL
 uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* header, uint32_t x, uint32_t y, uint32_t w, uint32_t h, char* dest);
+
 EXPORT_DLL
 uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER* header, uint32_t x, uint32_t y, uint32_t w, uint32_t h, char* src);
+
 EXPORT_DLL
 int GetTGAHeader(boost::iostreams::mapped_file_source* inFile, TGA_HEADER* outHeader);
-
-//For now we assume bpp
-struct RGBRect{
-    uint32_t x, y;
-    uint8_t bpp; //assume it 24
-    char* data; //data size is necesarily w*h*bpp
-};
-
-
-
-/*
-struct TGADef {
-    int w;
-    int h;
-    int bpp;
-    char* data;
-    //aData is assumed to be allocated with new, TGADef will own the pointer after construction.
-    TGADef(int aW, int aH, int aBpp, char* aData):
-        w(aW),
-        h(aH),
-        data(aData)
-    { }
-    ~TGADef() {
-        printf("~TGADef - free %p\n", data);
-        delete[] data;
-    }
-};
-
-EXPORT_DLL
-TGADef* ToBW(TGADef& img);
-*/

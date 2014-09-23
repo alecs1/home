@@ -1,26 +1,29 @@
 #pragma once
 
-struct SubTaskDef {
-    SubTaskDef(std::atomic<uint32_t>& aRemainingTasksCount, bool* aInitialised,
-               uint32_t aX, uint32_t aY, uint32_t aW, uint32_t aH):
-        remainingTasksCount(aRemainingTasksCount),
-        x(aX), y(aY), w(aW), h(aH)
-    {
-        initialised = aInitialised;
-        inFile = NULL;
-        outFile = NULL;
-    }
 
-
-    //TODO - all these are shared - correctly handle deletion with mutex protection
-    std::atomic<uint32_t>& remainingTasksCount;
+struct SubTaskShared {
     //global mutex protected
-    bool* initialised;
+    bool initialised;
     boost::iostreams::mapped_file_source* inFile;
     boost::iostreams::mapped_file_sink* outFile;
     TGA_HEADER* inHeader;
     TGA_HEADER* outHeader;
     //end global mutex protected
+
+};
+
+struct SubTaskDef {
+    SubTaskDef(std::atomic<uint32_t>& aRemainingTasksCount, SubTaskShared* aShared,
+               uint32_t aX, uint32_t aY, uint32_t aW, uint32_t aH):
+        remainingTasksCount(aRemainingTasksCount),
+        shared(aShared),
+        x(aX), y(aY), w(aW), h(aH)
+    {
+    }
+
+    //TODO - all these are shared - correctly handle deletion with mutex protection
+    std::atomic<uint32_t>& remainingTasksCount;
+    SubTaskShared* shared; //this could also use a shared_ptr
 
 
     uint32_t x, y, w, h;

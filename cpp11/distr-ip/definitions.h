@@ -60,7 +60,7 @@ struct ClientWorkDef {
             std::cout << __func__ << "- error deserialising, got wrong header signature:" << sigBytes << "\n";
 
         std::cout << "ClientWorkDef: " << sigBytes << ", " << (uint8_t)op << ", " << (uint8_t)transmit << ", "
-            << (uint8_t)compression << ", " << w << ", " << h << ", " << dataSize << ", " << reqId << "\n";
+            << (uint8_t)compression << ", " << x << ", " << y << ", " << w << ", " << h << ", " << bpp << ", " << dataSize << ", " << reqId << "\n";
     }
 
     int serialise(/*uint8_t* */ char* header) {
