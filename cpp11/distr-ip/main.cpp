@@ -56,7 +56,10 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
     if (shared->initialised)
         return;
 
-    mutex.lock();
+    //TODO - learn about this unique_lock, lock guard
+    std::lock_guard<std::mutex> lockHandle(mutex);
+    
+    //mutex.lock();
     //try {
         if (!(shared->initialised)) {
             shared->inFile = new boost::iostreams::mapped_file_source(inFPath);
@@ -91,7 +94,7 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
 //        abort();
 //    }
 
-    mutex.unlock();
+    //mutex.unlock();
 }
 
 void deinitSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex) {
@@ -101,13 +104,14 @@ void deinitSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex) {
 }
 
 
-void pushBackTasks(WorkBatchDef* work) {
-    if (work->work.size() > 0)
-        std::cout << __func__ << " - will push to fail queue " << work->work.size() << " elements\n";
+void pushBackTasks(WorkBatchDef* workBatch) {
+    if (workBatch->work.size() > 0)
+        std::cout << __func__ << " - will push to fail queue " << workBatch->work.size() << " elements\n";
 
-    while (work->work.size() > 0) {
-        work->failedQueue.push(work->work.back());
-        work->work.pop_back();
+    while (workBatch->work.size() > 0) {
+        //this is the global queue
+        workBatch->failedQueue.push(workBatch->work.back());
+        workBatch->work.pop_back();
     }
 }
 
@@ -364,7 +368,7 @@ void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatch
     }
 
     subTask->remainingTasksCount -= 1;
-    if (subTask->remainingTasksCount) {
+    if (subTask->remainingTasksCount == 0) {
         //deinit shared data
         deinitSubTaskSharedData(*subTask, conn->globalMutex);
     }

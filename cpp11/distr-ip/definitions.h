@@ -95,7 +95,7 @@ struct ClientWorkDef {
     uint32_t reqId;
 };
 
-
+//TODO - doxygen and rename this struct
 #define S_HEADER_SERVERREQDEF (S_SIG_BYTES + S_COMPRESSION + S_DATASIZE + S_REQ_ID)
 struct ServerReqDef {
     CompressionType compression;
