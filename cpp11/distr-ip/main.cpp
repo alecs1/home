@@ -97,13 +97,6 @@ void initSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex, const std::st
     //mutex.unlock();
 }
 
-void deinitSubTaskSharedData(SubTaskDef& subTask, std::mutex& mutex) {
-    mutex.lock();
-    //aici
-    mutex.unlock();
-}
-
-
 void pushBackTasks(WorkBatchDef* workBatch) {
     if (workBatch->work.size() > 0)
         std::cout << __func__ << " - will push to fail queue " << workBatch->work.size() << " elements\n";
@@ -172,8 +165,8 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
 #else
-    std::string outDir("/home/alex/tmp/tga/tga-out");
-    boost::filesystem::path path("/home/alex/tmp/tga/tga-in");
+    std::string outDir("/home/alex/tmp/tga/out");
+    boost::filesystem::path path("/home/alex/tmp/tga/in");
 #endif
 
     uint32_t id = 0;
@@ -210,88 +203,34 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
     return id;
 }
 
-void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
-                   const boost::system::error_code& err, size_t bytes)
-{
-    if (err != boost::system::errc::success) {
-        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
-        //pushBackTasks(work.get());
-        return; //safe to exit, connection and all memory will be deallocated via the shared pointers destruction
-    }
 
-    //check if there's any case when write_async has no error but sends fewer byts
-    if (bytes != conn->lastOpExpectedBytes) {
-        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
-            conn->lastOpExpectedBytes << "\n\n\n";
-        //pushBackTasks(work.get());
-        return;
-    }
 
-        if (conn->fileBufPos == 0) {
-            conn->inS.open(work->work.back()->filePath(), std::ifstream::in | std::ios::binary);
-            if (conn->inS.rdstate() != std::ios::goodbit) {
-                std::cout << __func__ << " - std::fstream::open failed: " <<
-                    work->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
-                return;
-            }
-        }
-
-    if (conn->inS.eof() == false) {
-        conn->inS.read(conn->buf, conn->sBuf);
-        bytes = conn->inS.gcount();
-
-        if (bytes <= 0) {
-            std::cout << __func__ << " - std::ifstream::read() error\n";
-            //pushBackTasks(work.get());
-            return;
-        }
-        conn->lastOpExpectedBytes = bytes;
-        conn->fileBufPos += bytes;
-
-        boost::asio::async_write(conn->sock,
-                                 boost::asio::buffer(conn->buf, bytes),
-                                 boost::bind(&sendNextChunk, conn, work,
-                                             boost::asio::placeholders::error,
-                                             boost::asio::placeholders::bytes_transferred));
-    }
-    else {
-        conn->inS.close();
-        //conn->lastOpExpectedBytes = S_HEADER_SERVERREQDEF; //superfluous
-        //we're done sending the file, start receiving
-        boost::asio::async_read(conn->sock,
-                                boost::asio::buffer(conn->buf, S_HEADER_SERVERREQDEF),
-                                boost::bind(&readNextHeader, conn, work,
-                                            boost::asio::placeholders::error,
-                                            boost::asio::placeholders::bytes_transferred));
-    }
-}
-
-int manageNextTask(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work) {
-    if (work->work.size() == 0) {
+int manageNextTask(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch) {
+    if (workBatch->work.size() == 0) {
         std::cout << "Finished a batch of jobs, will take another one\n\n";
         for (int i = 0; i < S_TASK_BATCH; i++) {
             TaskDef *taskDef;
-            if (work->failedQueue.pop(taskDef)) {
-                work->work.push_back(taskDef);
+            if (workBatch->failedQueue.pop(taskDef)) {
+                workBatch->work.push_back(taskDef);
             }
         }
     }
 
-    if (work->work.size() > 0) {
-        if (work->work.back()->subTask == NULL) {
-            sendNextHeader(conn, work);
+    if (workBatch->work.size() > 0) {
+        if (workBatch->work.back()->subTask == NULL) {
+            sendNextHeader(conn, workBatch);
         }
         else {
-            sendSingleRequest(conn, work);
+            sendSingleRequest(conn, workBatch);
         }
     }
     else {
         std::cout << __func__ << " - finishing comm with the current client, there were not tasks to take.\n\n\n";
     }
-    return work->work.size();
+    return workBatch->work.size();
 }
 
-void readSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+void readSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
                        const boost::system::error_code& err, size_t bytes)
 {
     if (err != boost::system::errc::success) {
@@ -306,25 +245,25 @@ void readSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef
     }
     conn->lastOpExpectedBytes = conn->lastOpExpectedBytes - S_HEADER_CLIENTWORKDEF + S_HEADER_SERVERREQDEF; //size of data + reply header
     boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
-                            boost::bind(&processSingleReply, conn, work,
+                            boost::bind(&processSingleReply, conn, workBatch,
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::bytes_transferred));
 }
 
-void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch)
 {
-    TaskDef* taskDef = work->work.back();
-    SubTaskDef* subTask = taskDef->subTask;
+    TaskDef* task = workBatch->work.back();
+    SubTaskDef* subTask = task->subTask;
     SubTaskShared* shared = subTask->shared;
 
     if ( shared->initialised == false) {
         initSubTaskSharedData(*subTask, conn->globalMutex,
-                              taskDef->filePath(), taskDef->outFilePath());
+                              task->filePath(), task->outFilePath());
     }
 
     ClientWorkDef def;
-    def.reqId = taskDef->id;
-    def.op = taskDef->op;
+    def.reqId = task->id;
+    def.op = task->op;
     def.compression = CompressionType::None;
     def.transmit = TransmitType::Bloc100x100;
     def.x = subTask->x;
@@ -339,13 +278,13 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     std::cout << __func__ << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << ", " << def.dataSize << ", " << bytes << "\n";
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
-        boost::bind(&readSingleReply, conn, work,
+        boost::bind(&readSingleReply, conn, workBatch,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
 
 }
 
-void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
                        const boost::system::error_code& err, size_t bytes)
 {
     if (err != boost::system::errc::success) {
@@ -358,44 +297,57 @@ void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatch
             conn->lastOpExpectedBytes << "\n\n\n";
         return;
     }
-    TaskDef* taskDef = work->work.back();
-    SubTaskDef* subTask = taskDef->subTask;
+
+
+    TaskDef* task = workBatch->work.back();
+    SubTaskDef* subTask = task->subTask;
     SubTaskShared* shared = subTask->shared;
+
+    ServerReqDef reply(conn->buf);
+    if (!reply.valid) {
+        abort();
+        return;
+    }
+    if (reply.reqId != task->id) {
+        std::cout << __func__ << " reply did not match request\n";
+        abort();
+        return;
+    }
+
 
     bytes = writeRectToFile(shared->outFile, shared->outHeader, subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_SERVERREQDEF);
     if (bytes != (shared->outHeader->bits/8) * subTask->w * subTask->h) {
         std::cout << __func__ << " - wrote to file: " << bytes << ", expected: " << (shared->outHeader->bits/8) * subTask->w * subTask->h << "\n";
     }
 
-    subTask->remainingTasksCount -= 1;
-    if (subTask->remainingTasksCount == 0) {
-        //deinit shared data
-        deinitSubTaskSharedData(*subTask, conn->globalMutex);
+    //ordering important to ensure we don't double delete (ABA problem)
+    if ( (--subTask->remainingTasksCount) == 0) {
+        delete subTask->shared;
     }
 
-    delete work->work.back();
-    work->work.pop_back();
+    delete workBatch->work.back();
+    workBatch->work.pop_back();
     conn->remainingTasks -= 1;
 
-    manageNextTask(conn, work);
+    manageNextTask(conn, workBatch);
 }
 
 //sendNextHeader -> sendNextChunk -> readNextChunk >>
-void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch)
 {
-    TaskDef* taskDef = work->work.back();
+    TaskDef* task = workBatch->work.back();
     ClientWorkDef def;
 
-    def.reqId = taskDef->id;
-    def.op = taskDef->op;
+    def.reqId = task->id;
+    def.op = task->op;
     def.compression = CompressionType::None;
     def.transmit = TransmitType::FullFile;
     def.x = 0;
     def.y = 0;
     def.w = 0;
     def.h = 0;
-    def.dataSize = boost::filesystem::file_size(taskDef->filePath());
-    std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
+    def.dataSize = boost::filesystem::file_size(task->filePath());
+    std::cout << "sending file: " << task->filePath() << " of size " << def.dataSize << "\n";
 
 
     //keep buffer alive, maybe even reuse it!
@@ -403,15 +355,13 @@ void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
     conn->lastOpExpectedBytes = S_HEADER_CLIENTWORKDEF;
     def.serialise(conn->buf);
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, S_HEADER_CLIENTWORKDEF),
-        boost::bind(&sendNextChunk, conn, work,
+        boost::bind(&sendNextChunk, conn, workBatch,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
 }
 
 
-void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
-    const boost::system::error_code& err, size_t bytes);
-void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
                     const boost::system::error_code& err, size_t bytes)
 {
     if (err != boost::system::errc::success) {
@@ -429,12 +379,18 @@ void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
     if (!reply.valid) {
         return;
     }
+    TaskDef* task = workBatch->work.back();
+    if (reply.reqId != task->id) {
+        std::cout << __func__ << " reply did not match request\n";
+        abort();
+        return;
+    }
 
-    conn->outS.open(work->work.back()->outFilePath(),
+    conn->outS.open(workBatch->work.back()->outFilePath(),
                     std::ios::binary | std::ios::trunc | std::ios::out);
     if (conn->outS.rdstate() != std::ios::goodbit) {
         std::cout << __func__ << " - std::fstream::open failed: " <<
-            work->work.back()->outFilePath() << ", " << conn->outS.rdstate() << "\n";
+            workBatch->work.back()->outFilePath() << ", " << conn->outS.rdstate() << "\n";
         return;
     }
 
@@ -445,12 +401,12 @@ void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
         conn->lastOpExpectedBytes = conn->sBuf;
 
     boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
-        boost::bind(&readNextChunk, conn, work,
+        boost::bind(&readNextChunk, conn, workBatch,
         boost::asio::placeholders::error,
         boost::asio::placeholders::bytes_transferred));
 }
 
-void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
     const boost::system::error_code& err, size_t bytes)
 {
     if (err != boost::system::errc::success) {
@@ -474,24 +430,24 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
 
     if (conn->fileBufPos == conn->sBackFile) {
         conn->outS.close();
-        delete work->work.back();
-        work->work.pop_back();
+        delete workBatch->work.back();
+        workBatch->work.pop_back();
         conn->remainingTasks -= 1;
-        if (work->work.size() == 0) {
+        if (workBatch->work.size() == 0) {
             std::cout << "Finished a batch of jobs, will take another one\n\n";
             for (int i = 0; i < S_TASK_BATCH; i++) {
                 TaskDef *taskDef;
-                if (work->failedQueue.pop(taskDef)) {
-                    work->work.push_back(taskDef);
+                if (workBatch->failedQueue.pop(taskDef)) {
+                    workBatch->work.push_back(taskDef);
                 }
             }
         }
-        if (work->work.size() > 0) {
-            if (work->work.back()->subTask == NULL) {
-                sendNextHeader(conn, work);
+        if (workBatch->work.size() > 0) {
+            if (workBatch->work.back()->subTask == NULL) {
+                sendNextHeader(conn, workBatch);
             }
             else {
-                sendSingleRequest(conn, work);
+                sendSingleRequest(conn, workBatch);
             }
         }
         else {
@@ -504,129 +460,70 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
             conn->lastOpExpectedBytes = conn->sBuf;
 
         boost::asio::async_read(conn->sock, boost::asio::buffer(conn->buf, conn->lastOpExpectedBytes),
-            boost::bind(&readNextChunk, conn, work,
+            boost::bind(&readNextChunk, conn, workBatch,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
     }
 }
 
-
-//old implementation, does not yeld until exit, holds the state of the current communication
-void workerLoop2(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work)
+void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
+                   const boost::system::error_code& err, size_t bytes)
 {
-    //std::cout << __func__ << "\n";
+    if (err != boost::system::errc::success) {
+        std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
+        //pushBackTasks(work.get());
+        return; //safe to exit, connection and all memory will be deallocated via the shared pointers destruction
+    }
 
-    boost::system::error_code err;
-    uint32_t loopCount = 0;
-    try {
-        while (work->work.size() > 0)
-        {
-            TaskDef* taskDef = work->work.back();
-            ClientWorkDef def;
+    //check if there's any case when write_async has no error but sends fewer byts
+    if (bytes != conn->lastOpExpectedBytes) {
+        std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
+            conn->lastOpExpectedBytes << "\n\n\n";
+        //pushBackTasks(work.get());
+        return;
+    }
 
-            def.reqId = loopCount;
-            def.op = taskDef->op;
-            def.transmit = TransmitType::FullFile;
-            def.compression = CompressionType::None;
-            def.w = 0;
-            def.h = 0;
-            def.dataSize = boost::filesystem::file_size(taskDef->filePath());
-            std::cout << "sending file: " << taskDef->filePath() << " of size " << def.dataSize << "\n";
-
-
-            std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
-            def.serialise(headerBuf.data());
-            boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-
-            const int bufSize = 10000;
-            std::array<char, bufSize> buf;
-            std::ifstream fileSIn(taskDef->filePath(), std::ifstream::in | std::ios::binary);
-
-            uint64_t totalWrote = 0;
-            uint64_t wrote = 0;
-            uint64_t bytes = 0;
-            while (1) {
-                if (fileSIn.eof() == false) {
-                    fileSIn.read(buf.data(), buf.size());
-                    bytes = fileSIn.gcount();
-                    if (bytes <= 0) {
-                        std::cout << __func__ << " - std::ifstream::read() error\n";
-                    }
-
-                    wrote = boost::asio::write(conn->sock, boost::asio::buffer(buf, bytes), err);
-                    totalWrote += wrote;
-                    if (err) {
-                        std::cout << __func__ << " - boost::asio::write() error\n";
-                    }
-                    if (wrote != bytes) {
-                        std::cout << __func__ << " - wrote=" << wrote << ", expected=" << bytes << "\n";
-                    }
-                }
-                else
-                    break;
+        if (conn->fileBufPos == 0) {
+            conn->inS.open(workBatch->work.back()->filePath(), std::ifstream::in | std::ios::binary);
+            if (conn->inS.rdstate() != std::ios::goodbit) {
+                std::cout << __func__ << " - std::fstream::open failed: " <<
+                    workBatch->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
+                return;
             }
-            if (totalWrote != def.dataSize) {
-                std::cout << "Error, totalWrote=" << totalWrote << ", expected=" << def.dataSize << "\n";
-            }
-
-            std::cout << __func__ << " - sent " << taskDef->filePath() << ", " << totalWrote << " bytes\n";
-
-
-            //we're now expecting the data back
-            std::array<char, S_HEADER_SERVERREQDEF> replyHeaderBuf;
-            size_t len = boost::asio::read(conn->sock,
-                boost::asio::buffer(replyHeaderBuf, replyHeaderBuf.size()));
-
-            if (len != S_HEADER_SERVERREQDEF) {
-                std::cout << "Error reading header\n";
-            }
-            ServerReqDef reply(replyHeaderBuf.data());
-            std::shared_ptr<char> pImgData = std::shared_ptr<char>(new char[reply.dataSize]);
-            uint64_t readBytes = 0;
-            while (readBytes < reply.dataSize) {
-                readBytes += conn->sock.read_some(boost::asio::buffer(pImgData.get() + readBytes, reply.dataSize - readBytes));
-                std::cout << "Read " << readBytes << ", remaining " << reply.dataSize - readBytes << "\n";
-            }
-
-            //write down the file
-
-            std::fstream outStream;
-            outStream.open(taskDef->outFilePath(), std::ios::binary | std::ios::trunc | std::ios::out);
-            if (outStream.rdstate() == std::ios::goodbit) {
-                outStream.write(pImgData.get(), reply.dataSize);
-            }
-            outStream.close();
-            delete taskDef;
-            work->work.pop_back();
-
-            //at this point we're done with the TaskDef, delete forever
-
-            std::cout << "Done reading reply, will start over\n";
         }
 
-        //now close the connection
-        ClientWorkDef def;
-        def.op = OpType::Stop;
-        std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
-        def.serialise(headerBuf.data());
-        boost::asio::write(conn->sock, boost::asio::buffer(headerBuf, headerBuf.size()), err);
-    }
-    catch (std::exception ex) {
-        std::cout << __func__ << " - exception:" << ex.what() << "\n";
-        std::cout << __func__ << " - will push to fail queue " << work->work.size() << " elements\n";
-    }
+    if (conn->inS.eof() == false) {
+        conn->inS.read(conn->buf, conn->sBuf);
+        bytes = conn->inS.gcount();
 
-    //whatever task was not finished will be put back to the fail queue
-    while (work->work.size() > 0) {
-        work->failedQueue.push(work->work.back());
-        work->work.pop_back();
-    }
+        if (bytes <= 0) {
+            std::cout << __func__ << " - std::ifstream::read() error\n";
+            //pushBackTasks(work.get());
+            return;
+        }
+        conn->lastOpExpectedBytes = bytes;
+        conn->fileBufPos += bytes;
 
-    std::cout << __func__ << " - done\n\n\n";
+        boost::asio::async_write(conn->sock,
+                                 boost::asio::buffer(conn->buf, bytes),
+                                 boost::bind(&sendNextChunk, conn, workBatch,
+                                             boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+    }
+    else {
+        conn->inS.close();
+        //conn->lastOpExpectedBytes = S_HEADER_SERVERREQDEF; //superfluous
+        //we're done sending the file, start receiving
+        boost::asio::async_read(conn->sock,
+                                boost::asio::buffer(conn->buf, S_HEADER_SERVERREQDEF),
+                                boost::bind(&readNextHeader, conn, workBatch,
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    }
 }
 
 void acceptConn(std::shared_ptr<ConnDef> conn,
-                std::shared_ptr<WorkBatchDef> work,
+                std::shared_ptr<WorkBatchDef> workBatch,
                 boost::asio::io_service& ioService,
                 boost::asio::ip::tcp::acceptor& acceptor,
                 const boost::system::error_code& err)
@@ -634,16 +531,16 @@ void acceptConn(std::shared_ptr<ConnDef> conn,
     printFuncInfo(__func__);
 
     //take references to needed variable before posting the new thread
-    boost::lockfree::queue<TaskDef*> &workQueue = work->failedQueue;
+    boost::lockfree::queue<TaskDef*> &workQueue = workBatch->failedQueue;
     std::mutex& globalMutex = conn->globalMutex;
     std::atomic<uint32_t>& remainingTasks = conn->remainingTasks;
 
-    if ( (!err) && (work->work.size() > 0) ) {
-        if (work->work.back()->subTask == NULL) {
-            work->io_service.post(boost::bind(&sendNextHeader, conn, work));
+    if ( (!err) && (workBatch->work.size() > 0) ) {
+        if (workBatch->work.back()->subTask == NULL) {
+            workBatch->io_service.post(boost::bind(&sendNextHeader, conn, workBatch));
         }
         else {
-            work->io_service.post(boost::bind(&sendSingleRequest, conn, work));
+            workBatch->io_service.post(boost::bind(&sendSingleRequest, conn, workBatch));
         }
     }
     else {

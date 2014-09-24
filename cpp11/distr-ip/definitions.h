@@ -104,7 +104,7 @@ struct ServerReqDef {
     bool valid;
 
     ServerReqDef() {
-        reqId = 0xBBB;
+        reqId = 0xFFFFFFFF;
         valid = false;
     }
     

@@ -297,7 +297,7 @@ void ToBWBlock(char*data, uint8_t bpp, uint32_t w, uint32_t h) {
         for (unsigned int j = 0; j < w; j++) {
             val = (crtPix[0] + crtPix[1] + crtPix[2]) / 3;
             crtPix[0] = crtPix[1] = crtPix[2] = val;
-            crtPix += bpp / 8;
+            crtPix += (bpp / 8);
         }
     }
 }

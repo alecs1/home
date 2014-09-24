@@ -2,6 +2,12 @@
 
 
 struct SubTaskShared {
+    ~SubTaskShared() {
+        delete inFile;
+        delete outFile;
+        delete inHeader;
+        delete outHeader;
+    }
     //global mutex protected
     bool initialised;
     boost::iostreams::mapped_file_source* inFile;
@@ -116,10 +122,14 @@ public:
 };
 
 
-
+void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+                   const boost::system::error_code& err, size_t bytes);
+void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
+    const boost::system::error_code& err, size_t bytes);
 void sendNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work);
 void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                     const boost::system::error_code& err, size_t bytes);
+
 void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work,
                        const boost::system::error_code& err, size_t bytes);
 void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> work);
