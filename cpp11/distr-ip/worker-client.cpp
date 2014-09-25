@@ -152,20 +152,17 @@ int main(int argc, char* argv[]) {
             boost::system::error_code err;
             std::array<char, S_HEADER_CLIENTWORKDEF> headerBuf;
 
-            size_t len = 0;
-            while (len < S_HEADER_CLIENTWORKDEF) {
-                len += sock.read_some(boost::asio::buffer(headerBuf, headerBuf.size()));
-                std::cout << "Read " << len << ", remaining " << S_HEADER_CLIENTWORKDEF - len << "\n";
-            }
+            uint64_t readBytes = 0;
+            readBytes = boost::asio::read(sock, boost::asio::buffer(headerBuf, headerBuf.size()));
 
             ClientWorkDef def(headerBuf.data());
-            uint64_t readBytes = 0;
+
             std::shared_ptr<char> pImgData(new char[def.dataSize], [](char*p) { delete[] p; });
             readBytes = 0;
-
             readBytes = boost::asio::read(sock, boost::asio::buffer(pImgData.get(), def.dataSize));
             if (readBytes != def.dataSize) {
-                std::cout << __func__ << " - readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
+                std::cout << __func__ << " - aborting, readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
+                abort();
             }
             std::cout << __func__ << " - readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
 
@@ -182,14 +179,7 @@ int main(int argc, char* argv[]) {
             else if (def.transmit == TransmitType::FullFile) {
                 std::cout << "TransmitType::FullFile: " << (uint8_t)def.transmit << "\n";
             }
-            /*
-            int w, h, bpp;
-            char* pImg = LoadTGAFromMem(pImgData.get(), def.dataSize, &w, &h, &bpp);
-            TGADef imgDef(w, h, bpp, pImg);
-            std::cout << "w=" << w << ", " << "h=" << h << ", bpp=" << bpp << "\n";
 
-            std::shared_ptr<TGADef> retImg(ToBW(imgDef));
-            */
 
             ServerReqDef reply;
             reply.compression = def.compression;
@@ -208,13 +198,15 @@ int main(int argc, char* argv[]) {
                 toSend = 10000;
                 if (newSize - totalWrote < toSend)
                     toSend = newSize - totalWrote;
-                wrote = boost::asio::write(sock, boost::asio::buffer(pImgData.get() + wrote, toSend), err);
+                wrote = boost::asio::write(sock, boost::asio::buffer(pImgData.get() + totalWrote, toSend), err);
                 totalWrote += wrote;
                 if (err) {
-                    std::cout << "boost::asio::write() error\n";
+                    std::cout << __func__ << " - aborting - boost::asio::write() error\n";
+                    abort();
                 }
                 if (wrote != toSend) {
-                    std::cout << "wrote=" << wrote << ", expected=" << toSend << "\n";
+                    std::cout << __func__ << " - aborting, wrote=" << wrote << ", expected=" << toSend << "\n";
+                    abort();
                 }
             }
 

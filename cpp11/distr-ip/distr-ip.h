@@ -100,16 +100,19 @@ public:
     {
         sBuf = 4 * 100 * 100 + S_HEADER_CLIENTWORKDEF; //able to hold 100*100 32 bit pixels + its header
         buf = new char[sBuf];
+        validationBuf = new char[sBuf];
     }
 
     ~ConnDef() {
-         delete[] buf;
+        delete[] buf;
+        delete[] validationBuf;
     }
 
 public:
     boost::asio::ip::tcp::socket sock;
     std::atomic<uint32_t>& remainingTasks;
     char* buf;
+    char* validationBuf;
     uint64_t sBuf;
 
     uint64_t lastOpExpectedBytes;

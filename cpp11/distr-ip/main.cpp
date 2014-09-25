@@ -29,7 +29,7 @@
 
 
 auto hourAndThread = [] () {
-    auto now = std::chrono::system_clock::now();
+    //auto now = std::chrono::system_clock::now();
     //auto tt = std::chrono::system_clock::to_time_t(now);
     //auto lt = 
     //char fTime[100];
@@ -275,13 +275,13 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
     def.serialise(conn->buf);
     uint64_t bytes = getRectFromFile(shared->inFile, shared->inHeader,
                                      subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
-    std::cout << __func__ << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << ", " << def.dataSize << ", " << bytes << "\n";
+    std::cout << __func__ << " - " << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << ", " << def.dataSize << ", " << bytes << "\n";
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
+    ToBWBlock(conn->validationBuf + S_HEADER_SERVERREQDEF, def.bpp, def.w, def.h);
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
         boost::bind(&readSingleReply, conn, workBatch,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
-
 }
 
 void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
@@ -312,6 +312,13 @@ void processSingleReply(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatch
         std::cout << __func__ << " reply did not match request\n";
         abort();
         return;
+    }
+
+    for(unsigned int i = S_HEADER_SERVERREQDEF; i < conn->lastOpExpectedBytes; i++) {
+        if (conn->buf[i] != conn->validationBuf[i]) {
+            //std::cout << __func__ << " - invalid reply, byte: " << i << "\n";
+            //abort();
+        }
     }
 
 
@@ -409,6 +416,7 @@ void readNextHeader(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef>
 void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> workBatch,
     const boost::system::error_code& err, size_t bytes)
 {
+    std::cout << __func__ << " - " << conn->outS.tellg() << "\n";
     if (err != boost::system::errc::success) {
         std::cout << __func__ << " - error: " << err.message() << "\n\n\n";
         return;
@@ -418,6 +426,13 @@ void readNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
         std::cout << __func__ << " - last socket write: " << bytes << " bytes, expected: " <<
             conn->lastOpExpectedBytes << "\n\n\n";
         return;
+    }
+
+    for(unsigned int i = 0; i < bytes; i++) {
+        if (conn->buf[i] != conn->validationBuf[i]) {
+            //std::cout << __func__ << " - invalid reply, byte: " << i << ", len = " << bytes << ", already wrote: " << conn->outS.tellg() << "\n";
+            //abort();
+        }
     }
 
     conn->outS.write(conn->buf, bytes);
@@ -484,17 +499,20 @@ void sendNextChunk(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchDef> 
     }
 
         if (conn->fileBufPos == 0) {
-            conn->inS.open(workBatch->work.back()->filePath(), std::ifstream::in | std::ios::binary);
-            if (conn->inS.rdstate() != std::ios::goodbit) {
-                std::cout << __func__ << " - std::fstream::open failed: " <<
-                    workBatch->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
-                return;
-            }
+        conn->inS.open(workBatch->work.back()->filePath(), std::ifstream::in | std::ios::binary);
+        if (conn->inS.rdstate() != std::ios::goodbit) {
+            std::cout << __func__ << " - std::fstream::open failed: " <<
+                workBatch->work.back()->filePath() << ", " << conn->inS.rdstate() << "\n";
+            return;
         }
+    }
 
     if (conn->inS.eof() == false) {
         conn->inS.read(conn->buf, conn->sBuf);
         bytes = conn->inS.gcount();
+
+        //debug
+        memcpy(conn->validationBuf, conn->buf, bytes);
 
         if (bytes <= 0) {
             std::cout << __func__ << " - std::ifstream::read() error\n";
@@ -608,7 +626,7 @@ void mainLoop() {
 
     //check for termination condition here instead of inside acceptConn
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(4));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
         if (taskCount == 0) {
             io_service.stop();
             break;
