@@ -53,7 +53,7 @@ EXPORT_DLL
 char * ToBWFullFile(const char * fData, uint64_t size, uint64_t * newSize);
 
 EXPORT_DLL
-void ToBWBlock(char*data, uint8_t bpp, uint32_t w, uint32_t h);
+void ToBWBlock(unsigned char*data, uint8_t bpp, uint32_t w, uint32_t h);
 
 
 EXPORT_DLL

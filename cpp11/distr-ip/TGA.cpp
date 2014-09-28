@@ -113,8 +113,8 @@ uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
 
     for (unsigned int i = yR; i < yR+hR; i++)
     {
-        const char * srcRow = src +
-            (bInverted ? (h - i - 1) * rowSize : i * rowSize);
+        uint32_t row = bInverted ? (h-i-1) : i;
+        const char * srcRow = src + row * rowSize + xR * (header->bits/8);
         if (header->bits == 24)
         {
             for (unsigned int j = xR; j < xR + wR; j++)
@@ -145,8 +145,9 @@ uint64_t getRectFromFile(boost::iostreams::mapped_file_source* inFile, TGA_HEADE
 uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER* header, uint32_t xR, uint32_t yR, uint32_t wR, uint32_t hR, char* src)
 {
     int w = header->width;
-    //int h = header->height;
+    int h = header->height;
     int rowSize = w * header->bits / 8;
+    bool bInverted = ((header->descriptor & (1 << 5)) != 0);
     uint32_t wrote = 0;
 
     //skip header
@@ -156,7 +157,8 @@ uint32_t writeRectToFile(boost::iostreams::mapped_file_sink* outFile, TGA_HEADER
 
     for (unsigned int i = yR; i < yR+hR; i++)
     {
-        char * destRow = dest + i * rowSize + (header->bits/8) * xR;
+        uint32_t row = bInverted ? (h-i-1) : i;
+        char * destRow = dest + row * rowSize + xR * (header->bits/8);
         if (header->bits == 24)
         {
             for (unsigned int j = xR; j < xR + wR; j++)
@@ -290,12 +292,16 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
     return pOutBuffer;
 }
 
-void ToBWBlock(char*data, uint8_t bpp, uint32_t w, uint32_t h) {
-    char* crtPix = data;
+void ToBWBlock(unsigned char*data, uint8_t bpp, uint32_t w, uint32_t h) {
+    unsigned char* crtPix = data;
     unsigned int val;
     for (unsigned int i = 0; i < h; i++) {
         for (unsigned int j = 0; j < w; j++) {
             val = (crtPix[0] + crtPix[1] + crtPix[2]) / 3;
+            if ( (val < 10) || (val > 250)) {
+                //std::cout << __func__ << " -  " << i << ", " << i << ": " << crtPix[0] << "-" << crtPix[1]  << "-" << crtPix[2] << "->" << val << "\n";
+                printf("%s - %d, %d: %d-%d-%d->%d\n", __func__, i, j, crtPix[0], crtPix[1], crtPix[2], val);
+            }
             crtPix[0] = crtPix[1] = crtPix[2] = val;
             crtPix += (bpp / 8);
         }

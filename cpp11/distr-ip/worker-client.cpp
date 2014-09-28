@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
 
             if (def.transmit == TransmitType::Bloc100x100) {
                 std::cout << "TransmitType::Bloc100x100: " << (uint8_t)def.transmit << "\n";
-                ToBWBlock(pImgData.get(), def.bpp, def.w, def.h);
+                ToBWBlock((unsigned char*)pImgData.get(), def.bpp, def.w, def.h);
             }
             else if (def.transmit == TransmitType::FullFile) {
                 std::cout << "TransmitType::FullFile: " << (uint8_t)def.transmit << "\n";

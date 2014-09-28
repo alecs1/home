@@ -277,7 +277,7 @@ void sendSingleRequest(std::shared_ptr<ConnDef> conn, std::shared_ptr<WorkBatchD
                                      subTask->x, subTask->y, subTask->w, subTask->h, conn->buf + S_HEADER_CLIENTWORKDEF);
     std::cout << __func__ << " - " << def.x << ", " << def.y << ", " << def.w << ", " << def.h << ", " << def.bpp << ", " << def.dataSize << ", " << bytes << "\n";
     conn->lastOpExpectedBytes = bytes + S_HEADER_CLIENTWORKDEF;
-    ToBWBlock(conn->validationBuf + S_HEADER_SERVERREQDEF, def.bpp, def.w, def.h);
+    ToBWBlock((unsigned char*)conn->validationBuf + S_HEADER_SERVERREQDEF, def.bpp, def.w, def.h);
     boost::asio::async_write(conn->sock, boost::asio::buffer(conn->buf, bytes+S_HEADER_CLIENTWORKDEF),
         boost::bind(&readSingleReply, conn, workBatch,
                     boost::asio::placeholders::error,
