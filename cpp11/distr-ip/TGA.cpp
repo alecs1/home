@@ -245,52 +245,7 @@ char * LoadTGA( const char * szFileName, int * width, int * height, int * bpp )
 }
 
 
-char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * height, int * bpp)
-{
-    uint64_t pos = 0;
-    TGA_HEADER header;
 
-    memcpy(&header, data + pos, sizeof(header)); pos += sizeof(header);
-
-    int fileLen = size;
-    pos = sizeof(header) + header.identsize;
-
-    if (header.imagetype != IT_COMPRESSED && header.imagetype != IT_UNCOMPRESSED)
-    {
-        return NULL;
-    }
-
-    if (header.bits != 24 && header.bits != 32)
-    {
-        return NULL;
-    }
-
-    int bufferSize = fileLen - sizeof(header) - header.identsize;
-    char * pBuffer = new char[bufferSize];
-    //fread(pBuffer, 1, bufferSize, f);
-    //fclose(f);
-    memcpy(pBuffer, data + pos, bufferSize);
-
-    *width = header.width;
-    *height = header.height;
-    *bpp = header.bits;
-    char * pOutBuffer = new char[header.width * header.height * header.bits / 8];
-
-    switch (header.imagetype)
-    {
-    case IT_UNCOMPRESSED:
-        //LoadUncompressedImage(pOutBuffer, pBuffer, &header);
-        LoadUncompressedImage(pOutBuffer, pBuffer, &header);
-        break;
-    case IT_COMPRESSED:
-        LoadCompressedImage(pOutBuffer, pBuffer, &header);
-        break;
-    }
-
-    delete[] pBuffer;
-
-    return pOutBuffer;
-}
 
 void ToBWBlock(unsigned char*data, uint8_t bpp, uint32_t w, uint32_t h) {
     unsigned char* crtPix = data;
@@ -298,72 +253,11 @@ void ToBWBlock(unsigned char*data, uint8_t bpp, uint32_t w, uint32_t h) {
     for (unsigned int i = 0; i < h; i++) {
         for (unsigned int j = 0; j < w; j++) {
             val = (crtPix[0] + crtPix[1] + crtPix[2]) / 3;
-            if ( (val < 10) || (val > 250)) {
-                //std::cout << __func__ << " -  " << i << ", " << i << ": " << crtPix[0] << "-" << crtPix[1]  << "-" << crtPix[2] << "->" << val << "\n";
-                printf("%s - %d, %d: %d-%d-%d->%d\n", __func__, i, j, crtPix[0], crtPix[1], crtPix[2], val);
-            }
             crtPix[0] = crtPix[1] = crtPix[2] = val;
             crtPix += (bpp / 8);
         }
     }
 }
 
-//char* TGATOBW()
-
-EXPORT_DLL
-char * ToBWFullFile(const char * fData, uint64_t size, uint64_t * newSize) {
-
-    //FILE * f = fopen(szFileName, "rb");
-
-    //if (f == NULL)
-    //    return NULL;
-    uint64_t pos = 0;
-
-    TGA_HEADER header;
-    //fread(&header, sizeof(header), 1, f);
-    memcpy(&header, fData + pos, sizeof(header)); pos += sizeof(header);
-
-    //fseek(f, 0, SEEK_END);
-    int fileLen = size;
-    //fseek(f, sizeof(header) + header.identsize, SEEK_SET);
-    pos = sizeof(header) + header.identsize;
-
-    if (header.imagetype != IT_COMPRESSED && header.imagetype != IT_UNCOMPRESSED)
-    {
-        //fclose(f);
-        return NULL;
-    }
-
-    if (header.bits != 24 && header.bits != 32)
-    {
-        //fclose(f);
-        return NULL;
-    }
-
-    int bufferSize = fileLen - sizeof(header) - header.identsize;
-    char * pBuffer = new char[bufferSize];
-    //fread(pBuffer, 1, bufferSize, f);
-    //fclose(f);
-    memcpy(pBuffer, fData + pos, bufferSize);
-
-    //*width = header.width;
-    //*height = header.height;
-    //*bpp = header.bits;
-    char * pOutBuffer = new char[header.width * header.height * header.bits / 8];
-
-    switch (header.imagetype)
-    {
-    case IT_UNCOMPRESSED:
-        LoadUncompressedImage(pOutBuffer, pBuffer, &header);
-        break;
-    case IT_COMPRESSED:
-        LoadCompressedImage(pOutBuffer, pBuffer, &header);
-        break;
-    }
-
-    //delete[] pBuffer;
-
-    return pOutBuffer;
 
 
-}

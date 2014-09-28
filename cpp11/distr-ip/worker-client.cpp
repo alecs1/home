@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
                 break;
             }
 
-            if (def.transmit == TransmitType::Bloc100x100) {
+            if (def.transmit == TransmitType::SquareBlock) {
                 std::cout << "TransmitType::Bloc100x100: " << (uint8_t)def.transmit << "\n";
                 ToBWBlock((unsigned char*)pImgData.get(), def.bpp, def.w, def.h);
             }

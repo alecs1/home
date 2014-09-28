@@ -9,7 +9,7 @@ enum class OpType : uint8_t {
 enum class TransmitType : uint8_t  {
     FullFile = 0,
     FullImageData = 1,
-    Bloc100x100 = 2
+    SquareBlock = 2
 };
 
 enum class CompressionType : uint8_t {
@@ -17,7 +17,9 @@ enum class CompressionType : uint8_t {
     Zlib = 1
 };
 
-#define S_MIN_FILE_SIZE_FOR_SPLITTING 20000000 //20 MB (not MiB)
+#define S_TASK_BATCH 5
+#define SQUARE_SIDE_PIXELS 500 //size of a square tile of pixels for processing
+#define S_MIN_FILE_SIZE_FOR_SPLITTING 0 //All files are processed by splitting into blocks.
 
 //what we're sending to the client
 #define S_SIG_BYTES 14 //some easily identifiable bytes at the start (signature)

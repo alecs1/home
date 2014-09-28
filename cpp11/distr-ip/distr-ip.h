@@ -98,7 +98,7 @@ public:
         remainingTasks(aRemainingTasks),
         globalMutex(aGlobalMutex)
     {
-        sBuf = 4 * 100 * 100 + S_HEADER_CLIENTWORKDEF; //able to hold 100*100 32 bit pixels + its header
+        sBuf = 4 * SQUARE_SIDE_PIXELS * SQUARE_SIDE_PIXELS + S_HEADER_CLIENTWORKDEF; //able to hold SQUARE_SIDE_PIXELS**2 32 bit pixels + its header
         buf = new char[sBuf];
         validationBuf = new char[sBuf];
     }
