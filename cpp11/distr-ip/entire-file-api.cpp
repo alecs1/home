@@ -9,6 +9,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
+#include "global_defines.h"
 #include "TGA.h"
 #include "definitions.h"
 #include "distr-ip.h"

@@ -109,7 +109,7 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
 
     memcpy(&header, data + pos, sizeof(header)); pos += sizeof(header);
 
-    int fileLen = size;
+    uint64_t fileLen = size;
     pos = sizeof(header) + header.identsize;
 
     if (header.imagetype != IT_COMPRESSED && header.imagetype != IT_UNCOMPRESSED)
@@ -122,7 +122,7 @@ char * LoadTGAFromMem(const char * data, uint64_t size, int * width, int * heigh
         return NULL;
     }
 
-    int bufferSize = fileLen - sizeof(header) - header.identsize;
+    uint64_t bufferSize = fileLen - sizeof(header) - header.identsize;
     char * pBuffer = new char[bufferSize];
 
     memcpy(pBuffer, data + pos, bufferSize);
