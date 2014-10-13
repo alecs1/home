@@ -74,12 +74,13 @@ M-;	-
 Selection:
 C-<SPC> - set mark (start of selection)
 C-x C-x	- interchange mark and point
-C-x h   - select all (region contain entire buffer)
+C-x h   - select all (region contains entire buffer)
 M-h     - select current paragraph
 
 
 Start terminals:
-M-x shell       - starts a new shell in a new screen/buffer
+M-x shell       - starts a new
+shell in a new screen/buffer
 M-x python-shell
 M-x eshell      - Emacs-Lisp shell
 M-!             - run command, output will show in split pane

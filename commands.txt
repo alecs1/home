@@ -16,6 +16,12 @@ route -n
 
 find . -iname <name> -print0 | xargs -0 grep -i <expression>
 
+#gre in files that are not in directories with .svn in name.
+grep -ri "log_tag" --exclude="*.svn*" *
+
+
+
+
 
 Shutdown kde from command line:
 logout: qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1
