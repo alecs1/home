@@ -21,7 +21,17 @@
 **
 ****************************************************************************/
 
-#include <QtGui>
+//#include <QtGui>
+#include <QLabel>
+#include <QScrollArea>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QAction>
+#include <QPrintDialog>
+#include <QPainter>
+#include <QMenu>
+#include <QMenuBar>
+#include <QScrollBar>
 
 #include "imageviewer.h"
 
@@ -166,7 +176,7 @@ void ImageViewer::createActions()
     connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
 
     aboutQtAct = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    //connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
 
 void ImageViewer::createMenus()
