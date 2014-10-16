@@ -1,0 +1,130 @@
+<ui version="4.0" >
+ <class>MaidensForm</class>
+ <widget class="QWidget" name="MaidensForm" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>164</width>
+    <height>149</height>
+   </rect>
+  </property>
+  <property name="sizePolicy" >
+   <sizepolicy>
+    <hsizetype>3</hsizetype>
+    <vsizetype>3</vsizetype>
+    <horstretch>1</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle" >
+   <string>Maidens and Italians</string>
+  </property>
+  <property name="windowIcon" >
+   <iconset resource="../../src.qrc" >:/images/icons/parallel worlds.png</iconset>
+  </property>
+  <layout class="QGridLayout" >
+   <property name="margin" >
+    <number>9</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
+   <item row="0" column="0" >
+    <layout class="QVBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="openButton" >
+       <property name="text" >
+        <string>Open</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QDoubleSpinBox" name="speedSpinBox" >
+         <property name="maximum" >
+          <double>400.000000000000000</double>
+         </property>
+         <property name="minimum" >
+          <double>1.000000000000000</double>
+         </property>
+         <property name="value" >
+          <double>60.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="startButton" >
+         <property name="text" >
+          <string>Start</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QToolButton" name="backButton" >
+         <property name="toolTip" >
+          <string>Back</string>
+         </property>
+         <property name="text" >
+          <string>Back</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="forwardButton" >
+         <property name="toolTip" >
+          <string>Forward</string>
+         </property>
+         <property name="text" >
+          <string>Forward</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="randomButton" >
+       <property name="text" >
+        <string>Random</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>openButton</tabstop>
+  <tabstop>speedSpinBox</tabstop>
+  <tabstop>startButton</tabstop>
+  <tabstop>backButton</tabstop>
+  <tabstop>forwardButton</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../../src.qrc" />
+ </resources>
+ <connections/>
+</ui>

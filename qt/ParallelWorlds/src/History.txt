@@ -1,0 +1,155 @@
+This is some kind of Changelog to trace the evolution of the program.
+-		-what was done
+XXX	-ideas and theoretical design problems no solved at all
+xxx	-partially solved
+YYY-solved
+ZZZ	-real problems like leaks and crashes
+///	-things that have been solved by other means etc.
+\\\ 	-dropped ideas
+
+
+
+0.5(8.06.2007)
+Done:
+-the MCWorld moved to its own folder, and all the different worlds will be used like that
+
+Ideas:
+XXX-don't know if the objects should have a Universe* member
+XXX-the objects poll their parent universe for sizes, they shouldn't do that, instead they should be notified if sizes change
+xxx-there will be a main dock which will have a list of worlds that can be selected, will provide a main menu, acces to settings and so on
+XXX-the Universe and MainWindow will provide means for the worlds to set sizes, backgrounds, and also will provide means for the worlds to set toolbars.
+
+0.51(9.06.2007)
+Done:
+-added a function to set the module of the speed
+-implemented 2 new worlds, one is just with random flying objects, the other is with objects (Bees) that follow each other in a chain.
+
+
+Ideas:
+YYY-write a new world in which some bees follow other bees (bondari sunt ei, dar nu știu cum le spune în engleză).
+XXX-at least the pixmaps will have the property of orientation, but I think this should a property of physical object
+XXX-to implement inertia stuff: 1)real inertia, 2) a maximum angle change per step or per pixel.
+xxx-see why the f* this is so slow. Part of this is because of Xorg.
+
+0.52(10.06.2007)
+-created a new (abstract) interface for objects that will show a list of worlds and a widget to show that list
+ZZZ-WorldEmisarWidget does not clean corectly, small leaks
+XXX-big problem, the curent composition is:
+MainWindow
+	UniverseWidget
+		Universe
+and I want universe to have pointer to the MainWindow, so I must write a function such that the UniverseWidget knows it parent, and Universe receives that pointer from UniverseWidget too. Not clever at all.
+///work-around: UniverseWidget implements setListerInterface and passes the info to Universe which also implements setListerInterface.
+
+///XXX-yet another bigger (huge) problem. I want to show all the available worlds without actualy instantiating them. But the worlds ambasadors (WorldEmisar) are children of the worlds. The WorldEmisars should only have pointers to the worlds, but I want the description and properties to stay in the worlds source files and not create a WorldEmisar subclass for each World class.
+work-around: for each world class there exists an emisar class
+
+YYY-bug (ciudat). If MainWindow calls setListerInterface then the universe will send its emisars, but no emisar widget will show up (the ones made by the test code also disappear). If setListerInterface is not called the test code works. That was a appearance problem, many widget were added to the list widget, but it never resized, so no part of those widgets ever appeared, instead only the space around them.
+
+0.53(11.06.2007)
+-creating new worlds from the ListInterface works now
+YYY-a lot of workarounds. Now WorldEmisar and Universe inherit from QObject. Universe sends world emisars to the list widget, then each emisar sends a signal with a World* pointer to the Universe. The Universe the must accept the new world.
+///XXX-the WorldEmisars will continue to suffer a lot of changes, they should be moved in their own source files to avoid recompilation of all the world classes. Also, they shoud be more generic, with functionality implemented in the upper class.
+xxx-make some order in this History file :).
+
+0.54(11.06.2007)
+-creating worlds from the interface works now, deleting them also works, sort of (deleting in another way than LIFO will eventualy crash the program). There is no point in going further with this design, each work-around brings another.
+///Description of what happens now:
+There exist 2 classes which represent the worlds as classes and as instances (WorldEmisar and WorldBuddy) and they have corresponding widgets. The Universe manages the representatives, and tells the lister how to manage the widgets. The Universe has a pointer to the lister widget so it can call functions of the lister widget telling it to create and remove the coresponding widgets. This works decent (in my opinion). The lister has no way to send messages to the Universe, so the following twist is used: the widgets coresponding to the world representatives hold pointers to the representatives; the representatives implement public functions that will eventually send signals, which are be connected to the Universe.
+
+0.55(12.06.2007) Working release
+-adding and removing world finally works corectly
+-the unused BaseClass has been removed
+-complicated workarounds have disappeared
+xxx-there are still problems with the sizes of the lists
+Description of what happens now:
+WorldEmisar has no more subclassed. The two classes WorldEmisar and WorldBuddy have pointers to the Universe and can send messages to it (the Universe implements an interface to which the world representatives communicate). Everything is now based on the names of the worlds (creation and deletion of the worlds, emisars, buddies and corresponding widgets). The WorldEmisar gets the name from the world (through static functions). The WorldBuddy gets its name from the world and an index.
+What is not ok is that world types must be added in two places, once at creating the emisars (Universe::addEmisar), second in a function that returns a world based on its name (Universe::makeWorldInstance). I have found no solution until now. This could be solved by having pointers to constructor.
+I would also like to be able to add an external world, like a plugin or something, but this is even harder.
+
+0.56(13.06.2007)
+-provide a work-around when the speed became 0 for an object following another object.
+-added a world based on the BeesWorld, which has 308 bees and starts with a very interesting effect (the bees continue to go to a direction although the leader had changed its direction).
+-added menus and an application icon
+
+0.56b(14.06.2007)
+-added an option to toggle the showing of the frame, the frame is not really needed
+-built a Win32 executable with some version and platform dependent code, will merge it in the main sources
+-from now on the folders will be named after the version of the program
+-a complete build now takes about 51 second on Linux and the source archive is 14,5 kB
+XXX-I did a complete rebuild and I get a warning:
+WorldBuddy.h: In constructor ‘WorldBuddy::WorldBuddy(WorldControlInterface*, World*, QString)’:
+WorldBuddy.h:18: warning: ‘WorldBuddy::interface’ will be initialized after
+WorldBuddy.h:17: warning: ‘World* WorldBuddy::worldPointer’
+WorldBuddy.cpp:4: warning: when initialized here
+WorldBuddy.h:17: warning: ‘WorldBuddy::worldPointer’ will be initialized after
+WorldBuddy.h:16: warning: ‘QString WorldBuddy::name’
+WorldBuddy.cpp:4: warning: when initialized here
+
+0.57(16.06.2007)
+-added the chained bees world
+-added rotation (quite correct mathematically) and now the leader from bees world is non transparent
+-resized the background picture
+XXX-will merge the code for the other bees in the with the code of the Bees
+XXX-will give the chains some strength, the pulling bee will slow down, the pulled one will accelerate because the chain between them is not perfectly elastic, the same thing will happen is some bee pushes the other. More than that, in more advanced versions the chain may have limits of length and the speeds of the bees may compounded (compuse).
+
+0.58(21.06.2007)
+-a new world is available. Its name is PuzzleWorld. Its first destination was to show 8 puzzle problem solutions, but evoluated to be a moving images show. The 8 puzzle implementation is not ready, but the world is so spectacular that is deserves a new release.
+-new constructors for the Pixmap object
+-now the source archive has 18 kB and a complete build takes about 60 seconds
+
+0.59(22.06.2007)
+-a world based on puzzle world is available, PuzzleWorldShow. It does animations by itself.
+xxx-PuzzleWorldShow does not clean correctly, even more, it can crash the program. The messages are glibc double linked list corruption detected.
+
+0.59b(22.06.2007)
+-extended the PuzzleWorldShow and it the crashes dissapeared, for reasons I don't know. Too improable to be compiler problems, on the other hand the only changes to physical object are not related to allocation and dealocation.
+-made some form icons work and used resources for the first time
+XXX-at 100*100 objects and a small image the process takes 40% on Linux, the rest is Xorg, so big improvements can be make if I will avoid passing the painter refference, test this assumption; with 70*70 it takes 20% of the processor.
+
+0.6(23.06.2007)
+-created a new world in which rectangles detect when they colide. The actions that they take are not really smart, but the colision detection works (kind of, each object is tested for colision with all the other objects).
+-now there are 100 kB of sources (more than 100.000 characters, at 50 characters/line this would mean 2000 l.o.c.). I will count those lines sometime, or maybe I will merge the files or other smart method.
+
+0.61(25.06.2007)
+-there are 4 posible actions at a colision: change speed randomly, make red during the colision, objects interchange speeds, objects interchange speed and die a little at each colision, also changing color as they are less alive
+XXX-World will inherit PhysicalObject, enabling a world to have some worlds in its turn. I want to do this in order to be able to make a dying rectangle explode.
+
+0.65(25.06.2007)
+-version jump, 0.65 is a test, trying to reach 0.7. Will try to evolve such that World will inherit PhysicalObject
+-changed the way objects find out the universe sizes, at every size change the data propagates from the parent objects to the children
+-now World inherits from PhysicalObject. The next thing to do is to make the worlds able to die and their parents to take the apropriate decisions when that happens
+
+0.65.1(26.06.2007)
+-this a back-up release, before making hard changes, implemented a tree class which should replace much of the world code
+-moving the code from AliveObject to PhysicalObject, really need to make a decision about which objects should be AliveObjects and which not.
+
+0.65.2(31.07.2007)
+XXX-bug. The chained bees don't draw the chain anymore.
+-made some clean-up in the MainDock code
+\\\-Decision: World will work like an alive object, and Universe should probably do the same; AliveObject will dissapear. PhysicalObject will the basic class, the only one that can be drawn. Both World and PhysicalObject will implement an Alive interface.
+YYY-it seems like the world inherits some important functions from PhysicalObject. Remove the PhysicalObject dependency.
+
+0.65.3(3.10.2007)
+-backup release. World will not inherit PhysicalObject, the worlds will have two lists: one of worlds and one of objects. For the moment everything will die by sending a message to its parent, which will put them on a list to die after a step (or smth like that).
+YYY-in explosions world, a new world will be created for each object that dies, then it will continue by its own, or all of the objects could go into the already existing world, the new world having to pass its children to its parent.
+
+0.66(30.10.2007)
+-a dying CWRect spawns a new world, composed from 4 smaller rects.
+
+0.66.1(30.10.2007)
+-all the new CWRects not go into the old world and other posibilities have appeared.
+
+0.67(10.11.2007)
+-RectsWorld does a part of what it should do. The colisions do not take into accout sizes.
+-Alive and AliveObject have dissapeared for the moment
+XXX-I enforce closing everything when MainWindow goes down, this makes the program crash at end.
+
+0.68(9.05.2008)
+Fixed crash when closing, was due to double deletion of widgets, one by close and on by their parents.
+
+0.69(16.05.2008)
+Now UniverseWidget hold a pointer to the Universe, not the Universe itself, will move the Universe somewhere upper. The user can choose the type of widget to be used for drawing.
+
+0.70(25.05.2008)
+Drawing can be done also using QGLWidget.

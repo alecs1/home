@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/" >
+        <file>images/icons/folder_crystal.png</file>
+        <file>images/icons/parallel worlds.png</file>
+    </qresource>
+</RCC>

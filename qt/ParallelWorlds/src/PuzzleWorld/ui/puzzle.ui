@@ -1,0 +1,233 @@
+<ui version="4.0" >
+ <class>PuzzleForm</class>
+ <widget class="QWidget" name="PuzzleForm" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>203</width>
+    <height>321</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Puzzle World</string>
+  </property>
+  <property name="windowIcon" >
+   <iconset resource="../../src.qrc" >:/images/icons/parallel worlds.png</iconset>
+  </property>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>50</y>
+     <width>127</width>
+     <height>193</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" >
+    <property name="margin" >
+     <number>0</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>0</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="selectPuzzleButton" >
+        <property name="text" >
+         <string>Select puzzle</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="randPozButton" >
+        <property name="text" >
+         <string>Amestecă</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="randMoveButton" >
+        <property name="text" >
+         <string>Move randomly</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QToolButton" name="solveButton" >
+      <property name="text" >
+       <string>Solve one at a time</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="parallelSolveButton" >
+      <property name="toolTip" >
+       <string>All pieces go to their place in the same time</string>
+      </property>
+      <property name="text" >
+       <string>Solve</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="solutionSolveButton" >
+      <property name="toolTip" >
+       <string>Load a solution and display it</string>
+      </property>
+      <property name="text" >
+       <string>Solve from solution</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>150</x>
+     <y>70</y>
+     <width>48</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" >
+    <property name="margin" >
+     <number>0</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <widget class="QLabel" name="rowLabel" >
+      <property name="text" >
+       <string>Rows</string>
+      </property>
+      <property name="buddy" >
+       <cstring>rowsSpinBox</cstring>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSpinBox" name="rowsSpinBox" >
+      <property name="maximum" >
+       <number>500</number>
+      </property>
+      <property name="minimum" >
+       <number>1</number>
+      </property>
+      <property name="value" >
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>150</x>
+     <y>140</y>
+     <width>48</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" >
+    <property name="margin" >
+     <number>0</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <widget class="QLabel" name="colLabel" >
+      <property name="text" >
+       <string>Columns</string>
+      </property>
+      <property name="buddy" >
+       <cstring>colsSpinBox</cstring>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSpinBox" name="colsSpinBox" >
+      <property name="maximum" >
+       <number>500</number>
+      </property>
+      <property name="minimum" >
+       <number>1</number>
+      </property>
+      <property name="value" >
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="gatherButton" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>250</y>
+     <width>85</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Gather pieces</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="randGatherButton" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>290</y>
+     <width>145</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Move randomly together</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openButton" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>100</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Select image</string>
+   </property>
+   <property name="icon" >
+    <iconset resource="../../src.qrc" >:/images/icons/folder_crystal.png</iconset>
+   </property>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>openButton</tabstop>
+  <tabstop>randPozButton</tabstop>
+  <tabstop>randMoveButton</tabstop>
+  <tabstop>solveButton</tabstop>
+  <tabstop>parallelSolveButton</tabstop>
+  <tabstop>solutionSolveButton</tabstop>
+  <tabstop>rowsSpinBox</tabstop>
+  <tabstop>colsSpinBox</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../../src.qrc" />
+ </resources>
+ <connections/>
+</ui>
