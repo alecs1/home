@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="500"
+   height="500"
+   id="svg13591"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docbase="/acasa/home/alecs1"
+   sodipodi:docname="parallel worlds.svg"
+   inkscape:export-filename="/acasa/home/alecs1/parallel worlds.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs13593">
+    <linearGradient
+       id="linearGradient16305">
+      <stop
+         style="stop-color:black;stop-opacity:1"
+         offset="0"
+         id="stop16307" />
+      <stop
+         id="stop16313"
+         offset="0.5090909"
+         style="stop-color:#7a7a00;stop-opacity:0.49803922;" />
+      <stop
+         style="stop-color:#f7f700;stop-opacity:0.24705882;"
+         offset="0.75454545"
+         id="stop16315" />
+      <stop
+         style="stop-color:black;stop-opacity:0;"
+         offset="1"
+         id="stop16309" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient15399">
+      <stop
+         style="stop-color:black;stop-opacity:1;"
+         offset="0"
+         id="stop15401" />
+      <stop
+         id="stop15411"
+         offset="0.74545455"
+         style="stop-color:black;stop-opacity:0.49803922;" />
+      <stop
+         style="stop-color:black;stop-opacity:0;"
+         offset="1"
+         id="stop15403" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient14486">
+      <stop
+         style="stop-color:#676767;stop-opacity:0;"
+         offset="0"
+         id="stop14510" />
+      <stop
+         style="stop-color:black;stop-opacity:0;"
+         offset="1"
+         id="stop14490" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient16305"
+       id="linearGradient16311"
+       x1="297.23087"
+       y1="136.23422"
+       x2="410.4024"
+       y2="327.75534"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.80408885"
+     inkscape:cx="238.04198"
+     inkscape:cy="255.88775"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="500px"
+     height="500px"
+     inkscape:window-width="1017"
+     inkscape:window-height="691"
+     inkscape:window-x="0"
+     inkscape:window-y="47" />
+  <metadata
+     id="metadata13596">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:url(#linearGradient16311);fill-opacity:1.0"
+       id="path15418"
+       sodipodi:cx="207.68849"
+       sodipodi:cy="192.1982"
+       sodipodi:rx="181.57198"
+       sodipodi:ry="172.24464"
+       d="M 389.26047 192.1982 A 181.57198 172.24464 0 1 1  26.116516,192.1982 A 181.57198 172.24464 0 1 1  389.26047 192.1982 z" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#ffffeb;fill-opacity:1"
+       id="path17220"
+       sodipodi:cx="315.8855"
+       sodipodi:cy="396.77759"
+       sodipodi:rx="67.156761"
+       sodipodi:ry="65.913116"
+       d="M 383.04226 396.77759 A 67.156761 65.913116 0 1 1  248.72874,396.77759 A 67.156761 65.913116 0 1 1  383.04226 396.77759 z"
+       transform="translate(23.62923,-18.65466)"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+  </g>
+</svg>
