@@ -9,9 +9,9 @@ BeesWorld::BeesWorld() {
 	int howMany = 8;
 	for(int i = 0; i < howMany; i++) {
 		if (i == howMany - 1/*false*/)
-			aBeePointer = new Bee("images/BeesWorld/bee-nt.png");
+            aBeePointer = new Bee("qrc:/images/BeesWorld/bee-nt.png");
 		else
-			aBeePointer = new Bee("images/BeesWorld/bee.png");
+            aBeePointer = new Bee("qrc:/images/BeesWorld/bee.png");
 		Speed x(i * 17 + 15, i * 19 + 15, 0);
 		aBeePointer->setSpeed(x);
 		aBeePointer->move(Coordinate(i * 30, i * 40, 0));

@@ -13,9 +13,9 @@ public:
 	void deleteIt();
 
 private:
-	QString name;
+    WorldControlInterface* interface;
 	World* worldPointer;
-	WorldControlInterface* interface;
+    QString name;
 };
 
 #endif

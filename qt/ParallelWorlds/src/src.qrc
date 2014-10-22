@@ -1,6 +1,20 @@
 <RCC>
-    <qresource prefix="/" >
+    <qresource prefix="/">
         <file>images/icons/folder_crystal.png</file>
         <file>images/icons/parallel worlds.png</file>
+        <file>images/BeesWorld/bee-nt.png</file>
+        <file>images/BeesWorld/bee.png</file>
+        <file>images/BeesWorld/simple-bee.png</file>
+        <file>images/MCWorld/boat.png</file>
+        <file>images/MCWorld/italian-notransparency.png</file>
+        <file>images/MCWorld/italian.png</file>
+        <file>images/MCWorld/maiden-notransparency.png</file>
+        <file>images/MCWorld/maiden.png</file>
+        <file>images/MCWorld/river.png</file>
+        <file>images/icons/parallel worlds.svg</file>
+        <file>images/PuzzleWorld/tux-small.png</file>
+        <file>images/PuzzleWorld/tux.png</file>
+        <file>images/PuzzleWorld/yousmile-large.png</file>
+        <file>images/PuzzleWorld/yousmile.png</file>
     </qresource>
 </RCC>

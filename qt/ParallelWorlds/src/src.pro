@@ -95,3 +95,21 @@ TARGET = ../bin/src
 
 QT += widgets opengl
 
+OTHER_FILES += \
+    images/BeesWorld/bee-nt.png \
+    images/BeesWorld/bee.png \
+    images/BeesWorld/simple-bee.png \
+    images/icons/folder_crystal.png \
+    images/icons/parallel worlds.png \
+    images/icons/parallel worlds.svg \
+    images/MCWorld/boat.png \
+    images/MCWorld/italian-notransparency.png \
+    images/MCWorld/italian.png \
+    images/MCWorld/maiden-notransparency.png \
+    images/MCWorld/maiden.png \
+    images/MCWorld/river.png \
+    images/PuzzleWorld/tux-small.png \
+    images/PuzzleWorld/tux.png \
+    images/PuzzleWorld/yousmile-large.png \
+    images/PuzzleWorld/yousmile.png
+
