@@ -14,24 +14,28 @@ ip route add 130.89.148.0/24 via 192.168.42.129 dev usb0
 
 route -n
 
+
+Utilities:
 find . -iname <name> -print0 | xargs -0 grep -i <expression>
 
 #grep in files that are not in directories with .svn in name.
 grep -ri "log_tag" --exclude="*.svn*" *
 
 
+rsync --exclude='*.svn' --exclude='*.obj' --exclude='*.pdb' --exclude='*.idb' --exclude='*.tlog' --exclude='*.log' --exclude='*.lib' --exclude='*.lastbuildstate' --exclude='*.exe' --exclude='*.dll' --exclude='*.pch' --progress -urz --perms --chmod=ugo=rwX /<path> <user>@<target-ip>:<target-path>
 
 
 
+KDE
 Shutdown kde from command line:
 logout: qdbus org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1
 shutdown: qdbus org.kde.ksmserver /KSMServer logout 0 0 0
-
 1    No confirmation (0), await confirmation (1)
 2    Logout (0), Don't know (1), Shutdown (2)
 3    This is the "when" parameter, but it isn't clear what the impact is.
 
 
 
+Kernel:
 Harddisk
 smartctl
