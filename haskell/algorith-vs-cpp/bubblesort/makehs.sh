@@ -1,0 +1,1 @@
+ghc bsort.hs -o bsorths
