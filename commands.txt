@@ -22,7 +22,7 @@ find . -iname <name> -print0 | xargs -0 grep -i <expression>
 grep -ri "log_tag" --exclude="*.svn*" *
 
 
-rsync --exclude='*.svn' --exclude='*.obj' --exclude='*.pdb' --exclude='*.idb' --exclude='*.tlog' --exclude='*.log' --exclude='*.lib' --exclude='*.lastbuildstate' --exclude='*.exe' --exclude='*.dll' --exclude='*.pch' --progress -urz --perms --chmod=ugo=rwX /<path> <user>@<target-ip>:<target-path>
+rsync --exclude='*.svn' --exclude='*.obj' --exclude='*.pdb' --exclude='*.idb' --exclude='*.tlog' --exclude='*.log' --exclude='*.lib' --exclude='*.lastbuildstate' --exclude='*.exe' --exclude='*.dll' --progress -urz --perms --chmod=ugo=rwX /<path> <user>@<target-ip>:<target-path>
 
 
 
@@ -39,3 +39,15 @@ shutdown: qdbus org.kde.ksmserver /KSMServer logout 0 0 0
 Kernel:
 Harddisk
 smartctl
+
+Laptop speaker:
+rmmod pcspkr
+
+Blacklisting the pcspkr module will prevent udev from loading it at boot:
+echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
+
+
+OsX:
+harddisk trashing:
+    iotop -C 5 12
+    fs_usage
