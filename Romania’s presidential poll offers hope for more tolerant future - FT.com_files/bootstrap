@@ -1,0 +1,42 @@
+(function() {
+/**
+ *
+ * Bootstrap Javascript
+ *
+ * Very basic javascript that needs to run on
+ * every page that annotations applies to.
+ *
+ * @codingstandard ftlabs-phpcs
+ * @copyright The Financial Times Limited [All Rights Reserved]
+ */
+
+var bootstrap = (function() {
+
+	var host = "newslines.ft.com";
+	var useSsl = location.href.match(/^https\:/);
+
+	// Override the hostname if the appropriate cookie is set
+	var m = document.cookie.match(/;\s*AnnotationsHost=([^;]+)/);
+	if (m) host = m[1];
+	if (!host.match(/ft.com$/)) return;
+
+	// Check that an appropriate annotations-level is set in the AYSC cookie
+	// And stop if not
+	var m = document.cookie.match(/;\s*AYSC=([^;]+)/);
+	if (!m) return;
+	var annotationslevel = m[1].match(/_50([^_]+)_/);
+	if (!annotationslevel || parseInt(annotationslevel[1]) == 0) return;
+
+	// Add the main javascript and CSS files for the project
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = 'http'+(useSsl?'s':'')+'://'+host+'/resources/javascript/widget?v=1.0.11';
+	document.getElementsByTagName("head")[0].appendChild(script);
+
+	// Add CSS
+	var css = document.createElement('link');
+	css.rel = 'stylesheet';
+	css.type = 'text/css';
+	css.href = 'http'+(useSsl?'s':'')+'://'+host+'/resources/css/widget?v=1.0.11';
+	document.getElementsByTagName("head")[0].appendChild(css);
+}());}());

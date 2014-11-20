@@ -1,0 +1,154 @@
+typeof topArticles.render.buildUi === 'function' && topArticles.render.buildUi({
+  "mostRead": {
+    "type": "mostRead",
+    "pages": [
+      {
+        "url": "http://www.ft.com/cms/s/0/785e4552-700e-11e4-90af-00144feabdc0.html",
+        "title": "Report blasts US banks’ physical commodities operations"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/068c2212-700b-11e4-bc6a-00144feabdc0.html",
+        "title": "Apple plans to push Beats to every iPhone"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/21ef6916-6fd8-11e4-90af-00144feabdc0.html",
+        "title": "Bankers have tendency to lie for financial gain, say scientists"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/7b353d7c-7071-11e4-8113-00144feabdc0.html",
+        "title": "Goldman fires staff for alleged NY Fed breach"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/b87c67b4-7017-11e4-bc6a-00144feabdc0.html",
+        "title": "Federal Reserve minutes show easy decision to end QE"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/177ef226-700f-11e4-bc6a-00144feabdc0.html",
+        "title": "Fat places $2tn burden on world economy, says McKinsey report"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/262d0ffe-6fdf-11e4-90af-00144feabdc0.html",
+        "title": "KPMG laps up McLaren’s F1-style analytics"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/c5daa59e-6fc5-11e4-90af-00144feabdc0.html",
+        "title": "El Corte Inglés reflects Spain’s woes"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/697dc8de-7016-11e4-bc6a-00144feabdc0.html",
+        "title": "Energy groups face ‘existential’ climate threat, says ex-BP chief"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/0215de98-7061-11e4-90af-00144feabdc0.html",
+        "title": "Stocks slip after meek China data"
+      }
+    ],
+    "updated": "Thu Nov 20 2014 08:49:16 GMT+0000 (UTC)",
+    "label": "Read",
+    "defaultContent": true,
+    "isValid": true,
+    "appVersion": "2.0.1"
+  },
+  "mostCommented": {
+    "type": "mostCommented",
+    "pages": [
+      {
+        "url": "http://www.ft.com/cms/s/0/16364ade-6fb2-11e4-90af-00144feabdc0.html",
+        "title": "China and Russia in naval co-operation vow"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/3e4be7f8-6e4b-11e4-afe5-00144feabdc0.html",
+        "title": "The curse of weak global demand"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/21ef6916-6fd8-11e4-90af-00144feabdc0.html",
+        "title": "Bankers have tendency to lie for financial gain, say scientists"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/29d2ccd2-6f23-11e4-8d86-00144feabdc0.html",
+        "title": "The truth about UK living standards since the crisis"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/068c2212-700b-11e4-bc6a-00144feabdc0.html",
+        "title": "Apple plans to push Beats to every iPhone"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/177ef226-700f-11e4-bc6a-00144feabdc0.html",
+        "title": "Fat places $2tn burden on world economy, says McKinsey report"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/da6ccfb2-6e4b-11e4-bffb-00144feabdc0.html",
+        "title": "ECB inflation target fails credibility test"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/785e4552-700e-11e4-90af-00144feabdc0.html",
+        "title": "Report blasts US banks’ physical commodities operations"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/156d909c-6f23-11e4-8d86-00144feabdc0.html",
+        "title": "Uber should not run down the messenger"
+      },
+      {
+        "url": "http://www.ft.com/cms/s/0/0138e544-6f47-11e4-8d86-00144feabdc0.html",
+        "title": "Russia may pivot to the east but it cannot escape its European destiny"
+      }
+    ],
+    "updated": "Thu Nov 20 2014 08:49:16 GMT+0000 (UTC)",
+    "label": "Commented",
+    "defaultContent": false,
+    "isValid": true,
+    "appVersion": "2.0.1"
+  },
+  "popularVideos": {
+    "type": "popularVideos",
+    "pages": [
+      {
+        "url": "http://video.ft.com/v/3891633632001",
+        "title": "Private equity warns of credit bubble"
+      },
+      {
+        "url": "http://video.ft.com/v/3887595090001",
+        "title": "The best business writing of the decade"
+      },
+      {
+        "url": "http://video.ft.com/v/3888814052001",
+        "title": "China's overseas students return home"
+      },
+      {
+        "url": "http://video.ft.com/v/3885242023001",
+        "title": "How long can it last?"
+      },
+      {
+        "url": "http://video.ft.com/v/3892093910001",
+        "title": "The FX scandal now and later"
+      },
+      {
+        "url": "http://video.ft.com/v/3895558096001",
+        "title": "Rocket launch from Russia"
+      },
+      {
+        "url": "http://video.ft.com/v/3890115082001",
+        "title": "How will Opec act over oil’s fall?"
+      },
+      {
+        "url": "http://video.ft.com/v/3891720513001",
+        "title": "Eurozone – lost in stagnation"
+      },
+      {
+        "url": "http://video.ft.com/v/3895550393001",
+        "title": "Russia's next move in Ukraine"
+      },
+      {
+        "url": "http://video.ft.com/v/3887894899001",
+        "title": "Are you an FX numpty?"
+      }
+    ],
+    "updated": "Thu Nov 20 2014 08:49:16 GMT+0000 (UTC)",
+    "label": "Videos",
+    "defaultContent": false,
+    "isValid": true,
+    "appVersion": "2.0.1"
+  },
+  "componentTitle": "MOST POPULAR",
+  "allDataValid": true
+});

@@ -1,0 +1,2543 @@
+/* Loading Overlay */
+.loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #FFF1E0;
+    opacity: 0.5;
+    filter: alpha(opacity = 50);
+    z-index: 10;
+}
+
+.loadingOverlay img {
+    position: relative;
+}
+
+/* Heat Bars */
+.heatBarPlus6 {
+    background: none repeat scroll 0 0 #1E3C00 !important;
+}
+.heatBarPlus5 {
+    background: none repeat scroll 0 0 #2A4C02 !important;
+}
+.heatBarPlus4 {
+    background: none repeat scroll 0 0 #316300 !important;
+}
+.heatBarPlus3 {
+    background: none repeat scroll 0 0 #458B00 !important;
+}
+.heatBarPlus2 {
+    background: none repeat scroll 0 0 #5C9A20 !important;
+}
+.heatBarPlus1 {
+    background: none repeat scroll 0 0 #74A840 !important;
+}
+.heatBarEven {
+    background: none repeat scroll 0 0 #777777 !important;
+}
+.heatBarNeg1 {
+    background: none repeat scroll 0 0 #DF6060 !important;
+}
+.heatBarNeg2 {
+    background: none repeat scroll 0 0 #D94040 !important;
+}
+.heatBarNeg3 {
+    background: none repeat scroll 0 0 #CC0000 !important;
+}
+.heatBarNeg4 {
+    background: none repeat scroll 0 0 #920000 !important;
+}
+.heatBarNeg5 {
+    background: none repeat scroll 0 0 #720303 !important;
+}
+.heatBarNeg6 {
+    background: none repeat scroll 0 0 #570000 !important;
+}
+
+/* Global Styles */
+
+.wsod-widget .contains:after {
+    clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}
+
+.wsod-widget a
+{
+    text-decoration: none;
+}
+
+.wsod-widget a:hover
+{
+    color: #000;
+}
+
+.wsod-widget .neg 
+{
+    color: #CC0000;
+}
+
+.wsod-widget .pos 
+{
+    color: #458B00;
+}
+
+.wsod-widget .hidden,
+.wsodHidden 
+{
+    display: none;
+}
+
+.wsod-widget .disclaimer 
+{
+    color: #777777;
+    margin-top: 8px;
+    font-size: 10px;
+    margin-left: 10px;
+}
+
+.wsod-widget .links 
+{
+    font-size: 11px;
+    position: absolute;
+    right: 0px;
+    margin-right: 10px;
+}
+
+.wsod-widget .links a
+{
+    margin-left: 10px;
+}
+
+.wsod-widget table 
+{
+    border: collapse;
+}
+
+.trading-room-module ul.widget-tabs
+{
+    border-bottom: 2px solid #96938A;
+    float: left;
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    z-index: 0;
+}
+
+.trading-room-module ul.widget-tabs li
+{
+    //background: url("http://markets.ft.com/resources/image/tabs-main_new.gif") no-repeat scroll 100% 0 transparent;
+    float: left;
+    margin-right: 7px;
+    padding-right: 7px;
+    position: relative;
+}
+
+.trading-room-module ul.widget-tabs li a
+{
+    //background: url("http://markets.ft.com/resources/image/tabs-main_new.gif") no-repeat scroll 0 0 transparent;
+    float: left;
+    font-size: 12px;
+    margin-left: -3px;
+    padding: 5px 0 3px 7px;
+    position: relative;
+}
+
+
+span.link-symbol 
+{
+    margin-left: 5px;    
+}
+/* Content */
+
+.WSODHoverPopup {
+	z-index: 10000;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	float: left;
+	font-size: 14px;
+	font-family: arial;
+	display: none;
+}
+
+.WSODHoverPopup .contains {
+	zoom: 1;
+}
+
+.WSODHoverPopup .contains:after {
+	content: ".";
+	display: block;
+	visibility: hidden;
+	clear: both;
+	height: 0;
+}
+
+.WSODHoverPopup .WSODHoverPopupContainer {
+	position: relative;
+}
+
+.WSODHoverPopup .WSODHoverPopupContainer iframe {
+	position: absolute;
+	height: 0;
+	left: -9px;
+	top: -9px;
+	width: 100%;
+	background-color: #D3CBBC;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+
+.wsodOverlayPopup .WSODHoverPopupContainer iframe {
+	left: -6px;
+	top: -6px;
+}
+
+
+.WSODHoverPopup .WSODHoverPopupContainer .WSODHoverPopupInner {
+	background-color: #fff;
+	position: relative;
+	z-index: 1;
+	width: 390px;
+}
+
+.WSODHoverPopup .WSODHoverPopupContainer .WSODHoverPopupInner.error {
+	width:240px;
+}
+
+.WSODHoverPopup .WSODHoverPopupContainer
+{
+    background-color: #fff;
+	border: 9px solid #D9D9D9; 
+    border: 9px solid rgba(150, 150, 150, .5);
+    -webkit-background-clip: padding-box; /* for Safari */
+    background-clip: padding-box; /* for IE9+, Firefox 4+, Opera, Chrome */
+	-webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+}
+
+
+.WSODHoverPopup .WSODHoverPopupContainer .WSODHoverPopupOuter {
+    background-color: #fff
+}
+
+.WSODHoverPopup .WSODHoverPopupContainer .WSODHoverPopupOuter.WSODLoading {
+    background: url("http://apis.markets.ft.com/ResourceManager/Tgf5TRN060-rUp8EF9X0lQ2/d/f/635369091221015546/Content/Images/Loading.gif") no-repeat scroll center center #fff;
+    height: 200px;
+    width: 390px;
+}
+
+.WSODHoverPopup a {
+	color: #4781AA;
+	text-decoration: none;
+}
+
+.WSODHoverPopup a:hover {
+	color: #000;
+}
+
+.WSODHoverPopup table {
+	border-collapse: collapse;
+	margin-bottom: 2px;
+	width: 100%;
+}
+
+.WSODHoverPopup table tr th {
+	font-size: 11px;
+	font-weight: bold;
+	color: #666;
+	padding: 3px 4px;
+}
+
+.WSODHoverPopup table tr td {
+	font-size: 16px;
+	vertical-align: middle;
+	text-align: right;
+}
+
+.WSODHoverPopup table tr.labels td 
+{
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.WSODHoverPopup table tr td.first
+{
+    text-align: left;
+}
+.WSODHoverPopup .pos,
+.WSODPopup .pos {
+	color: #458b00;
+}
+
+.WSODHoverPopup .neg,
+.WSODPopup .neg {
+	color: #c00;
+}
+
+.WSODHoverPopup .neu,
+.WSODPopup .neu {
+	color: #333;
+}
+
+.WSODHoverPopup .popupHeader {
+	padding: 15px 15px 10px;
+	line-height: 18px;
+}
+
+.WSODHoverPopup .popupHeader .buttonsContainer
+{
+    margin-bottom: 15px;
+}
+
+.WSODHoverPopup .popupHeader .buttonsContainer .basicButton
+{
+    margin-right: 10px;
+}
+
+.WSODHoverPopup .popupHeader a 
+{
+    font-size: 16px;
+}
+
+.WSODHoverPopup .popupHeader span
+{
+    color: #777;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.WSODHoverPopup .popupBody {
+	font-size: 12px;
+	padding: 0px 15px 7px;
+}
+
+.popupBody td.center {
+	padding-right:35px;
+}
+
+.WSODHoverPopup .popupFooter {
+	font-size: 10px;
+	padding: 0px 15px 15px;
+	color: #777;
+}
+
+
+.WSODHoverPopup .popupFooter .disclaimerHolder
+{
+    float: left;
+}
+
+.WSODHoverPopup .popupFooter .disclaimerHolder span
+{
+    display: block;
+}
+
+.WSODHoverPopup .popupFooter .sponsorHolder
+{
+    float: right;
+}
+
+.popupFooter .basicButton 
+{
+	margin-right:8px !important;
+}
+
+.symbol-error {
+	font-size:12px;
+	padding:20px;
+	width:200px;
+	text-align:center;
+	margin:auto;
+}
+
+p.hover-over-test a
+{
+    margin:8px;
+}
+.WSODPopup {
+	z-index: 20000;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background-color: #ccc;
+	float: left;
+	font-size: 14px;
+	font-family: arial;
+}
+
+.WSODPopup .contains {
+	zoom: 1;
+}
+
+.WSODPopup .contains:after {
+	content: ".";
+	display: block;
+	visibility: hidden;
+	clear: both;
+	height: 0;
+}
+
+.WSODPopup .WSODPopupContainer {
+	position: relative;
+}
+
+.WSODPopup .WSODPopupContainer iframe {
+	position: absolute;
+	height: 0;
+	left: -9px;
+	top: -9px;
+	width: 0;
+	background-color: #D3CBBC;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+
+.wsodOverlayPopup .WSODPopupContainer iframe {
+	left: -6px;
+	top: -6px;
+}
+
+
+.WSODPopup .WSODPopupContainer .WSODPopupInner {
+	width: 670px;
+	background-color: #fff;
+	position: relative;
+	z-index: 1;
+}
+
+.WSODPopup .WSODPopupContainer .WSODPopupOuter {
+	position: absolute;
+	left: -9px;
+	top: -9px;
+	background-color: #fff;
+	border: 9px solid #D3CBBC;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+
+.wsodOverlayPopup .WSODPopupContainer .WSODPopupOuter {
+	border-width: 6px;
+	left: -6px;
+	top: -6px;
+	opacity: 0.15;
+	filter: alpha(opacity=15);
+	border: 6px solid #000;
+}
+
+.ui-draggable .popupHeader {
+	cursor: move;
+}
+
+
+.WSODPopup .popupHeader {
+	padding: 8px 8px 6px;
+	line-height: 18px;
+}
+
+.isie.wsodOverlayPopup .popupHeader
+{
+	padding-bottom:8px
+}
+
+.wsodOverlayPopup .popupHeader {
+	padding: 6px 6px 12px;
+}
+
+wsodOverlayPopup .popupHeader
+{
+	padding-bottom:8px
+}
+
+.WSODPopup .error-text
+{
+	display:none;
+}
+
+.WSODPopup .errorState .error-text
+{
+	color:#C00;
+	display:block;
+}
+
+.WSODPopup .popupHeader h2 {
+	font-size: 14px;
+	color: #777;
+	margin: 6px 0 0 8px;
+	padding: 0;
+	border-bottom-width: 2px;
+	font-weight: bold;
+	text-transform:uppercase;
+	zoom: 1;
+	float: left;
+}
+
+.WSODPopup .popupHeader a.closeLink {
+	color: #787878;
+	display: block;
+	font-size: 11px;
+	float: right;
+	text-decoration: none;
+	position: absolute;
+	right: 8px;
+	top: 8PX;
+}
+
+.wsodOverlayPopup .popupHeader a.closeLink {
+	background-position: 0 -1825px;
+	width: 12px;
+	height: 12px;
+}
+
+.WSODPopup .popupHeader a.closeLink span {
+	display: none;
+}
+
+.WSODPopup .popupBody {
+	font-size: 12px;
+	padding: 5px 15px 15px;
+}
+
+.wsodOverlayPopup .popupBody {
+	padding: 0 6px 6px;
+}
+
+
+.WSODPopup .popupBody p {
+	margin: 0 0 5px 0;
+}
+
+.WSODPopup .popupBody ul {
+	margin: 0;
+}
+
+.WSODPopup .popupFooter {
+	font-size: 10px;
+	padding: 5px 10px 10px 15px;
+}
+.WSODPopup .popupFooter .cancelLinkContain {
+	float: left;
+	font-size: 14px;
+	line-height: 16px;
+	padding: 0px 5px;
+}
+.WSODPopup .popupFooter .cancelLinkContain a:hover {
+	text-decoration: underline;
+}
+
+.WSODPopupContainer .WSODPopupInner label {
+	float: left;
+	font-size: 12px;
+	font-weight: bold;
+	margin: 10px 0;
+	padding-left: 0;
+	width: 150px;
+}
+
+.WSODPopup .popupFooter span {
+	font-size: 10px;
+	float: right;
+	color: #999;
+}
+
+.WSODPopup .popupButtonSpacer {
+	margin-left: 10px;
+}
+
+.WSODPopup a {
+	color: #4781AA;
+	text-decoration: none;
+}
+
+.WSODPopup table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.WSODPopup table tr th {
+	font-size: 11px;
+	font-weight: bold;
+	color: #666;
+	padding: 3px 4px;
+}
+
+.WSODPopup table tr td {
+	font-size: 12px;
+	vertical-align: middle;
+	padding: 3px 4px;
+}
+
+.WSODPopup table tr th.text,
+.WSODPopup table tr td.text {
+	text-align: left;
+}
+
+.WSODPopup .posChange {
+	color: #458b00;
+}
+
+.WSODPopup .negChange {
+	color: #c00;
+}
+
+
+.WSODPopup li {
+	list-style-type: none;
+}
+
+.WSODPopup .errorHeader {
+	color: #000;
+	font-weight: bold;
+}
+
+.WSODPopup .errorMessage {
+	font-size: 11px;
+	color: #333;
+}
+
+.WSODPopup .errorMessage ul {
+	margin-top: 15px;
+}
+
+.WSODPopup .errorMessage ul li {
+	list-style-type: disc;
+}
+
+/*
+Investor Relations / Company Content Popup Styles
+*/
+
+.WSODPopup li.content {
+	margin: 10px 10px 10px 0;
+}
+
+.WSODPopup li.content a {
+	margin-right: 10px;
+}
+
+.WSODPopup li.content a.content {
+	padding-top: 10px;
+	text-align: center;
+	position: relative;
+	top: 4px;
+}
+
+.WSODPopup.WSODPopupIRContent div.popupHeader h2 {
+	color: #777777;
+	font-size: 15px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+
+/*
+    ICVIEW Popup
+*/
+
+.WSODPopup.WSODPopupICView .fleft {
+	float: left;
+}
+
+.WSODPopup.WSODPopupICView .fright {
+	float: right;
+}
+
+.WSODPopup.WSODPopupICView span.range {
+	margin-left: 5px;
+	font-weight: bold;
+}
+
+.WSODPopup.WSODPopupICView div.viewoptions {
+	border: 1px solid #E7E2D6;
+	background-color: #FAF9F6;
+	padding: 10px;
+	margin-bottom: 5px;
+}
+
+.WSODPopup.WSODPopupICView div.options {
+	margin-left: 15px;
+}
+
+.WSODPopup.WSODPopupICView div.legend {
+	margin-bottom: 20px;
+	margin-top: 20px;
+}
+
+.WSODPopup.WSODPopupICView span.disclaimer {
+	color: #777777;
+	font-size: 10px;
+	margin-top: 3px;
+}
+
+.WSODPopup.WSODPopupICView div.rankingbox {
+	border-top: 1px solid #E7E2D6;
+	padding-top: 10px;
+	margin-bottom: 20px;
+}
+
+.WSODPopup.WSODPopupICView span.info {
+	display: block;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+.WSODPopup.WSODPopupICView div.rating {
+	margin-right: 10px;
+	margin-bottom: 15px;
+}
+
+.WSODPopup.WSODPopupICView span.companyName {
+	font-weight: bold;
+	font-size: 15px;
+}
+
+.WSODPopup.WSODPopupICView span.symbol {
+	margin-left: 3px;
+	color: #777777;
+	font-size: 15px;
+}
+
+.WSODPopup.WSODPopupICView div.priceInfo {
+	margin-bottom: 10px;
+}
+
+.WSODPopup.WSODPopupICView div.header {
+	position: relative;
+	top: -30px;
+	width: 140px;
+}
+
+.WSODPopup.WSODPopupICView span.lastview {
+	font-weight: bold;
+}
+
+/*
+Data Definitions Popup
+*/
+
+.WSODPopup.WSODDataDefinitions .dataDefinitions {
+	font-weight: bold;
+	margin-top: 15px;
+	overflow: auto;
+}
+
+.WSODPopup.WSODDataDefinitions .dataDefinitions dt {
+	clear: both;
+	float: left;
+	line-height:15px;
+    font-size:12px;
+	font-weight: bold;
+	margin: 0 0 0 0;
+	text-align: right;
+	width: 105px;
+	margin-bottom: 20px;
+}
+
+.WSODPopup.WSODDataDefinitions .dataDefinitions dd {
+	float: left;
+	font-weight: normal;
+	line-height:15px;
+    font-size:12px;
+	margin-bottom: 20px;
+	margin-left: 25px;
+	width: 300px;
+}
+
+.WSODPopup.WSODDataDefinitions .popupHeader h2 {
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.WSODPopup.WSODDataDefinitions .popupBody dl.dataDefinitions {
+	height: 300px;
+	overflow: auto;
+}
+
+.WSODPopup.WSODDataDefinitions .popupBody dl.oneDataDefinition dt {
+    display: none;
+}
+
+.WSODPopup.WSODDataDefinitions .popupBody dl.oneDataDefinition dd {
+    line-height:16px;
+}
+
+
+/*
+Subscribe popup
+*/
+
+.subscribeToSite .WSODPopupContainer .subscribeMessage {
+	line-height: 18px;
+}
+
+.subscribeToSite .WSODPopupContainer .subscribeMessage ul {
+	list-style: disc outside none;
+	margin: 10px 0 0 17px;
+}
+.subscribeToSite .WSODPopupContainer .basicButton {
+	float: right;
+	margin-left: 12px;
+}
+
+/*
+Add to portfolio popup
+*/
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup {
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl {
+	float: left;
+	padding: 8px 16px 8px 0;
+	position: relative;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl label {
+	margin: 0 8px 0 0;
+	width:auto;
+	font-size:11px;
+	line-height:18px;
+	float:none;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl input {
+	width: 105px;
+	
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl input,
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl select {
+	border: 1px solid #999;
+}
+
+
+.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl .errorMessage
+{
+	display:none;
+}
+
+.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl .errorMessage label
+{
+	visibility:hidden;
+}
+
+.WSODPopupAddToPortfolio .addToPortfolioControlGroup .error .errorMessage
+{
+	display:block;
+	color:#CC0000;
+}
+.WSODPopup.WSODPopupAddToPortfolio  .addToPortfolioControlGroup .error  select,
+.WSODPopup.WSODPopupAddToPortfolio  .addToPortfolioControlGroup .error  input
+{
+	border:1px solid #CC000C;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio  .addToPortfolioControlGroup .ghostText
+{
+	color:#777;
+	font-size:14px;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .wsodDatePickerInput input {
+	border: 1px solid #999;
+	font-size: inherit;
+}
+
+.WSODPopup .wsodDatePickerInput div.wsod-icon, #wsod .wsodDatePickerInput div.wsod-icon {
+position: absolute;
+top: 5px;
+right: 5px;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .wsodDatePickerInput div.wsod-icon
+{
+	top:5px;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl .useLastControl {
+	position: absolute;
+	top: 10px;
+	right: 16px;
+	font-size: 11px;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl .currencyCodeInfo {
+	font-size: 11px;
+}
+
+.WSODPopup.WSODPopupAddToPortfolio .addToPortfolioControlGroup .addToPortfolioControl .currencyCodeInfo span {
+	font-weight: bold;
+}
+
+.wsodCustomDropdownContainer input, .WSODPopup input, #wsod input {
+font-size: 14px;
+padding: 1px 5px;
+height: 20px;
+}
+
+input.hasDatepicker, .WSODPopup .wsodDatePickerInput, #wsod .wsodDatePickerInput {
+position: relative;
+}
+
+/*
+Add/Edit Alet Popup
+*/
+
+.WSODPopup.WSODPopupAddEditAlerts .popupBody {
+	padding-left: 10px;
+	font-size: 11px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .nameHeader {
+	width: auto;
+}
+
+.WSODPopup .formatIssueName {
+	color: #000;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.WSODPopup .formatIssueSymbol {
+	color: #777;
+	margin-left: 5px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .quoteHeader {
+	width: auto;
+	margin-top: 10px;
+	border-bottom: 1px solid #E9DECE;
+	float: left;
+	width: 100%;
+	padding-bottom: 10px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .quoteHeader div {
+	float: left;
+	width: auto;
+	margin-right: 20px;
+	font-size: 20px;
+	font-weight: bold;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .quoteHeader div .quoteLabel {
+	margin-right: 5px;
+	font-size: 10px;
+	font-weight: bold;
+	color:#333;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .quoteHeader div .currencyCode {
+	font-size: 10px;
+	font-weight: bold;
+	color:#333;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .quoteHeader div .dataDate {
+	font-size: 11px;
+	color: #777;
+	margin-left: 3px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder {
+	float: left;
+	width: 100%;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder a{
+	margin-left:16px;
+	font-size:11px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .removeAlert a{
+	margin-left:0px;
+}
+
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup {
+	margin-top: 20px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup h2 {
+	font-size: 12px;
+	font-weight: bold;
+	margin: 0 0 2px;
+	padding: 0;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr th {
+	background-color: #F6E9D8;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr th,
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td {
+	border-bottom: 1px solid #E9DECE;
+	border-top: 1px solid #E9DECE;
+	padding: 6px 4px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr.activeAlert td {
+	background-color: #F2F2F2;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.removeAlert {
+	width: 12px;
+	padding: 0 6px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.removeAlert a {
+	display: none;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr.activeAlert td.removeAlert a {
+	display: block;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.duplicateAlert div.iconLinkWrapper {
+	display: none;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.duplicateAlert div.iconLinkWrapper a {
+	font-size: 11px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.duplicateAlert div.iconLinkWrapper a.wsod-icon {
+	margin: 2px 3px 0 0;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr.activeAlert td.duplicateAlert div.iconLinkWrapper {
+	display: block;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr th.delivery,
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.delivery {
+	border: 1px solid #E9DECE;
+	text-align: center;
+	width: 20px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder input
+{
+	margin-left:8px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td.delivery  input{
+	margin-left:0;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td .intervalControl {
+	margin-left: 15px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td .intervalControl span {
+	font-size: 11px;
+	color: #777;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .groupsHolder .editGroup table tr td .intervalControl select {
+	margin: 0 5px;
+}
+
+.WSODPopup.WSODPopupAddEditAlerts .popupFooter .basicButton {
+	float: right;
+	margin-left: 10px;
+}
+
+.WSODPopup .fullWidth {
+	width: 231px;
+}
+
+.WSODPopup.saveFilterSettings input[type=checkbox] {
+	float: left;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 0px;
+}
+
+.WSODPopup.saveFilterSettings .basicButton,
+.WSODPopup.editFilterSettings .basicButton,
+.WSODPopup.pleaseRegister .basicButton
+{
+	margin-right: 8px;
+}
+
+.WSODPopup.saveFilterSettings label {
+	width: auto;
+	margin-top: 5px;
+	margin-bottom: 2px;
+}
+
+.WSODPopup.saveFilterSettings label.makeDefaultLabel {
+    margin-top: 9px;
+    margin-left: 5px;
+}
+
+.WSODPopup.saveFilterSettings .popupHeader {
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.WSODPopup.editFilterSettings .checkboxList li {
+	border-bottom: 1px solid #E9DECF;
+}
+
+.WSODPopup.editFilterSettings .checkboxList label {
+	float: none;
+	font-weight: normal;
+}
+
+.WSODPopup.editFilterSettings .checkboxList input {
+	float: none;
+	margin-top: 5px;
+	height: 13px;
+}
+
+.WSODPopup.saveFilterSettings h2,
+.WSODPopup.editFilterSettings h2,
+.WSODPopup.pleaseRegister h2 {
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.WSODPopup.pleaseRegister p {
+	margin-bottom: 20px;
+}
+
+.featureList {
+	list-style-type: disc;
+}
+
+.featureList li {
+	list-style: disc none inside;
+}
+
+.popupFooter .basicButton
+{
+	margin-right:8px;
+}
+
+.confirmationPopup  .popupHeader h2
+{
+	margin-top:0px;
+}
+
+.confirmationPopup .popupBody div,
+.confirmationPopup .popupBody  p
+{
+	line-height:16px;
+	margin-bottom:0px;
+}
+.confirmationPopup  .bold
+{
+	font-weight:bold;
+}
+
+.alertsConfirmation div.basicButton
+{
+	margin-right:8px;
+}
+
+.WSODPopupPortfolioHoldings  .popupBody
+{
+	padding-top:16px;
+}
+
+.WSODPopupPortfolioHoldings  .popupBody select
+{
+	margin:0 10px;
+	width:180px;
+}
+.WSODPopupPortfolioHoldings .popupBody label
+{
+	width:auto;
+	font-size:11px;
+	font-weight:normal;
+	font-color:#777;
+	margin:0px;
+	line-height:20px;
+}
+
+.WSODPopupPortfolioHoldings .popupBody .holdingList 
+{
+	position:static;
+	margin-top:24px;
+	max-height:135px;
+	overflow-y:auto;
+	border:1px solid #DFDED8;
+}
+
+.WSODPopupPortfolioHoldings .popupBody .holdingList td
+{
+	white-space:nowrap;
+}
+
+.WSODPopupPortfolioHoldings .popupBody .holdingList td.first
+{
+	width:70%;
+}
+
+
+.wsodOverlayPopup .overlayNews div
+{
+	margin-bottom:8px;
+	line-height:16px;	
+}
+.wsodOverlayPopup .overlayNews div.last
+{
+	margin-bottom:0px;	
+}
+
+.wsodOverlayPopup .overlayNews span
+{
+	margin-left:10px;
+	font-size:11px;
+	color:#777;	
+}
+
+.WSODPopup.adminPopup .buttonsRow .basicButton
+{
+	margin-right:8px;
+}
+.WSODPopup.adminPopup .popupBody 
+{
+	padding:5px 8px 8px;
+}
+.WSODPopup.adminPopup .popupBody 
+{
+	line-height:16px;
+}
+.WSODPopup.adminPopup .popupFooter
+{
+	padding:5px 8px 16px
+}
+
+.WSODPopup.adminPopupSmall .popupHeader h2
+{
+	font-size:12px;
+	line-height:12px;
+	font-weight:normal;	
+	margin:0px;
+}
+
+
+.WSODPopup.adminPopupSmall .popupBody .radioRow 
+{
+	padding:8px 0 0;
+}
+.WSODPopup.adminPopupSmall .popupBody .radioRow label
+{
+	float:none;
+	font-weight:normal;
+}
+
+.WSODPopup.adminPopupSmall .popupBody .radioRow input
+{
+	float:left;
+	height:20px;
+	margin:0 8px 3px 0px
+}
+
+
+
+.WSODPopup.adminPopupSmall .popupFooter .basicButton 
+{
+	padding-left: 8px;
+}
+
+.WSODPopup.adminPopupSmall .popupFooter .basicButton div
+{
+	font-size:11px;
+	line-height:16px;
+}
+
+
+
+.WSODPopup.WSODPopupAddToPortfolio.AddToWatchList .addToPortfolioControl.name label{
+    margin-right: 25px;
+
+}
+
+.WSODPopup.WSODPopupAddToPortfolio.AddToWatchList .addToPortfolioControlGroup .addToPortfolioControl select
+{
+    width:200px;
+}
+
+
+.interactiveChartPopup .popupHeader h2,
+.wsodOverlayPopup .popupHeader h2
+{
+	margin:0;
+}
+
+.wsodOverlayPopup .popupHeader span
+{
+	font-size:11px;
+	line-height:16px;
+	margin: 0 0 0 4px;
+}
+
+.wsodOverlayPopup .popupHeader span.overlayDate
+{
+	font-weight:normal;
+}
+
+
+.wsodOverlayPopup .popupHeader span.header
+{
+	text-transform:uppercase;
+	font-weight:bold;
+}
+
+.wsodOverlayPopup .popupHeader h2
+{
+	font-weight:normal;
+	font-size:12px;
+	line-height:14px;
+}
+
+.wsodOverlayPopup .popupBody
+{
+	padding-bottom:14px;
+}
+
+div.wsodOverlayPopup input
+{
+	float:left;
+	clear:both;
+}
+
+div.wsodOverlayPopup .saveTypeRadios 
+{
+	width:100%;
+	padding-bottom:8px;
+}
+
+div.wsodOverlayPopup .saveTypeRadios input
+{
+	float:left;
+	clear:none;
+	margin:0 8px;
+}
+
+div.wsodOverlayPopup .saveTypeRadios input.first
+{
+	margin-left:0px;
+}
+div.wsodOverlayPopup .saveTypeRadios label
+{
+	width:auto;
+	line-height:20px;
+	margin:0;
+}
+div.wsodOverlayPopup div.WSODPopupInner label
+{
+	font-weight:normal;
+}
+
+div.wsodOverlayPopup .chartState .settingsInput,
+div.wsodOverlayPopup .chartState .settingsButton
+{
+	display:none;
+}
+
+div.wsodOverlayPopup .chartState .settingsLabel
+{
+	color:#777;
+}
+
+div.wsodOverlayPopup .settingsState .chartLabel
+{
+	color:#777;
+}
+
+div.wsodOverlayPopup .settingsState .chartInput,
+div.wsodOverlayPopup .settingsState .chartButton
+{
+	display:none;
+}
+
+div.wsodOverlayPopup input.errorMessage 
+{
+	font-size:14px;
+	border-color:#CC0000;
+}
+
+div.wsodOverlayPopup div.popupBody .basicButton
+{
+	margin-right:8px;
+}
+div.wsodOverlayPopup div.popupBody  form .basicButton
+{
+	margin-left:8px;
+}
+
+div.wsodOverlayPopup div.popupBody .controlRow .basicButton
+{
+	margin:0 8px 0 0;
+}
+
+div.wsodOverlayPopup div.popupBody .controlRow
+{
+	margin-top:16px;
+}
+
+div.wsodOverlayPopup div.popupBody select
+{
+	margin:8px 0;
+	width:200px;
+}
+
+div.wsodOverlayPopup input[type="text"]
+{
+	float:left;
+	width:140px;
+}
+
+.wsodOverlayPopup textarea
+{
+	margin-top:14px;
+	width:220px;
+	height:60px;
+}
+
+.wsodOverlayPopup
+{
+	line-height:16px
+}
+
+div.save-prompt input[type="text"] {
+    width: 220px;
+}
+.wsod-icon
+{
+    background-repeat: no-repeat;
+    float: left;
+    font-size: 0px;
+}
+
+.wsod-icon-disabled {
+    opacity: 0.5 !important;
+    filter: alpha(opacity = 50);
+    cursor: default;
+}
+.streamingColorArrow,
+.wsod-icon-v {  background-image: url("http://apis.markets.ft.com/ResourceManager/SVNt_JI1v8Z3vdIyPg3kKA2/d/f/635369091221015546/Content/Images/Icons.Vertical.Sprite.png") !important ; background-repeat:no-repeat;}
+ 
+.wsod-icon-wide {background-image: url("http://apis.markets.ft.com/ResourceManager/xnTqgb0RPKjOmKi6CG9Mnw2/d/f/635369091221015546/Content/Images/Icon.Vertical.Wide.Sprite.png") !important ;}
+
+.wsod-icon-admin {background-image: url("http://apis.markets.ft.com/ResourceManager/ONXPLTH3E4G-cHbL26_VZw2/d/f/0/Content/Images/Icons.Sprite.Admin.png") !important ;}
+
+.wsod-icon-v2 {  background-image: url("http://apis.markets.ft.com/ResourceManager/tnKQofwhvd5w8wDTVablMw2/d/f/635369091221015546/Content/Images/Icons.Vertical.2.Sprite.png") !important ; background-repeat:no-repeat;}
+
+.wsod-icon-flag {
+	height: 11px;
+	width: 16px;
+	background-image: url("http://apis.markets.ft.com/ResourceManager/qBlTOkVH8TgpFqi9pDwb0g2/d/f/0/Content/Images/Flags.Sprite.png");
+	overflow: hidden;
+}
+/* wsod-icon-one */
+.wsod-icon-close-large { background-position: 0 -1780px; width: 21px; height: 20px; }
+.wsod-icon-help { background-position: 0 -1860px; width: 14px; height: 14px; }
+.wsod-icon-add-inactive { background-position: 0 -2459px; width: 11px; height: 11px; }
+.wsod-icon-add-active { background-position: 0 -2483px; width: 11px; height: 11px; }
+.wsod-icon-close { background-position: 0 -1825px; width: 12px; height: 12px; }
+.wsod-icon-close-2013 { background-position: -2px -5960px; width: 11px !important; height: 11px; cursor:pointer;}
+.wsod-icon-paging-back-active { background-position: 0 -1901px; width: 17px; height: 16px; }
+.wsod-icon-paging-first-active { background-position: 0 -1935px; width: 17px; height: 16px; }
+.wsod-icon-paging-next-active { background-position: 0 -1976px; width: 17px; height: 16px; }
+.wsod-icon-paging-last-active { background-position: 0 -2009px; width: 17px; height: 16px; }
+.wsod-icon-menu { background-position: -0px -2051px; width: 16px; height: 16px; }
+.wsod-icon-expanded { background-position: -0 -2235px; width: 16px; height: 16px; }
+.wsod-icon-paging-next-inactive { background-position: 0 -2125px; width: 17px; height: 16px; }
+.wsod-icon-paging-back-inactive { background-position: 0 -2083px; width: 17px; height: 16px; }
+.wsod-icon-paging-last-inactive { background-position: 0 -2200px; width: 17px; height: 16px; }
+.wsod-icon-paging-first-inactive { background-position: 0 -2159px; width: 17px; height: 16px; }
+.wsod-icon-collapsed { background-position: 0 -2275px ; width: 16px; height: 16px; }
+.wsod-icon-carousel-active { background-position: 0 -2408px; width: 12px; height: 12px; }
+.wsod-icon-carousel-inactive { background-position: 0 -2433px; width: 12px; height: 12px; }
+.wsod-icon-bullet { background-position: 0 -2561px; width: 4px; height: 4px; }
+.wsod-icon-open-quotation-mark { background-position: 0 -2505px; width: 17px; height: 15px; }
+.wsod-icon-close-quotation-mark { background-position: 0 -2529px; width: 17px; height: 15px; }
+.wsod-icon-accordion-expanded { background-position: 0 -2358px; width: 12px; height: 10px; }
+.wsod-icon-accordion-collapsed { background-position: 0 -2331px; width: 10px; height: 13px; }
+.wsod-icon-menu-selected { background-position: 0 -2576px; width: 28px; height: 26px; }
+.wsod-icon-menu-submenu { background-position: 0 -2051px; width: 17px; height: 17px; }
+.wsod-icon-doc-emphasized { background-position: 0 -255px; width: 28px; height: 31px; }
+
+/* wsod-icon-two */
+.wsod-icon-alert-set { background-position: 0 -2659px; width: 17px; height: 16px; }
+.wsod-icon-alert { background-position: 0 -2626px; width: 14px; height: 16px; }
+.wsod-icon-notice { background-position: 0 -2701px; width: 14px; height: 13px; }
+.wsod-icon-edit { background-position: 0 -259px; width: 16px; height: 16px; }
+.wsod-icon-portfolio { background-position: 0 -675px; width: 14px; height: 15px; }
+.wsod-icon-portfolio-add { background-position: 0 -633px; width: 16px; height: 17px; }
+.wsod-icon-assets { background-position: 0 -2736px; width: 16px; height: 14px; }
+.wsod-icon-chart { background-position: 0 -599px; width: 16px; height: 15px; }
+.wsod-icon-assets-dividends { background-position: 0 -2776px; width: 16px; height: 15px; }
+.wsod-icon-note-edit { background-position: 0 -2851px; width: 14px; height: 15px; }
+.wsod-icon-note { background-position: -0 -2888px; width: 12px; height: 13px; }
+.wsod-icon-screener { background-position: 0 -2925px; width: 16px; height: 14px; }
+.wsod-icon-market-open { background-position: -0 -2806px; width: 12px; height: 12px; }
+.wsod-icon-market-closed { background-position: -0 -2830px; width: 12px; height: 12px; }
+.wsod-icon-error { background-position: 0 -2961px; width: 14px; height: 14px; }
+.wsod-icon-pdf { background-position: 0 -3000px; width: 14px; height: 16px; }
+.wsod-icon-calendar { background-position: 0 -3079px; width: 15px; height: 16px; }
+.wsod-icon-new { background-position: 0 -3034px; width: 16px; height: 8px; }
+.wsod-icon-edit-small { background-position: 0 -3963px; width: 12px; height: 12px; }
+.wsod-icon-isb1 { background-position: 0 -302px; width:13px; height: 13px;}
+.wsod-icon-isb2 { background-position: 0 -320px; width:13px; height: 13px;}
+.wsod-icon-isb3 { background-position: 0 -338px; width:13px; height: 13px;}
+.wsod-icon-isb4 { background-position: 0 -356px; width:13px; height: 13px;}
+.wsod-icon-isb5 { background-position: 0 -374px; width:13px; height: 13px;}
+.wsod-icon-isb6 { background-position: 0 -410px; width:13px; height: 13px;}
+.wsod-icon-isb7 { background-position: 0 -428px; width:13px; height: 13px;}
+.wsod-icon-isb8 { background-position: 0 -446px; width:13px; height: 13px;}
+.wsod-icon-isb9 { background-position: 0 -464px; width:13px; height: 13px;}
+
+/* wsod-icon-three */
+.wsod-icon-email1 { background-position: 0 -784px; width: 20px; height: 16px; }
+.wsod-icon-email2 { background-position: 0 -489px; width: 20px; height: 16px; }
+.wsod-icon-print { background-position: 0 -373px; width: 16px; height: 16px; }
+.wsod-icon-comment { background-position: 0 -525px; width: 15px; height: 14px; }
+.wsod-icon-sector-industry { background-position: 0 -825px; width: 16px; height: 16px; }
+.wsod-icon-rss { background-position: 0 -336px; width: 14px; height: 16px; }
+.wsod-icon-macromap { background-position: 0 -559px; width: 16px; height: 16px; }
+.wsod-icon-mail { background-position: 0 -750px; width: 16px; height: 12px; }
+.wsod-icon-spreadsheet { background-position: 0 -709px; width: 14px; height: 16px; }
+.wsod-icon-criteria { background-position: 0 -409px; width: 12px; height: 16px; }
+.wsod-icon-criteria-add { background-position: 0 -448px; width: 14px; height: 16px; }
+.wsod-icon-check { background-position: 0 -1650px; width: 16px; height: 12px; }
+.wsod-icon-window { background-position: 0 999; width: 15px; height: 15px; }
+.wsod-icon-sort-asc { background-position: 0 -1736px; width: 5px; height: 3px; }
+.wsod-icon-sort-desc { background-position: 0 -1712px; width: 5px; height: 3px; }
+.wsod-icon-benchmark-rates { background-position: 0 -1451px; width: 22px; height: 19px; }
+.wsod-icon-benchmark-currencies { background-position: 0 -1301px; width: 28px; height: 20px; }
+.wsod-icon-benchmark-fuels { background-position: 0 -1401px; width: 20px; height: 17px; }
+.wsod-icon-benchmark-metals { background-position: 0 -1351px; width: 24px; height: 16px; }
+.wsod-icon-data-archive-equity { background-position: 0 0; width: 100px; height: 100px; }
+.wsod-icon-data-archive-bonds-and-rates { background-position: 0 -130px; width: 100px; height: 100px; }
+.wsod-icon-data-archive-currencies { background-position: 0 -262px; width: 100px; height: 100px; }
+.wsod-icon-data-archive-personal-finance { background-position: 0 -388px; width: 100px; height: 100px; }
+.wsod-icon-data-archive-commodities { background-position: 0 -522px; width: 100px; height: 100px; }
+.wsod-icon-indent-arrow { background-position: 0 -1750px; width: 9px; height: 10px; }
+.wsod-icon-preview{ background-position: 0 -1685px; width: 14px; height: 16px; }
+.wsod-icon-compare{ background-position: 0 -189px; width:15px; height: 15px;}
+.wsod-icon-compare-add{ background-position: 0 -225px; width:17px; height: 17px;}
+.wsod-icon-checkbox{ background-position: 0 0; width: 15px; height: 15px; }
+.wsod-icon-iChartEarnings{ background-position: 0 -224px; width: 15px; height: 15px; }
+.wsod-icon-iChartSplit{ background-position: 0 -185px; width: 15px; height: 15px; }
+.wsod-icon-iChartDividends{ background-position: 0 -151px; width: 15px; height: 15px; }
+.wsod-icon-iChartCandlestick{ background-position: 0 -986px; width: 15px; height: 15px; }
+.wsod-icon-iChartCandlestickRG{ background-position: 0 -875px; width: 15px; height: 15px; }
+.wsod-icon-iChartDot{ background-position: 0 -1161px; width: 15px; height: 15px; }
+.wsod-icon-iChartLine{ background-position:0 -1025px; width: 15px; height: 15px; }
+.wsod-icon-iChartMountain{ background-position: 0 -911px; width: 15px; height: 15px; }
+.wsod-icon-iChartOHLC{ background-position: 0 -1125px; width: 15px; height: 15px; }
+.wsod-icon-iChartPercentChangeFill{ background-position:0 -950px; width: 15px; height: 15px; }
+.wsod-icon-iChartPercentChangeLine{ background-position: 0 -1075px; width: 15px; height: 15px; }
+.wsod-icon-iChartTrackBall { background-position: 0 -299px; width: 14px; height: 14px; }
+.wsod-icon-iChartBuy{ background-position: 0 -111px; width: 14px; height: 14px; }
+.wsod-icon-iChartPortfolio{ background-position: 0 -76px; width: 14px; height: 14px; }
+.wsod-icon-iChartSell { background-position: 0 -3926px; width: 14px; height: 14px; }
+.wsod-icon-iChartHolding { background-position: 0 -34px; width: 16px; height: 16px; }
+.wsod-icon-white-info { background-position:0 -5921px; width:17px; height:16px;}
+.wsod-icon-white-alert { background-position:0 -6010px; width:17px; height:16px;}
+
+/* wsod-icon-company-content */
+.wsod-icon-company-content-annual-report { background-position: 0 -3525px; width: 20px; height: 20px; }
+.wsod-icon-company-content-podcast { background-position: 0 -3626px; width: 20px; height: 20px; }
+.wsod-icon-company-content-slideshow { background-position: 0 -3480px; width: 20px; height: 20px; }
+.wsod-icon-company-content-news-feed { background-position: 0 -3675px; width: 20px; height: 20px; }
+.wsod-icon-company-content-contact-details { background-position: 0 -3876px; width: 20px; height: 20px; }
+.wsod-icon-company-content-other-information { background-position: 0 -3725px; width: 20px; height: 20px; }
+.wsod-icon-company-content-calendar { background-position: 0 -3575px; width: 20px; height: 21px; }
+.wsod-icon-company-content-video { background-position: 0 -3776px; width: 20px; height: 21px; }
+.wsod-icon-company-content-check { background-position: 0 -3826px; width: 16px; height: 16px; }
+
+/* wsod-icon-logo */
+
+.wsod-icon-ft-logo-large { background-position: 0 -1053px; width: 50px; height: 50px; }
+.wsod-icon-ft-logo-small { background-position: 0 -1201px; width: 16px; height: 16px; }
+.wsod-icon-ft-logo-medium { background-position:0 -4311px; width:25px; height:26px; }
+.wsod-icon-money-media-logo-small { background-position: 0 -4009px; width: 16px; height: 16px; }
+.wsod-icon-the-banker-logo-small { background-position: 0 -4104px; width: 17px; height: 16px; }
+.wsod-icon-ic-logo-small { background-position: 0 -1250px; width: 16px; height: 16px; }
+.wsod-icon-ic-logo-medium { background-position: 0 -4276px; width:24px; height:24px; }
+.wsod-icon-merger-market-logo-small { background-position: 0 -4050px; width: 16px; height: 16px; }
+.wsod-icon-china-confidential-logo-small { background-position: 0 -4079px; width: 16px; height: 16px; }
+.wsod-icon-scheme-xpert-logo-small { background-position: 0 -5571Px; width: 16px; height: 10px; }
+.wsod-icon-ignites-europe-logo-small { background-position: 0 -4229px; width: 16px; height: 16px; }
+.wsod-icon-foreign-direct-investment-logo-small { background-position: 0 -4257px; width: 16px; height: 16px; }
+.wsod-icon-ft-mandate-logo-small { background-position: 0 -4351px; width: 32px; height: 13px; }
+.wsod-icon-ft-pensions-week-small { background-position: 0 -5643px; width: 14px; height: 14px; }
+.wsod-icon-ft-schweizer-pensions-small { background-position: 0 -5620px; width: 16px; height: 16px; }
+.wsod-icon-ft-nederlands-pensions-small { background-position: 0 -5590px; width: 16px; height: 16px; }
+.wsod-icon-this-is-africa-logo-small { background-position: 0 -4130px; width: 16px; height: 16px; }
+.wsod-icon-professional-wealth-management-logo-small { background-position: 0 -4154px; width: 17px; height: 16px; }
+.wsod-icon-uk-forex-logo { background-position: 0 -4px  !important; width: 77px; height: 16px; }
+.wsod-icon-clear-fx { background-position: 0 -766px !important; width: 77px; height: 20px; }
+.wsod-icon-pearson-longman { background-position: 0 -793px; width: 73px; height: 81px; }
+.wsod-icon-thomson-reuters { background-position: 0 -3986px; width: 15px; height: 14px; }
+.wsod-icon-thomson-reuters-full { background-position: 0 -656px; width: 98px; height: 14px; }
+.wsod-icon-powered-by-markit { background-position:0 -884px; width: 147px; height: 23px; }
+.wsod-icon-epfr-logo { background-position: 0 -692px; width: 39px; height: 22px; }
+.wsod-icon-morningstar-logo {background-position: 0 -932px; width: 100px; height: 21px;}
+.wsod-icon-brazil-confidential-logo {background-position: 0 -4379px; width: 17px; height: 16px;}
+.wsod-icon-nrpn-logo {background-position: 0 -4405px; width: 16px; height: 16px;}
+.wsod-icon-dpn-logo {background-position: 0 -5664px; width: 16px; height: 16px;}
+.wsod-icon-topix-logo {background-position: 0 -977px; width: 81px; height: 31px;}
+.wsod-icon-data-explorers-logo {background-position: 0 -1019px; width: 121px; height: 22px;}
+.wsod-icon-oz-forex {background-position: 0 -26px  !important; width: 74px; height: 16px;}
+.wsod-icon-lipper-logo {background-position: 0 -2556px; width: 105px; height: 23px;}
+.wsod-icon-bestinvest-logo {background-position: 0 -2621px; width: 100px; height: 17px;}
+.wsod-icon-4cast {background-position: 0 -2112px; width: 155px; height: 46px;}
+
+/* wsod-icon-admin */
+.wsod-icon-chartbuilder-commodities { background-position: 0 0; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-currencies { background-position: -60px 0; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-equities { background-position: -120px 0; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-indices { background-position: -180px 0; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-yield-curves { background-position: 0 -40px; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-large { background-position: -60px -40px; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-small { background-position: -120px -40px; width: 60px; height: 40px }
+.wsod-icon-chartbuilder-full { background-position: -180px -40px; width: 60px; height: 40px }
+
+/* wsod-icon-carousel */
+.carouselTool { width: 167px; height: 96px }
+.wsod-icon-carousel-market-macromap { background-position: -95px -1645px;}
+.wsod-icon-carousel-screener { background-position: 46px -1537px;  }
+.wsod-icon-carousel-charts { background-position: 46px -1246px;}
+.wsod-icon-carousel-alerts { background-position: -90px -1746px;}
+.wsod-icon-carousel-financials { background-position: -89px -1445px; }
+.wsod-icon-carousel-currencies-macromap { background-position: 42px -1445px;  }
+.wsod-icon-carousel-fund-screener { background-position: -94px -1546px;}
+.wsod-icon-carousel-comparison-tool {  background-position: 27px -1348px; }
+.wsod-icon-carousel-new-portfolio { background-position: -89px -1445px; }
+.wsod-icon-carousel-eco-calendar { background-position: 50px -1642px; }
+.wsod-icon-carousel-help { background-position: 50px -1755px; }
+.wsod-icon-carousel-market-explorer { background-position: -89px -1244px; }
+
+/* wsod-icon-etf */
+.wsod-icon-etf-alphabet-soup { background-position: 0 -2198px; width: 167px; height: 96px }
+.wsod-icon-etf-good-and-bad { background-position: 0 -2427px; width: 167px; height: 96px }
+.wsod-icon-etf-new-players { background-position: 0 -2312px; width: 167px; height: 96px }
+
+/* .wsod-icon-social */
+.wsod-icon-sharelink-digg { background-position: 0 -4431px; width: 16px; height: 14px; }
+.wsod-icon-sharelink-reddit { background-position: 0 -4456px; width: 17px; height: 14px; }
+.wsod-icon-sharelink-linkedin { background-position: 0 -4481px; width: 16px; height: 14px; }
+.wsod-icon-sharelink-facebook { background-position: 0 -4505px; width: 14px; height: 14px; }
+.wsod-icon-sharelink-delicious { background-position: 0 -4530px; width: 14px; height: 14px; }
+.wsod-icon-sharelink-twitter { background-position: 0 -4555px; width: 14px; height: 14px; }
+.wsod-icon-sharelink-business-exchange { background-position: 0 -4583px; width: 16px; height: 12px; }
+.wsod-icon-sharelink-yahoobuzz { background-position: 0 -4606px; width: 16px; height: 16px; }
+.wsod-icon-sharelink-stumbleupon{ background-position: 0 -4632px; width: 14px; height: 14px; }
+.wsod-icon-sharelink-viadeo { background-position: 0 -4655px; width: 16px; height: 16px; }
+
+/* .wsod-icon-indicator */
+.wsod-icon-quote-negative { background-position: 0 -3110px; width: 15px; height: 17px; }
+.wsod-icon-quote-positive { background-position: 0 -3150px; width: 15px; height: 17px; }
+
+#wsod .streamingNegArrow{ background-position: 0 -3107px;}
+.wsod-icon-quote-negative-vertical { background-position: 0 -3110px;}
+#wsod .streamingPosArrow,
+.wsod-icon-quote-positive-vertical { background-position: 0 -3150px; }
+.wsod-icon-surprise-negative { background-position: 0 -3305px; width: 9px; height: 11px; }
+.wsod-icon-surprise-positive { background-position: 0 -3281px; width: 9px; height: 11px; }
+.wsod-icon-portfolio-holdings-negative { background-position: 0 -3185px; width: 7px; height: 8px; }
+.wsod-icon-portfolio-holdings-positive { background-position: 0 -3210px; width: 7px; height: 8px; }
+.wsod-icon-portfolio-holdings-neutral { background-position: 0 -3397px; width: 9px; height: 4px; }
+.wsod-icon-restatement-negative { background-position: 0 -3359px; width: 8px; height: 15px; }
+.wsod-icon-restatement-positive { background-position: 0 -3330px; width: 8px; height: 15px; }
+.wsod-icon-heat-bar-positive { background-position: 0 -3231px; width: 9px; height: 11px; margin-top:1px;}
+.wsod-icon-heat-bar-negative { background-position: 0 -3257px; width: 9px; height: 11px; margin-top:2px;}
+.wsod-icon-heat-bar-neutral { background-image:none; width: 9px; height: 12px; }
+.wsod-icon-refresh-arrow { background-position: 0 -684px !important;  width: 14px !important; height: 14px !important; }
+.wsod-icon-white-new-window { background-position: 0 -649px !important;  width: 12px !important; height: 12px !important; }
+
+
+/* .wsod-icon-ic */
+.wsod-icon-logo-large { background-position: 0 -1131px; width: 45px; height: 45px; }
+.wsod-icon-logo-large-text { background-position: -45px -1131px; width: 93px; height: 45px; }
+.wsod-icon-sell { background-position: 0 -4925px; width: 33px; height: 37px; }
+.wsod-icon-buy { background-position: 0 -4713px; width: 33px; height: 37px; }
+.wsod-icon-ic-view { background-position: 0 -1207px; width: 47px; height: 17px; }
+.wsod-icon-left-arrow { background-position:0 -5496px; width: 32px; height: 9px; }
+.wsod-icon-right-arrow { background-position: 0 -5521px; width: 32px; height: 9px; }
+.wsod-icon-high-enough { background-position: 0 -4775px; width: 33px; height: 47px; }
+.wsod-icon-fairly-priced { background-position: 0 -4978px; width: 33px; height: 47px; }
+.wsod-icon-good-value { background-position: 0 -5300px; width: 33px; height: 47px; }
+.wsod-icon-bid-sit { background-position: 0 -5175px; width: 33px; height: 47px; }
+.wsod-icon-ignore { background-position: 0 -5250px; width: 32px; height: 36px; }
+.wsod-icon-hold { background-position: 0 -5125px; width: 32px; height: 36px; }
+.wsod-icon-accept { background-position: 0 -5375px; width: 32px; height: 36px; }
+.wsod-icon-await-docs { background-position: 0 -4851px; width: 32px; height: 45px; }
+.wsod-icon-keep-buying { background-position: 0 -5051px; width: 32px; height: 45px; }
+.wsod-icon-sit-tight { background-position: -0 -5430px; width: 32px; height: 45px; }
+
+/* .wsod-icon-stars*/
+
+.wsod-icon-stars{ background-position:0px -481px; width:20px; height:23px}
+.active .wsod-icon-stars,
+.screen-details .wsod-icon-stars
+ { background-position:0px -503px;}
+.mStarRatingsBar .active .wsod-icon-stars { background-position:0px -706px;}
+
+.stars1 { width:11px; }
+.stars2 { width:23px;}
+.stars3 { width:36px;}
+.stars4 { width:50px; }
+.stars5 { width:61px;}
+
+/* .wsod-icon-lipper*/
+.wsod-icon-lipper-key {background-position:0 -2704px; width:203px; height:22px}
+.wsod-icon-lipper-rating{width:28px ;height:28px;}
+.lipper1{background-position:-2px -2658px;}
+.lipper2{background-position:-36px -2658px;}
+.lipper3{background-position:-70px -2658px;}
+.lipper4{background-position:-104px -2658px;}
+.lipper5{background-position:-138px -2658px;}
+
+
+/* .wsod-icon-flag */
+.wsod-icon-flag-argentina{background-position:-144px 0px;}
+.wsod-icon-flag-australia{background-position:-192px 0px;}
+.wsod-icon-flag-austria{background-position:-176px 0px;}
+.wsod-icon-flag-belgium{background-position:0px -11px;}
+.wsod-icon-flag-brazil{background-position:-144px -11px;}
+.wsod-icon-flag-canada{background-position:-272px -11px;}
+.wsod-icon-flag-chile{background-position:-112px -22px;}
+.wsod-icon-flag-china{background-position:-144px -22px;}
+.wsod-icon-flag-czech-republic{background-position:-272px -22px;}
+.wsod-icon-flag-denmark{background-position:-16px -33px;}
+.wsod-icon-flag-european-union{background-position:-208px -33px;}
+.wsod-icon-flag-finland{background-position:-240px -33px;}
+.wsod-icon-flag-france{background-position:-16px -44px;}
+.wsod-icon-flag-germany{background-position:-288px -22px;}
+.wsod-icon-flag-greece{background-position:-240px -44px;}
+.wsod-icon-flag-hong-kong{background-position:-32px -55px;}
+.wsod-icon-flag-hungary{background-position:-112px -55px;}
+.wsod-icon-flag-india{background-position:-192px -55px;}
+.wsod-icon-flag-indonesia{background-position:-128px -55px;}
+.wsod-icon-flag-ireland{background-position:-144px -55px;}
+.wsod-icon-flag-israel{background-position:-256px -55px;}
+.wsod-icon-flag-italy{background-position:-272px -55px;}
+.wsod-icon-flag-japan{background-position:-32px -66px;}
+.wsod-icon-flag-kenya{background-position:-48px -66px;}
+.wsod-icon-flag-kuwait{background-position:-176px -66px;}
+.wsod-icon-flag-mexico{background-position:-96px -88px;}
+.wsod-icon-flag-malaysia{background-position:-112px -88px;}
+.wsod-icon-flag-new-zealand{background-position:-16px -99px;}
+.wsod-icon-flag-netherlands{background-position:-240px -88px;}
+.wsod-icon-flag-norway{background-position:-256px -88px;}
+.wsod-icon-flag-portugal{background-position:-224px -99px;}
+.wsod-icon-flag-poland{background-position:-144px -99px;}
+.wsod-icon-flag-qatar{background-position:-272px -99px;}
+.wsod-icon-flag-russia{background-position:-32px -110px;}
+.wsod-icon-flag-singapore{background-position:-160px -110px;}
+.wsod-icon-flag-south-africa{background-position:-16px -143px;}
+.wsod-icon-flag-south-korea{background-position:-160px -66px;}
+.wsod-icon-flag-spain{background-position:-176px -33px;}
+.wsod-icon-flag-sweden{background-position:-144px -110px;}
+.wsod-icon-flag-switzerland{background-position:-64px -22px;}
+.wsod-icon-flag-taiwan{background-position:0px -132px;}
+.wsod-icon-flag-thailand{background-position:-144px -121px;}
+.wsod-icon-flag-turkey{background-position:-256px -121px;}
+.wsod-icon-flag-united-arab-emirates{background-position:-16px 0px;}
+.wsod-icon-flag-united-kingdom{background-position:-48px -44px;}
+.wsod-icon-flag-united-states{background-position:-80px -132px;}
+.wsod-icon-flag-uk-cayman-islands{background-position:-192px -66px;}
+.wsod-icon-flag-uk-guernsey{background-position:-112px -44px;}
+.wsod-icon-flag-uk-isle-of-man{background-position:-176px -55px;}
+.wsod-icon-flag-uk-jersey{background-position:-288px -55px;}
+.wsod-icon-flag-uk-virgin-islands{background-position:-176px -132px;}
+.wsod-icon-flag-xx{background:none;}
+
+
+
+
+.wsod-icon-flag-andorra{background-position:0px 0px;}
+.wsod-icon-flag-antigua-and-barbuda{background-position:-48px 0px;}
+.wsod-icon-flag-anguilla{background-position:-64px 0px;}
+.wsod-icon-flag-albania{background-position:-80px 0px;}
+.wsod-icon-flag-armenia{background-position:-96px 0px;}
+.wsod-icon-flag-netherlands-antilles{background-position:-112px 0px;}
+.wsod-icon-flag-angola{background-position:-128px 0px;}
+.wsod-icon-flag-aruba{background-position:-208px 0px;}
+.wsod-icon-flag-aland-islands{background-position:-224px 0px;}
+.wsod-icon-flag-azerbaijan {background-position:-240px 0px;}
+.wsod-icon-flag-bosnia-and-herzegovina{background-position:-256px 0px;}
+.wsod-icon-flag-barbados {background-position:-272px 0px;}
+.wsod-icon-flag-bangladesh{background-position:-288px 0px;}
+.wsod-icon-flag-burkina-faso{background-position:-16px -11px;}
+.wsod-icon-flag-bulgaria{background-position:-32px -11px;}
+.wsod-icon-flag-bahrain{background-position:-48px -11px;}
+.wsod-icon-flag-burundi {background-position:-64px -11px;}
+.wsod-icon-flag-benin{background-position:-80px -11px;}
+.wsod-icon-flag-bermuda {background-position:-96px -11px;}
+.wsod-icon-flag-brunei {background-position:-112px -11px;}
+.wsod-icon-flag-bolivia{background-position:-128px -11px;}
+.wsod-icon-flag-bahamas{background-position:-160px -11px;}
+.wsod-icon-flag-bhutan{background-position:-176px -11px;}
+.wsod-icon-flag-bouvet-island{background-position:-192px -11px;}
+.wsod-icon-flag-british-virgin-islands{background-position:-208px -11px;}
+.wsod-icon-flag-botswana {background-position:-224px -11px;}
+.wsod-icon-flag-belarus{background-position:-240px -11px;}
+.wsod-icon-flag-belize {background-position:-256px -11px;}
+.wsod-icon-flag-cocos-islands{background-position:0px -22px;}
+.wsod-icon-flag-congo-democratic-republic-of{background-position:-16px -22px;}
+.wsod-icon-flag-central-african-republic{background-position:-32px -22px;}
+.wsod-icon-flag-congo-republic-of{background-position:-48px -22px;}
+.wsod-icon-flag-ivory-coast{background-position:-80px -22px;}
+.wsod-icon-flag-cook-islands{background-position:-96px -22px;}
+.wsod-icon-flag-cameroon{background-position:-128px -22px;}
+.wsod-icon-flag-columbia{background-position:-160px -22px;}
+.wsod-icon-flag-costa-rica{background-position:-176px -22px;}
+.wsod-icon-flag-czechoslovakia{background-position:-192px -22px;}
+.wsod-icon-flag-cuba{background-position:-208px -22px;}
+.wsod-icon-flag-cape-verde{background-position:-224px -22px;}
+.wsod-icon-flag-christmas-island{background-position:-240px -22px;}
+.wsod-icon-flag-cyprus {background-position:-256px -22px;}
+.wsod-icon-flag-djibouti{background-position:0px -33px;}
+.wsod-icon-flag-dominica {background-position:-32px -33px;}
+.wsod-icon-flag-dominican-republic{background-position:-48px -33px;}
+.wsod-icon-flag-algeria{background-position:-64px -33px;}
+.wsod-icon-flag-ecuador{background-position:-80px -33px;}
+.wsod-icon-flag-estonia {background-position:-96px -33px;}
+.wsod-icon-flag-egypt {background-position:-112px -33px;}
+.wsod-icon-flag-western-sahara{background-position:-128px -33px;}
+.wsod-icon-flag-england{background-position:-144px -33px;}
+.wsod-icon-flag-eritrea{background-position:-160px -33px;}
+.wsod-icon-flag-ethiopia {background-position:-192px -33px;}
+.wsod-icon-flag-fiji{background-position:-256px -33px;}
+.wsod-icon-flag-falkland-islands{background-position:-272px -33px;}
+.wsod-icon-flag-micronesia{background-position:-288px -33px;}
+.wsod-icon-flag-faroe-islands{background-position:0px -44px;}
+.wsod-icon-flag-gabon{background-position:-32px -44px;}
+.wsod-icon-flag-grenada{background-position:-64px -44px;}
+.wsod-icon-flag-georgia {background-position:-80px -44px;}
+.wsod-icon-flag-french-guiana{background-position:-96px -44px;}
+.wsod-icon-flag-ghana {background-position:-128px -44px;}
+.wsod-icon-flag-gibraltar{background-position:-144px -44px;}
+.wsod-icon-flag-greenland{background-position:-160px -44px;}
+.wsod-icon-flag-gambia{background-position:-176px -44px;}
+.wsod-icon-flag-guinea{background-position:-192px -44px;}
+.wsod-icon-flag-guadeloupe{background-position:-208px -44px;}
+.wsod-icon-flag-equatorial-guinea{background-position:-224px -44px;}
+.wsod-icon-flag-south-georgia-and-south-sandwich-island{background-position:-256px -44px;}
+.wsod-icon-flag-guatemala {background-position:-272px -44px;}
+.wsod-icon-flag-guam {background-position:-288px -44px;}
+.wsod-icon-flag-guinea-bissau{background-position:0px -55px;}
+.wsod-icon-flag-guyana {background-position:-16px -55px;}
+.wsod-icon-flag-heard-and-mcdonalds-islands{background-position:-48px -55px;}
+.wsod-icon-flag-honduras {background-position:-64px -55px;}
+.wsod-icon-flag-croatia {background-position:-80px -55px;}
+.wsod-icon-flag-haiti {background-position:-96px -55px;}
+.wsod-icon-flag-israel {background-position:-160px -55px;}
+.wsod-icon-flag-british-indian-ocean-territory{background-position:-208px -55px;}
+.wsod-icon-flag-iraq{background-position:-224px -55px;}
+.wsod-icon-flag-iran{background-position:-240px -55px;}
+.wsod-icon-flag-jamaica{background-position:0px -66px;}
+.wsod-icon-flag-jordan{background-position:-16px -66px;}
+.wsod-icon-flag-kyrgyzstan{background-position:-64px -66px;}
+.wsod-icon-flag-cambodia{background-position:-80px -66px;}
+.wsod-icon-flag-kiribati{background-position:-96px -66px;}
+.wsod-icon-flag-comoros {background-position:-112px -66px;}
+.wsod-icon-flag-saint-kitts-and-nevis{background-position:-128px -66px;}
+.wsod-icon-flag-north-korea{background-position:-144px -66px;}
+.wsod-icon-flag-kazakhstan {background-position:-208px -66px;}
+.wsod-icon-flag-laos{background-position:-224px -66px;}
+.wsod-icon-flag-lebanon{background-position:-240px -66px;}
+.wsod-icon-flag-st-lucia{background-position:-256px -66px;}
+.wsod-icon-flag-iceland{background-position:-256px -55px;}
+.wsod-icon-flag-liechtenstein{background-position:-272px -66px;}
+.wsod-icon-flag-sri-lanka{background-position:-288px -66px;}
+.wsod-icon-flag-liberia{background-position:0px -77px;}
+.wsod-icon-flag-lesotho{background-position:-16px -77px;}
+.wsod-icon-flag-lithuania {background-position:-32px -77px;}
+.wsod-icon-flag-luxembourg {background-position:-48px -77px;}
+.wsod-icon-flag-latvia{background-position:-64px -77px;}
+.wsod-icon-flag-libya{background-position:-80px -77px;}
+.wsod-icon-flag-morocco {background-position:-96px -77px;}
+.wsod-icon-flag-monaco {background-position:-112px -77px;}
+.wsod-icon-flag-moldova{background-position:-128px -77px;}
+.wsod-icon-flag-montenegro{background-position:-144px -77px;}
+.wsod-icon-flag-madagascar{background-position:-160px -77px;}
+.wsod-icon-flag-marshall-islands{background-position:-176px -77px;}
+.wsod-icon-flag-macedonia{background-position:-192px -77px;}
+.wsod-icon-flag-mali{background-position:-208px -77px;}
+.wsod-icon-flag-myanmar {background-position:-224px -77px;}
+.wsod-icon-flag-mongolia{background-position:-240px -77px;}
+.wsod-icon-flag-macau{background-position:-256px -77px;}
+.wsod-icon-flag-northern-mariana-islands{background-position:-272px -77px;}
+.wsod-icon-flag-martinique {background-position:-288px -77px;}
+.wsod-icon-flag-mauritania {background-position:0px -88px;}
+.wsod-icon-flag-montserrat{background-position:-16px -88px;}
+.wsod-icon-flag-malta {background-position:-32px -88px;}
+.wsod-icon-flag-mauritius{background-position:-48px -88px;}
+.wsod-icon-flag-maldives {background-position:-64px -88px;}
+.wsod-icon-flag-malawi {background-position:-80px -88px;}
+.wsod-icon-flag-mozambique {background-position:-128px -88px;}
+.wsod-icon-flag-namibia {background-position:-144px -88px;}
+.wsod-icon-flag-new-caledonia{background-position:-160px -88px;}
+.wsod-icon-flag-niger{background-position:-176px -88px;}
+.wsod-icon-flag-norfolk-island{background-position:-192px -88px;}
+.wsod-icon-flag-nigeria{background-position:-208px -88px;}
+.wsod-icon-flag-nicaragua {background-position:-224px -88px;}
+.wsod-icon-flag-nepal{background-position:-272px -88px;}
+.wsod-icon-flag-niue {background-position:0px -99px;}
+.wsod-icon-flag-oman{background-position:-32px -99px;}
+.wsod-icon-flag-panama{background-position:-48px -99px;}
+.wsod-icon-flag-peru{background-position:-64px -99px;}
+.wsod-icon-flag-fr-polynesia{background-position:-80px -99px;}
+.wsod-icon-flag-new-guinea{background-position:-96px -99px;}
+.wsod-icon-flag-philippines{background-position:-112px -99px;}
+.wsod-icon-flag-pakistan {background-position:-128px -99px;}
+.wsod-icon-flag-saint-pierre{background-position:-160px -99px;}
+.wsod-icon-flag-pitcairn-islands{background-position:-176px -99px;}
+.wsod-icon-flag-puerto-rico{background-position:-192px -99px;}
+.wsod-icon-flag-palau{background-position:-240px -99px;}
+.wsod-icon-flag-paraguay {background-position:-256px -99px;}
+.wsod-icon-flag-romania{background-position:0px -110px;}
+.wsod-icon-flag-serbia{background-position:-16px -110px;}
+.wsod-icon-flag-rwanda {background-position:-48px -110px;}
+.wsod-icon-flag-saudi-arabia{background-position:-64px -110px;}
+.wsod-icon-flag-solomon-islands{background-position:-80px -110px;}
+.wsod-icon-flag-seychelles {background-position:-96px -110px;}
+.wsod-icon-flag-scotland{background-position:-112px -110px;}
+.wsod-icon-flag-sudan {background-position:-128px -110px;}
+.wsod-icon-flag-saint-helena{background-position:-176px -110px;}
+.wsod-icon-flag-slovenia{background-position:-192px -110px;}
+.wsod-icon-flag-Svalbard {background-position:-208px -110px;}
+.wsod-icon-flag-slovakia {background-position:-224px -110px;}
+.wsod-icon-flag-sierra-leone {background-position:-240px -110px;}
+.wsod-icon-flag-san-marino {background-position:-256px -110px;}
+.wsod-icon-flag-senegal {background-position:-272px -110px;}
+.wsod-icon-flag-somalia {background-position:-288px -110px;}
+.wsod-icon-flag-suriname {background-position:0px -121px;}
+.wsod-icon-flag-el-salvador{background-position:-32px -121px;}
+.wsod-icon-flag-syria{background-position:-48px -121px;}
+.wsod-icon-flag-swaziland{background-position:-64px -121px;}
+.wsod-icon-flag-turks-and-caicos-islands{background-position:-80px -121px;}
+.wsod-icon-flag-chad{background-position:-96px -121px;}
+.wsod-icon-flag-tajikistan {background-position:-160px -121px;}
+.wsod-icon-flag-togo{background-position:-128px -121px;}
+.wsod-icon-flag-tokelau{background-position:-176px -121px;}
+.wsod-icon-flag-timor-leste{background-position:-192px -121px;}
+.wsod-icon-flag-tunisia {background-position:-224px -121px;}
+.wsod-icon-flag-tonga {background-position:-240px -121px;}
+.wsod-icon-flag-trinidad-and-tobago{background-position:-272px -121px;}
+.wsod-icon-flag-tuvalu{background-position:-288px -121px;}
+.wsod-icon-flag-tanzania {background-position:-16px -132px;}
+.wsod-icon-flag-turkmenistan {background-position:-208px -121px;}
+.wsod-icon-flag-ukraine {background-position:-32px -132px;}
+.wsod-icon-flag-uganda{background-position:-48px -132px;}
+.wsod-icon-flag-uruguay{background-position:-96px -132px;}
+.wsod-icon-flag-uzbekistan{background-position:-112px -132px;}
+.wsod-icon-flag-vatican-city{background-position:-128px -132px;}
+.wsod-icon-flag-saint-vincent-anda-the-grenadines {background-position:-144px -132px;}
+.wsod-icon-flag-venezuela{background-position:-160px -132px;}
+.wsod-icon-flag-us-virgin-islands{background-position:-192px -132px;}
+.wsod-icon-flag-vietnam {background-position:-208px -132px;}
+.wsod-icon-flag-vanuatu {background-position:-224px -132px;}
+.wsod-icon-flag-wales{background-position:-240px -132px;}
+.wsod-icon-flag-wallis-and-futuna{background-position:-256px -132px;}
+.wsod-icon-flag-samoa{background-position:-272px -132px;}
+.wsod-icon-flag-yemen{background-position:-288px -132px;}
+.wsod-icon-flag-mayotte {background-position:0px -143px;}
+.wsod-icon-flag-zambia {background-position:-32px -143px;}
+.wsod-icon-flag-zimbabwe{background-position:-48px -143px;}
+
+
+
+
+/* countries not in use but defined in sprite
+.wsod-icon-flag-as{background-position:-160px 0px;}
+.wsod-icon-flag-catalonia{background-position:-288px -11px;}
+.wsod-icon-flag-fam{background-position:-224px -33px;}
+.wsod-icon-flag-ps{background-position:-208px -99px;}
+.wsod-icon-flag-re{background-position:-288px -99px;}
+.wsod-icon-flag-st{background-position:-16px -121px;}
+.wsod-icon-flag-tf{background-position:-112px -121px;}
+.wsod-icon-flag-um{background-position:-64px -132px;}
+.wsod-icon-flag-afghanistan {background-position:-32px 0px;} /* this one may be unite arab emrites nations, or something like that*/
+
+
+/*
+    Special Case animated Icon for Social Class with hover.
+*/
+.wsod-icon-sharelink-mainAnimated   
+{
+    background-image: url("http://apis.markets.ft.com/ResourceManager/Js_RJbiKU12yUv_IjDbaUg2/d/f/0/Content/Images/Icons.Social.Animated.gif");
+    background-repeat: no-repeat;
+    float: left;
+    font-size: 0px !important;
+    background-position:0px ; width: 16px; height: 16px; 
+}
+
+.wsod-icon-sharelink-mainAnimated:hover   
+{
+    background-image: url("http://apis.markets.ft.com/ResourceManager/zGboYHe4lPVWQcL4RaYvZg2/d/f/0/Content/Images/Icon.Vertical.Sprite.png");
+    background-position: 1px -4680px;
+	width: 16px; height: 16px; 
+}
+
+.streamingColorArrow,
+.wsod-no-icon 
+{
+	background-position: 999px 999px;
+}
+
+/**Outer**/
+#wsod .custom-slider-bg-container {
+    background-image: url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png");
+    background-repeat: no-repeat;
+    float: left;
+    border: 0;
+    margin: 0;
+    height: 8px;
+    background-position: left -488px;
+    padding-left: 5px;
+}
+
+/**Inner**/
+#wsod .custom-slider-bg-container .ui-slider-horizontal {
+    background-image: url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png");
+    background-repeat: no-repeat;
+    position: relative;
+    float: left;
+    background-position: right -488px;
+    height: 8px;
+}
+
+/**Range**/
+#wsod .custom-slider-bg-container .ui-slider-range {
+    background-image: url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png");
+    background-repeat: no-repeat;
+    background-position: 0 -513px;
+    height: 8px;
+    position: absolute;
+    top: 0;
+}
+
+.wsodCustomDropdownContainer .basicButton,
+#wsod .basicButton,
+div.wsodServiceComponent .basicButton,
+.WSODPopup .basicButton,
+.WSODHoverPopup .basicButton {
+    cursor: pointer; cursor: hand;
+    color: #fff;
+    font-family: Arial;
+    font-weight: normal;
+    background-image: url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png");
+    background-repeat: no-repeat;
+    border: 0;
+    margin: 0;
+    padding: 0 0 0 10px;
+    float: left;
+}
+
+.wsodCustomDropdownContainer .basicButton div,
+.wsodCustomDropdownContainer .basicButton span,
+#wsod .basicButton div,
+#wsod .basicButton span,
+div.wsodServiceComponent .basicButton div,
+div.wsodServiceComponent .basicButton span,
+.WSODPopup .basicButton div,
+.WSODPopup .basicButton span,
+.WSODHoverPopup .basicButton div, 
+.WSODHoverPopup .basicButton span {
+    white-space: nowrap;
+    background-image: url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png");
+    background-repeat: no-repeat;
+    padding-right: 10px;
+	position: relative;
+	left: 1px;
+    float: left;
+   
+}
+
+.basicButton div:hover,
+.basicButton span:hover
+{
+	color:#DDD;
+}
+
+.basicButtonDisabled div:hover,
+.basicButtonDisabled span:hover
+{
+	color:#FFF;
+}
+
+wsodCustomDropdownContainer .basicButton .iconLinkWrapper,
+wsodCustomDropdownContainer .basicButton .iconLinkWrapper span,
+#wsod .basicButton .iconLinkWrapper,
+#wsod .basicButton .iconLinkWrapper span,
+div.wsodServiceComponent .basicButton .iconLinkWrapper,
+div.wsodServiceComponent .basicButton .iconLinkWrapper span,
+.WSODPopup .basicButton .iconLinkWrapper,
+.WSODPopup .basicButton .iconLinkWrapper span
+{
+    white-space: nowrap;
+    background-image: none;
+    padding-right: 0px;
+	position: static;
+	left: 0;
+    float: left;
+}
+
+.wsodCustomDropdownContainer .basicButtonLarge,
+#wsod .basicButtonLarge,
+div.wsodServiceComponent .basicButtonLarge,
+.WSODPopup .basicButtonLarge {
+    background-position: left 0;
+    font-size: 16px;
+    line-height: 30px;
+}
+
+.wsodCustomDropdownContainer .basicButtonLarge div,
+.wsodCustomDropdownContainer .basicButtonLarge span,
+#wsod .basicButtonLarge div,
+#wsod .basicButtonLarge span,
+div.wsodServiceComponent .basicButtonLarge div,
+div.wsodServiceComponent .basicButtonLarge span,
+.WSODPopup .basicButtonLarge div,
+.WSODPopup .basicButtonLarge span {
+    background-position: right 0;
+    line-height: 30px;
+}
+
+
+.wsodCustomDropdownContainer .basicButtonMedium,
+#wsod .basicButtonMedium,
+div.wsodServiceComponent .basicButtonMedium,
+.WSODPopup .basicButtonMedium {
+    background-position: left -40px;
+    font-size: 14px;
+    line-height: 24px;
+}
+
+
+.wsodCustomDropdownContainer .basicButtonMedium div,
+.wsodCustomDropdownContainer .basicButtonMedium span,
+#wsod .basicButtonMedium div,
+#wsod .basicButtonMedium span,
+div.wsodServiceComponent .basicButtonMedium div,
+div.wsodServiceComponent .basicButtonMedium span,
+.WSODPopup .basicButtonMedium div,
+.WSODPopup .basicButtonMedium span {
+    background-position: right -40px;
+    line-height: 24px;
+}
+
+
+.wsodCustomDropdownContainer .basicButtonSmall,
+#wsod .basicButtonSmall,
+div.wsodServiceComponent .basicButtonSmall,
+.WSODPopup .basicButtonSmall,
+.WSODHoverPopup .basicButtonSmall {
+    background-position: left -76px;
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.wsodCustomDropdownContainer .basicButtonSmall div,
+.wsodCustomDropdownContainer .basicButtonSmall span,
+#wsod .basicButtonSmall div,
+#wsod .basicButtonSmall span,
+div.wsodServiceComponent .basicButtonSmall div,
+div.wsodServiceComponent .basicButtonSmall span,
+.WSODPopup .basicButtonSmall div,
+.WSODPopup .basicButtonSmall span,
+.WSODHoverPopup .basicButtonSmall div,
+.WSODHoverPopup .basicButtonSmall span {
+    background-position: right -76px;
+    line-height: 16px;
+    zoom: 1;
+}
+
+.wsodCustomDropdownContainer .basicButtonSecondaryLarge,
+#wsod .basicButtonSecondaryLarge,
+div.wsodServiceComponent .basicButtonSecondaryLarge,
+.WSODPopup .basicButtonSecondaryLarge {
+    background-position: left -70px;
+    font-size: 16px;
+    line-height: 30px;
+}
+
+.wsodCustomDropdownContainer .basicButtonSecondaryLarge div,
+#wsod .basicButtonSecondaryLarge div,
+div.wsodServiceComponent .basicButtonSecondaryLarge div,
+.WSODPopup .basicButtonSecondaryLarge div {
+    background-position: right -70px;
+    line-height: 30px;
+}
+.wsodCustomDropdownContainer .basicButtonSecondaryMedium,
+#wsod .basicButtonSecondaryMedium,
+div.wsodServiceComponent .basicButtonSecondaryMedium,
+.WSODPopup .basicButtonSecondaryMedium {
+    background-position: left -100px;
+    font-size: 14px;
+    line-height: 24px;
+}
+.wsodCustomDropdownContainer .basicButtonSecondaryMedium div,
+#wsod .basicButtonSecondaryMedium div,
+div.wsodServiceComponent .basicButtonSecondaryMedium div,
+.WSODPopup .basicButtonSecondaryMedium div {
+    background-position: right -100px;
+    line-height: 24px;
+}
+
+.wsodCustomDropdownContainer .basicButtonSecondaryRedMedium,
+#wsod .basicButtonSecondaryRedMedium,
+div.wsodServiceComponent .basicButtonSecondaryRedMedium,
+.WSODPopup .basicButtonSecondaryRedMedium {
+    background-position: left -580px;
+    font-size: 14px;
+    line-height: 24px;
+}
+.wsodCustomDropdownContainer .basicButtonSecondaryRedMedium div,
+#wsod .basicButtonSecondaryRedMedium div,
+div.wsodServiceComponent .basicButtonSecondaryRedMedium div,
+.WSODPopup .basicButtonSecondaryRedMedium div {
+    background-position: right -580px;
+    line-height: 24px;
+}
+
+.wsodCustomDropdownContainer .basicButtonSecondarySmall,
+#wsod .basicButtonSecondarySmall,
+div.wsodServiceComponent .basicButtonSecondarySmall,
+.WSODPopup .basicButtonSecondarySmall {
+    background-position: left -410px;
+    font-size: 12px;
+    line-height: 16px;
+}
+.wsodCustomDropdownContainer .basicButtonSecondarySmall div,
+#wsod .basicButtonSecondarySmall div,
+div.wsodServiceComponent .basicButtonSecondarySmall div,
+.WSODPopup .basicButtonSecondarySmall div {
+    background-position: right -410px;
+    line-height: 16px;
+}
+
+.wsodCustomDropdownContainer .basicButtonReducedFocusLarge,
+#wsod .basicButtonReducedFocusLarge,
+div.wsodServiceComponent .basicButtonReducedFocusLarge,
+.WSODPopup .basicButtonReducedFocusLarge {
+    background-position: left -140px;
+    font-size: 16px;
+    line-height: 30px;
+}
+.wsodCustomDropdownContainer .basicButtonReducedFocusLarge div,
+#wsod .basicButtonReducedFocusLarge div,
+div.wsodServiceComponent .basicButtonReducedFocusLarge div,
+.WSODPopup .basicButtonReducedFocusLarge div {
+    background-position: right -140px;
+    line-height: 30px;
+}
+
+.wsodCustomDropdownContainer .basicButtonReducedFocusMedium,
+#wsod .basicButtonReducedFocusMedium,
+div.wsodServiceComponent .basicButtonReducedFocusMedium,
+.WSODPopup .basicButtonReducedFocusMedium {
+    background-position: left -170px;
+    font-size: 14px;
+    line-height: 24px;
+}
+.wsodCustomDropdownContainer .basicButtonReducedFocusMedium div,
+#wsod .basicButtonReducedFocusMedium div,
+div.wsodServiceComponent .basicButtonReducedFocusMedium div,
+.WSODPopup .basicButtonReducedFocusMedium div {
+    background-position: right -170px;
+    line-height: 24px;
+}
+.wsodCustomDropdownContainer .basicButtonReducedFocusSmall,
+#wsod .basicButtonReducedFocusSmall,
+div.wsodServiceComponent .basicButtonReducedFocusSmall,
+.WSODPopup .basicButtonReducedFocusSmall {
+    background-position: left -194px;
+    font-size: 12px;
+    line-height: 16px;
+}
+.wsodCustomDropdownContainer .basicButtonReducedFocusSmall div,
+#wsod .basicButtonReducedFocusSmall div,
+div.wsodServiceComponent .basicButtonReducedFocusSmall div,
+.WSODPopup .basicButtonReducedFocusSmall div {
+    background-position: right -194px;
+    line-height: 16px;
+}
+
+#wsod .preFalconBasicButton,
+div.wsodServiceComponent .preFalconBasicButton,
+.WSODPopup .preFalconBasicButton {
+    background-position: left -210px !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    padding-left: 0px;
+}
+
+#wsod .preFalconBasicButton div,
+div.wsodServiceComponent .preFalconBasicButton div,
+.WSODPopup .preFalconBasicButton div {
+    background-position: right -210px !important;
+    line-height: 16px;
+    left: 4px;
+    padding-right: 8px;
+    font-size: 10px;
+}
+
+#wsod .basicButtonFTNewsOverlay,
+div.wsodServiceComponent .basicButtonFTNewsOverlay,
+.WSODPopup .basicButtonFTNewsOverlay {
+    background-position: left -201px !important;
+    font-size: 10px !important;
+    line-height: 14px !important;
+    padding: 8px 0 0 8px;
+}
+#wsod .basicButtonFTNewsOverlay div,
+div.wsodServiceComponent .basicButtonFTNewsOverlay div,
+.WSODPopup .basicButtonFTNewsOverlay div {
+    background-position: right -209px !important;
+    left: 4px;
+    padding-right:6px;
+    font-size: 10px;
+}
+  
+#wsod .basicButtonDisabled,
+div.basicButtonDisabled,
+.WSODPopup .basicButtonDisabled {
+    opacity: 0.5 !important;
+    filter: alpha(opacity = 50);
+    cursor:default;
+}
+
+#wsod .basicButtonDisabled div,
+div.basicButtonDisabled div,
+.WSODPopup .basicButtonDisabled div {
+    position: static;
+    margin-right: -1px;
+    cursor:default;
+}
+
+.wsodCustomDropdownContainer .basicButton:hover
+#wsod .basicButton:hover{
+    color: #DDD;
+}
+
+#wsod .button-selectable
+{
+	background:url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png") transparent left -448px no-repeat;
+	color:#2e6e9e;
+	cursor:pointer;
+	display:inline-block;
+	padding:0 0 0 8px;
+}
+#wsod .button-selectable>span
+{
+	background:url("http://apis.markets.ft.com/ResourceManager/v_NFpz3dTEsQZMcFjVPWNQ2/d/f/635369091221015546/Content/Images/Buttons.Sprite.png") transparent right -448px no-repeat;
+	line-height:24px;
+	padding:0 8px 0 0;
+	display:inline-block;
+	position:relative;
+	left:1px;
+}
+#wsod .button-selected{ background-position:left -40px;}
+#wsod .button-selected>span { background-position:right -40px; color:#fff;}
+
+#wsod .toggle-btn-group {}
+#wsod .toggle-btn {
+
+}
+/* Here are some more modern buttons grabbed from the Origami registry */
+
+
+#wsod .buttons {
+	box-sizing: border-box;
+	display: inline-block;
+	margin: 0;
+	padding: 0 14px;
+	font-family: BentonSans,Helvetica,Arial,sans-serif;
+	font-weight: 400;
+	font-size: 12px;
+	line-height: 22px;
+	text-decoration: none;
+	text-align: center;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 3px;
+	border-color: #74736C;
+	background-color: #FFF1E0;
+	cursor:pointer;
+}
+
+#wsod .buttons.selected {
+	border-color: #74736C;
+	background-color: #74736C;
+	color: #FFF1E0;
+}
+#wsod .buttons-standout {
+	border-color: #4781AA;
+	background-color: #4781AA;
+	color: #FFF;
+}
+#wsod .buttons-standout.seleced {
+	border-color: #74736C;
+	background-color: #74736C;
+	color: #FFF1E0;
+}
+#wsod .buttons-standout.disabled {
+	border-color: #E9DECF;
+	background-color: #E9DECF;
+	color: #A7A59B;
+}
+#wsod .buttons-standout-red {
+	border-color: #9E2F50;
+	background-color: #9E2F50;
+	color: #FFF;
+}
+#wsod .buttons-standout-red.seleced {
+	border-color: #74736C;
+	background-color: #74736C;
+	color: #FFF1E0;
+}
+#wsod .buttons-standout-red.disabled {
+	border-color: #E9DECF;
+	background-color: #E9DECF;
+	color: #A7A59B;
+}
+#wsod .buttons-big {
+	padding-left: 18px;
+	padding-right: 18px;
+	font-family: BentonSans,Helvetica,Arial,sans-serif;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 34px;
+	text-decoration: none;
+	text-align: center;
+}
+#wsod .buttons-group .buttons {
+	border-radius: 0;
+}
+#wsod .buttons-group .buttons:first-child {
+	border-bottom-left-radius: 3px;
+	border-top-left-radius: 3px;
+	border-left-width: 1px;
+}
+#wsod .buttons-group .buttons.last {
+	border-bottom-right-radius: 3px;
+	border-top-right-radius: 3px;
+	border-right-width: 1px;
+}
+#wsod .buttons+.buttons {
+	margin-left: 0;
+	border-left-width: 0;
+}
+.ui-datepicker {
+    display: none;
+    font-size: 12px;
+    font-family: Arial;
+    background-color: #FFF1E0;
+    z-index: 100000 !important;
+    border: 5px solid #fff;
+    width: 154px;
+}
+
+.ui-datepicker-title {
+    text-align: center;
+    color: #000;
+    background-color: #E9DECE;
+    padding: 4px 0;
+}
+
+
+iframe.ui-datepicker-cover{
+    visibility: hidden;
+}
+
+.ui-datepicker-header a {
+    background-image: url("http://apis.markets.ft.com/ResourceManager/iYWc4Hu4aUuF-6R1BVId4A2/d/f/635369091221015546/Content/Images/Icons.Sprite.1v2.png");
+    background-repeat: no-repeat;
+    float: left;
+    margin: 3px 5px;
+}
+
+.ui-datepicker-header a.ui-datepicker-prev {
+    background-position: -31px 0; width: 17px; height: 16px;
+}
+.ui-datepicker-header a.ui-datepicker-next {
+    float: right;
+    background-position: -48px 0; width: 17px; height: 16px;
+}
+
+.ui-datepicker-header a span {
+    display: none;
+}
+
+table.ui-datepicker-calendar {
+    border-collapse: collapse;
+}
+
+table.ui-datepicker-calendar td {
+    padding: 0;
+    border: 1px solid #fff;
+}
+
+table.ui-datepicker-calendar td a {
+    margin: 2px 3px;
+    display: block;
+    text-decoration: none;
+    color: #4781AA;
+}
+
+
+table.ui-datepicker-calendar th,
+table.ui-datepicker-calendar td {
+    text-align: center;
+}
+.ui-datepicker table.ui-datepicker-calendar td.ui-datepicker-not-available a,
+.ui-datepicker-disable-weekends table.ui-datepicker-calendar td.ui-datepicker-week-end a,
+.ui-datepicker-disable-today table.ui-datepicker-calendar td.ui-datepicker-today a,
+.ui-datepicker-disable-past table.ui-datepicker-calendar td.ui-datepicker-past a,
+.ui-datepicker-disable-future table.ui-datepicker-calendar td.ui-datepicker-future a
+{
+    color: #D4D4D4;
+    cursor: default;
+    
+}
+
+.ui-datepicker table.ui-datepicker-calendar td.ui-datepicker-unselectable span
+{
+    color: #D4D4D4;
+    cursor: default;
+    margin: 2px 3px;
+    display: block;
+}
+
+
+table.ui-datepicker-calendar .ui-state-active {
+    color: #FFF;
+    background-color: #C2C2C2;
+}
+
+#ui-datepicker-div td.invalid a{
+    color: #CCC;
+    z-index: 11;
+    cursor: default;
+}
+
+#ui-datepicker-div input.ui-datepicker-trigger{
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    color:transparent;
+}
+
+img.ui-datepicker-trigger{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+
