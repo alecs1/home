@@ -1,1 +1,0 @@
-Tynt.sc({"ap":"High quality global journalism requires investment. Please share this article with others using the link below, do not cut &amp; paste the article. See our &lt;a href=&quot;http://www.ft.com/servicestools/help/terms&quot;&gt;Ts&amp;Cs&lt;/a&gt; and &lt;a href=http://www.ft.com/servicesto","aw":"50","cc":"1","t":true,"b":true})
