@@ -6,12 +6,30 @@
 #include "TGA.h"
 #include "global_defines.h"
 
+int logi(const char* format, ...) {
+    size_t printed = 0;
+    printed += printf("Info - TestInboxManagement - ");
+    va_list argList;
+    va_start(argList, format);
+    printed += vprintf(format, argList);
+    va_end(argList);
+    return printed;
+}
+
 #ifdef _WIN32
 	// if windows use standard C I/O
 	#include <stdio.h>
-#elif defined __ANDROID__
-	#include "module.lala"
 #endif
+
+//need to implement boost::exception for some reason I don't remember.
+namespace boost
+{
+    void throw_exception(std::exception const& e)
+    {
+        assert(!e.what());
+    }
+}
+
 
 const int IT_COMPRESSED = 10;
 const int IT_UNCOMPRESSED = 2;

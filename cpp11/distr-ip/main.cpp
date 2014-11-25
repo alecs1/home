@@ -23,6 +23,7 @@
 #include "definitions.h"
 #include "TGA.h"
 #include "distr-ip.h"
+#include "entrypoint_server.h"
 
 auto hourAndThread = [] () {
     //auto now = std::chrono::system_clock::now();
@@ -160,10 +161,15 @@ uint32_t readWork(boost::lockfree::queue<TaskDef*>& workQueue) {
 #ifdef WIN32
     std::string outDir("D:\\tmp\\tga-out");
     boost::filesystem::path path("D:\\tmp\\tga-in");
+#elif defined ANDROID
+    std::string outDir("/sdcard/tmp/tga-out");
+    boost::filesystem::path path("/sdcard/tmp/tga-in");
 #else
     std::string outDir("/home/alex/tmp/tga/out");
     boost::filesystem::path path("/home/alex/tmp/tga/in");
 #endif
+
+    std::cout << __func__ << " - reading all tga files from: " << path.c_str() << "\n";
 
     uint32_t id = 0;
 

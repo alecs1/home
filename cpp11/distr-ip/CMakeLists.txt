@@ -36,8 +36,12 @@ add_executable(distr-ip main.cpp entire-file-api.cpp global_defines.h definition
 target_link_libraries(distr-ip tgafunctions ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_IOSTREAMS_LIBRARY})
 
 
-add_executable(worker-client worker-client.cpp global_defines.h definitions.h TGA.h)
+add_executable(worker-client worker-client.cpp entrypoint_client.h global_defines.h definitions.h TGA.h)
 target_link_libraries(worker-client tgafunctions ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY}) #iostreams dragged in by tgafunctions
+
+#also add this project to facilitate create a .so file for the client, which will be loaded by Android GUI app.
+add_library(worker-client-lib worker-client.cpp entrypoint_client.h global_defines.h definitions.h TGA.h)
+target_link_libraries(worker-client-lib tgafunctions ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY}) 
 
 
 #a couple of test programs

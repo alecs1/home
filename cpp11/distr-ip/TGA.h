@@ -9,6 +9,40 @@
 #define EXPORT_DLL
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
+//from android/log.h, which I can't be bothered to find:
+/**
+typedef enum android_LogPriority {
+    ANDROID_LOG_UNKNOWN = 0,
+    ANDROID_LOG_DEFAULT, // only for SetMinPriority()
+    ANDROID_LOG_VERBOSE,
+    ANDROID_LOG_DEBUG,
+    ANDROID_LOG_INFO,
+    ANDROID_LOG_WARN,
+    ANDROID_LOG_ERROR,
+    ANDROID_LOG_FATAL,
+    ANDROID_LOG_SILENT, // only for SetMinPriority(); must be last
+} android_LogPriority;
+int __android_log_print(int prio, const char *tag, const char *fmt, ...);
+*/
+
+//A printf like function that works on the Android debug path too.
+//Since in the current project we don't have log.h and other stuff, keep it simple and do this:
+//$ adb shell stop
+//$ adb shell setprop log.redirect-stdio true
+//$ adb shell start
+int logi(const char* format, ...);
+
+#ifdef ANDROID
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_WARN, "DistrIpWorkerClient", __VA_ARGS__))
+#else
+#define LOGI(...) logi(__VA_ARGS__)
+#endif
+
+
 #pragma pack(push,x1)					// Byte alignment (8-bit)
 #pragma pack(1)
 

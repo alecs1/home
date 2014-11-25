@@ -7,8 +7,6 @@
 #ifdef _WIN32
     // if windows use standard C I/O
     #include <stdio.h>
-#elif defined __ANDROID__
-    #include "module.lala"
 #endif
 
 const int IT_COMPRESSED = 10;

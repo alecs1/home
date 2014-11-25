@@ -5,14 +5,36 @@
 
 #include <boost/asio.hpp>
 
-//could not get this thing to link on Debian
+
+//could not get this thing to link on Debian, nor compile it for Android
 //#ifdef WIN32
-#include <boost/interprocess/sync/named_mutex.hpp>
+//#include <boost/interprocess/sync/named_mutex.hpp>
 //#endif
+
+
+int logi(const char* format, ...) {
+    size_t printed = 0;
+    printed += printf("Info - TestInboxManagement - ");
+    va_list argList;
+    va_start(argList, format);
+    printed += vprintf(format, argList);
+    va_end(argList);
+    return printed;
+}
+
+namespace boost
+{
+    void throw_exception(std::exception const& e)
+    {
+        assert(!e.what());
+    }
+}
+
 
 #include "global_defines.h"
 #include "definitions.h"
 #include "TGA.h"
+#include "entrypoint_client.h"
 
 #ifdef WIN32
 #define SRV "10.58.10.224"
@@ -132,20 +154,28 @@ int manageInstances(bool increase) {
 }
 
 
-int main(int argc, char* argv[]) {
-
+int clientLoop() {
     //manageInstances(true);
+    __android_log_print(ANDROID_LOG_WARN, "DistrIpWorkerClient", "blablabla\n\n\n\n\n");
+    __android_log_print(ANDROID_LOG_ERROR, "DistrIpWorkerClient", "this one should be printed\n\n\n\n\n");
+    LOGI("%s - start\n", __func__);
 
     int loopCount = 0;
     bool stop = false;
 
+    std::stringstream coutStream;
+
     try {
+        LOGI("%s - inside try\n", __func__);
         boost::asio::io_service ioServ;
         boost::asio::ip::tcp::endpoint endPoint;
         endPoint.address(boost::asio::ip::address::from_string(SRV));
         endPoint.port(PORT);
         boost::asio::ip::tcp::socket sock(ioServ);
-        sock.connect(endPoint);
+        LOGI("%s - will call sock.connect, on %s:%d\n", __func__, SRV, PORT);
+        boost::system::error_code ec;
+        sock.connect(endPoint, ec);
+        LOGI("%s - called sock.connect, ec=%d, %s\n", __func__, ec.value(), ec.message().c_str());
 
         while (!stop) {
 
@@ -161,23 +191,23 @@ int main(int argc, char* argv[]) {
             readBytes = 0;
             readBytes = boost::asio::read(sock, boost::asio::buffer(pImgData.get(), def.dataSize));
             if (readBytes != def.dataSize) {
-                std::cout << __func__ << " - aborting, readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
+                coutStream << __func__ << " - aborting, readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
                 abort();
             }
-            std::cout << __func__ << " - readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
+            coutStream << __func__ << " - readBytes=" << readBytes << ", expected=" << def.dataSize << "\n";
 
             if (def.op == OpType::Stop) {
                 stop = true;
-                std::cout << __func__ << " - exiting on stop command\n";
+                coutStream << __func__ << " - exiting on stop command\n";
                 break;
             }
 
             if (def.transmit == TransmitType::SquareBlock) {
-                std::cout << "TransmitType::Bloc100x100: " << (uint8_t)def.transmit << "\n";
+                coutStream << "TransmitType::Bloc100x100: " << (uint8_t)def.transmit << "\n";
                 ToBWBlock((unsigned char*)pImgData.get(), def.bpp, def.w, def.h);
             }
             else if (def.transmit == TransmitType::FullFile) {
-                std::cout << "TransmitType::FullFile: " << (uint8_t)def.transmit << "\n";
+                coutStream << "TransmitType::FullFile: " << (uint8_t)def.transmit << "\n";
             }
 
 
@@ -201,29 +231,39 @@ int main(int argc, char* argv[]) {
                 wrote = boost::asio::write(sock, boost::asio::buffer(pImgData.get() + totalWrote, toSend), err);
                 totalWrote += wrote;
                 if (err) {
-                    std::cout << __func__ << " - aborting - boost::asio::write() error\n";
+                    coutStream << __func__ << " - aborting - boost::asio::write() error\n";
                     abort();
                 }
                 if (wrote != toSend) {
-                    std::cout << __func__ << " - aborting, wrote=" << wrote << ", expected=" << toSend << "\n";
+                    coutStream << __func__ << " - aborting, wrote=" << wrote << ", expected=" << toSend << "\n";
                     abort();
                 }
             }
 
             //std::this_thread::sleep_for(std::chrono::seconds(10));
             loopCount += 1;
-            printf("%s - %d\n", __func__, loopCount);
+            LOGI("%s", coutStream.str().c_str()); coutStream.clear();
+            LOGI("%s - %d\n", __func__, loopCount);
         }
     }
     catch (std::exception ex) {
-        std::cout << __func__ << " - exception: " << ex.what() << "\n";
-        std::cout << __func__ << " - program exiting with error\n";
+        coutStream << __func__ << " - exception: " << ex.what() << "\n";
+        coutStream << __func__ << " - program exiting with error\n";
+        LOGI("%s", coutStream.str().c_str()); coutStream.clear();
     }
 
     //start new instance before exiting
-    std::cout << "starting new instances\n";
+    std::this_thread::sleep_for(std::chrono::seconds(60)); //but sleep a little while ease debugging
+    coutStream << "starting new instances\n";
+    LOGI("%s", coutStream.str().c_str()); coutStream.clear();
     startNewInstance();
+
     //manageInstances(false);
 
     return 0;
+}
+
+
+int main(int argc, char* argv[]) {
+    return clientLoop();
 }
