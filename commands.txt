@@ -25,6 +25,10 @@ grep -ri "log_tag" --exclude="*.svn*" *
 rsync --exclude='*.svn' --exclude='*.obj' --exclude='*.pdb' --exclude='*.idb' --exclude='*.tlog' --exclude='*.log' --exclude='*.lib' --exclude='*.lastbuildstate' --exclude='*.exe' --exclude='*.dll' --progress -urz --perms --chmod=ugo=rwX /<path> <user>@<target-ip>:<target-path>
 
 
+#add timestamps to terminal output.
+<command> | gawk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush(); }'
+
+
 
 KDE
 Shutdown kde from command line:

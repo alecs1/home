@@ -12,35 +12,16 @@
 //#endif
 
 
-int logi(const char* format, ...) {
-    size_t printed = 0;
-    printed += printf("Info - TestInboxManagement - ");
-    va_list argList;
-    va_start(argList, format);
-    printed += vprintf(format, argList);
-    va_end(argList);
-    return printed;
-}
-
-namespace boost
-{
-    void throw_exception(std::exception const& e)
-    {
-        assert(!e.what());
-    }
-}
-
-
 #include "global_defines.h"
 #include "definitions.h"
 #include "TGA.h"
 #include "entrypoint_client.h"
 
-#ifdef WIN32
-#define SRV "10.58.10.224"
-#else
-#define SRV "127.0.0.1"
-#endif
+//#ifdef WIN32
+#define SRV "10.58.249.19"
+//#else
+//#define SRV "127.0.0.1"
+//#endif
 
 bool startNewInstance() {
 #ifdef WIN32
