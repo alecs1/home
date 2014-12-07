@@ -1,0 +1,28 @@
+games:
+enigma kigo gbrainy
+assaultcube kgoldrunner kobodeluxe
+
+
+
+useful
+libreoffice gimp inkscape gwenview kolourpaint okular kdeedu kaddressbook gramps lyx rednotebook kwalletmanager ark celestia marble filelight klipper nano okteta kruler
+
+other:
+argyll
+
+media:
+vlc amarok audacity pavucontrol 
+
+internet:
+firefox thunderbird ktorrent pidgin ktorrent filezilla opera
+
+system:
+krusader kuser kate emacs NetworkManager konsole aptitude synaptic ksysguard dolphin qalculate kinfocenter
+hwinfo lshw lshw-gtk ntp ntpdate kwin kdm plasma-desktop pm-utils pulseaudio qtcurve rkhunter rsync task-laptop task-romanian unrar zip unzip p7zip-full util-linux virtualbox
+
+drivers:
+firmware-iwlwifi firmware-linux-free firmware-linux-nonfree
+
+
+dev:
+qtcreator qt5-default cmake kdiff3 g++ gdb ddd ghc make python 
