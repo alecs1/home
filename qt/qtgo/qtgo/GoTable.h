@@ -24,11 +24,17 @@ protected:
     void resizeEvent(QResizeEvent *event);
     void exposeEvent(QExposeEvent* event);
 
+    void mouseMoveEvent(QMouseEvent *ev);
+
 private:
     bool m_updatePending;
     QBackingStore* m_backingStore;
     QCursor* blackCursor = NULL;
     QCursor* whiteCursor = NULL;
+    float dist;
+    int highlightRow;
+    int highlightCol;
+    bool highlightPosChanged;
 
 private:
     bool buildCursors(int diameter);
