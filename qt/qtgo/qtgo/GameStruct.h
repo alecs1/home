@@ -7,4 +7,6 @@ struct GameStruct {
     int state[19][19]; //actually state[size][size];
 };
 
+int placeStone(GameStruct* game, int row, int col);
+
 #endif // GAMESTRUCT_H

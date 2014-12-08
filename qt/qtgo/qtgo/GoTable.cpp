@@ -42,26 +42,44 @@ void GoTable::exposeEvent(QExposeEvent* event) {
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
-    highlightRow = pos.y;
-    highlightCol = pos.x;
+    int row = pos.y();
+    int col = pos.x();
 
     if (highlightRow != row || highlightCol != col) {
+        highlightRow = row;
+        highlightCol = col;
         highlightPosChanged = true; //kind of unused; maybe I should not call renderNow() directly?
         renderNow();
     }
 
-    printf("localPos=%f, %f, row=%d, col=%d\n", localPos.rx(), localPos.ry(), row, col);
+    printf("mouseMoveEvent - localPos=%f, %f, row=%d, col=%d\n", pos.ry(), pos.rx(), row, col);
 }
 
 void GoTable::mousePressEvent(QMouseEvent* ev) {
+    QPoint pos = mouseToGameCoordinates(ev);
+    highlightRow = pos.y();
+    highlightCol = pos.x();
 
+    newStoneRow = pos.y();
+    newStoneCol = pos.x();
+
+    QPointF localPos = ev->localPos();
+    printf("mousePressEvent - %f, %f -> %d, %d\n", localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
+    QPoint pos = mouseToGameCoordinates(ev);
+    if (pos.x() == newStoneCol && pos.y() == newStoneCol) {
+        placeStone(pos.y(), pos.x());
+    }
+    newStoneRow = -1;
+    newStoneCol = -1;
 
+    QPointF localPos = ev->localPos();
+    printf("mouseReleaseEvent - %f, %f -> %d, %d\n", localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
-QPoint mouseToGameCoordinates(QMouseEvent* ev) {
+QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
     QPointF localPos = ev->localPos();
 
     //compute the closest intersection
@@ -148,6 +166,11 @@ void GoTable::render(QPainter *painter) {
         painter->drawEllipse(highlightPos, highlightDiameter, highlightDiameter);
     }
 
+    if (newStoneCol != -1) {
+        QPointF newStonePos(dist + newStoneCol * dist, dist + newStoneRow * dist);
+        painter->drawPixmap(newStonePos, *blackStonePixmap);
+    }
+
 }
 
 
@@ -172,24 +195,33 @@ bool GoTable::buildPixmaps(int diameter) {
     printf("buildCursors, diameter=%d\n", diameter);
     QSvgRenderer svgR;
 
-    QPixmap blackPixmap(diameter, diameter);
-    blackPixmap.fill(Qt::transparent);
+    delete blackStonePixmap;
+    blackStonePixmap = new QPixmap(diameter, diameter);
+    blackStonePixmap->fill(Qt::transparent);
     svgR.load(QString("resources/cursorBlack.svg"));
-    QPainter bPainter(&blackPixmap);
+    QPainter bPainter(blackStonePixmap);
     svgR.render(&bPainter);
     delete blackCursor;
-    blackCursor = new QCursor(blackPixmap);
+    blackCursor = new QCursor(*blackStonePixmap);
 
-    QPixmap whitePixmap(diameter, diameter);
-    whitePixmap.fill(QColor(0, 0, 0, 0));
-
+    delete whiteStonePixmap;
+    whiteStonePixmap = new QPixmap(diameter, diameter);
+    whiteStonePixmap->fill(QColor(0, 0, 0, 0));
     svgR.load(QString("resources/cursorWhite.svg"));
-    QPainter wPainter(&whitePixmap);
+    QPainter wPainter(whiteStonePixmap);
     svgR.render(&wPainter);
     delete whiteCursor;
-    whiteCursor = new QCursor(whitePixmap);
+    whiteCursor = new QCursor(*whiteStonePixmap);
 
     return true;
 }
 
+
+//some game logic
+int GoTable::placeStone(int row, int col) {
+    printf("placeStone: %d, %d\n", row, col);
+    int retVal = -1;
+    //retVal = placeStone(game, row, col);
+    return retVal;
+}
 

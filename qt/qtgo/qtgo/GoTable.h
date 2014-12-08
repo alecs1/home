@@ -47,6 +47,7 @@ private:
 
 private:
     bool buildPixmaps(int diameter);
+    int placeStone(int row, int col);
 };
 
 #endif // GOTABLE_H

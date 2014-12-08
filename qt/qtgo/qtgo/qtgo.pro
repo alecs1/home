@@ -14,7 +14,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    GoTable.cpp
+    GoTable.cpp \
+    GameStruct.cpp
 
 HEADERS  += mainwindow.h \
     GoTable.h \
