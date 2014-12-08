@@ -2,27 +2,28 @@
 #define GOTABLE_H
 
 
-#include <QWindow>
+//#include <QWindow>
+#include <QWidget>
 
-class QExposeEvent;
+//class QExposeEvent;
 
-class GoTable : public QWindow {
+class GoTable : public QWidget {
 Q_OBJECT
 public:
-    explicit GoTable(QWindow* parent = 0);
+    explicit GoTable(QWidget* parent = 0);
     ~GoTable();
 
-    virtual void render(QPainter* painter);
+    //virtual void render(QPainter* painter);
+    void paintEvent(QPaintEvent *);
 
 public slots:
-    void renderLater();
-    void renderNow();
+//    void renderLater();
+//    void renderNow();
 
 protected:
-    bool event(QEvent *event);
+    //bool event(QEvent *event);
 
     void resizeEvent(QResizeEvent *event);
-    void exposeEvent(QExposeEvent* event);
 
     void mouseMoveEvent(QMouseEvent *ev);
     void mousePressEvent(QMouseEvent* ev);
@@ -43,10 +44,13 @@ private:
     int highlightCol;
     int newStoneRow;
     int newStoneCol;
-    bool highlightPosChanged;
+    //bool highlightPosChanged;
+
+    int player;
 
 private:
     bool buildPixmaps(int diameter);
+    void updateCursor();
     int placeStone(int row, int col);
 };
 

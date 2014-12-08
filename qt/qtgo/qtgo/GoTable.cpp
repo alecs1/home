@@ -11,12 +11,13 @@
 extern GameStruct game;
 
 /**/
-GoTable::GoTable(QWindow *parent) :
-    QWindow(parent),
+GoTable::GoTable(QWidget *parent) :
+    QWidget(parent),
     m_updatePending(false)
 {
-    m_backingStore = new QBackingStore(this);
+    m_backingStore = backingStore();
     create();
+    setMouseTracking(true);
 
     setGeometry(100, 100, 100, 100);
 
@@ -28,17 +29,17 @@ GoTable::GoTable(QWindow *parent) :
     highlightRow = -1;
     newStoneRow = -1;
     newStoneCol = -1;
+
+    buildPixmaps(10);
+    setCursor(*blackCursor);
+
+    player = 1;
 }
 
 GoTable::~GoTable() {
     printf("Implement destructor!\n");
 }
 
-void GoTable::exposeEvent(QExposeEvent* event) {
-    if (isExposed()) {
-        renderNow();
-    }
-}
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
@@ -48,11 +49,11 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     if (highlightRow != row || highlightCol != col) {
         highlightRow = row;
         highlightCol = col;
-        highlightPosChanged = true; //kind of unused; maybe I should not call renderNow() directly?
-        renderNow();
+        update();
     }
 
-    printf("mouseMoveEvent - localPos=%f, %f, row=%d, col=%d\n", pos.ry(), pos.rx(), row, col);
+    QPointF localPos = ev->localPos();
+    printf("%s - localPos=%f, %f, row=%d, col=%d\n", __func__, localPos.ry(), localPos.rx(), row, col);
 }
 
 void GoTable::mousePressEvent(QMouseEvent* ev) {
@@ -60,23 +61,31 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     highlightRow = pos.y();
     highlightCol = pos.x();
 
-    newStoneRow = pos.y();
-    newStoneCol = pos.x();
+    if (GameCanPlaceStone(&game, pos.y(), pos.x(), player)) {
+        newStoneRow = pos.y();
+        newStoneCol = pos.x();
+    }
+
+    //TODO - this one can also be optimised
+    update();
 
     QPointF localPos = ev->localPos();
-    printf("mousePressEvent - %f, %f -> %d, %d\n", localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
-    if (pos.x() == newStoneCol && pos.y() == newStoneCol) {
+
+    QPointF localPos = ev->localPos();
+    printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    if (pos.x() == newStoneCol && pos.y() == newStoneRow) {
         placeStone(pos.y(), pos.x());
     }
     newStoneRow = -1;
     newStoneCol = -1;
 
-    QPointF localPos = ev->localPos();
-    printf("mouseReleaseEvent - %f, %f -> %d, %d\n", localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    //TODO - this can be optimised
+    update();
 }
 
 QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
@@ -98,42 +107,14 @@ void GoTable::resizeEvent(QResizeEvent* event) {
     if (height() < tableSize)
         tableSize = height();
     dist = tableSize / (game.size + 1.0);
-    float lineWidth = tableSize / 300.0;
     int diameter = (int) (dist * 0.8);
 
     buildPixmaps(diameter);
-
-    m_backingStore->resize(event->size());
-    if (isExposed())
-        renderNow();
-
-    setCursor(*blackCursor);
-    highlightPosChanged = true;
+    updateCursor();
 }
 
 
-void GoTable::renderNow() {
-    printf("renderNow\n");
-    if (!isExposed())
-        return;
-
-    QRect rect(0, 0, width(), height());
-    m_backingStore->beginPaint(rect);
-
-    QPaintDevice* device = m_backingStore->paintDevice();
-    QPainter painter(device);
-
-    painter.fillRect(0, 0, width(), height(), QColor(180, 210, 50));
-    render(&painter);
-
-    m_backingStore->endPaint();
-    m_backingStore->flush(rect);
-
-}
-
-//paint logic goes here
-void GoTable::render(QPainter *painter) {
-    //painter->drawText(QRectF(0, 0, width(), height()), Qt::AlignHCenter, QStringLiteral("Implement me!"));
+void GoTable::paintEvent(QPaintEvent *) {
 
     //TODO - all of this has to go to off-screen buffers and be called only on resize
     int tableSize = width(); //compute and enforce correctly
@@ -141,55 +122,61 @@ void GoTable::render(QPainter *painter) {
         tableSize = height();
     float lineWidth = tableSize / 300.0;
 
+    QPainter painter(this);
+
+    //background
+    QColor background(206, 170, 57);
+    painter.fillRect(QRectF(0, 0, width(), height()), background);
+
     QPen pen;
     pen.setWidthF(lineWidth);
-    painter->setPen(pen);
-    printf("render; width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", width(), height(), tableSize, dist, lineWidth);
-    //horizontal
+
+    painter.setPen(pen);
+    printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
+
+    //lines
     for(int i = 0; i < game.size; i++) {
-        painter->drawLine(QLineF(dist, dist + i * dist, tableSize-dist, dist + i * dist));
+        painter.drawLine(QLineF(dist, dist + i * dist, tableSize-dist, dist + i * dist));
     }
     for (int i = 0; i < game.size; i++) {
-        painter->drawLine(QLineF(dist + i * dist, dist, dist + i * dist, tableSize - dist));
+        painter.drawLine(QLineF(dist + i * dist, dist, dist + i * dist, tableSize - dist));
     }
 
-    if ((highlightRow != - 1) && (highlightPosChanged)) {
-        highlightPosChanged = false;
+    //highlighted position
+    if (highlightRow != - 1) {
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
-        printf("render, highlight at: %f, %f\n", highlightPos.rx(), highlightPos.ry());
+        printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
         float highlightDiameter = dist / 2;
 
-        pen.setColor(QColor(256, 100, 100, 128));
+        pen.setColor(QColor(255, 50, 50, 128));
         pen.setWidthF(dist/8);
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->setPen(pen);
-        painter->drawEllipse(highlightPos, highlightDiameter, highlightDiameter);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(pen);
+        painter.drawEllipse(highlightPos, highlightDiameter, highlightDiameter);
     }
 
+    //new stone, mouse button pressed/tapped
     if (newStoneCol != -1) {
-        QPointF newStonePos(dist + newStoneCol * dist, dist + newStoneRow * dist);
-        painter->drawPixmap(newStonePos, *blackStonePixmap);
+        QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
+        printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        painter.drawPixmap(newStonePos, *blackStonePixmap);
+    }
+
+    //all stones already on the table
+    for(int i = 0; i < game.size; i++) {
+        for(int j = 0; j < game.size; j++) {
+            if (game.state[i][j] > 0) {
+                QPointF stonePos(dist + j*dist - blackStonePixmap->width()/2, dist + i*dist - blackStonePixmap->width()/2);
+                if (game.state[i][j] == 1)
+                    painter.drawPixmap(stonePos, *blackStonePixmap);
+                else
+                    painter.drawPixmap(stonePos, *whiteStonePixmap);
+            }
+        }
     }
 
 }
 
-
-
-void GoTable::renderLater() {
-    if (!m_updatePending) {
-        m_updatePending = true;
-        QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
-    }
-}
-
-bool GoTable::event(QEvent *event) {
-    if (event->type() == QEvent::UpdateRequest) {
-        m_updatePending = false;
-        renderNow();
-        return true;
-    }
-    return QWindow::event(event);
-}
 
 bool GoTable::buildPixmaps(int diameter) {
     printf("buildCursors, diameter=%d\n", diameter);
@@ -219,9 +206,24 @@ bool GoTable::buildPixmaps(int diameter) {
 
 //some game logic
 int GoTable::placeStone(int row, int col) {
-    printf("placeStone: %d, %d\n", row, col);
+    printf("placeStone: %d, %d, %d\n", row, col, player);
     int retVal = -1;
-    //retVal = placeStone(game, row, col);
+    retVal = GamePlaceStone(&game, row, col, player);
+    if (retVal == true) {
+        if (player == 1)
+            player = 2;
+        else
+            player = 1;
+        updateCursor();
+    }
     return retVal;
 }
+
+void GoTable::updateCursor() {
+    if (player == 1)
+        setCursor(*blackCursor);
+    else
+        setCursor(*whiteCursor);
+}
+
 
