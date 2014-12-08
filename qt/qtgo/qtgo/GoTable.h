@@ -25,19 +25,28 @@ protected:
     void exposeEvent(QExposeEvent* event);
 
     void mouseMoveEvent(QMouseEvent *ev);
+    void mousePressEvent(QMouseEvent* ev);
+    void mouseReleaseEvent(QMouseEvent* ev);
+
+    //use QPoint as tuple of coordinates
+    QPoint mouseToGameCoordinates(QMouseEvent* ev);
 
 private:
     bool m_updatePending;
     QBackingStore* m_backingStore;
-    QCursor* blackCursor = NULL;
-    QCursor* whiteCursor = NULL;
+    QCursor* blackCursor;
+    QCursor* whiteCursor;
+    QPixmap* blackStonePixmap;
+    QPixmap* whiteStonePixmap;
     float dist;
     int highlightRow;
     int highlightCol;
+    int newStoneRow;
+    int newStoneCol;
     bool highlightPosChanged;
 
 private:
-    bool buildCursors(int diameter);
+    bool buildPixmaps(int diameter);
 };
 
 #endif // GOTABLE_H

@@ -20,9 +20,14 @@ GoTable::GoTable(QWindow *parent) :
 
     setGeometry(100, 100, 100, 100);
 
+    blackCursor = NULL;
+    whiteCursor = NULL;
+    blackStonePixmap = NULL;
+    whiteStonePixmap = NULL;
     highlightCol = -1;
     highlightRow = -1;
-
+    newStoneRow = -1;
+    newStoneCol = -1;
 }
 
 GoTable::~GoTable() {
@@ -36,27 +41,36 @@ void GoTable::exposeEvent(QExposeEvent* event) {
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
+    QPoint pos = mouseToGameCoordinates(ev);
+    highlightRow = pos.y;
+    highlightCol = pos.x;
+
+    if (highlightRow != row || highlightCol != col) {
+        highlightPosChanged = true; //kind of unused; maybe I should not call renderNow() directly?
+        renderNow();
+    }
+
+    printf("localPos=%f, %f, row=%d, col=%d\n", localPos.rx(), localPos.ry(), row, col);
+}
+
+void GoTable::mousePressEvent(QMouseEvent* ev) {
+
+}
+
+void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
+
+}
+
+QPoint mouseToGameCoordinates(QMouseEvent* ev) {
     QPointF localPos = ev->localPos();
 
     //compute the closest intersection
     int row = localPos.ry() / dist - 0.5;
     int col = localPos.rx() / dist - 0.5;
-
-    if ( row >= 0 && row < game.size && col >= 0 && col < game.size) {
-        if (highlightRow != row || highlightCol != col) {
-            highlightRow = row;
-            highlightCol = col;
-            highlightPosChanged = true;
-            renderNow();
-        }
-    }
-    else {
-        highlightRow = -1;
-        highlightCol = -1;
-        renderNow();
-    }
-
-    printf("localPos=%f, %f, row=%d, col=%d\n", localPos.rx(), localPos.ry(), row, col);
+    if ( row >= 0 && row < game.size && col >= 0 && col < game.size)
+        return QPoint(col, row);
+    else
+        return QPoint(-1, -1);
 }
 
 void GoTable::resizeEvent(QResizeEvent* event) {
@@ -69,7 +83,7 @@ void GoTable::resizeEvent(QResizeEvent* event) {
     float lineWidth = tableSize / 300.0;
     int diameter = (int) (dist * 0.8);
 
-    buildCursors(diameter);
+    buildPixmaps(diameter);
 
     m_backingStore->resize(event->size());
     if (isExposed())
@@ -154,7 +168,7 @@ bool GoTable::event(QEvent *event) {
     return QWindow::event(event);
 }
 
-bool GoTable::buildCursors(int diameter) {
+bool GoTable::buildPixmaps(int diameter) {
     printf("buildCursors, diameter=%d\n", diameter);
     QSvgRenderer svgR;
 
