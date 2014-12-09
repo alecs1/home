@@ -25,4 +25,7 @@ firmware-iwlwifi firmware-linux-free firmware-linux-nonfree
 
 
 dev:
-qtcreator qt5-default cmake kdiff3 g++ gdb ddd ghc make python 
+qtcreator qt5-default cmake kdiff3 g++ gdb ddd ghc make python
+
+optional:
+libboost-dev

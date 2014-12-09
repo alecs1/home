@@ -1,5 +1,6 @@
 #include <cstring>
 #include <iostream>
+#include <stdarg.h>
 
 #include <boost/iostreams/device/mapped_file.hpp>
 

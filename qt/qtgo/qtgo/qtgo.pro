@@ -22,4 +22,7 @@ HEADERS  += mainwindow.h \
     GameStruct.h
 
 FORMS    += mainwindow.ui \
-    GameSetting.ui
+    GameSettings.ui
+
+OTHER_FILES += \
+    CMakeLists.txt
