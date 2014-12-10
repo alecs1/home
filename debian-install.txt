@@ -18,7 +18,7 @@ firefox thunderbird ktorrent pidgin ktorrent filezilla opera
 
 system:
 krusader kuser kate emacs NetworkManager konsole aptitude synaptic ksysguard dolphin qalculate kinfocenter
-hwinfo lshw lshw-gtk ntp ntpdate kwin kdm plasma-desktop pm-utils pulseaudio qtcurve rkhunter rsync task-laptop task-romanian unrar zip unzip p7zip-full util-linux virtualbox
+hwinfo lshw lshw-gtk ntp ntpdate kwin kdm plasma-desktop pm-utils pulseaudio qtcurve rkhunter rsync task-laptop task-romanian unrar zip unzip p7zip-full util-linux virtualbox strace nmap wireshark wine
 
 drivers:
 firmware-iwlwifi firmware-linux-free firmware-linux-nonfree
