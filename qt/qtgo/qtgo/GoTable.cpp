@@ -5,12 +5,20 @@
 #include <QMainWindow>
 #include <QSvgRenderer>
 
+extern "C" {
+#include "engine/board.h"
+}
+
 #include "GoTable.h"
+
 #include "GameStruct.h"
+
+QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
+QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
 
 extern GameStruct game;
 
-/**/
+
 GoTable::GoTable(QWidget *parent) :
     QWidget(parent),
     m_updatePending(false)
@@ -32,6 +40,10 @@ GoTable::GoTable(QWidget *parent) :
 
     buildPixmaps(10);
     setCursor(*blackCursor);
+
+    if (useGNUGO) {
+        initGnuGo();
+    }
 
     player = 1;
 }
@@ -128,18 +140,36 @@ void GoTable::paintEvent(QPaintEvent *) {
     QColor background(206, 170, 57);
     painter.fillRect(QRectF(0, 0, width(), height()), background);
 
+
+    //lines
     QPen pen;
     pen.setWidthF(lineWidth);
 
     painter.setPen(pen);
     printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
 
-    //lines
     for(int i = 0; i < game.size; i++) {
         painter.drawLine(QLineF(dist, dist + i * dist, tableSize-dist, dist + i * dist));
     }
     for (int i = 0; i < game.size; i++) {
         painter.drawLine(QLineF(dist + i * dist, dist, dist + i * dist, tableSize - dist));
+    }
+
+
+    //numbering: from bottom left corner
+    //consider the simbol should fit into a square with length 1/3 of dist;
+    //for perfect results will use QFontMetrics, for now we make assumptions
+    QFont font("DejaVu Sans", dist/4);
+    painter.setFont(font);
+    qreal margin = 1.0/8 * dist;
+    for (int i = 0 ; i < game.size; i++) {
+        painter.drawText(QPointF(margin, dist + i * dist), rowNumbering[game.size-i-1]);
+        painter.drawText(QPointF(tableSize - 1.0/2.5 * dist - margin, dist + i * dist), rowNumbering[game.size-i-1]);
+    }
+
+    for (int i = 0; i < game.size; i++) {
+        painter.drawText(QPointF(dist + i * dist, 1.0/3 * dist + margin), colNumbering[i]);
+        painter.drawText(QPointF(dist + i * dist, tableSize - margin), colNumbering[i]);
     }
 
     //highlighted position
@@ -226,4 +256,7 @@ void GoTable::updateCursor() {
         setCursor(*whiteCursor);
 }
 
+void GoTable::initGnuGo() {
+    clear_board();
+}
 

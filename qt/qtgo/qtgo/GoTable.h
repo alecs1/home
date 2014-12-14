@@ -48,10 +48,14 @@ private:
 
     int player;
 
+    bool useGNUGO = true;
+
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
     int placeStone(int row, int col);
+
+    void initGnuGo();
 };
 
 #endif // GOTABLE_H
