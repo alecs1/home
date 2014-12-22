@@ -1,10 +1,27 @@
 #ifndef GAMESTRUCT_H
 #define GAMESTRUCT_H
 
-//0 - no player (for positions on table)
-//1 - black player
-//2 - white player
+//use the same definitions as GnuGo. If board.h is not included, define here
+#ifndef _BOARD_H_
+enum colors {
+  EMPTY,
+  WHITE,
+  BLACK,
+  GRAY,
+  GRAY_WHITE,
+  GRAY_BLACK,
+  WEAK_KO,
+  NUM_KOMASTER_STATES
+};
+#endif
 
+//what gnugo is doing may actually be useful, table looks like
+/*
+xxxx
+x000
+x000
+x000
+*/
 struct GameStruct {
     int size;
     int state[19][19];

@@ -56,6 +56,10 @@ private:
     int placeStone(int row, int col);
 
     void initGnuGo();
+    int toGnuGoPos(int row, int col);
+    void printfGnuGoStruct();
+    bool isValidPos(int row, int col); //because is_valid() from GnuGo actually uses fucking asserts
+    int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
 };
 
 #endif // GOTABLE_H

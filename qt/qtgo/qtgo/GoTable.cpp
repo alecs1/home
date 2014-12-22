@@ -65,7 +65,7 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     }
 
     QPointF localPos = ev->localPos();
-    printf("%s - localPos=%f, %f, row=%d, col=%d\n", __func__, localPos.ry(), localPos.rx(), row, col);
+    //printf("%s - localPos=%f, %f, row=%d, col=%d\n", __func__, localPos.ry(), localPos.rx(), row, col);
 }
 
 void GoTable::mousePressEvent(QMouseEvent* ev) {
@@ -146,7 +146,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     pen.setWidthF(lineWidth);
 
     painter.setPen(pen);
-    printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
+    //printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
 
     for(int i = 0; i < game.size; i++) {
         painter.drawLine(QLineF(dist, dist + i * dist, tableSize-dist, dist + i * dist));
@@ -197,9 +197,12 @@ void GoTable::paintEvent(QPaintEvent *) {
         for(int j = 0; j < game.size; j++) {
             if (game.state[i][j] > 0) {
                 QPointF stonePos(dist + j*dist - blackStonePixmap->width()/2, dist + i*dist - blackStonePixmap->width()/2);
-                if (game.state[i][j] == 1)
+                int colour = 0;
+                colour = game.state[i][j];
+
+                if (colour == BLACK)
                     painter.drawPixmap(stonePos, *blackStonePixmap);
-                else
+                else if (colour == WHITE)
                     painter.drawPixmap(stonePos, *whiteStonePixmap);
             }
         }
@@ -237,20 +240,39 @@ bool GoTable::buildPixmaps(int diameter) {
 //some game logic
 int GoTable::placeStone(int row, int col) {
     printf("placeStone: %d, %d, %d\n", row, col, player);
+    if (!isValidPos(row, col))
+        return -1;
+
     int retVal = -1;
-    retVal = GamePlaceStone(&game, row, col, player);
-    if (retVal == true) {
-        if (player == 1)
-            player = 2;
-        else
-            player = 1;
-        updateCursor();
+    if (useGNUGO) {
+        int pos = toGnuGoPos(row, col);
+        bool canPlay = is_legal(pos, player);
+        if (canPlay) {
+            play_move(pos, player);
+            if (player == WHITE)
+                player = BLACK;
+            else
+                player = WHITE;
+            updateCursor();
+        }
+        printfGnuGoStruct();
+        populateStructFromGnuGo();
+    }
+    else {
+        retVal = GamePlaceStone(&game, row, col, player);
+        if (retVal == true) {
+            if (player == WHITE)
+                player = BLACK;
+            else
+                player = WHITE;
+            updateCursor();
+        }
     }
     return retVal;
 }
 
 void GoTable::updateCursor() {
-    if (player == 1)
+    if (player == BLACK)
         setCursor(*blackCursor);
     else
         setCursor(*whiteCursor);
@@ -258,5 +280,33 @@ void GoTable::updateCursor() {
 
 void GoTable::initGnuGo() {
     clear_board();
+    printfGnuGoStruct();
+}
+
+int GoTable::toGnuGoPos(int row, int col) {
+    return (row+1) * 20 + col + 1;
+}
+
+void GoTable::printfGnuGoStruct() {
+    for (int i = 0; i < 21; i++) {
+        for (int j = 0; j < 20; j++)
+            printf("%d", board[i*20+j]);
+        printf("\n");
+    }
+}
+
+bool GoTable::isValidPos(int row, int col) {
+    if (row < 0 || row >= game.size || col < 0 || col >= game.size) {
+        return false;
+    }
+    return true;
+}
+
+int GoTable::populateStructFromGnuGo() {
+    for (int i = 0; i < game.size; i++) {
+        for(int j = 0; j < game.size; j++)
+            game.state[i][j] = board[toGnuGoPos(i, j)];
+    }
+
 }
 

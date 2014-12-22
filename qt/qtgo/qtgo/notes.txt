@@ -1,0 +1,1 @@
+1. Use do_genmove for playing against the computer. Also look at other functions in the file for computing the score.
