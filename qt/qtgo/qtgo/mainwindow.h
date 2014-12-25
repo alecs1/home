@@ -3,6 +3,13 @@
 
 #include <QMainWindow>
 
+//enum class ComputingPlatform : uint8_t {
+//    DesktopLinux = 0,
+//    DesktopWindows,
+//    Android
+//};
+
+//ComputingPlatform PlatformType();
 
 namespace Ui {
 class MainWindow;

@@ -31,8 +31,10 @@ GoTable::GoTable(QWidget *parent) :
 
     blackCursor = NULL;
     whiteCursor = NULL;
+    redCursor = NULL;
     blackStonePixmap = NULL;
     whiteStonePixmap = NULL;
+    redStonePixmap = NULL;
     highlightCol = -1;
     highlightRow = -1;
     newStoneRow = -1;
@@ -46,12 +48,36 @@ GoTable::GoTable(QWidget *parent) :
     }
 
     player = 1;
+    state = GameState::Initial;
+    emit GameStateChanged(state);
 }
 
 GoTable::~GoTable() {
     printf("Implement destructor!\n");
 }
 
+void GoTable::launchGamePressed(SGameSettings newSettings) {
+    settings = newSettings;
+
+    printf("%s\n", __func__);
+
+    if (state == GameState::Started) {
+        state = GameState::Stopped;
+        //TODO - ask if we want to lose progress
+    }
+    else {
+        launchGame();
+        state = GameState::Started;
+    }
+
+    updateCursor();
+    emit GameStateChanged(state);
+}
+
+//void GoTable::settingsChanged(SGameSettings newSettings) {
+//    //some setting will take effect right away, others won't, check them here
+//    settings = newSettings;
+//}
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
@@ -64,7 +90,7 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
         update();
     }
 
-    QPointF localPos = ev->localPos();
+    //QPointF localPos = ev->localPos();
     //printf("%s - localPos=%f, %f, row=%d, col=%d\n", __func__, localPos.ry(), localPos.rx(), row, col);
 }
 
@@ -113,18 +139,23 @@ QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
 }
 
 void GoTable::resizeEvent(QResizeEvent* event) {
+    Q_UNUSED(event);
     printf("resizeEvent\n");
+    updateSizes();
+}
 
+void GoTable::updateSizes() {
     int tableSize = width(); //compute and enforce correctly
     if (height() < tableSize)
         tableSize = height();
     dist = tableSize / (game.size + 1.0);
     int diameter = (int) (dist * 0.8);
 
+    printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
+
     buildPixmaps(diameter);
     updateCursor();
 }
-
 
 void GoTable::paintEvent(QPaintEvent *) {
 
@@ -175,7 +206,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     //highlighted position
     if (highlightRow != - 1) {
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
-        printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
+        //printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
         float highlightDiameter = dist / 2;
 
         pen.setColor(QColor(255, 50, 50, 128));
@@ -186,10 +217,13 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
     //new stone, mouse button pressed/tapped
-    if (newStoneCol != -1) {
+    if ((newStoneCol != -1) && (state != GameState::Stopped)){
         QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
-        printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        painter.drawPixmap(newStonePos, *blackStonePixmap);
+        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        if (player == BLACK)
+            painter.drawPixmap(newStonePos, *blackStonePixmap);
+        else if (player == WHITE)
+            painter.drawPixmap(newStonePos, *whiteStonePixmap);
     }
 
     //all stones already on the table
@@ -233,20 +267,33 @@ bool GoTable::buildPixmaps(int diameter) {
     delete whiteCursor;
     whiteCursor = new QCursor(*whiteStonePixmap);
 
+    delete redStonePixmap;
+    redStonePixmap = new QPixmap(diameter, diameter);
+    redStonePixmap->fill(QColor(0, 0, 0, 0));
+    svgR.load(QString("resources/cursorRed.svg"));
+    QPainter rPainter(redStonePixmap);
+    svgR.render(&rPainter);
+    delete redCursor;
+    redCursor = new QCursor(*redStonePixmap);
+
     return true;
 }
 
 
 //some game logic
-int GoTable::placeStone(int row, int col) {
+bool GoTable::placeStone(int row, int col) {
     printf("placeStone: %d, %d, %d\n", row, col, player);
     if (!isValidPos(row, col))
-        return -1;
+        return false;
 
-    int retVal = -1;
+    if (state == GameState::Stopped)
+        return false;
+
+    bool retVal = false;
     if (useGNUGO) {
         int pos = toGnuGoPos(row, col);
         bool canPlay = is_legal(pos, player);
+
         if (canPlay) {
             play_move(pos, player);
             if (player == WHITE)
@@ -254,6 +301,7 @@ int GoTable::placeStone(int row, int col) {
             else
                 player = WHITE;
             updateCursor();
+            retVal = true;
         }
         printfGnuGoStruct();
         populateStructFromGnuGo();
@@ -268,17 +316,26 @@ int GoTable::placeStone(int row, int col) {
             updateCursor();
         }
     }
+
+    if (retVal && state == GameState::Initial) {
+        printf("%s - we just automatically started a new game!\n", __func__);
+        state = GameState::Started;
+        emit GameStateChanged(state);
+    }
     return retVal;
 }
 
 void GoTable::updateCursor() {
-    if (player == BLACK)
+    if (state == GameState::Stopped)
+        setCursor(*redCursor);
+    else if (player == BLACK)
         setCursor(*blackCursor);
     else
         setCursor(*whiteCursor);
 }
 
 void GoTable::initGnuGo() {
+    board_size = settings.size;
     clear_board();
     printfGnuGoStruct();
 }
@@ -307,6 +364,15 @@ int GoTable::populateStructFromGnuGo() {
         for(int j = 0; j < game.size; j++)
             game.state[i][j] = board[toGnuGoPos(i, j)];
     }
+    return 0;
+}
 
+void GoTable::launchGame() {
+    game.size = settings.size;
+    updateSizes();
+    if (useGNUGO) {
+        initGnuGo();
+    }
+    update();
 }
 

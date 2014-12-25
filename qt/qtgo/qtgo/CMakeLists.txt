@@ -31,8 +31,8 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 
 #qt moc
-qt5_wrap_cpp(HEADER_MOC GoTable.h mainwindow.h)
+qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h mainwindow.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS})
+add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS})
 target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine utils sgf)
