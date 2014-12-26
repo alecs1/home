@@ -20,14 +20,12 @@ extern GameStruct game;
 
 
 GoTable::GoTable(QWidget *parent) :
-    QWidget(parent),
-    m_updatePending(false)
+    QWidget(parent)
 {
-    m_backingStore = backingStore();
-    create();
     setMouseTracking(true);
 
-    setGeometry(100, 100, 100, 100);
+    setMinimumWidth(400);
+    setMinimumHeight(400);
 
     blackCursor = NULL;
     whiteCursor = NULL;
@@ -40,6 +38,10 @@ GoTable::GoTable(QWidget *parent) :
     newStoneRow = -1;
     newStoneCol = -1;
 
+    game.size = settings.size;
+    typeBlack = settings.black;
+    typeWhite = settings.white;
+
     buildPixmaps(10);
     setCursor(*blackCursor);
 
@@ -47,7 +49,7 @@ GoTable::GoTable(QWidget *parent) :
         initGnuGo();
     }
 
-    player = 1;
+    player = BLACK;
     state = GameState::Initial;
     emit GameStateChanged(state);
 }
@@ -369,9 +371,12 @@ int GoTable::populateStructFromGnuGo() {
 
 void GoTable::launchGame() {
     game.size = settings.size;
+    typeBlack = settings.black;
+    typeWhite = settings.white;
     updateSizes();
     if (useGNUGO) {
         initGnuGo();
+        populateStructFromGnuGo();
     }
     update();
 }

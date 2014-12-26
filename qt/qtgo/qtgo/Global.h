@@ -7,8 +7,8 @@ enum class GameState:uint8_t  {
     Started
 };
 
-enum class GameType:uint8_t {
-    AI,
+enum class PlayerType:uint8_t {
+    AI = 0,
     LocalHuman,
     Network
 };
@@ -16,7 +16,8 @@ enum class GameType:uint8_t {
 struct SGameSettings {
     int size = 19;
     int AILevel = 1;
-    //TODO - some game type (vs computer or human player)
+    PlayerType black = PlayerType::LocalHuman;
+    PlayerType white = PlayerType::AI;
 };
 
 #endif // GLOBAL_H

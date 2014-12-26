@@ -4,6 +4,8 @@
 #include <QWidget>
 #include "Global.h"
 
+class PlayerWidget;
+
 namespace Ui {
 class GameSettings;
 }
@@ -35,6 +37,8 @@ protected:
 private:
     Ui::GameSettings* ui;
     SGameSettings settings;
+    PlayerWidget* blackPlayer;
+    PlayerWidget* whitePlayer;
 };
 
 #endif // GAMESETTINGS_H

@@ -1,12 +1,23 @@
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
 
+#include "PlayerWidget.h"
+
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
 {
     ui->setupUi(this);
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
+
+    blackPlayer = new PlayerWidget(this);
+    ui->gridLayout->addWidget(blackPlayer, 2, 0);
+    blackPlayer->setPlayerType(settings.black);
+
+    whitePlayer = new PlayerWidget(this);
+    whitePlayer->setTitle("White");
+    ui->gridLayout->addWidget(whitePlayer, 3, 0);
+    whitePlayer->setPlayerType(settings.white);
 
     populateSettings();
 }
@@ -27,6 +38,10 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
         return false;
     if (s1.size != s2.size)
         return false;
+    if (s1.black != s2.black)
+        return false;
+    if (s1.white != s2.white)
+        return false;
     return true;
 }
 
@@ -40,6 +55,9 @@ void GameSettings::populateSettings() {
         newSettings.size = 13;
     else if (ui->button19x19->isChecked())
         newSettings.size = 19;
+
+    newSettings.black = (PlayerType)blackPlayer->playerType();
+    newSettings.white = (PlayerType)whitePlayer->playerType();
 
     if (newSettings == settings)
         return;

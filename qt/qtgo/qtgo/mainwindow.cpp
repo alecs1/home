@@ -20,10 +20,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->centralWidget->setLayout(ui->gridLayout);
 
     ui->gridLayout->addWidget(table, 0, 0);
+    ui->gridLayout->setColumnStretch(0, 5);
 
     #if defined(Q_OS_LINUX) || defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
     GameSettings* settings = new GameSettings(this);
     ui->gridLayout->addWidget(settings, 0, 1);
+    ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
     QObject::connect(table, SIGNAL(GameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     //QObject::connect(settings, SIGNAL(settingsChanged(SGameSettings)), table, SLOT(settingsChanged(SGameSettings)));

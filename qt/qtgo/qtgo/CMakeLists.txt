@@ -23,7 +23,7 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 #qt UI
-qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui)
+qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui)
 
 
 #how to debug a CMake script:
@@ -31,8 +31,8 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 
 #qt moc
-qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h mainwindow.h)
+qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h PlayerWidget.h mainwindow.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS})
+add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS})
 target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine utils sgf)

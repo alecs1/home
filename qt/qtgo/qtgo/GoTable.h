@@ -33,7 +33,7 @@ protected:
 
 private:
     bool m_updatePending;
-    QBackingStore* m_backingStore;
+    //QBackingStore* m_backingStore;
     QCursor* blackCursor;
     QCursor* whiteCursor;
     QCursor* redCursor;
@@ -47,9 +47,12 @@ private:
     int newStoneCol;
     GameState state = GameState::Stopped;
 
+    //populate this with some default settings, which are then passed to the game
     SGameSettings settings;
 
     int player;
+    PlayerType typeBlack;
+    PlayerType typeWhite;
 
     bool useGNUGO = true;
 
