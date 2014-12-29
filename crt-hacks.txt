@@ -1,0 +1,5 @@
+big:
+rmmod iwlwifi iwlmvm
+
+small:
+m-a a-i broadcom-sta after each upgrade
