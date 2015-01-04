@@ -18,6 +18,9 @@ public slots:
     void launchGamePressed(SGameSettings newSettings);
     //void settingsChanged(SGameSettings newSettings);
 
+private slots:
+    bool AIPlayNextMove();
+
 signals:
     void GameStateChanged(GameState state);
 
@@ -48,9 +51,8 @@ private:
     //populate this with some default settings, which are then passed to the game
     SGameSettings settings;
 
-    int player;
-    PlayerType typeBlack;
-    PlayerType typeWhite;
+    int crtPlayer;
+    PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK
 
     bool useGNUGO = true;
 
@@ -62,7 +64,7 @@ private:
     void initGnuGo();
     int toGnuGoPos(int row, int col);
     void printfGnuGoStruct();
-    bool isValidPos(int row, int col); //because is_valid() from GnuGo actually uses fucking asserts
+    bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
 

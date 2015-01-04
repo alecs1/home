@@ -4,9 +4,12 @@
 #include <QCoreApplication>
 #include <QMainWindow>
 #include <QSvgRenderer>
+#include <QTimer>
 
 extern "C" {
 #include "engine/board.h"
+int do_genmove(int color, float pure_threat_value,
+              int allowed_moves[BOARDMAX], float *value, int *resign);
 }
 
 #include "GoTable.h"
@@ -39,8 +42,8 @@ GoTable::GoTable(QWidget *parent) :
     newStoneCol = -1;
 
     game.size = settings.size;
-    typeBlack = settings.black;
-    typeWhite = settings.white;
+    players[BLACK]= settings.black;
+    players[WHITE] = settings.white;
 
     buildPixmaps(10);
     setCursor(*blackCursor);
@@ -49,7 +52,7 @@ GoTable::GoTable(QWidget *parent) :
         initGnuGo();
     }
 
-    player = BLACK;
+    crtPlayer = BLACK;
     state = GameState::Initial;
     emit GameStateChanged(state);
 }
@@ -81,6 +84,24 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 //    settings = newSettings;
 //}
 
+bool GoTable::AIPlayNextMove() {
+
+    //genmove(int color, float *value, int *resign)
+    //static int do_genmove(int color, float pure_threat_value,
+    //              int allowed_moves[BOARDMAX], float *value, int *resign);
+
+    float value;
+    int resign;
+    int move = 0;
+    move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
+
+    printfGnuGoStruct();
+    printf("%s, move:%d\n", __func__, move);
+    printfGnuGoStruct();
+
+    return false;
+}
+
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
     int row = pos.y();
@@ -97,11 +118,14 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
 }
 
 void GoTable::mousePressEvent(QMouseEvent* ev) {
+    if (players[crtPlayer] != PlayerType::LocalHuman)
+        return;
+
     QPoint pos = mouseToGameCoordinates(ev);
     highlightRow = pos.y();
     highlightCol = pos.x();
 
-    if (GameCanPlaceStone(&game, pos.y(), pos.x(), player)) {
+    if (GameCanPlaceStone(&game, pos.y(), pos.x(), crtPlayer)) {
         newStoneRow = pos.y();
         newStoneCol = pos.x();
     }
@@ -114,6 +138,9 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
+    if (players[crtPlayer] != PlayerType::LocalHuman)
+        return;
+
     QPoint pos = mouseToGameCoordinates(ev);
 
     QPointF localPos = ev->localPos();
@@ -226,9 +253,9 @@ void GoTable::paintEvent(QPaintEvent *) {
     if ((newStoneCol != -1) && (state != GameState::Stopped)){
         QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
         //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        if (player == BLACK)
+        if (crtPlayer == BLACK)
             painter.drawPixmap(newStonePos, *blackStonePixmap);
-        else if (player == WHITE)
+        else if (crtPlayer == WHITE)
             painter.drawPixmap(newStonePos, *whiteStonePixmap);
     }
 
@@ -288,7 +315,7 @@ bool GoTable::buildPixmaps(int diameter) {
 
 //some game logic
 bool GoTable::placeStone(int row, int col) {
-    printf("placeStone: %d, %d, %d\n", row, col, player);
+    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     if (!isValidPos(row, col))
         return false;
 
@@ -298,14 +325,14 @@ bool GoTable::placeStone(int row, int col) {
     bool retVal = false;
     if (useGNUGO) {
         int pos = toGnuGoPos(row, col);
-        bool canPlay = is_legal(pos, player);
+        bool canPlay = is_legal(pos, crtPlayer);
 
         if (canPlay) {
-            play_move(pos, player);
-            if (player == WHITE)
-                player = BLACK;
+            play_move(pos, crtPlayer);
+            if (crtPlayer == WHITE)
+                crtPlayer = BLACK;
             else
-                player = WHITE;
+                crtPlayer = WHITE;
             updateCursor();
             retVal = true;
         }
@@ -313,12 +340,12 @@ bool GoTable::placeStone(int row, int col) {
         populateStructFromGnuGo();
     }
     else {
-        retVal = GamePlaceStone(&game, row, col, player);
+        retVal = GamePlaceStone(&game, row, col, crtPlayer);
         if (retVal == true) {
-            if (player == WHITE)
-                player = BLACK;
+            if (crtPlayer == WHITE)
+                crtPlayer = BLACK;
             else
-                player = WHITE;
+                crtPlayer = WHITE;
             updateCursor();
         }
     }
@@ -328,13 +355,18 @@ bool GoTable::placeStone(int row, int col) {
         state = GameState::Started;
         emit GameStateChanged(state);
     }
+
+    //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
+    if (players[crtPlayer] == PlayerType::AI)
+        QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
+
     return retVal;
 }
 
 void GoTable::updateCursor() {
     if (state == GameState::Stopped)
         setCursor(*redCursor);
-    else if (player == BLACK)
+    else if (crtPlayer == BLACK)
         setCursor(*blackCursor);
     else
         setCursor(*whiteCursor);
@@ -375,8 +407,8 @@ int GoTable::populateStructFromGnuGo() {
 
 void GoTable::launchGame() {
     game.size = settings.size;
-    typeBlack = settings.black;
-    typeWhite = settings.white;
+    players[BLACK] = settings.black;
+    players[WHITE] = settings.white;
     updateSizes();
     if (useGNUGO) {
         initGnuGo();
