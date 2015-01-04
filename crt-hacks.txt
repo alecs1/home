@@ -1,5 +1,10 @@
 big:
 rmmod iwlwifi iwlmvm
 
+modprobe -r rtsx_pci
+modprobe rtsx_pci
+
+
+
 small:
 m-a a-i broadcom-sta after each upgrade

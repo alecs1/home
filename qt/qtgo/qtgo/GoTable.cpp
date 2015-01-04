@@ -181,18 +181,22 @@ void GoTable::paintEvent(QPaintEvent *) {
     painter.setPen(pen);
     //printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
 
+    //Horizontal lines y is resolved to an int, lines will have exactly same width without AA
     for(int i = 0; i < game.size; i++) {
-        painter.drawLine(QLineF(dist, dist + i * dist, tableSize-dist, dist + i * dist));
+        int y = dist + i * dist;
+        painter.drawLine(QLineF(dist, y, tableSize-dist, y));
     }
+    //Vertical x resolved to an int...
     for (int i = 0; i < game.size; i++) {
-        painter.drawLine(QLineF(dist + i * dist, dist, dist + i * dist, tableSize - dist));
+        int x = dist + i * dist;
+        painter.drawLine(QLineF(x, dist, x, tableSize - dist));
     }
 
 
     //numbering: from bottom left corner
     //consider the simbol should fit into a square with length 1/3 of dist;
     //for perfect results will use QFontMetrics, for now we make assumptions
-    QFont font("DejaVu Sans", dist/4);
+    QFont font("DejaVu Sans", dist/3.5);
     painter.setFont(font);
     qreal margin = 1.0/8 * dist;
     for (int i = 0 ; i < game.size; i++) {

@@ -32,8 +32,6 @@ protected:
     QPoint mouseToGameCoordinates(QMouseEvent* ev);
 
 private:
-    bool m_updatePending;
-    //QBackingStore* m_backingStore;
     QCursor* blackCursor;
     QCursor* whiteCursor;
     QCursor* redCursor;
