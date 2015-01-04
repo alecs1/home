@@ -10,6 +10,8 @@ extern "C" {
 #include "engine/board.h"
 int do_genmove(int color, float pure_threat_value,
               int allowed_moves[BOARDMAX], float *value, int *resign);
+void
+init_gnugo(float memory, unsigned int seed);
 }
 
 #include "GoTable.h"
@@ -49,7 +51,8 @@ GoTable::GoTable(QWidget *parent) :
     setCursor(*blackCursor);
 
     if (useGNUGO) {
-        initGnuGo();
+        init_gnugo(50, 314);
+        resetGnuGo();
     }
 
     crtPlayer = BLACK;
@@ -96,7 +99,10 @@ bool GoTable::AIPlayNextMove() {
     move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
 
     printfGnuGoStruct();
-    printf("%s, move:%d\n", __func__, move);
+    printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
+    QPoint point = fromGnuGoPos(move);
+    placeStone(point.y(), point.x());
+
     printfGnuGoStruct();
 
     return false;
@@ -356,6 +362,8 @@ bool GoTable::placeStone(int row, int col) {
         emit GameStateChanged(state);
     }
 
+    update();
+
     //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
     if (players[crtPlayer] == PlayerType::AI)
         QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
@@ -363,6 +371,7 @@ bool GoTable::placeStone(int row, int col) {
     return retVal;
 }
 
+//change colour of mouse cursor to reflect the current player
 void GoTable::updateCursor() {
     if (state == GameState::Stopped)
         setCursor(*redCursor);
@@ -372,7 +381,7 @@ void GoTable::updateCursor() {
         setCursor(*whiteCursor);
 }
 
-void GoTable::initGnuGo() {
+void GoTable::resetGnuGo() {
     board_size = settings.size;
     clear_board();
     printfGnuGoStruct();
@@ -380,6 +389,12 @@ void GoTable::initGnuGo() {
 
 int GoTable::toGnuGoPos(int row, int col) {
     return (row+1) * 20 + col + 1;
+}
+
+QPoint GoTable::fromGnuGoPos(int pos) {
+    int row = pos / 20 - 1;
+    int col = pos - (row+1)*20 - 1;
+    return QPoint(col, row);
 }
 
 void GoTable::printfGnuGoStruct() {
@@ -411,9 +426,12 @@ void GoTable::launchGame() {
     players[WHITE] = settings.white;
     updateSizes();
     if (useGNUGO) {
-        initGnuGo();
+        resetGnuGo();
         populateStructFromGnuGo();
     }
     update();
+    if (players[crtPlayer] == PlayerType::AI) {
+        QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
+    }
 }
 
