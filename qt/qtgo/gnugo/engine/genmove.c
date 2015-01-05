@@ -62,7 +62,7 @@ static int revise_thrashing_dragon(int color, float our_score,
 static void break_mirror_go(int color);
 static int find_mirror_move(int *move, int color);
 static int should_resign(int color, float optimistic_score, int move);
-static void compute_scores(int use_chinese_rules);
+void compute_scores(int use_chinese_rules);
 
 
 /* Reset some things in the engine. 
@@ -785,7 +785,7 @@ find_mirror_move(int *move, int color)
  * cricital stones gets resolved in White's favor; vice verso for
  * black.
  */
-static void
+void
 compute_scores(int use_chinese_rules)
 {
   signed char safe_stones[BOARDMAX];

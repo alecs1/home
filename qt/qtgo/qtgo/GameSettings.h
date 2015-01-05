@@ -22,6 +22,7 @@ signals:
 
 public slots:
     void setGameState(GameState state);
+    void setScoreEstimate(float score);
 
 private slots:
     void launchGameClicked();

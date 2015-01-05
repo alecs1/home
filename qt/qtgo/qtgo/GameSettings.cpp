@@ -33,6 +33,12 @@ void GameSettings::setGameState(GameState state) {
     }
 }
 
+void GameSettings::setScoreEstimate(float score) {
+    QString text;
+    text.sprintf("Est: %3.1f", score);
+    ui->scoreEstimateLabel->setText(text);
+}
+
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
     if (s1.AILevel != s2.AILevel)
         return false;

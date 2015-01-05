@@ -22,7 +22,8 @@ private slots:
     bool AIPlayNextMove();
 
 signals:
-    void GameStateChanged(GameState state);
+    void gameStateChanged(GameState state);
+    void estimateScoreChanged(float score);
 
 protected:
     void resizeEvent(QResizeEvent *event);

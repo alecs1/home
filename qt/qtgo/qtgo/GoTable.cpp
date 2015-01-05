@@ -8,10 +8,10 @@
 
 extern "C" {
 #include "engine/board.h"
-int do_genmove(int color, float pure_threat_value,
-              int allowed_moves[BOARDMAX], float *value, int *resign);
-void
-init_gnugo(float memory, unsigned int seed);
+int do_genmove(int color, float pure_threat_value, int allowed_moves[BOARDMAX], float *value, int *resign);
+void init_gnugo(float memory, unsigned int seed);
+//void compute_scores(int use_chinese_rules);
+float gnugo_estimate_score(float *upper, float *lower);
 }
 
 #include "GoTable.h"
@@ -57,7 +57,7 @@ GoTable::GoTable(QWidget *parent) :
 
     crtPlayer = BLACK;
     state = GameState::Initial;
-    emit GameStateChanged(state);
+    emit gameStateChanged(state);
 }
 
 GoTable::~GoTable() {
@@ -79,31 +79,31 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
     }
 
     updateCursor();
-    emit GameStateChanged(state);
+    emit gameStateChanged(state);
 }
 
-//void GoTable::settingsChanged(SGameSettings newSettings) {
-//    //some setting will take effect right away, others won't, check them here
-//    settings = newSettings;
-//}
-
 bool GoTable::AIPlayNextMove() {
-
-    //genmove(int color, float *value, int *resign)
-    //static int do_genmove(int color, float pure_threat_value,
-    //              int allowed_moves[BOARDMAX], float *value, int *resign);
 
     float value;
     int resign;
     int move = 0;
     move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
 
-    printfGnuGoStruct();
     printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
+
+    if (move == 0) {
+        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
+        float score = gnugo_estimate_score(NULL, NULL);
+        if (score > 0)
+            printf("%s - estimates: white winning by %f\n", __func__, score);
+        else
+            printf("%s - estimates: black winning by %f\n", __func__, -score);
+    }
+
     QPoint point = fromGnuGoPos(move);
     placeStone(point.y(), point.x());
 
-    printfGnuGoStruct();
+    //printfGnuGoStruct();
 
     return false;
 }
@@ -342,7 +342,7 @@ bool GoTable::placeStone(int row, int col) {
             updateCursor();
             retVal = true;
         }
-        printfGnuGoStruct();
+        //printfGnuGoStruct();
         populateStructFromGnuGo();
     }
     else {
@@ -359,7 +359,7 @@ bool GoTable::placeStone(int row, int col) {
     if (retVal && state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
-        emit GameStateChanged(state);
+        emit gameStateChanged(state);
     }
 
     update();
@@ -367,6 +367,14 @@ bool GoTable::placeStone(int row, int col) {
     //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
     if (players[crtPlayer] == PlayerType::AI)
         QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
+
+
+    float score = gnugo_estimate_score(NULL, NULL);
+    emit estimateScoreChanged(score);
+    if (score > 0)
+        printf("%s - estimates: white winning by %f\n", __func__, score);
+    else
+        printf("%s - estimates: black winning by %f\n", __func__, -score);
 
     return retVal;
 }

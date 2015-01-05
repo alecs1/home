@@ -34,7 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
-    QObject::connect(table, SIGNAL(GameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
+    QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
+    QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     minWidth += settings->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;
