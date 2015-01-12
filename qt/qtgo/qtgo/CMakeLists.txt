@@ -35,4 +35,4 @@ qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h PlayerWidget.h mainwindow.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS})
-target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine patterns utils sgf)
+target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine utils sgf)
