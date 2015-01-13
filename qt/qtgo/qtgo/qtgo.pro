@@ -16,7 +16,7 @@ INCLUDEPATH +=  "../gnugo_include/gnugo" \
                 "../gnugo_include/gnugo/sgf" \
                 "../gnugo_include/gnugo/utils"
 
-LIBS += -lboard -lengine -lutils -lsgf
+LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L ../gnugo/patterns -lboard -lengine -lutils -lsgf -lpatterns
 
 # Input
 HEADERS += GameSettings.h \
