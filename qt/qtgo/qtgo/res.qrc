@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>resources/cursorBlack.svg</file>
+        <file>resources/cursorRed.svg</file>
+        <file>resources/cursorWhite.svg</file>
+        <file>resources/ko-rule-32.png</file>
+        <file>resources/ko-rule-64.png</file>
+        <file>resources/ko-rule-128.png</file>
+        <file>resources/ko-rule-185-orig.png</file>
+    </qresource>
+</RCC>
