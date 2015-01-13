@@ -32,3 +32,5 @@ SOURCES += GameSettings.cpp \
            main.cpp \
            mainwindow.cpp \
            PlayerWidget.cpp
+
+OTHER_FILES += AndroidManifest.xml
