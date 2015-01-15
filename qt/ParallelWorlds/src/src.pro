@@ -78,7 +78,7 @@ SOURCES += coliziuni.cpp \
  UniverseWidgetGL.cpp \
  UniverseWidgetBase.cpp \
  UniverseShowerGL.cpp
-RESOURCE = src.qrc
+RESOURCES = src.qrc
 INCLUDEPATH += ../src
 CONFIG += warn_on \
  qt \

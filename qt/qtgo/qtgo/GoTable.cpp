@@ -291,7 +291,7 @@ bool GoTable::buildPixmaps(int diameter) {
     delete blackStonePixmap;
     blackStonePixmap = new QPixmap(diameter, diameter);
     blackStonePixmap->fill(Qt::transparent);
-    svgR.load(QString("resources/cursorBlack.svg"));
+    svgR.load(QString(":/resources/cursorBlack.svg"));
     QPainter bPainter(blackStonePixmap);
     svgR.render(&bPainter);
     delete blackCursor;
@@ -300,7 +300,7 @@ bool GoTable::buildPixmaps(int diameter) {
     delete whiteStonePixmap;
     whiteStonePixmap = new QPixmap(diameter, diameter);
     whiteStonePixmap->fill(QColor(0, 0, 0, 0));
-    svgR.load(QString("resources/cursorWhite.svg"));
+    svgR.load(QString(":/resources/cursorWhite.svg"));
     QPainter wPainter(whiteStonePixmap);
     svgR.render(&wPainter);
     delete whiteCursor;
@@ -309,7 +309,7 @@ bool GoTable::buildPixmaps(int diameter) {
     delete redStonePixmap;
     redStonePixmap = new QPixmap(diameter, diameter);
     redStonePixmap->fill(QColor(0, 0, 0, 0));
-    svgR.load(QString("resources/cursorRed.svg"));
+    svgR.load(QString(":/resources/cursorRed.svg"));
     QPainter rPainter(redStonePixmap);
     svgR.render(&rPainter);
     delete redCursor;

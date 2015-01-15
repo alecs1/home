@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/resources">
+    <qresource prefix="/">
         <file>resources/cursorBlack.svg</file>
         <file>resources/cursorRed.svg</file>
         <file>resources/cursorWhite.svg</file>
