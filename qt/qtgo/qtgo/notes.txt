@@ -1,2 +1,5 @@
-1. Use do_genmove for playing against the computer. Also look at other functions in the file for computing the score.
-2. Bla bla test.
+v 1. Use do_genmove for playing against the computer. Also look at other functions in the file for computing the score.
+2. Give feedback that the computer is currently calculating and block interaction while computing.
+3. Android UI - remove top menu
+        - immersive mode
+        - confirmation button

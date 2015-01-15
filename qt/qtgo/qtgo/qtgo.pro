@@ -33,7 +33,8 @@ SOURCES += GameSettings.cpp \
            mainwindow.cpp \
            PlayerWidget.cpp
 
-OTHER_FILES += AndroidManifest.xml
+OTHER_FILES += AndroidManifest.xml \
+    notes.txt
 
 RESOURCES += \
     res.qrc
