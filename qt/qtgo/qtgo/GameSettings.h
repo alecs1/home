@@ -42,4 +42,16 @@ private:
     PlayerWidget* whitePlayer;
 };
 
+
+//Show the colour of the current player and maybe some animation, that he is currently "thinking", in case of the computer
+class RoundInfo : public QWidget {
+public:
+    RoundInfo();
+
+private:
+    QPixmap* blackStone;
+    QPixmap* whiteStone;
+
+};
+
 #endif // GAMESETTINGS_H

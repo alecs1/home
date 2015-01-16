@@ -90,3 +90,20 @@ void GameSettings::mouseReleaseEvent(QMouseEvent * event) {
     QWidget::mouseReleaseEvent(event);
 }
 */
+
+RoundInfo::RoundInfo() {
+    QSvgRenderer svgR;
+
+    //this is a fixed size during gameplay, but yet computed at program start-up.
+    //find the system font size and make the drawing a couple of times larger
+
+
+    blackStone = new QPixmap(diameter, diameter);
+    blackStonePixmap->fill(Qt::transparent);
+    svgR.load(QString(":/resources/cursorBlack.svg"));
+    QPainter bPainter(blackStonePixmap);
+    svgR.render(&bPainter);
+    delete blackCursor;
+    blackCursor = new QCursor(*blackStonePixmap);
+
+}
