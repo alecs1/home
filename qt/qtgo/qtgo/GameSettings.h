@@ -5,6 +5,7 @@
 #include "Global.h"
 
 class PlayerWidget;
+class RoundInfo;
 
 namespace Ui {
 class GameSettings;
@@ -40,13 +41,16 @@ private:
     SGameSettings settings;
     PlayerWidget* blackPlayer;
     PlayerWidget* whitePlayer;
+    bool showingRoundInfo;
+    RoundInfo* roundInfo;
 };
 
 
 //Show the colour of the current player and maybe some animation, that he is currently "thinking", in case of the computer
 class RoundInfo : public QWidget {
 public:
-    RoundInfo();
+    RoundInfo(QWidget* parent);
+    void paintEvent(QPaintEvent *);
 
 private:
     QPixmap* blackStone;

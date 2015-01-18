@@ -1,3 +1,6 @@
+#include <QSvgRenderer>
+#include <QPainter>
+
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
 
@@ -11,25 +14,40 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
 
     blackPlayer = new PlayerWidget(this);
-    ui->gridLayout->addWidget(blackPlayer, 2, 0);
+    ui->gridLayout->addWidget(blackPlayer, 3, 0);
     blackPlayer->setPlayerType(settings.black);
 
     whitePlayer = new PlayerWidget(this);
     whitePlayer->setTitle("White");
-    ui->gridLayout->addWidget(whitePlayer, 3, 0);
+    ui->gridLayout->addWidget(whitePlayer, 4, 0);
     whitePlayer->setPlayerType(settings.white);
 
     populateSettings();
+
+    roundInfo = new RoundInfo(ui->roundInfoWidget);
+    ui->roundInfoWidget->setMinimumHeight(roundInfo->height());
+    showingRoundInfo = false;
+    ui->roundInfoWidget->hide();
+
+    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
 }
 
 void GameSettings::setGameState(GameState state) {
     if (state == GameState::Started) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
+        ui->roundInfoWidget->show();
+        showingRoundInfo = true;
+        printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
         ui->tableSizeGroupBox->setEnabled(true);
+        if (showingRoundInfo == true) {
+            ui->roundInfoWidget->hide();
+            showingRoundInfo = false;
+            printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+        }
     }
 }
 
@@ -91,19 +109,34 @@ void GameSettings::mouseReleaseEvent(QMouseEvent * event) {
 }
 */
 
-RoundInfo::RoundInfo() {
+RoundInfo::RoundInfo(QWidget* parent) :
+    QWidget(parent)
+{
     QSvgRenderer svgR;
 
     //this is a fixed size during gameplay, but yet computed at program start-up.
     //find the system font size and make the drawing a couple of times larger
 
+    QFont font;
+    QString defaultFont = font.defaultFamily();
+    int defaultFontSize = font.pointSize();
+
+    printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
+    const int SCALE= 4;
+    int diameter = SCALE * defaultFontSize;
+    resize(diameter, diameter);
+
+    printf("%s - size:%dx%d\n", __func__, width(), height());
 
     blackStone = new QPixmap(diameter, diameter);
-    blackStonePixmap->fill(Qt::transparent);
+    blackStone->fill(Qt::transparent);
     svgR.load(QString(":/resources/cursorBlack.svg"));
-    QPainter bPainter(blackStonePixmap);
+    QPainter bPainter(blackStone);
     svgR.render(&bPainter);
-    delete blackCursor;
-    blackCursor = new QCursor(*blackStonePixmap);
+}
 
+void RoundInfo::paintEvent(QPaintEvent *) {
+    QPainter painter(this);
+    painter.drawPixmap(0, 0, blackStone->width(), blackStone->height(), *blackStone);
+    //render(blackStone);
 }
