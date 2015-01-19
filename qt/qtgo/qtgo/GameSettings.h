@@ -24,6 +24,7 @@ signals:
 public slots:
     void setGameState(GameState state);
     void setScoreEstimate(float score);
+    void setCurrentPlayer(int player, PlayerType type);
 
 private slots:
     void launchGameClicked();
@@ -48,14 +49,18 @@ private:
 
 //Show the colour of the current player and maybe some animation, that he is currently "thinking", in case of the computer
 class RoundInfo : public QWidget {
+//Q_OBJECT
 public:
     RoundInfo(QWidget* parent);
     void paintEvent(QPaintEvent *);
+    void setCurrentPlayer(int aPlayer, PlayerType aType);
 
 private:
     QPixmap* blackStone;
     QPixmap* whiteStone;
-
+    QPixmap* crtPixmap;
+    int player;
+    PlayerType playerType;
 };
 
 #endif // GAMESETTINGS_H

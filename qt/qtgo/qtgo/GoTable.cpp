@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QSvgRenderer>
 #include <QTimer>
+#include <QTime>
 
 extern "C" {
 #include "engine/board.h"
@@ -47,6 +48,9 @@ GoTable::GoTable(QWidget *parent) :
     players[BLACK]= settings.black;
     players[WHITE] = settings.white;
 
+    blockTime = new QTime();
+
+
     buildPixmaps(10);
     setCursor(*blackCursor);
 
@@ -56,12 +60,14 @@ GoTable::GoTable(QWidget *parent) :
     }
 
     crtPlayer = BLACK;
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+
     state = GameState::Initial;
     emit gameStateChanged(state);
 }
 
 GoTable::~GoTable() {
-    printf("Implement destructor!\n");
+    printf("%s - Implement destructor!\n", __func__);
 }
 
 void GoTable::launchGamePressed(SGameSettings newSettings) {
@@ -82,6 +88,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
     emit gameStateChanged(state);
 }
 
+//TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
 bool GoTable::AIPlayNextMove() {
 
     float value;
@@ -89,18 +96,21 @@ bool GoTable::AIPlayNextMove() {
     int move = 0;
     move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
 
-    printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
+    //printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
 
     if (move == 0) {
         printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
         float score = gnugo_estimate_score(NULL, NULL);
-        if (score > 0)
-            printf("%s - estimates: white winning by %f\n", __func__, score);
-        else
-            printf("%s - estimates: black winning by %f\n", __func__, -score);
+        if (score > 0) {
+            //printf("%s - estimates: white winning by %f\n", __func__, score);
+        }
+        else {
+            //printf("%s - estimates: black winning by %f\n", __func__, -score);
+        }
     }
 
     QPoint point = fromGnuGoPos(move);
+    printf("%s - AI has finished\n", __func__);
     placeStone(point.y(), point.x());
 
     //printfGnuGoStruct();
@@ -124,8 +134,14 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
 }
 
 void GoTable::mousePressEvent(QMouseEvent* ev) {
-    if (players[crtPlayer] != PlayerType::LocalHuman)
+    if (players[crtPlayer] != PlayerType::LocalHuman) {
+        printf("%s - return because crtPlayer is not localHuman\n", __func__);
         return;
+    }
+
+    if (shouldRejectInput(ev)) {
+        return;
+    }
 
     QPoint pos = mouseToGameCoordinates(ev);
     highlightRow = pos.y();
@@ -140,25 +156,61 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     update();
 
     QPointF localPos = ev->localPos();
-    printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
-    if (players[crtPlayer] != PlayerType::LocalHuman)
+    //static unsigned long lastTimestamp = ev->timestamp();
+    //printf("timestamp: %lu, diff:%lu\n", ev->timestamp(), ev->timestamp() - lastTimestamp);
+    //lastTimestamp = ev->timestamp();
+
+    //printf("timestamp: %lu, lastInputTimestamp: %lu, diff:%lu, block duration:%lu\n",
+    //       ev->timestamp(), lastInputTimestamp, ev->timestamp() - lastInputTimestamp, inputBlockingDuration);
+
+    if (shouldRejectInput(ev)) {
         return;
+    }
+    else {
+        lastInputTimestamp = ev->timestamp();
+    }
+
+    if (players[crtPlayer] != PlayerType::LocalHuman) {
+        printf("%s - return because crtPlayer is not localHuman\n", __func__);
+        return;
+    }
 
     QPoint pos = mouseToGameCoordinates(ev);
 
-    QPointF localPos = ev->localPos();
-    printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    //QPointF localPos = ev->localPos();
+    //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
     if (pos.x() == newStoneCol && pos.y() == newStoneRow) {
         placeStone(pos.y(), pos.x());
     }
+
+
     newStoneRow = -1;
     newStoneCol = -1;
 
     //TODO - this can be optimised
     update();
+}
+
+bool GoTable::shouldRejectInput(QMouseEvent* ev) {
+    if ((ev->timestamp() < lastInputTimestamp) || (inputBlockingDuration == 0)){
+        //maybe the wm counter has been reset (every ~48 days :D)
+        return false;
+    }
+    else {
+        if ( (ev->timestamp() - lastInputTimestamp < inputBlockingDuration) &&
+             (players[crtPlayer] == PlayerType::LocalHuman) ){
+            printf("%s - rejected input as it's detected to be an old event from WM queue, "
+                   "timestamp: %lu, lastInputTimestamp: %lu, dif: %lu, %lu\n",
+                   __func__, ev->timestamp(), lastInputTimestamp, ev->timestamp() - lastInputTimestamp, inputBlockingDuration);
+            return true;
+        }
+        return false;
+    }
+    return false;
 }
 
 QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
@@ -175,7 +227,6 @@ QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
 
 void GoTable::resizeEvent(QResizeEvent* event) {
     Q_UNUSED(event);
-    printf("resizeEvent\n");
     updateSizes();
 }
 
@@ -186,7 +237,7 @@ void GoTable::updateSizes() {
     dist = tableSize / (game.size + 1.0);
     int diameter = (int) (dist * 0.8);
 
-    printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
+    //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
     buildPixmaps(diameter);
     updateCursor();
@@ -285,7 +336,7 @@ void GoTable::paintEvent(QPaintEvent *) {
 
 
 bool GoTable::buildPixmaps(int diameter) {
-    printf("buildCursors, diameter=%d\n", diameter);
+    //printf("buildCursors, diameter=%d\n", diameter);
     QSvgRenderer svgR;
 
     delete blackStonePixmap;
@@ -321,12 +372,19 @@ bool GoTable::buildPixmaps(int diameter) {
 
 //some game logic
 bool GoTable::placeStone(int row, int col) {
-    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    //printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     if (!isValidPos(row, col))
         return false;
 
     if (state == GameState::Stopped)
         return false;
+
+    inputBlockingDuration = 0;
+    if (players[crtPlayer] == PlayerType::LocalHuman)
+        blockTime->start();
+    setEnabled(false);
+    cursorBlocked = true;
+    updateCursor();
 
     bool retVal = false;
     if (useGNUGO) {
@@ -356,6 +414,10 @@ bool GoTable::placeStone(int row, int col) {
         }
     }
 
+    if (retVal) {
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    }
+
     if (retVal && state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
@@ -364,24 +426,32 @@ bool GoTable::placeStone(int row, int col) {
 
     update();
 
-    //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
-    if (players[crtPlayer] == PlayerType::AI)
-        QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
-
-
     float score = gnugo_estimate_score(NULL, NULL);
     emit estimateScoreChanged(score);
-    if (score > 0)
-        printf("%s - estimates: white winning by %f\n", __func__, score);
-    else
-        printf("%s - estimates: black winning by %f\n", __func__, -score);
+    if (score > 0) {
+        //printf("%s - estimates: white winning by %f\n", __func__, score);
+    }
+    else {
+        //printf("%s - estimates: black winning by %f\n", __func__, -score);
+    }
+
+    //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
+    if (players[crtPlayer] == PlayerType::AI) {
+        QTimer::singleShot(5, this, SLOT(AIPlayNextMove()));
+    }
+    else {
+        setEnabled(true); //this is too early, to the point of making setEnabled useless; queued clicks still come in
+        inputBlockingDuration = blockTime->elapsed();
+        cursorBlocked = false;
+        updateCursor();
+    }
 
     return retVal;
 }
 
 //change colour of mouse cursor to reflect the current player
 void GoTable::updateCursor() {
-    if (state == GameState::Stopped)
+    if ( (state == GameState::Stopped) || cursorBlocked)
         setCursor(*redCursor);
     else if (crtPlayer == BLACK)
         setCursor(*blackCursor);
@@ -439,7 +509,7 @@ void GoTable::launchGame() {
     }
     update();
     if (players[crtPlayer] == PlayerType::AI) {
-        QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
+        QTimer::singleShot(5, this, SLOT(AIPlayNextMove()));
     }
 }
 

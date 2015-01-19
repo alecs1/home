@@ -5,6 +5,7 @@
 #include "ui_GameSettings.h"
 
 #include "PlayerWidget.h"
+#include "GameStruct.h"
 
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
@@ -14,12 +15,12 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
 
     blackPlayer = new PlayerWidget(this);
-    ui->gridLayout->addWidget(blackPlayer, 3, 0);
+    ui->playersLayout->addWidget(blackPlayer);
     blackPlayer->setPlayerType(settings.black);
 
     whitePlayer = new PlayerWidget(this);
     whitePlayer->setTitle("White");
-    ui->gridLayout->addWidget(whitePlayer, 4, 0);
+    ui->playersLayout->addWidget(whitePlayer);
     whitePlayer->setPlayerType(settings.white);
 
     populateSettings();
@@ -29,6 +30,8 @@ GameSettings::GameSettings(QWidget *parent):
     showingRoundInfo = false;
     ui->roundInfoWidget->hide();
 
+    ui->hintButton->hide();
+
     printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
 }
 
@@ -37,17 +40,21 @@ void GameSettings::setGameState(GameState state) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
         ui->roundInfoWidget->show();
+        ui->tableSizeGroupBox->hide();
+        ui->hintButton->show();
         showingRoundInfo = true;
-        printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             ui->roundInfoWidget->hide();
-            showingRoundInfo = false;
-            printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
         }
+        ui->tableSizeGroupBox->show();
+        ui->hintButton->hide();
+        showingRoundInfo = false;
+        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
 }
 
@@ -55,6 +62,10 @@ void GameSettings::setScoreEstimate(float score) {
     QString text;
     text.sprintf("Est: %3.1f", score);
     ui->scoreEstimateLabel->setText(text);
+}
+
+void GameSettings::setCurrentPlayer(int player, PlayerType type) {
+    roundInfo->setCurrentPlayer(player, type);
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
@@ -97,18 +108,6 @@ void GameSettings::launchGameClicked() {
     emit launchGamePerform(settings);
 }
 
-/*
-void GameSettings::keyReleaseEvent(QKeyEvent * event) {
-    populateSettings();
-    QWidget::keyReleaseEvent(event);
-}
-
-void GameSettings::mouseReleaseEvent(QMouseEvent * event) {
-    populateSettings();
-    QWidget::mouseReleaseEvent(event);
-}
-*/
-
 RoundInfo::RoundInfo(QWidget* parent) :
     QWidget(parent)
 {
@@ -133,10 +132,31 @@ RoundInfo::RoundInfo(QWidget* parent) :
     svgR.load(QString(":/resources/cursorBlack.svg"));
     QPainter bPainter(blackStone);
     svgR.render(&bPainter);
+
+    whiteStone = new QPixmap(diameter, diameter);
+    whiteStone->fill(Qt::transparent);
+    svgR.load(QString(":/resources/cursorWhite.svg"));
+    QPainter wPainter(whiteStone);
+    svgR.render(&wPainter);
+
+    crtPixmap = blackStone;
 }
 
 void RoundInfo::paintEvent(QPaintEvent *) {
+    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
     QPainter painter(this);
-    painter.drawPixmap(0, 0, blackStone->width(), blackStone->height(), *blackStone);
-    //render(blackStone);
+    painter.drawPixmap(0, 0, crtPixmap->width(), crtPixmap->height(), *crtPixmap);
+}
+
+void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
+    player = aPlayer;
+    playerType = aType;
+    if (player == BLACK) {
+        crtPixmap = blackStone;
+    }
+    else if (player == WHITE) {
+        crtPixmap = whiteStone;
+    }
+    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
+    update();
 }

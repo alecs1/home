@@ -24,6 +24,7 @@ private slots:
 signals:
     void gameStateChanged(GameState state);
     void estimateScoreChanged(float score);
+    void crtPlayerChanged(int player, PlayerType type);
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -55,6 +56,16 @@ private:
     int crtPlayer;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK
 
+    /*we need to block input on the widget, with this hackish way:
+    time difference between the click that triggered blocking and current click must be bigger than the amount of time we decided to block input:
+    _click1_        _click2_(ignored)                           _click1_(accepted)
+                _block_input    _compute_   _unblock_input_
+    */
+    ulong lastInputTimestamp;
+    ulong inputBlockingDuration = 0;
+    QTime* blockTime;
+    bool cursorBlocked;
+
     bool useGNUGO = true;
 
 private:
@@ -70,8 +81,12 @@ private:
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
 
+    bool shouldRejectInput(QMouseEvent *ev);
+
 
     void launchGame();
 };
+
+//class RAIIInputBlock
 
 #endif // GOTABLE_H
