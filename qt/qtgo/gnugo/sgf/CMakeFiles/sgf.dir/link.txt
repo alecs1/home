@@ -1,0 +1,2 @@
+/usr/bin/ar cr libsgf.a  CMakeFiles/sgf.dir/sgf_utils.o CMakeFiles/sgf.dir/sgfnode.o CMakeFiles/sgf.dir/sgftree.o
+/usr/bin/ranlib libsgf.a

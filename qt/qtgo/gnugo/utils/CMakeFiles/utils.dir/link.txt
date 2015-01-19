@@ -1,0 +1,2 @@
+/usr/bin/ar cr libutils.a  CMakeFiles/utils.dir/getopt.o CMakeFiles/utils.dir/getopt1.o CMakeFiles/utils.dir/random.o CMakeFiles/utils.dir/gg_utils.o CMakeFiles/utils.dir/winsocket.o
+/usr/bin/ranlib libutils.a

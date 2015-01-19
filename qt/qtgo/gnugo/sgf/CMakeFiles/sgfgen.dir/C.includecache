@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/alex/github/home/qt/qtgo/gnugo/sgf/sgfgen.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+

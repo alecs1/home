@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="GNUGo" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\utils\;CMake Files\sgf\;CMake Files\engine\;CMake Files\patterns\;CMake Files\interface\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="edit_cache">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 edit_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="install">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 install" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="install/local">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 install/local" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="install/strip">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 install/strip" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="list_install_components">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 list_install_components" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rebuild_cache">
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 rebuild_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="utils">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/utils/libutils.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 utils" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="utils/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/utils/libutils.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 utils/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/utils/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="sgf">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/sgf/libsgf.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 sgf" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="sgf/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/sgf/libsgf.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 sgf/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="sgfgen">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgfgen" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 sgfgen" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="sgfgen/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgfgen" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 sgfgen/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/sgf/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="board">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/engine/libboard.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 board" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="board/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/engine/libboard.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 board/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="engine">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/engine/libengine.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 engine" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="engine/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/engine/libengine.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 engine/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/engine/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="compress_fuseki">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/compress_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 compress_fuseki" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="compress_fuseki/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/compress_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 compress_fuseki/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="extract_fuseki">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/extract_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 extract_fuseki" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="extract_fuseki/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/extract_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 extract_fuseki/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="joseki">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/joseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 joseki" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="joseki/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/joseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 joseki/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkeyes">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkeyes" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkeyes" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkeyes/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkeyes" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkeyes/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkmcpat">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkmcpat" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkmcpat" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkmcpat/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkmcpat" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkmcpat/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkpat">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkpat" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkpat" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="mkpat/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkpat" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 mkpat/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="patterns">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/libpatterns.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 patterns" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="patterns/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/libpatterns.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 patterns/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="uncompress_fuseki">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/uncompress_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 uncompress_fuseki" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="uncompress_fuseki/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/patterns/uncompress_fuseki" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/patterns" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 uncompress_fuseki/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/patterns/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="gnugo">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/interface/gnugo" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 gnugo" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="gnugo/fast">
+         <Option output="/home/alex/github/home/qt/qtgo/gnugo/interface/gnugo" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add option="-DHAVE_CONFIG_H" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/engine" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/sgf" />
+            <Add directory="/home/alex/github/home/qt/qtgo/gnugo/utils" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 gnugo/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/alex/github/home/qt/qtgo/gnugo/interface/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/aftermath.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/board.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/boardlib.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/breakin.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/cache.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/clock.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/combination.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/dragon.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/endgame.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/filllib.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/fuseki.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/genmove.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/globals.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/handicap.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/hash.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/influence.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/interface.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/matchpat.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/montecarlo.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/move_reasons.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/movelist.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/optics.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/oracle.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/owl.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/persistent.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/printutils.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/readconnect.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/reading.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/semeai.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/sgfdecide.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/sgffile.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/shapes.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/showbord.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/surround.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/unconditional.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/utils.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/value_moves.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/worm.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/gmp.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/gtp.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/main.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/play_ascii.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/play_gmp.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/play_gtp.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/play_solo.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/play_test.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/compress_fuseki.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/connections.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/dfa.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/extract_fuseki.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/helpers.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/joseki.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkeyes.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkmcpat.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/mkpat.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/transform.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/uncompress_fuseki.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgf_utils.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgfgen.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgfnode.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgftree.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/getopt.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/getopt1.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/gg_utils.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/random.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/winsocket.c">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/board.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/cache.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/clock.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/hash.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/influence.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/move_reasons.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/readconnect.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/gmp.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/gtp.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/dfa.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/sgftree.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/gg_utils.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/random.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/winsocket.h">
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/config.h.cmake">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/utils/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\utils\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/sgf/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\sgf\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/engine/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\engine\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/patterns/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\patterns\" />
+      </Unit>
+      <Unit filename="/home/alex/github/home/qt/qtgo/gnugo/interface/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\interface\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>
