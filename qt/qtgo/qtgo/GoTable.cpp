@@ -94,7 +94,13 @@ bool GoTable::AIPlayNextMove() {
     float value;
     int resign;
     int move = 0;
-    move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
+
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
+
+    //move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
+    aiThread.run_do_genmove(crtPlayer, 0.5, NULL, &value, &resign, & move);
+
+    printf("%s - back to thread %p\n", __func__, QThread::currentThreadId());
 
     //printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
 
@@ -373,16 +379,17 @@ bool GoTable::buildPixmaps(int diameter) {
 //some game logic
 bool GoTable::placeStone(int row, int col) {
     //printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    inputBlockingDuration = 0;
+    if (players[crtPlayer] == PlayerType::LocalHuman)
+        blockTime->start();
+
     if (!isValidPos(row, col))
         return false;
 
     if (state == GameState::Stopped)
         return false;
 
-    inputBlockingDuration = 0;
-    if (players[crtPlayer] == PlayerType::LocalHuman)
-        blockTime->start();
-    setEnabled(false);
+    //setEnabled(false);
     cursorBlocked = true;
     updateCursor();
 
@@ -513,3 +520,25 @@ void GoTable::launchGame() {
     }
 }
 
+
+bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves, float *value, int *resign, int *result) {
+    if(running)
+        return false;
+
+    running = true;
+    p.color = color;
+    p.pure_threat_value = pure_threat_value;
+    p.allowed_moves = allowed_moves;
+    p.value = value;
+    p.resign = resign;
+    p.result = result;
+    start();
+}
+
+void AIThread::run() {
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
+
+    *p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, p.value, p.resign);
+    printf("%s - done running on thread %p\n", __func__, QThread::currentThreadId());
+    running = false;
+}

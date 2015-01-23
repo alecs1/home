@@ -2,8 +2,32 @@
 #define GOTABLE_H
 
 #include <QWidget>
+#include <QThread>
 
 #include "Global.h"
+
+
+class AIThread : public QThread {
+Q_OBJECT
+    void run() override;
+
+public:
+    bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves, float *value, int *resign, int* result);
+
+signals:
+    void AIComputationReady();
+
+private:
+    bool running = false;
+    struct Parameters {
+        int color;
+        float pure_threat_value;
+        int* allowed_moves;
+        float *value; int *resign;
+        int *result;
+    };
+    Parameters p;
+};
 
 
 class GoTable : public QWidget {
@@ -68,6 +92,8 @@ private:
 
     bool useGNUGO = true;
 
+    AIThread aiThread;
+
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
@@ -87,6 +113,5 @@ private:
     void launchGame();
 };
 
-//class RAIIInputBlock
 
 #endif // GOTABLE_H
