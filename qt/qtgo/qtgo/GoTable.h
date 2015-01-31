@@ -6,16 +6,16 @@
 
 #include "Global.h"
 
-
+class GoTable;
 class AIThread : public QThread {
 Q_OBJECT
     void run() override;
 
 public:
-    bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves, float *value, int *resign, int* result);
+    bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
 
 signals:
-    void AIComputationReady();
+    void AIThreadPlaceStone(int row, int col);
 
 private:
     bool running = false;
@@ -23,8 +23,9 @@ private:
         int color;
         float pure_threat_value;
         int* allowed_moves;
-        float *value; int *resign;
-        int *result;
+        float value;
+        int resign;
+        int result;
     };
     Parameters p;
 };
@@ -37,9 +38,11 @@ public:
     ~GoTable();
 
     void paintEvent(QPaintEvent *);
+    static QPoint fromGnuGoPos(int pos);
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
+    bool placeStone(int row, int col);
     //void settingsChanged(SGameSettings newSettings);
 
 private slots:
@@ -97,11 +100,9 @@ private:
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
-    bool placeStone(int row, int col);
 
     void resetGnuGo();
     int toGnuGoPos(int row, int col);
-    QPoint fromGnuGoPos(int pos);
     void printfGnuGoStruct();
     bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used

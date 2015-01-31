@@ -64,6 +64,8 @@ GoTable::GoTable(QWidget *parent) :
 
     state = GameState::Initial;
     emit gameStateChanged(state);
+
+    connect(&aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
 }
 
 GoTable::~GoTable() {
@@ -86,42 +88,6 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     updateCursor();
     emit gameStateChanged(state);
-}
-
-//TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
-bool GoTable::AIPlayNextMove() {
-
-    float value;
-    int resign;
-    int move = 0;
-
-    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
-
-    //move = do_genmove(crtPlayer, 0.5, NULL, &value, &resign);
-    aiThread.run_do_genmove(crtPlayer, 0.5, NULL, &value, &resign, & move);
-
-    printf("%s - back to thread %p\n", __func__, QThread::currentThreadId());
-
-    //printf("%s, move:%d, value=%f, resign=%d\n", __func__, move, value, resign);
-
-    if (move == 0) {
-        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
-        float score = gnugo_estimate_score(NULL, NULL);
-        if (score > 0) {
-            //printf("%s - estimates: white winning by %f\n", __func__, score);
-        }
-        else {
-            //printf("%s - estimates: black winning by %f\n", __func__, -score);
-        }
-    }
-
-    QPoint point = fromGnuGoPos(move);
-    printf("%s - AI has finished\n", __func__);
-    placeStone(point.y(), point.x());
-
-    //printfGnuGoStruct();
-
-    return false;
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
@@ -376,7 +342,6 @@ bool GoTable::buildPixmaps(int diameter) {
 }
 
 
-//some game logic
 bool GoTable::placeStone(int row, int col) {
     //printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     inputBlockingDuration = 0;
@@ -521,7 +486,18 @@ void GoTable::launchGame() {
 }
 
 
-bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves, float *value, int *resign, int *result) {
+//TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
+bool GoTable::AIPlayNextMove() {
+
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
+
+    aiThread.run_do_genmove(crtPlayer, 0.5, NULL);
+
+    return false;
+}
+
+bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
+
     if(running)
         return false;
 
@@ -529,16 +505,32 @@ bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_m
     p.color = color;
     p.pure_threat_value = pure_threat_value;
     p.allowed_moves = allowed_moves;
-    p.value = value;
-    p.resign = resign;
-    p.result = result;
+    p.value = 0;
+    p.resign = 0;
+    p.result = 0;
     start();
 }
 
 void AIThread::run() {
     printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
-    *p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, p.value, p.resign);
-    printf("%s - done running on thread %p\n", __func__, QThread::currentThreadId());
+    p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, &p.value, &p.resign);
+
+    int move = p.result;
+    if (move == 0) {
+        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
+        float score = gnugo_estimate_score(NULL, NULL);
+        if (score > 0) {
+            //printf("%s - estimates: white winning by %f\n", __func__, score);
+        }
+        else {
+            //printf("%s - estimates: black winning by %f\n", __func__, -score);
+        }
+    }
+
+    QPoint point = GoTable::fromGnuGoPos(move);
+    printf("%s - AI has finished\n", __func__);
+    emit AIThreadPlaceStone(point.y(), point.x());
+
     running = false;
 }
