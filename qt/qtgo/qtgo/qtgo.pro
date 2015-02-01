@@ -24,14 +24,17 @@ HEADERS += GameSettings.h \
            Global.h \
            GoTable.h \
            mainwindow.h \
-           PlayerWidget.h
-FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui
+           PlayerWidget.h \
+           GameEndDialog.h
+FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
+    GameEndDialog.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
            main.cpp \
            mainwindow.cpp \
-           PlayerWidget.cpp
+           PlayerWidget.cpp \
+           GameEndDialog.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt

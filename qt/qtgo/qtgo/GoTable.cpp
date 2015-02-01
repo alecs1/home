@@ -6,6 +6,7 @@
 #include <QSvgRenderer>
 #include <QTimer>
 #include <QTime>
+#include <QTextStream>
 
 extern "C" {
 #include "engine/board.h"
@@ -16,8 +17,8 @@ float gnugo_estimate_score(float *upper, float *lower);
 }
 
 #include "GoTable.h"
-
 #include "GameStruct.h"
+#include "GameEndDialog.h"
 
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
@@ -80,6 +81,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     if (state == GameState::Started) {
         state = GameState::Stopped;
+        finish();
         //TODO - ask if we want to lose progress
     }
     else {
@@ -513,6 +515,36 @@ void GoTable::finish() {
     QString finisher = "White";
     if (crtPlayer == BLACK)
         finisher = "Black";
+    QString finalText;
+    QTextStream stream(&finalText);
+    stream << winner << " won with a score of " << fabs(score) << ".\n" << finisher << " ended the game.";
+    stream.flush();
+
+    QFont font;
+    int defaultFontSize = font.pixelSize();
+    if (defaultFontSize <= 0)
+        defaultFontSize = font.pointSize();
+    if (defaultFontSize <= 0) {
+        printf("%s - error - could not establish a fonst size!\n", __func__);
+    }
+    int SCALE = 8;
+    int diameter = defaultFontSize * SCALE;
+
+    QPixmap winnerPixmap(diameter, diameter);
+    winnerPixmap.fill(Qt::transparent);
+    QSvgRenderer svgR;
+    if (score < 0)
+        svgR.load(QString(":/resources/cursorBlack.svg"));
+    else
+        svgR.load(QString(":/resources/cursorWhite.svg"));
+    QPainter bPainter(&winnerPixmap);
+    svgR.render(&bPainter);
+
+    GameEndDialog endDialog(this);
+    endDialog.setText(finalText);
+    endDialog.setPixmap((winnerPixmap));
+    endDialog.setModal(true);
+    endDialog.exec();
 }
 
 void GoTable::activateEstimatingScore(bool estimate) {

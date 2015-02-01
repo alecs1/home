@@ -122,7 +122,7 @@ void GameSettings::updateScoreEstimateButton() {
             text = "Black: ";
 
         QString aux;
-        aux.sprintf("%3.1f", scoreEstimate);
+        aux.sprintf("%3.1f", fabs(scoreEstimate));
         text += aux + " (hide)";
     }
     else {
