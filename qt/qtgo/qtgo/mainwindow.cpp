@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int,PlayerType)), settings, SLOT(setCurrentPlayer(int,PlayerType)));

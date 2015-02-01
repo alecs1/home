@@ -19,7 +19,8 @@ public:
 
 signals:
     void launchGamePerform(SGameSettings settings);
-    //void settingsChanged(SGameSettings settings);
+    void doEstimateScore(bool estimate);
+
 
 public slots:
     void setGameState(GameState state);

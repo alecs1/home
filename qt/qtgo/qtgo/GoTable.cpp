@@ -66,6 +66,7 @@ GoTable::GoTable(QWidget *parent) :
     emit gameStateChanged(state);
 
     connect(&aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
+    connect(&aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
 }
 
 GoTable::~GoTable() {
@@ -399,14 +400,19 @@ bool GoTable::placeStone(int row, int col) {
 
     update();
 
-    float score = gnugo_estimate_score(NULL, NULL);
-    emit estimateScoreChanged(score);
-    if (score > 0) {
-        //printf("%s - estimates: white winning by %f\n", __func__, score);
+    if (estimateScore) {
+        printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        float score = gnugo_estimate_score(NULL, NULL);
+        printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
+        emit estimateScoreChanged(score);
+        if (score > 0) {
+            //printf("%s - estimates: white winning by %f\n", __func__, score);
+        }
+        else {
+            //printf("%s - estimates: black winning by %f\n", __func__, -score);
+        }
     }
-    else {
-        //printf("%s - estimates: black winning by %f\n", __func__, -score);
-    }
+
 
     //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
     if (players[crtPlayer] == PlayerType::AI) {
@@ -497,6 +503,28 @@ bool GoTable::AIPlayNextMove() {
     return false;
 }
 
+void GoTable::finish() {
+    //TODO - find the GnuGo fancy end computations
+
+    float score = gnugo_estimate_score(NULL, NULL);
+    QString winner = "White";
+    if (score < 0)
+        winner = "Black";
+    QString finisher = "White";
+    if (crtPlayer == BLACK)
+        finisher = "Black";
+}
+
+void GoTable::activateEstimatingScore(bool estimate) {
+    estimateScore = estimate;
+    if (estimate) {
+        printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        float score = gnugo_estimate_score(NULL, NULL);
+        printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
+        emit estimateScoreChanged(score);
+    }
+}
+
 bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
 
     if(running)
@@ -510,6 +538,7 @@ bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_m
     p.resign = 0;
     p.result = 0;
     start();
+    return true;
 }
 
 void AIThread::run() {
@@ -527,11 +556,64 @@ void AIThread::run() {
         else {
             printf("%s - estimates: black winning by %f\n", __func__, -score);
         }
+        emit AIQuitsGame();
+    }
+    else {
+        QPoint point = GoTable::fromGnuGoPos(move);
+        printf("qtgo: %s - AI has finished\n", __func__);
+        emit AIThreadPlaceStone(point.y(), point.x());
     }
 
-    QPoint point = GoTable::fromGnuGoPos(move);
-    printf("qtgo: %s - AI has finished\n", __func__);
-    emit AIThreadPlaceStone(point.y(), point.x());
-
     running = false;
+}
+
+
+
+#include <QElapsedTimer>
+#include <QTextStream>
+ElapsedTimerWrapper::ElapsedTimerWrapper() {
+    t = new QElapsedTimer();
+    t->start();
+}
+
+ElapsedTimerWrapper::~ElapsedTimerWrapper() {
+    delete t;
+}
+
+uint64_t ElapsedTimerWrapper::getTimestamp(uint64_t* delta) {
+    uint64_t ts = t->elapsed();
+    if (delta != NULL)
+        *delta = ts - lastTimestamp;
+    lastTimestamp = ts;
+    return ts;
+}
+
+QString ElapsedTimerWrapper::getTimestampStr(QString* delta) {
+    uint64_t auxDelta, ts;
+    ts = getTimestamp(&auxDelta);
+    QTextStream stream;
+    if (delta != NULL) {
+        stream.setString(delta);
+        stream << auxDelta;
+    }
+    QString retVal;
+    stream.setString(&retVal);
+    stream << ts;
+    stream.flush();
+    return retVal;
+}
+
+uint64_t ElapsedTimerWrapper::getElapsed() {
+    uint64_t ts = t->elapsed();
+    uint64_t delta = ts - lastTimestamp;
+    lastTimestamp = ts;
+    return delta;
+}
+
+QString ElapsedTimerWrapper::getElapsedStr() {
+    QString retVal;
+    QTextStream stream(&retVal);
+    stream << getElapsed();
+    stream.flush();
+    return retVal;
 }

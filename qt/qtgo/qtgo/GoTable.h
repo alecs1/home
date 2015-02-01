@@ -6,6 +6,21 @@
 
 #include "Global.h"
 
+//Very basic wrapper until (if) I decide for a nice way to get timestamps
+class QElapsedTimer;
+class ElapsedTimerWrapper {
+    QElapsedTimer* t;
+    uint64_t lastTimestamp;
+public:
+    ElapsedTimerWrapper();
+    ~ElapsedTimerWrapper();
+
+    uint64_t getTimestamp(uint64_t* delta = NULL);
+    QString getTimestampStr(QString* delta = NULL);
+    uint64_t getElapsed();
+    QString getElapsedStr();
+};
+
 class AIThread : public QThread {
 Q_OBJECT
     void run() override;
@@ -15,6 +30,7 @@ public:
 
 signals:
     void AIThreadPlaceStone(int row, int col);
+    void AIQuitsGame();
 
 private:
     bool running = false;
@@ -42,7 +58,8 @@ public:
 public slots:
     void launchGamePressed(SGameSettings newSettings);
     bool placeStone(int row, int col);
-    //void settingsChanged(SGameSettings newSettings);
+    void finish();
+    void activateEstimatingScore(bool estimate);
 
 private slots:
     bool AIPlayNextMove();
@@ -93,8 +110,11 @@ private:
     bool cursorBlocked;
 
     bool useGNUGO = true;
+    bool estimateScore = false;
 
     AIThread aiThread;
+    ElapsedTimerWrapper timer;
+    QString timerDelta;
 
 private:
     bool buildPixmaps(int diameter);
@@ -108,7 +128,6 @@ private:
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame();
-    void finish();
 };
 
 

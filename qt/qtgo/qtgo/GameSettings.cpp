@@ -144,6 +144,7 @@ void GameSettings::toggleShowEstimateScore() {
         showScore = true;
 
     updateScoreEstimateButton();
+    emit doEstimateScore(showScore);
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
