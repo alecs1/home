@@ -6,7 +6,6 @@
 
 #include "Global.h"
 
-class GoTable;
 class AIThread : public QThread {
 Q_OBJECT
     void run() override;
@@ -107,11 +106,9 @@ private:
     bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
-
     bool shouldRejectInput(QMouseEvent *ev);
-
-
     void launchGame();
+    void finish();
 };
 
 

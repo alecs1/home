@@ -9,6 +9,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget)
 {
+    printf("qtgo: %s\n", __func__);
     ui->setupUi(this);
     ui->playerComboBox->insertItem((int)PlayerType::AI, "Computer");
     ui->playerComboBox->insertItem((int)PlayerType::LocalHuman, "Human");
@@ -29,6 +30,7 @@ void PlayerWidget::setPlayerType(PlayerType type) {
 }
 
 void PlayerWidget::setPixmap(QPixmap aPixmap) {
+    printf("qtgo: %s - set pixmap size:%d, %d\n", __func__, aPixmap.size().width(), aPixmap.size().height());
     pixmap = aPixmap;
     ui->playerColourLabel->setMinimumSize(pixmap.size());
     ui->playerColourLabel->setPixmap(pixmap);

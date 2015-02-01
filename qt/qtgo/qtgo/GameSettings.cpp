@@ -10,6 +10,7 @@
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
 {
+    printf("gtgo: %s - start\n", __func__);
     ui->setupUi(this);
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
@@ -19,10 +20,18 @@ GameSettings::GameSettings(QWidget *parent):
     //initialize the two players:
     QSvgRenderer svgR;
     QFont font;
-    int defaultFontSize = font.pointSize();
+    int defaultFontSize = font.pixelSize();
+    if (defaultFontSize <= 0)
+        defaultFontSize = font.pointSize();
+    if (defaultFontSize <= 0) {
+        printf("%s - error - could not establish a fonst size!\n", __func__);
+    }
+
     const int SCALE= 3;
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
+
+    printf("qtgo: %s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
 
     QPixmap blackStone(diameter, diameter);
     blackStone.fill(Qt::transparent);
@@ -58,11 +67,17 @@ GameSettings::GameSettings(QWidget *parent):
     ui->passButton->hide();
 
     showScore = false;
+    setGameState(GameState::Initial);
 
-    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+    printf("qtgo: %s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+    printf("qtgo: %s - end\n", __func__);
 }
 
 void GameSettings::setGameState(GameState state) {
+    if (state == GameState::Initial) {
+        ui->scoreEstimateButton->hide();
+        setScoreEstimate(0);
+    }
     if (state == GameState::Started) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
@@ -72,6 +87,8 @@ void GameSettings::setGameState(GameState state) {
         ui->passButton->show();
         whitePlayer->enableChoosingPlayer(false);
         blackPlayer->enableChoosingPlayer(false);
+        ui->scoreEstimateButton->show();
+        setScoreEstimate(0);
         showingRoundInfo = true;
         //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
@@ -86,6 +103,7 @@ void GameSettings::setGameState(GameState state) {
         ui->passButton->hide();
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
+        //ui->scoreEstimateButton->hide();
         showingRoundInfo = false;
         //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
@@ -93,29 +111,39 @@ void GameSettings::setGameState(GameState state) {
 
 void GameSettings::setScoreEstimate(float score) {
     scoreEstimate = score;
+    updateScoreEstimateButton();
 }
 
-void GameSettings::showScoreEstimate() {
-    QString text("White: ");
-    if (scoreEstimate < 0)
-        text = "Black: ";
+void GameSettings::updateScoreEstimateButton() {
+    QString text;
+    if (showScore) {
+        text = "White: ";
+        if (scoreEstimate < 0)
+            text = "Black: ";
 
-    //text.sprintf("Est: %3.1f", score);
+        QString aux;
+        aux.sprintf("%3.1f", scoreEstimate);
+        text += aux + " (hide)";
+    }
+    else {
+        text = "Estimate score";
+    }
 
     ui->scoreEstimateButton->setText(text);
 }
 
 void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     roundInfo->setCurrentPlayer(player, type);
+    roundInfo->update();
 }
 
 void GameSettings::toggleShowEstimateScore() {
-    if (showScore) {
+    if (showScore)
         showScore = false;
-    }
-    else {
+    else
         showScore = true;
-    }
+
+    updateScoreEstimateButton();
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
@@ -131,7 +159,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 }
 
 void GameSettings::populateSettings() {
-    printf("%s\n", __func__);
+    printf("qtgo: %s\n", __func__);
     SGameSettings newSettings;
     newSettings.size = 19;
     if (ui->button9x9->isChecked())
@@ -168,7 +196,14 @@ RoundInfo::RoundInfo(QWidget* parent) :
 
     QFont font;
     QString defaultFont = font.defaultFamily();
-    int defaultFontSize = font.pointSize();
+    int defaultFontSize = font.pixelSize();
+    if (defaultFontSize <= 0)
+        defaultFontSize = font.pointSize();
+    if (defaultFontSize <= 0) {
+        printf("%s - error - could not establish a fonst size!\n", __func__);
+    }
+
+
 
     printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
     const int SCALE= 8;

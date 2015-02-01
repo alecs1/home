@@ -32,6 +32,7 @@ private slots:
 
 private:
     void populateSettings();
+    void updateScoreEstimateButton();
 
 protected:
     //intercept generic events and call populateSettings on each of them
