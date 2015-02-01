@@ -25,6 +25,7 @@ public slots:
     void setGameState(GameState state);
     void setScoreEstimate(float score);
     void setCurrentPlayer(int player, PlayerType type);
+    void toggleShowEstimateScore();
 
 private slots:
     void launchGameClicked();
@@ -44,6 +45,8 @@ private:
     PlayerWidget* whitePlayer;
     bool showingRoundInfo;
     RoundInfo* roundInfo;
+    bool showScore;
+    float scoreEstimate;
 };
 
 
@@ -54,6 +57,9 @@ public:
     RoundInfo(QWidget* parent);
     void paintEvent(QPaintEvent *);
     void setCurrentPlayer(int aPlayer, PlayerType aType);
+
+private:
+    void computeAnim(float pos);
 
 private:
     QPixmap* blackStone;

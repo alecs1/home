@@ -20,17 +20,48 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
+   <property name="leftMargin">
+    <number>1</number>
+   </property>
+   <property name="topMargin">
+    <number>1</number>
+   </property>
+   <property name="rightMargin">
+    <number>1</number>
+   </property>
+   <property name="bottomMargin">
+    <number>1</number>
+   </property>
+   <property name="spacing">
+    <number>1</number>
+   </property>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
      <property name="spacing">
       <number>0</number>
      </property>
+     <item row="9" column="0">
+      <spacer name="verticalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
      <item row="1" column="0">
       <layout class="QGridLayout" name="gridLayout_3">
-       <property name="spacing">
+       <property name="horizontalSpacing">
         <number>0</number>
        </property>
-       <item row="1" column="0">
+       <property name="verticalSpacing">
+        <number>1</number>
+       </property>
+       <item row="2" column="0">
         <widget class="QPushButton" name="launchButton">
          <property name="text">
           <string>Start</string>
@@ -38,113 +69,23 @@
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="passButton">
          <property name="text">
           <string>Pass</string>
          </property>
+         <property name="flat">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QPushButton" name="hintButton">
          <property name="text">
           <string>Hint</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="scoreEstimateLabel">
-         <property name="text">
-          <string>Est:</string>
-         </property>
-        </widget>
-       </item>
       </layout>
-     </item>
-     <item row="2" column="0">
-      <widget class="QGroupBox" name="tableSizeGroupBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>1</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="sizeIncrement">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>Grid settings</string>
-       </property>
-       <widget class="QRadioButton" name="button9x9">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>30</y>
-          <width>102</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>9x9</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup</string>
-        </attribute>
-       </widget>
-       <widget class="QRadioButton" name="button13x13">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>60</y>
-          <width>102</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>13x13</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup</string>
-        </attribute>
-       </widget>
-       <widget class="QRadioButton" name="button19x19">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>90</y>
-          <width>102</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>19x19</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">buttonGroup</string>
-        </attribute>
-       </widget>
-       <zorder>button13x13</zorder>
-       <zorder>button19x19</zorder>
-       <zorder>button9x9</zorder>
-      </widget>
      </item>
      <item row="2" column="2">
       <spacer name="horizontalSpacer">
@@ -169,18 +110,57 @@
      <item row="0" column="0">
       <widget class="QWidget" name="roundInfoWidget" native="true"/>
      </item>
-     <item row="6" column="0">
-      <spacer name="verticalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+     <item row="7" column="0">
+      <widget class="QGroupBox" name="tableSizeGroupBox">
+       <property name="title">
+        <string>Grid settings</string>
        </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <item>
+         <widget class="QRadioButton" name="button9x9">
+          <property name="text">
+           <string>9x9</string>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">buttonGroup</string>
+          </attribute>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="button13x13">
+          <property name="text">
+           <string>13x13</string>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">buttonGroup</string>
+          </attribute>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="button19x19">
+          <property name="text">
+           <string>19x19</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">buttonGroup</string>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QPushButton" name="scoreEstimateButton">
+       <property name="text">
+        <string>Score estimate</string>
        </property>
-      </spacer>
+      </widget>
      </item>
     </layout>
    </item>

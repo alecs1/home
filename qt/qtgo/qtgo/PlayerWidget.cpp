@@ -1,6 +1,8 @@
 #include "PlayerWidget.h"
 #include "ui_PlayerWidget.h"
 
+#include <QPainter>
+
 #include "Global.h"
 
 PlayerWidget::PlayerWidget(QWidget *parent) :
@@ -18,14 +20,20 @@ PlayerWidget::~PlayerWidget()
     delete ui;
 }
 
-void PlayerWidget::setTitle(QString title) {
-    ui->playerGroupBox->setTitle(title);
-}
-
 int PlayerWidget::playerType() const {
     return ui->playerComboBox->currentIndex();
 }
 
 void PlayerWidget::setPlayerType(PlayerType type) {
     ui->playerComboBox->setCurrentIndex((int)type);
+}
+
+void PlayerWidget::setPixmap(QPixmap aPixmap) {
+    pixmap = aPixmap;
+    ui->playerColourLabel->setMinimumSize(pixmap.size());
+    ui->playerColourLabel->setPixmap(pixmap);
+}
+
+void PlayerWidget::enableChoosingPlayer(bool enable) {
+    ui->playerComboBox->setEnabled(enable);
 }

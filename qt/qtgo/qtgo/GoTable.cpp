@@ -354,7 +354,6 @@ bool GoTable::placeStone(int row, int col) {
     if (state == GameState::Stopped)
         return false;
 
-    //setEnabled(false);
     cursorBlocked = true;
     updateCursor();
 
@@ -409,10 +408,9 @@ bool GoTable::placeStone(int row, int col) {
 
     //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
     if (players[crtPlayer] == PlayerType::AI) {
-        QTimer::singleShot(5, this, SLOT(AIPlayNextMove()));
+        QTimer::singleShot(0, this, SLOT(AIPlayNextMove()));
     }
     else {
-        setEnabled(true); //this is too early, to the point of making setEnabled useless; queued clicks still come in
         inputBlockingDuration = blockTime->elapsed();
         cursorBlocked = false;
         updateCursor();
