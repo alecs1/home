@@ -1,3 +1,5 @@
+# copy needed directory structures
+
 function(FAndroidSpecificSetup source)
     file(COPY ${SOURCE}/qtgo DESTINATION .)
     file(COPY ${SOURCE}/gnugo DESTINATION gnugo_include FILES_MATCHING PATTERN "*.h")

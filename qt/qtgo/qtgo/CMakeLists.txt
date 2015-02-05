@@ -23,7 +23,7 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 #qt UI
-qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui)
+qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui)
 
 
 #how to debug a CMake script:
@@ -31,12 +31,12 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 
 #qt moc
-qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h PlayerWidget.h mainwindow.h)
+qt5_wrap_cpp(HEADER_MOC GoTable.h GameSettings.h PlayerWidget.h GameEndDialog.h mainwindow.h)
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+add_executable(qtgo GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp mainwindow.cpp ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 #TODO - why don't I have to link libpatterns.a?
 target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine utils sgf patterns)

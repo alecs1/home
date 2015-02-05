@@ -16,6 +16,22 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    #if defined(Q_OS_ANDROID)
+    QList<QToolBar *> toolbars = findChildren<QToolBar *>();
+    for (auto* toolbar : toolbars) {
+        printf("%s - hiding toolbar %p\n", __func__, toolbar);
+        toolbar->hide();
+    }
+    statusBar()->hide();
+    #else
+    QList<QToolBar *> toolbars = findChildren<QToolBar *>();
+    for (auto* toolbar : toolbars) {
+        printf("%s - hiding toolbar %p\n", __func__, toolbar);
+        toolbar->hide();
+    }
+    statusBar()->hide();
+    #endif
+
     GoTable* table = new GoTable(this);
     ui->centralWidget->setLayout(ui->gridLayout);
 
@@ -29,18 +45,19 @@ MainWindow::MainWindow(QWidget *parent) :
     int minHeight = table->minimumSize().height();
 
 
-    #if defined(Q_OS_LINUX) || defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
+    //seems Q_OS_LINUX also applies to Android
     GameSettings* settings = new GameSettings(this);
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int,PlayerType)), settings, SLOT(setCurrentPlayer(int,PlayerType)));
     minWidth += settings->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;
-    #endif
+
 
     printf("%s - computed min sizes: %dx%d\n", __func__, minWidth, minHeight);
     setMinimumSize(minWidth, minHeight);

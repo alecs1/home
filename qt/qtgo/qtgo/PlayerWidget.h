@@ -16,13 +16,17 @@ class PlayerWidget : public QWidget
 public:
     explicit PlayerWidget(QWidget *parent = 0);
     ~PlayerWidget();
-    void setTitle(QString title);
+    void setPixmap(QPixmap aPixmap);
 
     int playerType() const;
     void setPlayerType(PlayerType type);
+    void enableChoosingPlayer(bool enable);
+
+//    void paintEvent(QPaintEvent *);
 
 private:
     Ui::PlayerWidget *ui;
+    QPixmap pixmap;
 };
 
 #endif // PLAYERWIDGET_H

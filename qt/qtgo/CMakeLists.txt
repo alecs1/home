@@ -37,15 +37,18 @@ if (DEFINED ANDROID_ABI)
     set(ANDROID_SDK "/home/alex/programs/adt-bundle-linux-x86_64-20140702/sdk")
     set(ENV{ANDROID_SDK} ${ANDROID_SDK})
     set(ENV{ANDROID_SDK_ROOT} ${ANDROID_SDK})
+
+    #TODO - this is also a sorry hack
+    set (ANDROID_NDK_INCLUDES ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android)
+
     add_custom_target(AndroidSpecificSetup
                     ALL
                     COMMAND ${CMAKE_COMMAND} -D SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -D BUILD_APK_TARGET_DIR=${BUILD_APK_TARGET_DIR} -D ANDROID_TEMPLATE=${ANDROID_TEMPLATE} -P AndroidSpecificSetup.cmake
-                    #DEPENDS bogus
                     COMMENT "Setting up structure for qmake system" VERBATIM)
     add_custom_target(QtGo_Android
                     ALL
                     WORKING_DIRECTORY qtgo
-                    COMMAND ${QT_DIR}/bin/qmake -r
+                    COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES}
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name QtGo

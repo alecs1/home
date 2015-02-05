@@ -1,6 +1,20 @@
 v 1. Use do_genmove for playing against the computer. Also look at other functions in the file for computing the score.
 2. Give feedback that the computer is currently calculating and block interaction while computing.
-        -introduced a timer to reject clicks, seems to work fine.
-3. Android UI - remove top menu
-        - immersive mode
-        - confirmation button
+        -introduced a timer to reject clicks; disabled it after introducing AIThread. There are still situations when a wrong click could be performed.
+
+3. Save current game.
+
+3.1 Android UI
+    v - remove top menu
+      - immersive mode
+      - confirmation button/double tap
+      - disable portrait layout
+      - make sidebar hideable
+
+4. Correct score computation.
+
+5. Learn about Komi and and options.
+
+6. AI should be selectable.
+
+7. Play over ethernet.

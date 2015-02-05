@@ -1,6 +1,11 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#if defined(Q_OS_ANDROID)
+#include <log.h>
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "qtgo", __VA_ARGS__);
+#endif
+
 enum class GameState:uint8_t  {
     Initial, //At GUI start-up, clicking on the board will start the game
     Stopped,

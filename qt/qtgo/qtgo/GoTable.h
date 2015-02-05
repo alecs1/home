@@ -2,8 +2,48 @@
 #define GOTABLE_H
 
 #include <QWidget>
+#include <QThread>
 
 #include "Global.h"
+
+//Very basic wrapper until (if) I decide for a nice way to get timestamps
+class QElapsedTimer;
+class ElapsedTimerWrapper {
+    QElapsedTimer* t;
+    uint64_t lastTimestamp;
+public:
+    ElapsedTimerWrapper();
+    ~ElapsedTimerWrapper();
+
+    uint64_t getTimestamp(uint64_t* delta = NULL);
+    QString getTimestampStr(QString* delta = NULL);
+    uint64_t getElapsed();
+    QString getElapsedStr();
+};
+
+class AIThread : public QThread {
+Q_OBJECT
+    void run() override;
+
+public:
+    bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
+
+signals:
+    void AIThreadPlaceStone(int row, int col);
+    void AIQuitsGame();
+
+private:
+    bool running = false;
+    struct Parameters {
+        int color;
+        float pure_threat_value;
+        int* allowed_moves;
+        float value;
+        int resign;
+        int result;
+    };
+    Parameters p;
+};
 
 
 class GoTable : public QWidget {
@@ -13,10 +53,13 @@ public:
     ~GoTable();
 
     void paintEvent(QPaintEvent *);
+    static QPoint fromGnuGoPos(int pos);
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
-    //void settingsChanged(SGameSettings newSettings);
+    bool placeStone(int row, int col);
+    void finish();
+    void activateEstimatingScore(bool estimate);
 
 private slots:
     bool AIPlayNextMove();
@@ -67,26 +110,25 @@ private:
     bool cursorBlocked;
 
     bool useGNUGO = true;
+    bool estimateScore = false;
+
+    AIThread aiThread;
+    ElapsedTimerWrapper timer;
+    QString timerDelta;
 
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
-    bool placeStone(int row, int col);
 
     void resetGnuGo();
     int toGnuGoPos(int row, int col);
-    QPoint fromGnuGoPos(int pos);
     void printfGnuGoStruct();
     bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
-
     bool shouldRejectInput(QMouseEvent *ev);
-
-
     void launchGame();
 };
 
-//class RAIIInputBlock
 
 #endif // GOTABLE_H
