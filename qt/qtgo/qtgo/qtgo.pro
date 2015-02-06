@@ -25,16 +25,19 @@ HEADERS += GameSettings.h \
            GoTable.h \
            mainwindow.h \
            PlayerWidget.h \
-           GameEndDialog.h
+           GameEndDialog.h \
+           ConfirmMoveDialog.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
-    GameEndDialog.ui
+           GameEndDialog.ui \
+           ConfirmMoveDialog.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
            main.cpp \
            mainwindow.cpp \
            PlayerWidget.cpp \
-           GameEndDialog.cpp
+           GameEndDialog.cpp \
+    ConfirmMoveDialog.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt

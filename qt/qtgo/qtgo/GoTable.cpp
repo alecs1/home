@@ -44,6 +44,13 @@ GoTable::GoTable(QWidget *parent) :
     highlightRow = -1;
     newStoneRow = -1;
     newStoneCol = -1;
+    unconfirmedStoneRow = -1;
+    unconfirmedStoneCol = -1;
+
+    askPlayConfirmation = true;
+    #if defined(Q_OS_ANDROID)
+    askPlayConfirmation = true;
+    #endif
 
     game.size = settings.size;
     players[BLACK]= settings.black;
@@ -125,6 +132,10 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     if (GameCanPlaceStone(&game, pos.y(), pos.x(), crtPlayer)) {
         newStoneRow = pos.y();
         newStoneCol = pos.x();
+        if (newStoneRow != unconfirmedStoneRow || newStoneCol != unconfirmedStoneCol) {
+            unconfirmedStoneRow = -1;
+            unconfirmedStoneCol = -1;
+        }
     }
 
     //TODO - this one can also be optimised
@@ -158,8 +169,33 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
 
     //QPointF localPos = ev->localPos();
     //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
-    if (pos.x() == newStoneCol && pos.y() == newStoneRow) {
-        placeStone(pos.y(), pos.x());
+    if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
+        if (askPlayConfirmation) {
+            if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
+                //user confirmed by double clicking this
+                placeStone(pos.y(), pos.x());
+                newStoneRow = -1;
+                newStoneCol = -1;
+                unconfirmedStoneRow = -1;
+                unconfirmedStoneCol = -1;
+                emit askUserConfirmation(false);
+            }
+            else {
+                unconfirmedStoneRow = newStoneRow;
+                unconfirmedStoneCol = newStoneCol;
+                newStoneRow = -1;
+                newStoneCol = -1;
+                emit askUserConfirmation(true);
+            }
+        }
+        else {
+            placeStone(pos.y(), pos.x());
+        }
+    }
+    else if (askPlayConfirmation) {
+        unconfirmedStoneRow = -1;
+        unconfirmedStoneCol = -1;
+        emit askUserConfirmation(false);
     }
 
 
@@ -293,6 +329,15 @@ void GoTable::paintEvent(QPaintEvent *) {
             painter.drawPixmap(newStonePos, *whiteStonePixmap);
     }
 
+    if ((unconfirmedStoneCol != -1) && (state != GameState::Stopped)){
+        QPointF unconfirmedStonePos(dist + unconfirmedStoneCol * dist - blackStonePixmap->width()/2, dist + unconfirmedStoneRow * dist - blackStonePixmap->width()/2);
+        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        if (crtPlayer == BLACK)
+            painter.drawPixmap(unconfirmedStonePos, *blackStonePixmap);
+        else if (crtPlayer == WHITE)
+            painter.drawPixmap(unconfirmedStonePos, *whiteStonePixmap);
+    }
+
     //all stones already on the table
     for(int i = 0; i < game.size; i++) {
         for(int j = 0; j < game.size; j++) {
@@ -353,7 +398,7 @@ bool GoTable::placeStone(int row, int col) {
     if (players[crtPlayer] == PlayerType::LocalHuman)
         blockTime->start();
 
-    if (!isValidPos(row, col))
+    if (!isPosInsideTable(row, col))
         return false;
 
     if (state == GameState::Stopped)
@@ -463,7 +508,7 @@ void GoTable::printfGnuGoStruct() {
     }
 }
 
-bool GoTable::isValidPos(int row, int col) {
+bool GoTable::isPosInsideTable(int row, int col) {
     if (row < 0 || row >= game.size || col < 0 || col >= game.size) {
         return false;
     }
@@ -555,6 +600,17 @@ void GoTable::activateEstimatingScore(bool estimate) {
         printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
         emit estimateScoreChanged(score);
     }
+}
+
+void GoTable::userConfirmedMove(int confirmed) {
+    printf("%s - confirmed=%d\n", __func__, confirmed);
+    const int QTDIALOG_CONFIRMED_CODE = 1;
+    if (confirmed == QTDIALOG_CONFIRMED_CODE) {
+        placeStone(unconfirmedStoneRow, unconfirmedStoneCol);
+    }
+    unconfirmedStoneRow = -1;
+    unconfirmedStoneCol = -1;
+    update();
 }
 
 bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {

@@ -6,6 +6,7 @@
 
 class PlayerWidget;
 class RoundInfo;
+class ConfirmMoveDialog;
 
 namespace Ui {
 class GameSettings;
@@ -16,16 +17,18 @@ Q_OBJECT
 
 public:
     GameSettings(QWidget* parent);
+    ~GameSettings();
 
 signals:
     void launchGamePerform(SGameSettings settings);
     void doEstimateScore(bool estimate);
-
+    void userConfirmedMove(int confirmed);
 
 public slots:
     void setGameState(GameState state);
     void setScoreEstimate(float score);
     void setCurrentPlayer(int player, PlayerType type);
+    void showConfirmButton(bool show);
     void toggleShowEstimateScore();
 
 private slots:
@@ -49,6 +52,8 @@ private:
     RoundInfo* roundInfo;
     bool showScore;
     float scoreEstimate;
+    ConfirmMoveDialog* confirmMoveDialog;
+
 };
 
 

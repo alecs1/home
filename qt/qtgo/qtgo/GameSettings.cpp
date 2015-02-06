@@ -6,6 +6,7 @@
 
 #include "PlayerWidget.h"
 #include "GameStruct.h"
+#include "ConfirmMoveDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
@@ -69,8 +70,14 @@ GameSettings::GameSettings(QWidget *parent):
     showScore = false;
     setGameState(GameState::Initial);
 
+    confirmMoveDialog = NULL;
+
     printf("qtgo: %s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("qtgo: %s - end\n", __func__);
+}
+
+GameSettings::~GameSettings() {
+    delete confirmMoveDialog;
 }
 
 void GameSettings::setGameState(GameState state) {
@@ -135,6 +142,23 @@ void GameSettings::updateScoreEstimateButton() {
 void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     roundInfo->setCurrentPlayer(player, type);
     roundInfo->update();
+}
+
+void GameSettings::showConfirmButton(bool show) {
+    if (show == false) {
+        if (confirmMoveDialog != NULL) {
+            confirmMoveDialog->hide();
+        }
+        return;
+    }
+    if (confirmMoveDialog == NULL) {
+        confirmMoveDialog = new ConfirmMoveDialog(this);
+        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SIGNAL(userConfirmedMove(int)));
+    }
+    confirmMoveDialog->setGeometry(this->geometry());
+    confirmMoveDialog->show();
+    confirmMoveDialog->raise();
+    confirmMoveDialog->activateWindow();
 }
 
 void GameSettings::toggleShowEstimateScore() {
@@ -207,7 +231,7 @@ RoundInfo::RoundInfo(QWidget* parent) :
 
 
     printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
-    const int SCALE= 8;
+    const int SCALE= 5;
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 

@@ -9,7 +9,6 @@
 //    Android
 //};
 
-//ComputingPlatform PlatformType();
 
 namespace Ui {
 class MainWindow;

@@ -60,6 +60,7 @@ public slots:
     bool placeStone(int row, int col);
     void finish();
     void activateEstimatingScore(bool estimate);
+    void userConfirmedMove(int confirmed);
 
 private slots:
     bool AIPlayNextMove();
@@ -68,6 +69,7 @@ signals:
     void gameStateChanged(GameState state);
     void estimateScoreChanged(float score);
     void crtPlayerChanged(int player, PlayerType type);
+    void askUserConfirmation(bool ask); //ask the user for confirmation, dialog belongs to another widget
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -86,11 +88,18 @@ private:
     QPixmap* blackStonePixmap;
     QPixmap* whiteStonePixmap;
     QPixmap* redStonePixmap;
-    float dist;
+    float dist; //distance between two table lines
     int highlightRow;
     int highlightCol;
+    //position of the new stone between mouse press and mouse release
     int newStoneRow;
     int newStoneCol;
+    //position of the new stone when game asks for confirmation
+    int unconfirmedStoneRow;
+    int unconfirmedStoneCol;
+
+    bool askPlayConfirmation; //ask the user to confirm placement of a stone;
+    bool acceptDoubleClickConfirmation = false;
     GameState state = GameState::Stopped;
 
     //populate this with some default settings, which are then passed to the game
@@ -123,7 +132,7 @@ private:
     void resetGnuGo();
     int toGnuGoPos(int row, int col);
     void printfGnuGoStruct();
-    bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
+    bool isPosInsideTable(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
