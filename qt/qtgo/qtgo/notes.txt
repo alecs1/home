@@ -7,7 +7,9 @@ v 1. Use do_genmove for playing against the computer. Also look at other functio
 3.1 Android UI
     v - remove top menu
       - immersive mode - fuck it for now, too difficult
-      - confirmation button/double tap
+    v - confirmation button
+      - add player colour to the confirmation button
+      - double tap
       - disable portrait layout
       - make sidebar hideable
 
