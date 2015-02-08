@@ -23,7 +23,9 @@ signals:
     void launchGamePerform(SGameSettings settings);
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
+    void userPassedMove();
     void gameSettingsChanged(SGameSettings settings);
+
 
 public slots:
     void setGameState(GameState state);

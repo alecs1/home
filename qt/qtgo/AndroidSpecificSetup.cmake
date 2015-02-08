@@ -6,6 +6,7 @@ function(FAndroidSpecificSetup source)
     file(COPY ${ANDROID_TEMPLATE}/ DESTINATION FreeGo/${BUILD_APK_TARGET_DIR})
     #file(COPY ${SOURCE}/qtgo/res DESTINATION FreeGo/${BUILD_APK_TARGET_DIR})
     file(COPY ${SOURCE}/qtgo/AndroidManifest.xml DESTINATION FreeGo/${BUILD_APK_TARGET_DIR})
+    file(COPY ./release.keystore DESTINATION FreeGo/${BUILD_APK_TARGET_DIR})
     message("FAndroidSpecificSetup ran")
 endfunction(FAndroidSpecificSetup)
 

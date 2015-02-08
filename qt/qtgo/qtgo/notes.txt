@@ -1,6 +1,7 @@
 v 1. Use do_genmove for playing against the computer. Also look at other functions in the file for computing the score.
+v 1.1 Make pass work.
 2. Give feedback that the computer is currently calculating and block interaction while computing.
-    - introduced a timer to reject clicks; disabled it after introducing AIThread. There are still situations when a wrong click could be performed.
+    ? - introduced a timer to reject clicks; not very needed after introducing AIThread. There may still be situations when a wrong click could be performed.
     v - change background colour as a very easy fix
 
 3. Save current game.

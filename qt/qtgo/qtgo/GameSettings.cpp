@@ -24,7 +24,7 @@ GameSettings::GameSettings(QWidget *parent):
         printf("%s - error - could not establish a fonst size!\n", __func__);
     }
 
-    const int SCALE= 3;
+    const float SCALE= 2.5;
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 
@@ -58,9 +58,12 @@ GameSettings::GameSettings(QWidget *parent):
 
     connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
     connect(whitePlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
+    connect(blackPlayer, SIGNAL(playerStrengthChanged(int)), this, SLOT(populateSettings()));
+    connect(whitePlayer, SIGNAL(playerStrengthChanged(int)), this, SLOT(populateSettings()));
     connect(ui->button9x9, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->button13x13, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
 
     populateSettings();
 
@@ -148,6 +151,14 @@ void GameSettings::updateScoreEstimateButton() {
 void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     roundInfo->setCurrentPlayer(player, type);
     roundInfo->update();
+
+    bool enableBlockingGroup = true;
+    if (type == PlayerType::AI)
+        enableBlockingGroup = false;
+
+    ui->scoreEstimateButton->setEnabled(enableBlockingGroup);
+    ui->hintButton->setEnabled(enableBlockingGroup);
+    ui->passButton->setEnabled(enableBlockingGroup);
 }
 
 void GameSettings::showConfirmButton(bool show) {
@@ -184,7 +195,9 @@ void GameSettings::toggleShowEstimateScore() {
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
-    if (s1.AILevel != s2.AILevel)
+    if (s1.blackAIStrength != s2.blackAIStrength)
+        return false;
+    if (s1.whiteAIStrength != s2.whiteAIStrength)
         return false;
     if (s1.size != s2.size)
         return false;
@@ -207,7 +220,9 @@ void GameSettings::populateSettings() {
         newSettings.size = 19;
 
     newSettings.black = (PlayerType)blackPlayer->playerType();
+    newSettings.blackAIStrength = blackPlayer->getAIStrength();
     newSettings.white = (PlayerType)whitePlayer->playerType();
+    newSettings.whiteAIStrength = whitePlayer->getAIStrength();
 
     if (newSettings == settings)
         return;

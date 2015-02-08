@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QTime>
 #include <QTextStream>
+#include <QMutex>
 
 extern "C" {
 #include "engine/board.h"
@@ -53,8 +54,13 @@ GoTable::GoTable(QWidget *parent) :
     #endif
 
     game.size = settings.size;
+    players[EMPTY] = PlayerType::None;
     players[BLACK]= settings.black;
     players[WHITE] = settings.white;
+
+    gnuGoMutex = new QMutex;
+    aiThread = new AIThread(gnuGoMutex);
+
 
     blockTime = new QTime();
 
@@ -73,8 +79,8 @@ GoTable::GoTable(QWidget *parent) :
     state = GameState::Initial;
     emit gameStateChanged(state);
 
-    connect(&aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
-    connect(&aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
+    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
+    connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
 }
 
 GoTable::~GoTable() {
@@ -273,7 +279,7 @@ void GoTable::paintEvent(QPaintEvent *) {
 
     //background
     QColor background(206, 170, 57);
-    if (players[crtPlayer] != PlayerType::LocalHuman) {
+    if (players[crtPlayer] == PlayerType::AI) {
         background = QColor(210, 200, 200);
     }
     painter.fillRect(QRectF(0, 0, width(), height()), background);
@@ -442,7 +448,6 @@ bool GoTable::placeStone(int row, int col) {
     }
 
     if (retVal) {
-        //this needs to happen earlier...
         emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
         updateCursor();
     }
@@ -457,9 +462,9 @@ bool GoTable::placeStone(int row, int col) {
     update();
 
     if (estimateScore) {
-        printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        printf("%s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
         float score = gnugo_estimate_score(NULL, NULL);
-        printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
+        printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
         emit estimateScoreChanged(score);
         if (score > 0) {
             //printf("%s - estimates: white winning by %f\n", __func__, score);
@@ -483,6 +488,23 @@ bool GoTable::placeStone(int row, int col) {
     return retVal;
 }
 
+bool GoTable::passMove() {
+    //should insert some logic for counting
+    if (crtPlayer == WHITE)
+        crtPlayer = BLACK;
+    else
+        crtPlayer = WHITE;
+
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    cursorBlocked = false;
+    update();
+    updateCursor();
+    if (players[crtPlayer] == PlayerType::AI) {
+        QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+    }
+    return true;
+}
+
 //change colour of mouse cursor to reflect the current player
 void GoTable::updateCursor() {
     if ( (state == GameState::Stopped) || cursorBlocked)
@@ -495,7 +517,12 @@ void GoTable::updateCursor() {
 
 void GoTable::resetGnuGo() {
     board_size = settings.size;
+    if (gnuGoMutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        gnuGoMutex->lock();
+    }
     clear_board();
+    gnuGoMutex->unlock();
     //printfGnuGoStruct();
 }
 
@@ -552,19 +579,25 @@ void GoTable::launchGame(bool resetTable) {
 }
 
 
-//TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
 bool GoTable::AIPlayNextMove() {
-
-    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
-
-    aiThread.run_do_genmove(crtPlayer, 0.5, NULL);
-
+    //printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
+    float AIStrength = settings.blackAIStrength;
+    if (crtPlayer == WHITE)
+        AIStrength = settings.whiteAIStrength;
+    AIStrength /= 10;
+    aiThread->run_do_genmove(crtPlayer, AIStrength, NULL);
     return false;
 }
 
 void GoTable::finish() {
-    //TODO - find the GnuGo fancy end computations
+    //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
+    //maybe show the user a dialog explaining what's hapening.
+    if (gnuGoMutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        gnuGoMutex->lock();
+    }
 
+    //TODO - find the GnuGo fancy end computations
     float score = gnugo_estimate_score(NULL, NULL);
     QString winner = "White";
     if (score < 0)
@@ -596,24 +629,34 @@ void GoTable::finish() {
         svgR.load(QString(":/resources/cursorWhite.svg"));
     QPainter bPainter(&winnerPixmap);
     svgR.render(&bPainter);
+    crtPlayer = EMPTY;
+    update();
 
     GameEndDialog endDialog(this);
     endDialog.setText(finalText);
     endDialog.setPixmap((winnerPixmap));
     endDialog.setModal(true);
     endDialog.exec();
+
+    gnuGoMutex->unlock();
 }
 
 void GoTable::activateEstimatingScore(bool estimate) {
     estimateScore = estimate;
     if (estimate) {
         printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        if (gnuGoMutex->tryLock() == false) {
+            printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+            gnuGoMutex->lock();
+        }
         float score = gnugo_estimate_score(NULL, NULL);
+        gnuGoMutex->unlock();
         printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
         emit estimateScoreChanged(score);
     }
 }
 
+//Move confirmed by pressing the "Confirm" button
 void GoTable::userConfirmedMove(int confirmed) {
     printf("%s - confirmed=%d\n", __func__, confirmed);
     const int QTDIALOG_CONFIRMED_CODE = 1;
@@ -625,8 +668,12 @@ void GoTable::userConfirmedMove(int confirmed) {
     update();
 }
 
-bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
+AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
+}
+
+bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
+    printf("%s - color=%d, pure_threat_value=%f\n", __func__, color, pure_threat_value);
     if(running)
         return false;
 
@@ -644,7 +691,12 @@ bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_m
 void AIThread::run() {
     printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
+    if (mutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        mutex->lock();
+    }
     p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, &p.value, &p.resign);
+    mutex->unlock();
 
     int move = p.result;
     if (move == 0) {

@@ -52,6 +52,7 @@ if (DEFINED ANDROID_ABI)
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
+                    #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
                     COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
                     DEPENDS gnugo AndroidSpecificSetup
                     COMMENT "Running qmake outside of CMake system" VERBATIM)

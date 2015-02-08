@@ -6,6 +6,8 @@
 
 #include "Global.h"
 
+class QMutex;
+
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
 class ElapsedTimerWrapper {
@@ -26,6 +28,7 @@ Q_OBJECT
     void run() override;
 
 public:
+    AIThread(QMutex* mutex);
     bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
 
 signals:
@@ -43,6 +46,7 @@ private:
         int result;
     };
     Parameters p;
+    QMutex* mutex = NULL;
 };
 
 
@@ -59,6 +63,7 @@ public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(SGameSettings newSettings);
     bool placeStone(int row, int col);
+    bool passMove();
     void finish();
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);
@@ -121,8 +126,9 @@ private:
 
     bool useGNUGO = true;
     bool estimateScore = false;
+    QMutex* gnuGoMutex;
 
-    AIThread aiThread;
+    AIThread* aiThread;
     ElapsedTimerWrapper timer;
     QString timerDelta;
 

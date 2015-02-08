@@ -15,12 +15,14 @@ enum class GameState:uint8_t  {
 enum class PlayerType:uint8_t {
     AI = 0,
     LocalHuman,
-    Network
+    Network,
+    None
 };
 
 struct SGameSettings {
     int size = 19;
-    int AILevel = 1;
+    int blackAIStrength = 0;
+    int whiteAIStrength = 0;
     PlayerType black = PlayerType::LocalHuman;
     PlayerType white = PlayerType::AI;
 };

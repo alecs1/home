@@ -14,9 +14,11 @@ class ConfirmMoveDialog : public QDialog
 public:
     explicit ConfirmMoveDialog(QWidget *parent = 0);
     ~ConfirmMoveDialog();
+    void setPixmap(QPixmap &pixmap);
 
 private:
     Ui::ConfirmMoveDialog *ui;
+    //QIcon icon;
 };
 
 #endif // CONFIRMMOVEDIALOG_H

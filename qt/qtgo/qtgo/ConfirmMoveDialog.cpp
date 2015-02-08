@@ -14,3 +14,8 @@ ConfirmMoveDialog::~ConfirmMoveDialog()
 {
     delete ui;
 }
+
+void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
+    //icon = QIcon(pixmap);
+    //ui->confirmButton->setIcon(icon);
+}
