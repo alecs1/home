@@ -1,4 +1,4 @@
-project(qtgo)
+project(FreeGo)
 cmake_minimum_required(VERSION 2.8)
 
 message(${CMAKE_SYSTEM_NAME})
@@ -14,7 +14,7 @@ message(${CMAKE_SYSTEM_NAME})
 #TODO - definition that we want, should work with CMake 3.1.x:
 #if (CMAKE_SYSTEM_NAME STREQUAL Android)
 #    message("Doing Android build")
-#    add_custom_target(QtGo_Android depends gnugo)
+#    add_custom_target(FeeGo_Android depends gnugo)
 #else (CMAKE_SYSTEM_NAME STREQUAL Android)
 #    message("Doing desktop build")
 #    add_subdirectory("qtgo")
@@ -45,13 +45,13 @@ if (DEFINED ANDROID_ABI)
                     ALL
                     COMMAND ${CMAKE_COMMAND} -D SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -D BUILD_APK_TARGET_DIR=${BUILD_APK_TARGET_DIR} -D ANDROID_TEMPLATE=${ANDROID_TEMPLATE} -P AndroidSpecificSetup.cmake
                     COMMENT "Setting up structure for qmake system" VERBATIM)
-    add_custom_target(QtGo_Android
+    add_custom_target(FreeGo_Android
                     ALL
-                    WORKING_DIRECTORY qtgo
+                    WORKING_DIRECTORY FreeGo
                     COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES}
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
-                    COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name QtGo
+                    COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
                     COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
                     DEPENDS gnugo AndroidSpecificSetup
                     COMMENT "Running qmake outside of CMake system" VERBATIM)

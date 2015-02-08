@@ -3,7 +3,7 @@
 
 #if defined(Q_OS_ANDROID)
 #include <log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "qtgo", __VA_ARGS__);
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
 #endif
 
 enum class GameState:uint8_t  {

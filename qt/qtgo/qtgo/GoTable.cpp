@@ -47,7 +47,7 @@ GoTable::GoTable(QWidget *parent) :
     unconfirmedStoneRow = -1;
     unconfirmedStoneCol = -1;
 
-    askPlayConfirmation = true;
+    askPlayConfirmation = false;
     #if defined(Q_OS_ANDROID)
     askPlayConfirmation = true;
     #endif
@@ -98,6 +98,11 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     updateCursor();
     emit gameStateChanged(state);
+}
+
+void GoTable::changeGameSettings(SGameSettings newSettings) {
+    printf("%s\n", __func__);
+    settings = newSettings;
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
@@ -248,7 +253,7 @@ void GoTable::updateSizes() {
     if (height() < tableSize)
         tableSize = height();
     dist = tableSize / (game.size + 1.0);
-    int diameter = (int) (dist * 0.8);
+    int diameter = (int) (dist * 0.95);
 
     //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
@@ -268,6 +273,9 @@ void GoTable::paintEvent(QPaintEvent *) {
 
     //background
     QColor background(206, 170, 57);
+    if (players[crtPlayer] != PlayerType::LocalHuman) {
+        background = QColor(210, 200, 200);
+    }
     painter.fillRect(QRectF(0, 0, width(), height()), background);
 
 
@@ -310,13 +318,13 @@ void GoTable::paintEvent(QPaintEvent *) {
     if (highlightRow != - 1) {
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
         //printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
-        float highlightDiameter = dist / 2;
+        float highlightRadius = dist / 1.4;
 
-        pen.setColor(QColor(255, 50, 50, 128));
-        pen.setWidthF(dist/8);
+        pen.setColor(QColor(255, 30, 30, 150));
+        pen.setWidthF(dist/5);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(pen);
-        painter.drawEllipse(highlightPos, highlightDiameter, highlightDiameter);
+        painter.drawEllipse(highlightPos, highlightRadius, highlightRadius);
     }
 
     //new stone, mouse button pressed/tapped
@@ -442,6 +450,7 @@ bool GoTable::placeStone(int row, int col) {
     if (retVal && state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
+        launchGame(false);
         emit gameStateChanged(state);
     }
 
@@ -523,14 +532,17 @@ int GoTable::populateStructFromGnuGo() {
     return 0;
 }
 
-void GoTable::launchGame() {
+//TODO - customise to allow restarting sa saved game
+void GoTable::launchGame(bool resetTable) {
     game.size = settings.size;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
-    crtPlayer = BLACK;
+    if (resetTable)
+        crtPlayer = BLACK;
     updateSizes();
     if (useGNUGO) {
-        resetGnuGo();
+        if (resetTable)
+            resetGnuGo();
         populateStructFromGnuGo();
     }
     update();
@@ -543,7 +555,7 @@ void GoTable::launchGame() {
 //TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
 bool GoTable::AIPlayNextMove() {
 
-    printf("qtgo: %s - running on thread %p\n", __func__, QThread::currentThreadId());
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
     aiThread.run_do_genmove(crtPlayer, 0.5, NULL);
 
@@ -630,13 +642,13 @@ bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_m
 }
 
 void AIThread::run() {
-    printf("qtgo: %s - running on thread %p\n", __func__, QThread::currentThreadId());
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
     p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, &p.value, &p.resign);
 
     int move = p.result;
     if (move == 0) {
-        printf("qtgo: %s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
+        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
         float score = gnugo_estimate_score(NULL, NULL);
         if (score > 0) {
             printf("%s - estimates: white winning by %f\n", __func__, score);
@@ -648,7 +660,7 @@ void AIThread::run() {
     }
     else {
         QPoint point = GoTable::fromGnuGoPos(move);
-        printf("qtgo: %s - AI has finished\n", __func__);
+        printf("%s - AI has finished\n", __func__);
         emit AIThreadPlaceStone(point.y(), point.x());
     }
 

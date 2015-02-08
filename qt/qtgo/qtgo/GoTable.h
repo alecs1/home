@@ -57,6 +57,7 @@ public:
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
+    void changeGameSettings(SGameSettings newSettings);
     bool placeStone(int row, int col);
     void finish();
     void activateEstimatingScore(bool estimate);
@@ -136,7 +137,7 @@ private:
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
-    void launchGame();
+    void launchGame(bool resetTable = true);
 };
 
 

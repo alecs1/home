@@ -14,10 +14,6 @@ GameSettings::GameSettings(QWidget *parent):
     printf("gtgo: %s - start\n", __func__);
     ui->setupUi(this);
 
-    connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
-    connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
-
-
     //initialize the two players:
     QSvgRenderer svgR;
     QFont font;
@@ -32,7 +28,7 @@ GameSettings::GameSettings(QWidget *parent):
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 
-    printf("qtgo: %s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
+    printf("%s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
 
     QPixmap blackStone(diameter, diameter);
     blackStone.fill(Qt::transparent);
@@ -57,6 +53,15 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPlayerType(settings.white);
     whitePlayer->setPixmap(whiteStone);
 
+    connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
+    connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
+
+    connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
+    connect(whitePlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
+    connect(ui->button9x9, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->button13x13, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+
     populateSettings();
 
     roundInfo = new RoundInfo(ui->roundInfoWidget);
@@ -72,8 +77,8 @@ GameSettings::GameSettings(QWidget *parent):
 
     confirmMoveDialog = NULL;
 
-    printf("qtgo: %s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
-    printf("qtgo: %s - end\n", __func__);
+    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+    printf("%s - end\n", __func__);
 }
 
 GameSettings::~GameSettings() {
@@ -81,6 +86,7 @@ GameSettings::~GameSettings() {
 }
 
 void GameSettings::setGameState(GameState state) {
+    gameState = state;
     if (state == GameState::Initial) {
         ui->scoreEstimateButton->hide();
         setScoreEstimate(0);
@@ -151,11 +157,17 @@ void GameSettings::showConfirmButton(bool show) {
         }
         return;
     }
+    if ((gameState != GameState::Started) && (gameState != GameState::Initial))
+        return;
+
     if (confirmMoveDialog == NULL) {
         confirmMoveDialog = new ConfirmMoveDialog(this);
         connect(confirmMoveDialog, SIGNAL(finished(int)), this, SIGNAL(userConfirmedMove(int)));
     }
-    confirmMoveDialog->setGeometry(this->geometry());
+    //show dialog over the settings UI, but somehow seems hackish; just replace instead of creating a new window.
+    QPoint globalPos = mapToGlobal(QPoint(0, 0));
+    confirmMoveDialog->setGeometry(QRect(globalPos, this->size()));
+    confirmMoveDialog->setWindowFlags(Qt::FramelessWindowHint | confirmMoveDialog->windowFlags());
     confirmMoveDialog->show();
     confirmMoveDialog->raise();
     confirmMoveDialog->activateWindow();
@@ -184,7 +196,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 }
 
 void GameSettings::populateSettings() {
-    printf("qtgo: %s\n", __func__);
+    printf("%s\n", __func__);
     SGameSettings newSettings;
     newSettings.size = 19;
     if (ui->button9x9->isChecked())
@@ -202,7 +214,7 @@ void GameSettings::populateSettings() {
     else {
         printf("%s - settings have changed\n", __func__);
         settings = newSettings;
-        //emit settingsChanged(settings);
+        emit gameSettingsChanged(settings);
     }
 }
 

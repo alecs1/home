@@ -23,6 +23,7 @@ signals:
     void launchGamePerform(SGameSettings settings);
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
+    void gameSettingsChanged(SGameSettings settings);
 
 public slots:
     void setGameState(GameState state);
@@ -33,9 +34,9 @@ public slots:
 
 private slots:
     void launchGameClicked();
+    void populateSettings();
 
 private:
-    void populateSettings();
     void updateScoreEstimateButton();
 
 protected:
@@ -52,6 +53,7 @@ private:
     RoundInfo* roundInfo;
     bool showScore;
     float scoreEstimate;
+    GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;
 
 };

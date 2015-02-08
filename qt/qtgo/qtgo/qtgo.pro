@@ -3,10 +3,10 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = qtgo
+TARGET = FreeGo
 INCLUDEPATH += .
 
-CONFIG += debug
+#CONFIG += debug
 
 QT += widgets svg
 
@@ -40,7 +40,10 @@ SOURCES += GameSettings.cpp \
     ConfirmMoveDialog.cpp
 
 OTHER_FILES += AndroidManifest.xml \
-    notes.txt
+    notes.txt \
+    ../AndroidSpecificSetup.cmake
 
 RESOURCES += \
     res.qrc
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

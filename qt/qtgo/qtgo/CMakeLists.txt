@@ -1,6 +1,6 @@
 #nice documentation: https://qt-project.org/quarterly/view/using_cmake_to_build_qt_projects
 
-project(qtgo)
+project(FreeGo)
 cmake_minimum_required(VERSION 2.8)
 
 set (CMAKE_VERBOSE_MAKEFILE true)
@@ -36,7 +36,7 @@ qt5_wrap_cpp(HEADER_MOC  mainwindow.h GoTable.h GameSettings.h PlayerWidget.h Ga
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_executable(qtgo mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+add_executable(FreeGo mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 #TODO - why don't I have to link libpatterns.a?
-target_link_libraries(qtgo Qt5::Widgets Qt5::Svg board engine utils sgf patterns)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg board engine utils sgf patterns)

@@ -22,7 +22,8 @@ public:
     void setPlayerType(PlayerType type);
     void enableChoosingPlayer(bool enable);
 
-//    void paintEvent(QPaintEvent *);
+signals:
+    void playerTypeChanged(int);
 
 private:
     Ui::PlayerWidget *ui;
