@@ -33,7 +33,8 @@ int PlayerWidget::playerType() const {
 }
 
 int PlayerWidget::getAIStrength() const {
-    return AIStrength;
+    //because we have to show a limited number of options on Android screens
+    return AIStrength * 2;
 }
 
 void PlayerWidget::setPlayerTypeInt(int type) {
@@ -96,13 +97,15 @@ void PlayerWidget::showMenu(int playerTypeInt) {
     if (AIMenu == NULL) {
         AIMenu = new QMenu(this);
         AIMenu->setTitle("Computer strength");
-        AIMenu->addAction("Computer strength");
+        QAction* titleAct = AIMenu->addAction("Computer strength");
+        titleAct->setEnabled(false);
+        //TODO - on Android can't show too many levels. Fix.
         QAction* defAct = AIMenu->addAction("0 - Weak");
         AIMenu->setDefaultAction(defAct);
-        for(int i = 1; i <= 9; i++) {
+        for(int i = 1; i <= 4; i++) {
             AIMenu->addAction(QString::number(i));
         }
-        AIMenu->addAction("10 - Strong");
+        AIMenu->addAction("5 - Strong");
         connect(AIMenu, SIGNAL(triggered(QAction*)), this, SLOT(AIActionActivated(QAction*)));
     }
 
@@ -124,8 +127,8 @@ void PlayerWidget::AIActionActivated(QAction* action) {
             AIMenu->setDefaultAction(action);
             AIStrength = i - 1;
             ui->playerComboBox->setItemText((int)PlayerType::AI,
-                                            QString("Computer(" + QString::number(AIStrength) + QString(")")));
-            emit playerStrengthChanged(AIStrength);
+                                            QString("Computer(lev. " + QString::number(AIStrength) + QString(")")));
+            emit playerStrengthChanged(getAIStrength());
             printf("%s - AIStrength=%d\n", __func__, AIStrength);
             break;
         }
