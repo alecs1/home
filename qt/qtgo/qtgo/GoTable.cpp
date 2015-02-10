@@ -407,7 +407,7 @@ bool GoTable::buildPixmaps(int diameter) {
 
 
 bool GoTable::placeStone(int row, int col) {
-    //printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     inputBlockingDuration = 0;
     if (players[crtPlayer] == PlayerType::LocalHuman)
         blockTime->start();

@@ -7,6 +7,7 @@
 class PlayerWidget;
 class RoundInfo;
 class ConfirmMoveDialog;
+class QMenuBar;
 
 namespace Ui {
 class GameSettings;
@@ -57,7 +58,7 @@ private:
     float scoreEstimate;
     GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;
-
+    QMenuBar* miniMenuBar;
 };
 
 

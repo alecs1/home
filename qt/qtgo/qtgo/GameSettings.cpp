@@ -1,5 +1,6 @@
 #include <QSvgRenderer>
 #include <QPainter>
+#include <QMenuBar>
 
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
@@ -72,6 +73,7 @@ GameSettings::GameSettings(QWidget *parent):
     showingRoundInfo = false;
     ui->roundInfoWidget->hide();
 
+
     ui->hintButton->hide();
     ui->passButton->hide();
 
@@ -79,6 +81,16 @@ GameSettings::GameSettings(QWidget *parent):
     setGameState(GameState::Initial);
 
     confirmMoveDialog = NULL;
+
+
+    //these are there only to facilitate GUI design
+    ui->menuPlaceholder1->hide();
+    ui->menuPlaceholder2->hide();
+
+    miniMenuBar = new QMenuBar(this);
+    ui->horizontalLayout2->addWidget(miniMenuBar);
+    QMenu* auxMenu = new QMenu("...", this);
+    miniMenuBar->addMenu(auxMenu);
 
     printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
@@ -98,6 +110,8 @@ void GameSettings::setGameState(GameState state) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
         ui->roundInfoWidget->show();
+        ui->horizontalLayout2->removeWidget(miniMenuBar);
+        ui->horizontalLayout1->addWidget(miniMenuBar);
         ui->tableSizeGroupBox->hide();
         ui->hintButton->show();
         ui->passButton->show();
@@ -113,6 +127,8 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             ui->roundInfoWidget->hide();
+            ui->horizontalLayout1->removeWidget(miniMenuBar);
+            ui->horizontalLayout2->addWidget(miniMenuBar);
         }
         ui->tableSizeGroupBox->show();
         ui->hintButton->hide();

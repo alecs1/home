@@ -35,6 +35,22 @@
    <property name="spacing">
     <number>1</number>
    </property>
+   <item row="1" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Preferred</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
      <property name="spacing">
@@ -53,7 +69,7 @@
        </property>
       </spacer>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <layout class="QGridLayout" name="gridLayout_3">
        <property name="horizontalSpacing">
         <number>0</number>
@@ -61,14 +77,7 @@
        <property name="verticalSpacing">
         <number>1</number>
        </property>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="launchButton">
-         <property name="text">
-          <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
+       <item row="4" column="0">
         <widget class="QPushButton" name="passButton">
          <property name="text">
           <string>Pass</string>
@@ -78,27 +87,44 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="2" column="0">
         <widget class="QPushButton" name="hintButton">
          <property name="text">
           <string>Hint</string>
          </property>
         </widget>
        </item>
+       <item row="0" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="launchButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Start</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="menuPlaceholder2">
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
+           <property name="text">
+            <string>:</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
       </layout>
-     </item>
-     <item row="2" column="2">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item row="5" column="0">
       <layout class="QVBoxLayout" name="playersLayout">
@@ -106,9 +132,6 @@
         <number>0</number>
        </property>
       </layout>
-     </item>
-     <item row="0" column="0">
-      <widget class="QWidget" name="roundInfoWidget" native="true"/>
      </item>
      <item row="7" column="0">
       <widget class="QGroupBox" name="tableSizeGroupBox">
@@ -174,23 +197,40 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout1">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="roundInfoWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>2</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>10</width>
+           <height>10</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="menuPlaceholder1">
+         <property name="layoutDirection">
+          <enum>Qt::RightToLeft</enum>
+         </property>
+         <property name="text">
+          <string>:</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
-   </item>
-   <item row="1" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Preferred</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>
