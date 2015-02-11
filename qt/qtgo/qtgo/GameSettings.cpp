@@ -87,10 +87,13 @@ GameSettings::GameSettings(QWidget *parent):
     ui->menuPlaceholder1->hide();
     ui->menuPlaceholder2->hide();
 
+    //this joke doesn't work, it shows a full menubar on Android; revert to QToolButton stuff.
     miniMenuBar = new QMenuBar(this);
     ui->horizontalLayout2->addWidget(miniMenuBar);
-    QMenu* auxMenu = new QMenu("...", this);
+    QMenu* auxMenu = new QMenu(".x.", this);
     miniMenuBar->addMenu(auxMenu);
+    auxMenu->addAction("Bla bla bla");
+    auxMenu->addAction("Bla bla bla 2");
 
     printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
