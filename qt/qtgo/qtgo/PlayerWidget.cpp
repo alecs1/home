@@ -127,7 +127,7 @@ void PlayerWidget::AIActionActivated(QAction* action) {
             AIMenu->setDefaultAction(action);
             AIStrength = i - 1;
             ui->playerComboBox->setItemText((int)PlayerType::AI,
-                                            QString("Computer(lev. " + QString::number(AIStrength) + QString(")")));
+                                            QString("Computer (lev. " + QString::number(AIStrength) + QString(")")));
             emit playerStrengthChanged(getAIStrength());
             printf("%s - AIStrength=%d\n", __func__, AIStrength);
             break;

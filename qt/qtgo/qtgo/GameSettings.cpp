@@ -1,6 +1,6 @@
 #include <QSvgRenderer>
 #include <QPainter>
-#include <QMenuBar>
+#include <QMenu>
 
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
@@ -65,6 +65,8 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->button13x13, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
+    connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
+    connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
 
     populateSettings();
 
@@ -82,18 +84,16 @@ GameSettings::GameSettings(QWidget *parent):
 
     confirmMoveDialog = NULL;
 
+    //TODO: need to make a QToolButton look as much as possible as an Android menu launcher
+    //on Android this thing is called "action bar"
+    float MENU_SCALE = 2.5;
+    ui->menuLauncher1->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
+    ui->menuLauncher2->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
+    ui->menuLauncher1->hide();
 
-    //these are there only to facilitate GUI design
-    ui->menuPlaceholder1->hide();
-    ui->menuPlaceholder2->hide();
-
-    //this joke doesn't work, it shows a full menubar on Android; revert to QToolButton stuff.
-    miniMenuBar = new QMenuBar(this);
-    ui->horizontalLayout2->addWidget(miniMenuBar);
-    QMenu* auxMenu = new QMenu(".x.", this);
-    miniMenuBar->addMenu(auxMenu);
-    auxMenu->addAction("Bla bla bla");
-    auxMenu->addAction("Bla bla bla 2");
+    mainMenu = new QMenu(this);
+    mainMenu->addAction("Bla bla bla");
+    mainMenu->addAction("Bla bla bla 2");
 
     printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
@@ -113,8 +113,8 @@ void GameSettings::setGameState(GameState state) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
         ui->roundInfoWidget->show();
-        ui->horizontalLayout2->removeWidget(miniMenuBar);
-        ui->horizontalLayout1->addWidget(miniMenuBar);
+        ui->menuLauncher1->show();
+        ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
         ui->hintButton->show();
         ui->passButton->show();
@@ -130,9 +130,9 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             ui->roundInfoWidget->hide();
-            ui->horizontalLayout1->removeWidget(miniMenuBar);
-            ui->horizontalLayout2->addWidget(miniMenuBar);
+            ui->menuLauncher1->hide();
         }
+        ui->menuLauncher2->show();
         ui->tableSizeGroupBox->show();
         ui->hintButton->hide();
         ui->passButton->hide();
@@ -211,6 +211,18 @@ void GameSettings::toggleShowEstimateScore() {
 
     updateScoreEstimateButton();
     emit doEstimateScore(showScore);
+}
+
+void GameSettings::showMenu() {
+    printf("%s\n", __func__);
+    mainMenu->show();
+    //now which of the the two guys is visible?
+    QToolButton* menuLauncher = ui->menuLauncher1;
+    if (menuLauncher->isVisible() == false)
+        menuLauncher = ui->menuLauncher2;
+    QPoint globalPos = menuLauncher->mapToGlobal(QPoint(0, 0));
+    globalPos.setX(globalPos.x() - mainMenu->size().width());
+    mainMenu->move(globalPos);
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {

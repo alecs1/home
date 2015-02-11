@@ -7,7 +7,8 @@
 class PlayerWidget;
 class RoundInfo;
 class ConfirmMoveDialog;
-class QMenuBar;
+class QMenu;
+class QToolButton;
 
 namespace Ui {
 class GameSettings;
@@ -34,6 +35,7 @@ public slots:
     void setCurrentPlayer(int player, PlayerType type);
     void showConfirmButton(bool show);
     void toggleShowEstimateScore();
+    void showMenu();
 
 private slots:
     void launchGameClicked();
@@ -58,7 +60,7 @@ private:
     float scoreEstimate;
     GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;
-    QMenuBar* miniMenuBar;
+    QMenu* mainMenu;
 };
 
 
