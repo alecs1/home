@@ -5,6 +5,9 @@
 
 #include "Global.h"
 
+
+class QMenu;
+
 namespace Ui {
 class PlayerWidget;
 }
@@ -19,14 +22,27 @@ public:
     void setPixmap(QPixmap aPixmap);
 
     int playerType() const;
-    void setPlayerType(PlayerType type);
+    int getAIStrength() const;
     void enableChoosingPlayer(bool enable);
 
-//    void paintEvent(QPaintEvent *);
+private:
+
+public slots:
+    void setPlayerType(PlayerType type);
+    void setPlayerTypeInt(int type);
+    void showMenuExplicit();
+    void showMenu(int playerTypeInt=0);
+    void AIActionActivated(QAction* action);
+
+signals:
+    void playerTypeChanged(int);
+    void playerStrengthChanged(int);
 
 private:
     Ui::PlayerWidget *ui;
     QPixmap pixmap;
+    QMenu* AIMenu;
+    int AIStrength = 0;
 };
 
 #endif // PLAYERWIDGET_H

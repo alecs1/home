@@ -3,7 +3,7 @@
 
 #if defined(Q_OS_ANDROID)
 #include <log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "qtgo", __VA_ARGS__);
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
 #endif
 
 enum class GameState:uint8_t  {
@@ -15,12 +15,14 @@ enum class GameState:uint8_t  {
 enum class PlayerType:uint8_t {
     AI = 0,
     LocalHuman,
-    Network
+    Network,
+    None
 };
 
 struct SGameSettings {
     int size = 19;
-    int AILevel = 1;
+    int blackAIStrength = 0;
+    int whiteAIStrength = 0;
     PlayerType black = PlayerType::LocalHuman;
     PlayerType white = PlayerType::AI;
 };

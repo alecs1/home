@@ -1,1 +1,0 @@
-/usr/bin/cc      CMakeFiles/sgfgen.dir/sgfgen.o  -o sgfgen -rdynamic 

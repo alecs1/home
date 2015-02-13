@@ -6,6 +6,8 @@
 
 #include "Global.h"
 
+class QMutex;
+
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
 class ElapsedTimerWrapper {
@@ -26,6 +28,7 @@ Q_OBJECT
     void run() override;
 
 public:
+    AIThread(QMutex* mutex);
     bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
 
 signals:
@@ -43,6 +46,7 @@ private:
         int result;
     };
     Parameters p;
+    QMutex* mutex = NULL;
 };
 
 
@@ -57,9 +61,12 @@ public:
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
+    void changeGameSettings(SGameSettings newSettings);
     bool placeStone(int row, int col);
+    bool passMove();
     void finish();
     void activateEstimatingScore(bool estimate);
+    void userConfirmedMove(int confirmed);
 
 private slots:
     bool AIPlayNextMove();
@@ -68,6 +75,7 @@ signals:
     void gameStateChanged(GameState state);
     void estimateScoreChanged(float score);
     void crtPlayerChanged(int player, PlayerType type);
+    void askUserConfirmation(bool ask); //ask the user for confirmation, dialog belongs to another widget
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -86,11 +94,18 @@ private:
     QPixmap* blackStonePixmap;
     QPixmap* whiteStonePixmap;
     QPixmap* redStonePixmap;
-    float dist;
+    float dist; //distance between two table lines
     int highlightRow;
     int highlightCol;
+    //position of the new stone between mouse press and mouse release
     int newStoneRow;
     int newStoneCol;
+    //position of the new stone when game asks for confirmation
+    int unconfirmedStoneRow;
+    int unconfirmedStoneCol;
+
+    bool askPlayConfirmation; //ask the user to confirm placement of a stone;
+    bool acceptDoubleClickConfirmation = false;
     GameState state = GameState::Stopped;
 
     //populate this with some default settings, which are then passed to the game
@@ -111,8 +126,9 @@ private:
 
     bool useGNUGO = true;
     bool estimateScore = false;
+    QMutex* gnuGoMutex;
 
-    AIThread aiThread;
+    AIThread* aiThread;
     ElapsedTimerWrapper timer;
     QString timerDelta;
 
@@ -123,11 +139,11 @@ private:
     void resetGnuGo();
     int toGnuGoPos(int row, int col);
     void printfGnuGoStruct();
-    bool isValidPos(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
+    bool isPosInsideTable(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
-    void launchGame();
+    void launchGame(bool resetTable = true);
 };
 
 

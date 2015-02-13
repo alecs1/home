@@ -4,6 +4,8 @@
 #include "GoTable.h"
 #include "GameSettings.h"
 
+#include "Global.h"
+
 //ComputingPlatform PlatformType()
 //{
 //    if (d)
@@ -32,6 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->hide();
     #endif
 
+    #if defined(Q_OS_ANDROID)
+    printf("%s - setting fullscreen for Android - TODO: does not work!!!\n", __func__);
+    showFullScreen();
+    printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
+    #endif
+
     GoTable* table = new GoTable(this);
     ui->centralWidget->setLayout(ui->gridLayout);
 
@@ -49,11 +57,16 @@ MainWindow::MainWindow(QWidget *parent) :
     GameSettings* settings = new GameSettings(this);
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
-    QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
-    QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int,PlayerType)), settings, SLOT(setCurrentPlayer(int,PlayerType)));
+    QObject::connect(table, SIGNAL(askUserConfirmation(bool)), settings, SLOT(showConfirmButton(bool)));
+    QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
+    QObject::connect(settings, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
+    QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+
     minWidth += settings->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;

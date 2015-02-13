@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QTime>
 #include <QTextStream>
+#include <QMutex>
 
 extern "C" {
 #include "engine/board.h"
@@ -44,10 +45,22 @@ GoTable::GoTable(QWidget *parent) :
     highlightRow = -1;
     newStoneRow = -1;
     newStoneCol = -1;
+    unconfirmedStoneRow = -1;
+    unconfirmedStoneCol = -1;
+
+    askPlayConfirmation = false;
+    #if defined(Q_OS_ANDROID)
+    askPlayConfirmation = true;
+    #endif
 
     game.size = settings.size;
+    players[EMPTY] = PlayerType::None;
     players[BLACK]= settings.black;
     players[WHITE] = settings.white;
+
+    gnuGoMutex = new QMutex;
+    aiThread = new AIThread(gnuGoMutex);
+
 
     blockTime = new QTime();
 
@@ -66,8 +79,8 @@ GoTable::GoTable(QWidget *parent) :
     state = GameState::Initial;
     emit gameStateChanged(state);
 
-    connect(&aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
-    connect(&aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
+    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
+    connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
 }
 
 GoTable::~GoTable() {
@@ -91,6 +104,11 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     updateCursor();
     emit gameStateChanged(state);
+}
+
+void GoTable::changeGameSettings(SGameSettings newSettings) {
+    printf("%s\n", __func__);
+    settings = newSettings;
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
@@ -125,6 +143,10 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     if (GameCanPlaceStone(&game, pos.y(), pos.x(), crtPlayer)) {
         newStoneRow = pos.y();
         newStoneCol = pos.x();
+        if (newStoneRow != unconfirmedStoneRow || newStoneCol != unconfirmedStoneCol) {
+            unconfirmedStoneRow = -1;
+            unconfirmedStoneCol = -1;
+        }
     }
 
     //TODO - this one can also be optimised
@@ -158,8 +180,33 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
 
     //QPointF localPos = ev->localPos();
     //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
-    if (pos.x() == newStoneCol && pos.y() == newStoneRow) {
-        placeStone(pos.y(), pos.x());
+    if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
+        if (askPlayConfirmation) {
+            if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
+                //user confirmed by double clicking this
+                placeStone(pos.y(), pos.x());
+                newStoneRow = -1;
+                newStoneCol = -1;
+                unconfirmedStoneRow = -1;
+                unconfirmedStoneCol = -1;
+                emit askUserConfirmation(false);
+            }
+            else {
+                unconfirmedStoneRow = newStoneRow;
+                unconfirmedStoneCol = newStoneCol;
+                newStoneRow = -1;
+                newStoneCol = -1;
+                emit askUserConfirmation(true);
+            }
+        }
+        else {
+            placeStone(pos.y(), pos.x());
+        }
+    }
+    else if (askPlayConfirmation) {
+        unconfirmedStoneRow = -1;
+        unconfirmedStoneCol = -1;
+        emit askUserConfirmation(false);
     }
 
 
@@ -212,7 +259,7 @@ void GoTable::updateSizes() {
     if (height() < tableSize)
         tableSize = height();
     dist = tableSize / (game.size + 1.0);
-    int diameter = (int) (dist * 0.8);
+    int diameter = (int) (dist * 0.95);
 
     //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
@@ -232,6 +279,9 @@ void GoTable::paintEvent(QPaintEvent *) {
 
     //background
     QColor background(206, 170, 57);
+    if (players[crtPlayer] == PlayerType::AI) {
+        background = QColor(210, 200, 200);
+    }
     painter.fillRect(QRectF(0, 0, width(), height()), background);
 
 
@@ -274,13 +324,13 @@ void GoTable::paintEvent(QPaintEvent *) {
     if (highlightRow != - 1) {
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
         //printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
-        float highlightDiameter = dist / 2;
+        float highlightRadius = dist / 1.4;
 
-        pen.setColor(QColor(255, 50, 50, 128));
-        pen.setWidthF(dist/8);
+        pen.setColor(QColor(255, 30, 30, 150));
+        pen.setWidthF(dist/5);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(pen);
-        painter.drawEllipse(highlightPos, highlightDiameter, highlightDiameter);
+        painter.drawEllipse(highlightPos, highlightRadius, highlightRadius);
     }
 
     //new stone, mouse button pressed/tapped
@@ -291,6 +341,15 @@ void GoTable::paintEvent(QPaintEvent *) {
             painter.drawPixmap(newStonePos, *blackStonePixmap);
         else if (crtPlayer == WHITE)
             painter.drawPixmap(newStonePos, *whiteStonePixmap);
+    }
+
+    if ((unconfirmedStoneCol != -1) && (state != GameState::Stopped)){
+        QPointF unconfirmedStonePos(dist + unconfirmedStoneCol * dist - blackStonePixmap->width()/2, dist + unconfirmedStoneRow * dist - blackStonePixmap->width()/2);
+        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        if (crtPlayer == BLACK)
+            painter.drawPixmap(unconfirmedStonePos, *blackStonePixmap);
+        else if (crtPlayer == WHITE)
+            painter.drawPixmap(unconfirmedStonePos, *whiteStonePixmap);
     }
 
     //all stones already on the table
@@ -348,12 +407,12 @@ bool GoTable::buildPixmaps(int diameter) {
 
 
 bool GoTable::placeStone(int row, int col) {
-    //printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     inputBlockingDuration = 0;
     if (players[crtPlayer] == PlayerType::LocalHuman)
         blockTime->start();
 
-    if (!isValidPos(row, col))
+    if (!isPosInsideTable(row, col))
         return false;
 
     if (state == GameState::Stopped)
@@ -389,7 +448,6 @@ bool GoTable::placeStone(int row, int col) {
     }
 
     if (retVal) {
-        //this needs to happen earlier...
         emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
         updateCursor();
     }
@@ -397,15 +455,16 @@ bool GoTable::placeStone(int row, int col) {
     if (retVal && state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
+        launchGame(false);
         emit gameStateChanged(state);
     }
 
     update();
 
     if (estimateScore) {
-        printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        printf("%s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
         float score = gnugo_estimate_score(NULL, NULL);
-        printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
+        printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
         emit estimateScoreChanged(score);
         if (score > 0) {
             //printf("%s - estimates: white winning by %f\n", __func__, score);
@@ -429,6 +488,23 @@ bool GoTable::placeStone(int row, int col) {
     return retVal;
 }
 
+bool GoTable::passMove() {
+    //should insert some logic for counting
+    if (crtPlayer == WHITE)
+        crtPlayer = BLACK;
+    else
+        crtPlayer = WHITE;
+
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    cursorBlocked = false;
+    update();
+    updateCursor();
+    if (players[crtPlayer] == PlayerType::AI) {
+        QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+    }
+    return true;
+}
+
 //change colour of mouse cursor to reflect the current player
 void GoTable::updateCursor() {
     if ( (state == GameState::Stopped) || cursorBlocked)
@@ -441,7 +517,12 @@ void GoTable::updateCursor() {
 
 void GoTable::resetGnuGo() {
     board_size = settings.size;
+    if (gnuGoMutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        gnuGoMutex->lock();
+    }
     clear_board();
+    gnuGoMutex->unlock();
     //printfGnuGoStruct();
 }
 
@@ -463,7 +544,7 @@ void GoTable::printfGnuGoStruct() {
     }
 }
 
-bool GoTable::isValidPos(int row, int col) {
+bool GoTable::isPosInsideTable(int row, int col) {
     if (row < 0 || row >= game.size || col < 0 || col >= game.size) {
         return false;
     }
@@ -478,14 +559,17 @@ int GoTable::populateStructFromGnuGo() {
     return 0;
 }
 
-void GoTable::launchGame() {
+//TODO - customise to allow restarting sa saved game
+void GoTable::launchGame(bool resetTable) {
     game.size = settings.size;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
-    crtPlayer = BLACK;
+    if (resetTable)
+        crtPlayer = BLACK;
     updateSizes();
     if (useGNUGO) {
-        resetGnuGo();
+        if (resetTable)
+            resetGnuGo();
         populateStructFromGnuGo();
     }
     update();
@@ -495,19 +579,25 @@ void GoTable::launchGame() {
 }
 
 
-//TODO - this needs to move on a separate thread; for now we call it with delay, to give repaint on other widgets a chance;
 bool GoTable::AIPlayNextMove() {
-
-    printf("qtgo: %s - running on thread %p\n", __func__, QThread::currentThreadId());
-
-    aiThread.run_do_genmove(crtPlayer, 0.5, NULL);
-
+    //printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
+    float AIStrength = settings.blackAIStrength;
+    if (crtPlayer == WHITE)
+        AIStrength = settings.whiteAIStrength;
+    AIStrength /= 10;
+    aiThread->run_do_genmove(crtPlayer, AIStrength, NULL);
     return false;
 }
 
 void GoTable::finish() {
-    //TODO - find the GnuGo fancy end computations
+    //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
+    //maybe show the user a dialog explaining what's hapening.
+    if (gnuGoMutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        gnuGoMutex->lock();
+    }
 
+    //TODO - find the GnuGo fancy end computations
     float score = gnugo_estimate_score(NULL, NULL);
     QString winner = "White";
     if (score < 0)
@@ -539,26 +629,51 @@ void GoTable::finish() {
         svgR.load(QString(":/resources/cursorWhite.svg"));
     QPainter bPainter(&winnerPixmap);
     svgR.render(&bPainter);
+    crtPlayer = EMPTY;
+    update();
 
     GameEndDialog endDialog(this);
     endDialog.setText(finalText);
     endDialog.setPixmap((winnerPixmap));
     endDialog.setModal(true);
     endDialog.exec();
+
+    gnuGoMutex->unlock();
 }
 
 void GoTable::activateEstimatingScore(bool estimate) {
     estimateScore = estimate;
     if (estimate) {
         printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
+        if (gnuGoMutex->tryLock() == false) {
+            printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+            gnuGoMutex->lock();
+        }
         float score = gnugo_estimate_score(NULL, NULL);
+        gnuGoMutex->unlock();
         printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
         emit estimateScoreChanged(score);
     }
 }
 
-bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
+//Move confirmed by pressing the "Confirm" button
+void GoTable::userConfirmedMove(int confirmed) {
+    printf("%s - confirmed=%d\n", __func__, confirmed);
+    const int QTDIALOG_CONFIRMED_CODE = 1;
+    if (confirmed == QTDIALOG_CONFIRMED_CODE) {
+        placeStone(unconfirmedStoneRow, unconfirmedStoneCol);
+    }
+    unconfirmedStoneRow = -1;
+    unconfirmedStoneCol = -1;
+    update();
+}
 
+AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
+
+}
+
+bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
+    printf("%s - color=%d, pure_threat_value=%f\n", __func__, color, pure_threat_value);
     if(running)
         return false;
 
@@ -574,13 +689,18 @@ bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_m
 }
 
 void AIThread::run() {
-    printf("qtgo: %s - running on thread %p\n", __func__, QThread::currentThreadId());
+    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
+    if (mutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        mutex->lock();
+    }
     p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, &p.value, &p.resign);
+    mutex->unlock();
 
     int move = p.result;
     if (move == 0) {
-        printf("qtgo: %s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
+        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
         float score = gnugo_estimate_score(NULL, NULL);
         if (score > 0) {
             printf("%s - estimates: white winning by %f\n", __func__, score);
@@ -592,7 +712,7 @@ void AIThread::run() {
     }
     else {
         QPoint point = GoTable::fromGnuGoPos(move);
-        printf("qtgo: %s - AI has finished\n", __func__);
+        printf("%s - AI has finished\n", __func__);
         emit AIThreadPlaceStone(point.y(), point.x());
     }
 

@@ -1,21 +1,19 @@
 #include <QSvgRenderer>
 #include <QPainter>
+#include <QMenu>
 
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
 
 #include "PlayerWidget.h"
 #include "GameStruct.h"
+#include "ConfirmMoveDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
 {
     printf("gtgo: %s - start\n", __func__);
     ui->setupUi(this);
-
-    connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
-    connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
-
 
     //initialize the two players:
     QSvgRenderer svgR;
@@ -27,11 +25,11 @@ GameSettings::GameSettings(QWidget *parent):
         printf("%s - error - could not establish a fonst size!\n", __func__);
     }
 
-    const int SCALE= 3;
+    const float SCALE= 2.5;
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 
-    printf("qtgo: %s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
+    printf("%s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
 
     QPixmap blackStone(diameter, diameter);
     blackStone.fill(Qt::transparent);
@@ -56,6 +54,20 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPlayerType(settings.white);
     whitePlayer->setPixmap(whiteStone);
 
+    connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
+    connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
+
+    connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
+    connect(whitePlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
+    connect(blackPlayer, SIGNAL(playerStrengthChanged(int)), this, SLOT(populateSettings()));
+    connect(whitePlayer, SIGNAL(playerStrengthChanged(int)), this, SLOT(populateSettings()));
+    connect(ui->button9x9, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->button13x13, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
+    connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
+    connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
+    connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
+
     populateSettings();
 
     roundInfo = new RoundInfo(ui->roundInfoWidget);
@@ -63,17 +75,36 @@ GameSettings::GameSettings(QWidget *parent):
     showingRoundInfo = false;
     ui->roundInfoWidget->hide();
 
+
     ui->hintButton->hide();
     ui->passButton->hide();
 
     showScore = false;
     setGameState(GameState::Initial);
 
-    printf("qtgo: %s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
-    printf("qtgo: %s - end\n", __func__);
+    confirmMoveDialog = NULL;
+
+    //TODO: need to make a QToolButton look as much as possible as an Android menu launcher
+    //on Android this thing is called "action bar"
+    float MENU_SCALE = 2.5;
+    ui->menuLauncher1->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
+    ui->menuLauncher2->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
+    ui->menuLauncher1->hide();
+
+    mainMenu = new QMenu(this);
+    mainMenu->addAction("Bla bla bla");
+    mainMenu->addAction("Bla bla bla 2");
+
+    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+    printf("%s - end\n", __func__);
+}
+
+GameSettings::~GameSettings() {
+    delete confirmMoveDialog;
 }
 
 void GameSettings::setGameState(GameState state) {
+    gameState = state;
     if (state == GameState::Initial) {
         ui->scoreEstimateButton->hide();
         setScoreEstimate(0);
@@ -82,6 +113,8 @@ void GameSettings::setGameState(GameState state) {
         ui->launchButton->setText("Finish");
         ui->tableSizeGroupBox->setEnabled(false);
         ui->roundInfoWidget->show();
+        ui->menuLauncher1->show();
+        ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
         ui->hintButton->show();
         ui->passButton->show();
@@ -97,7 +130,9 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             ui->roundInfoWidget->hide();
+            ui->menuLauncher1->hide();
         }
+        ui->menuLauncher2->show();
         ui->tableSizeGroupBox->show();
         ui->hintButton->hide();
         ui->passButton->hide();
@@ -135,6 +170,37 @@ void GameSettings::updateScoreEstimateButton() {
 void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     roundInfo->setCurrentPlayer(player, type);
     roundInfo->update();
+
+    bool enableBlockingGroup = true;
+    if (type == PlayerType::AI)
+        enableBlockingGroup = false;
+
+    ui->scoreEstimateButton->setEnabled(enableBlockingGroup);
+    ui->hintButton->setEnabled(enableBlockingGroup);
+    ui->passButton->setEnabled(enableBlockingGroup);
+}
+
+void GameSettings::showConfirmButton(bool show) {
+    if (show == false) {
+        if (confirmMoveDialog != NULL) {
+            confirmMoveDialog->hide();
+        }
+        return;
+    }
+    if ((gameState != GameState::Started) && (gameState != GameState::Initial))
+        return;
+
+    if (confirmMoveDialog == NULL) {
+        confirmMoveDialog = new ConfirmMoveDialog(this);
+        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SIGNAL(userConfirmedMove(int)));
+    }
+    //show dialog over the settings UI, but somehow seems hackish; just replace instead of creating a new window.
+    QPoint globalPos = mapToGlobal(QPoint(0, 0));
+    confirmMoveDialog->setGeometry(QRect(globalPos, this->size()));
+    confirmMoveDialog->setWindowFlags(Qt::FramelessWindowHint | confirmMoveDialog->windowFlags());
+    confirmMoveDialog->show();
+    confirmMoveDialog->raise();
+    confirmMoveDialog->activateWindow();
 }
 
 void GameSettings::toggleShowEstimateScore() {
@@ -147,8 +213,22 @@ void GameSettings::toggleShowEstimateScore() {
     emit doEstimateScore(showScore);
 }
 
+void GameSettings::showMenu() {
+    printf("%s\n", __func__);
+    mainMenu->show();
+    //now which of the the two guys is visible?
+    QToolButton* menuLauncher = ui->menuLauncher1;
+    if (menuLauncher->isVisible() == false)
+        menuLauncher = ui->menuLauncher2;
+    QPoint globalPos = menuLauncher->mapToGlobal(QPoint(0, 0));
+    globalPos.setX(globalPos.x() - mainMenu->size().width());
+    mainMenu->move(globalPos);
+}
+
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
-    if (s1.AILevel != s2.AILevel)
+    if (s1.blackAIStrength != s2.blackAIStrength)
+        return false;
+    if (s1.whiteAIStrength != s2.whiteAIStrength)
         return false;
     if (s1.size != s2.size)
         return false;
@@ -160,7 +240,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 }
 
 void GameSettings::populateSettings() {
-    printf("qtgo: %s\n", __func__);
+    printf("%s\n", __func__);
     SGameSettings newSettings;
     newSettings.size = 19;
     if (ui->button9x9->isChecked())
@@ -171,14 +251,16 @@ void GameSettings::populateSettings() {
         newSettings.size = 19;
 
     newSettings.black = (PlayerType)blackPlayer->playerType();
+    newSettings.blackAIStrength = blackPlayer->getAIStrength();
     newSettings.white = (PlayerType)whitePlayer->playerType();
+    newSettings.whiteAIStrength = whitePlayer->getAIStrength();
 
     if (newSettings == settings)
         return;
     else {
         printf("%s - settings have changed\n", __func__);
         settings = newSettings;
-        //emit settingsChanged(settings);
+        emit gameSettingsChanged(settings);
     }
 }
 
@@ -207,7 +289,7 @@ RoundInfo::RoundInfo(QWidget* parent) :
 
 
     printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
-    const int SCALE= 8;
+    const int SCALE= 5;
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 
