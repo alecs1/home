@@ -128,11 +128,12 @@ private:
     QTime* blockTime = NULL;
     bool cursorBlocked = false;
 
+    //GNUGo relate:
     bool useGNUGO = true;
     bool estimateScore = false;
     QMutex* gnuGoMutex = NULL;
-
     AIThread* aiThread = NULL;
+
     ElapsedTimerWrapper timer;
     QString timerDelta;
 

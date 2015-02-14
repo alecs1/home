@@ -68,6 +68,10 @@ GoTable::GoTable(QWidget *parent) :
     buildPixmaps(10);
     setCursor(*blackCursor);
 
+    //global from board.h, keep track of it
+    sgf_dumptree = (SGFTree*)malloc(sizeof(SGFTree));
+    sgf_dumptree->lastnode = NULL;
+    sgf_dumptree->root = sgfNewNode();
     if (useGNUGO) {
         init_gnugo(50, 314);
         resetGnuGo();
