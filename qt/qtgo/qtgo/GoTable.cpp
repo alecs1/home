@@ -323,14 +323,26 @@ void GoTable::paintEvent(QPaintEvent *) {
     //highlighted position
     if (highlightRow != - 1) {
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
-        //printf("%s - highlight at: %f, %f\n", __func__, highlightPos.rx(), highlightPos.ry());
-        float highlightRadius = dist / 1.4;
+        float RADIUS_SCALE = 1.3;
+        float highlightRadius = dist / RADIUS_SCALE;
 
         pen.setColor(QColor(255, 30, 30, 150));
         pen.setWidthF(dist/5);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(pen);
         painter.drawEllipse(highlightPos, highlightRadius, highlightRadius);
+    }
+
+    //higlight last move
+    if (lastMoveRow > -1) {
+        QPointF lastMovePos(dist + lastMoveCol * dist, dist + lastMoveRow * dist);
+        float RADIUS_SCALE = 2;
+        float highlightRadius = dist / RADIUS_SCALE;
+        pen.setColor(QColor(0, 170, 0, 150));
+        pen.setWidthF(dist / 2);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(pen);
+        painter.drawEllipse(lastMovePos, highlightRadius, highlightRadius);
     }
 
     //new stone, mouse button pressed/tapped
@@ -427,6 +439,8 @@ bool GoTable::placeStone(int row, int col) {
         bool canPlay = is_legal(pos, crtPlayer);
 
         if (canPlay) {
+
+            //TODO - maybe add wrapper for this call do centralise placing stones
             play_move(pos, crtPlayer);
             if (crtPlayer == WHITE)
                 crtPlayer = BLACK;
@@ -450,6 +464,8 @@ bool GoTable::placeStone(int row, int col) {
     if (retVal) {
         emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
         updateCursor();
+        lastMoveRow = row;
+        lastMoveCol = col;
     }
 
     if (retVal && state == GameState::Initial) {
@@ -494,6 +510,8 @@ bool GoTable::passMove() {
         crtPlayer = BLACK;
     else
         crtPlayer = WHITE;
+
+    lastMoveRow = lastMoveCol = -2;
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
     cursorBlocked = false;
@@ -564,14 +582,17 @@ void GoTable::launchGame(bool resetTable) {
     game.size = settings.size;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
-    if (resetTable)
+    if (resetTable) {
         crtPlayer = BLACK;
+        lastMoveRow = lastMoveCol = -1;
+    }
     updateSizes();
     if (useGNUGO) {
         if (resetTable)
             resetGnuGo();
         populateStructFromGnuGo();
     }
+
     update();
     if (players[crtPlayer] == PlayerType::AI) {
         QTimer::singleShot(5, this, SLOT(AIPlayNextMove()));

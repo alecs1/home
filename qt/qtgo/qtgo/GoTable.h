@@ -104,6 +104,10 @@ private:
     int unconfirmedStoneRow;
     int unconfirmedStoneCol;
 
+    //-1 -> not showing; -2 -> passed; TODO - also show passes
+    int lastMoveRow = -1;
+    int lastMoveCol = -1;
+
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
     bool acceptDoubleClickConfirmation = false;
     GameState state = GameState::Stopped;
@@ -111,7 +115,7 @@ private:
     //populate this with some default settings, which are then passed to the game
     SGameSettings settings;
 
-    int crtPlayer;
+    int crtPlayer = 1;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK
 
     /*we need to block input on the widget, with this hackish way:
@@ -119,16 +123,16 @@ private:
     _click1_        _click2_(ignored)                           _click1_(accepted)
                 _block_input    _compute_   _unblock_input_
     */
-    ulong lastInputTimestamp;
+    ulong lastInputTimestamp = 0;
     ulong inputBlockingDuration = 0;
-    QTime* blockTime;
-    bool cursorBlocked;
+    QTime* blockTime = NULL;
+    bool cursorBlocked = false;
 
     bool useGNUGO = true;
     bool estimateScore = false;
-    QMutex* gnuGoMutex;
+    QMutex* gnuGoMutex = NULL;
 
-    AIThread* aiThread;
+    AIThread* aiThread = NULL;
     ElapsedTimerWrapper timer;
     QString timerDelta;
 
