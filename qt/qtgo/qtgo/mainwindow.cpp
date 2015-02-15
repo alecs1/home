@@ -68,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
     QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
 
+
+    table->checkForResumeGame();
+
     minWidth += settings->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;

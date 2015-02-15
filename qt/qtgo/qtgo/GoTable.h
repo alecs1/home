@@ -60,6 +60,7 @@ public:
 
     void paintEvent(QPaintEvent *);
     static QPoint fromGnuGoPos(int pos);
+    void checkForResumeGame();
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
@@ -96,7 +97,7 @@ private:
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);
-    bool startupCheckSaves();
+    bool loadStartupSave();
 
     void resetGnuGo();
     int toGnuGoPos(int row, int col);

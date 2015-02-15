@@ -188,7 +188,16 @@ GoTable::GoTable(QWidget *parent) :
         resetGnuGo();
     }
 
-    if (startupCheckSaves()) {
+}
+
+
+GoTable::~GoTable() {
+    printf("%s - Implement destructor!\n", __func__);
+}
+
+//code outside the constructor because this is executed after the signals of this object are connected
+void GoTable::checkForResumeGame() {
+    if (loadStartupSave()) {
         state = GameState::AutoResumed;
     }
     else {
@@ -200,12 +209,7 @@ GoTable::GoTable(QWidget *parent) :
     emit gameStateChanged(state);
 }
 
-
-GoTable::~GoTable() {
-    printf("%s - Implement destructor!\n", __func__);
-}
-
-bool GoTable::startupCheckSaves() {
+bool GoTable::loadStartupSave() {
     QFile f(crtGameSfgFName);
     if (!f.exists())
         return false;
@@ -255,7 +259,8 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
         //TODO - ask if we want to lose progress
     }
     else if (state == GameState::AutoResumed){
-        state = GameState::Started;
+        state = GameState::Stopped;
+        finish();
         //TODO - player settings should be loaded from the save, but the player should be able to modify them
     }
     else {
