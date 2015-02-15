@@ -8,6 +8,7 @@
 
 enum class GameState:uint8_t  {
     Initial, //At GUI start-up, clicking on the board will start the game
+    AutoResumed,
     Stopped,
     Started
 };

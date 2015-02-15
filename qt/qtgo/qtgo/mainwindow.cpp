@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
     printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
     #endif
 
+    //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
+    GameSettings* settings = new GameSettings(this);
+
     GoTable* table = new GoTable(this);
     ui->centralWidget->setLayout(ui->gridLayout);
 
@@ -53,8 +56,6 @@ MainWindow::MainWindow(QWidget *parent) :
     int minHeight = table->minimumSize().height();
 
 
-    //seems Q_OS_LINUX also applies to Android
-    GameSettings* settings = new GameSettings(this);
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));

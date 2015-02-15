@@ -22,8 +22,20 @@ float gnugo_estimate_score(float *upper, float *lower);
 extern "C" {
 int get_sgfmove(SGFProperty *property);
 }
+
+
+#include "GoTable.h"
+#include "GameStruct.h"
+#include "GameEndDialog.h"
+
+QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
+QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
+
+extern GameStruct game;
+
+//From play_test.c
 void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
-                 float *total_score)
+                 float *total_score, int* playedMoves, int* crtColour)
 {
     SGFProperty *sgf_prop;  /* iterate over properties of the node */
     SGFProperty *move_prop = NULL; /* remember if we see a move property */
@@ -120,17 +132,9 @@ void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
 
     /* Finally, do play the move from the file. */
     play_move(old_move, color);
+    (*playedMoves) += 1;
+    (*crtColour) = color;
 }
-
-#include "GoTable.h"
-#include "GameStruct.h"
-#include "GameEndDialog.h"
-
-QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
-QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
-
-extern GameStruct game;
-
 
 GoTable::GoTable(QWidget *parent) :
     QWidget(parent)
@@ -165,6 +169,8 @@ GoTable::GoTable(QWidget *parent) :
 
     gnuGoMutex = new QMutex;
     aiThread = new AIThread(gnuGoMutex);
+    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
+    connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
 
 
     blockTime = new QTime();
@@ -182,16 +188,16 @@ GoTable::GoTable(QWidget *parent) :
         resetGnuGo();
     }
 
-    crtPlayer = BLACK;
+    if (startupCheckSaves()) {
+        state = GameState::AutoResumed;
+    }
+    else {
+        crtPlayer = BLACK;
+        state = GameState::Initial;
+    }
+
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
-
-    state = GameState::Initial;
     emit gameStateChanged(state);
-
-    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
-    connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
-
-    startupCheckSaves();
 }
 
 
@@ -199,29 +205,43 @@ GoTable::~GoTable() {
     printf("%s - Implement destructor!\n", __func__);
 }
 
-void GoTable::startupCheckSaves() {
+bool GoTable::startupCheckSaves() {
     QFile f(crtGameSfgFName);
     if (!f.exists())
-        return;
+        return false;
 
     //looks like an unfinished game exists, let's load it
     SGFNode* aux = readsgffile(crtGameSfgFName.toUtf8().constData());
     if (aux == NULL)
-        return;
+        return false;
 
     //all checks done, now replay somehow
+    bool retVal = false;
     float replayScore = 0.0;
     float totalScore = 0.0;
+    int playedMoves = 0;
     SGFNode* node = aux;
     while (node) {
-      replay_node(node, GRAY, &replayScore, &totalScore);
+      replay_node(node, EMPTY, &replayScore, &totalScore, &playedMoves, &crtPlayer);
       node = node->child;
+      //TODO - we must also add the move to our Tree
     }
 
     printf("%s - done replaying, replayScore=%f, totalScore=%f\n", __func__, replayScore, totalScore);
-    //now who is the next to play? Let's see this loaded first
-    populateStructFromGnuGo();
+    if (playedMoves > 0) {
+        //now who is the next to play? Let's see this loaded first
+        populateStructFromGnuGo();
+        if (crtPlayer == BLACK)
+            crtPlayer = WHITE;
+        else
+            crtPlayer = BLACK;
+        retVal = true;
+    }
+
+    sgfFreeNode(aux);
+
     update();
+    return retVal;
 }
 
 void GoTable::launchGamePressed(SGameSettings newSettings) {
@@ -233,6 +253,10 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
         state = GameState::Stopped;
         finish();
         //TODO - ask if we want to lose progress
+    }
+    else if (state == GameState::AutoResumed){
+        state = GameState::Started;
+        //TODO - player settings should be loaded from the save, but the player should be able to modify them
     }
     else {
         launchGame();
@@ -793,6 +817,20 @@ void GoTable::finish() {
     svgR.render(&bPainter);
     crtPlayer = EMPTY;
     update();
+
+    //File saving stuff
+    QString oldSgfFName = crtGameSfgFName + ".old";
+    QFile file(oldSgfFName);
+    if (file.exists())
+        file.remove();
+
+    file.setFileName(crtGameSfgFName);
+    file.rename(oldSgfFName);
+
+    sgfFreeNode(sgfTree->root);
+    sgfTree->lastnode = NULL;
+    sgfTree->root = sgfNewNode();
+
 
     GameEndDialog endDialog(this);
     endDialog.setText(finalText);

@@ -96,7 +96,7 @@ private:
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);
-    void startupCheckSaves();
+    bool startupCheckSaves();
 
     void resetGnuGo();
     int toGnuGoPos(int row, int col);
