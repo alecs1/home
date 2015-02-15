@@ -6,8 +6,9 @@
 
 #include "Global.h"
 
+#include <sgf/sgftree.h>
+
 class QMutex;
-struct SGFTree;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;

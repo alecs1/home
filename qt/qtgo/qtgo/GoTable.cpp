@@ -588,8 +588,8 @@ bool GoTable::placeStone(int row, int col) {
     }
 
     if (retVal) {
-        sgftreeAddPlay(sgf_dumptree, crtPlayer, row, col);
-        writesgf(sgf_dumptree->root, crtGameSfgFName.toUtf8().constData());
+        sgftreeAddPlay(sgfTree, crtPlayer, row, col);
+        writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
 
         if (crtPlayer == WHITE)
             crtPlayer = BLACK;
@@ -641,9 +641,9 @@ bool GoTable::placeStone(int row, int col) {
 //TODO - redirect this to placeStone
 bool GoTable::passMove() {
     //should insert some logic for counting
-    sgftreeAddPlay(sgf_dumptree, crtPlayer, -1, -1);
+    sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
     //TODO - this actually has to be done with rename and other safety stuff
-    writesgf(sgf_dumptree->root, crtGameSfgFName.toUtf8().constData());
+    writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
 
 
     if (crtPlayer == WHITE)
