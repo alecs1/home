@@ -60,6 +60,7 @@ public:
 
     void paintEvent(QPaintEvent *);
     static QPoint fromGnuGoPos(int pos);
+    int toGnuGoPos(int row, int col);
     void checkForResumeGame();
 
 public slots:
@@ -100,7 +101,6 @@ private:
     bool loadStartupSave();
 
     void resetGnuGo();
-    int toGnuGoPos(int row, int col);
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
 
@@ -150,6 +150,7 @@ private:
     bool estimateScore = false;
     QMutex* gnuGoMutex = NULL;
     AIThread* aiThread = NULL;
+    bool computing = false;
     SGFTree* sgfTree;
     QString crtGameSfgFName = "FreeGoCrt.sgf";
 

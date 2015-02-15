@@ -10,6 +10,10 @@ v 1.4 Highlight last move! Low quality but works.
     v - change background colour as a very easy fix
 
 3. Save current game.
+    v - introduced basic loading of a saved game
+    - load player types
+    - when the one to move was the computer we should ask the user to resume
+    - continuing does not work on Android
 
 3.1 Android UI
     v - remove top menu
@@ -40,3 +44,7 @@ How-to:
 git update-index --assume-unchanged path/to/file.txt
 git commit -a -m "This is my commit messages"
 git update-index --no-assume-unchanged path/to/file.txt
+
+
+Other bugs:
+1. The compilation says: warning, failure to find engine/liberty.h

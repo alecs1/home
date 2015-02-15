@@ -35,7 +35,7 @@ extern GameStruct game;
 
 //From play_test.c
 void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
-                 float *total_score, int* playedMoves, int* crtColour)
+                 float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree)
 {
     SGFProperty *sgf_prop;  /* iterate over properties of the node */
     SGFProperty *move_prop = NULL; /* remember if we see a move property */
@@ -93,8 +93,10 @@ void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
         if (new_move != old_move || !quiet) {
             mprintf("Move %d (%C): ", movenum + 1, color);
 
-            if (resign)
-                printf("GNU Go resigns ");
+            //curiously enough, adding an opening bracked after "if (resign)" fixed the compilation error...
+            if (resign) {
+                printf("%s - GNU Go resigns", __func__);
+            }
             else {
                 mprintf("GNU Go plays %1m ", new_move);
                 if (new_move != PASS_MOVE)
@@ -111,9 +113,10 @@ void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
         }
 
         if (new_move != old_move) {
-            if (resign)
+            if (resign) {
                 printf("%s - GNU Go resigns - Game move %s (%.2f)",
                             __func__, location_to_string(old_move), old_move_value);
+            }
             else {
                 printf("%s - GNU Go plays %s (%.2f) - Game move %s (%.2f)",
                             __func__, location_to_string(new_move), new_move_value,
@@ -132,6 +135,9 @@ void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
 
     /* Finally, do play the move from the file. */
     play_move(old_move, color);
+    QPoint point = GoTable::fromGnuGoPos(old_move);
+    sgftreeAddPlay(outTree, color, point.y(), point.x());
+
     (*playedMoves) += 1;
     (*crtColour) = color;
 }
@@ -226,7 +232,7 @@ bool GoTable::loadStartupSave() {
     int playedMoves = 0;
     SGFNode* node = aux;
     while (node) {
-      replay_node(node, EMPTY, &replayScore, &totalScore, &playedMoves, &crtPlayer);
+      replay_node(node, EMPTY, &replayScore, &totalScore, &playedMoves, &crtPlayer, sgfTree);
       node = node->child;
       //TODO - we must also add the move to our Tree
     }
@@ -275,6 +281,9 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 void GoTable::changeGameSettings(SGameSettings newSettings) {
     printf("%s\n", __func__);
     settings = newSettings;
+    //TODO - check if there are other settings to be written here; should be the only place to change settings
+    players[BLACK] = settings.black;
+    players[WHITE] = settings.white;
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
@@ -445,7 +454,7 @@ void GoTable::paintEvent(QPaintEvent *) {
 
     //background
     QColor background(206, 170, 57);
-    if (players[crtPlayer] == PlayerType::AI) {
+    if (players[crtPlayer] == PlayerType::AI && computing) {
         background = QColor(210, 200, 200);
     }
     painter.fillRect(QRectF(0, 0, width(), height()), background);
@@ -589,6 +598,8 @@ bool GoTable::placeStone(int row, int col) {
     inputBlockingDuration = 0;
     if (players[crtPlayer] == PlayerType::LocalHuman)
         blockTime->start();
+    else if (players[crtPlayer] == PlayerType::AI)
+        computing = false;
 
     if (!isPosInsideTable(row, col))
         return false;
@@ -637,6 +648,11 @@ bool GoTable::placeStone(int row, int col) {
         launchGame(false);
         emit gameStateChanged(state);
     }
+    else if (retVal && state == GameState::AutoResumed) {
+        state = GameState::Started;
+        emit gameStateChanged(state);
+    }
+
 
     update();
 
@@ -776,6 +792,7 @@ bool GoTable::AIPlayNextMove() {
     if (crtPlayer == WHITE)
         AIStrength = settings.whiteAIStrength;
     AIStrength /= 10;
+    computing = true;
     aiThread->run_do_genmove(crtPlayer, AIStrength, NULL);
     return false;
 }
