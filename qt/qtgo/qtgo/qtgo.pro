@@ -26,7 +26,9 @@ HEADERS += GameSettings.h \
            mainwindow.h \
            PlayerWidget.h \
            GameEndDialog.h \
-           ConfirmMoveDialog.h
+           ConfirmMoveDialog.h \
+            ../gnugo/engine/gnugo.h \
+    ../gnugo/engine/liberty.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
            GameEndDialog.ui \
            ConfirmMoveDialog.ui

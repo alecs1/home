@@ -115,29 +115,31 @@ enum routine_id {
 const char *routine_id_to_string(enum routine_id routine);
 
 
-/* This is used for both the dragon status and safety fields.
- * Also used for unconditional status in struct worm_data and for the
- * final status computed by the aftermath code.
- */
-enum dragon_status {
-  DEAD,
-  ALIVE,
-  CRITICAL,
-  UNKNOWN,
-  UNCHECKED,
-  CAN_THREATEN_ATTACK,
-  CAN_THREATEN_DEFENSE, 
-  INESSENTIAL,
-  TACTICALLY_DEAD,
-  ALIVE_IN_SEKI,
-  STRONGLY_ALIVE,
-  INVINCIBLE,
-  INSUBSTANTIAL,
-  WHITE_TERRITORY,
-  BLACK_TERRITORY,
-  DAME,
-  NUM_DRAGON_STATUS
-};
+
+///* This is used for both the dragon status and safety fields.
+// * Also used for unconditional status in struct worm_data and for the
+// * final status computed by the aftermath code.
+// */
+
+//enum dragon_status {
+//  DEAD,
+//  ALIVE,
+//  CRITICAL,
+//  UNKNOWN,
+//  UNCHECKED,
+//  CAN_THREATEN_ATTACK,
+//  CAN_THREATEN_DEFENSE,
+//  INESSENTIAL,
+//  TACTICALLY_DEAD,
+//  ALIVE_IN_SEKI,
+//  STRONGLY_ALIVE,
+//  INVINCIBLE,
+//  INSUBSTANTIAL,
+//  WHITE_TERRITORY,
+//  BLACK_TERRITORY,
+//  DAME,
+//  NUM_DRAGON_STATUS
+//};
 
 #define DRAGON_STATUS_NAMES \
   "dead", \

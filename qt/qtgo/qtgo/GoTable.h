@@ -7,6 +7,7 @@
 #include "Global.h"
 
 class QMutex;
+struct SGFTree;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
@@ -88,6 +89,20 @@ protected:
     QPoint mouseToGameCoordinates(QMouseEvent* ev);
 
 private:
+    bool buildPixmaps(int diameter);
+    void updateCursor();
+    bool isPosInsideTable(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
+    void updateSizes();
+    bool shouldRejectInput(QMouseEvent *ev);
+    void launchGame(bool resetTable = true);
+    void startupCheckSaves();
+
+    void resetGnuGo();
+    int toGnuGoPos(int row, int col);
+    void printfGnuGoStruct();
+    int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
+
+private:
     QCursor* blackCursor;
     QCursor* whiteCursor;
     QCursor* redCursor;
@@ -128,27 +143,17 @@ private:
     QTime* blockTime = NULL;
     bool cursorBlocked = false;
 
-    //GNUGo relate:
+    //GNUGo related:
     bool useGNUGO = true;
     bool estimateScore = false;
     QMutex* gnuGoMutex = NULL;
     AIThread* aiThread = NULL;
+    SGFTree* sgfTree;
+    QString crtGameSfgFName = "FreeGoCrt.sgf";
 
     ElapsedTimerWrapper timer;
     QString timerDelta;
 
-private:
-    bool buildPixmaps(int diameter);
-    void updateCursor();
-
-    void resetGnuGo();
-    int toGnuGoPos(int row, int col);
-    void printfGnuGoStruct();
-    bool isPosInsideTable(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
-    int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
-    void updateSizes();
-    bool shouldRejectInput(QMouseEvent *ev);
-    void launchGame(bool resetTable = true);
 };
 
 
