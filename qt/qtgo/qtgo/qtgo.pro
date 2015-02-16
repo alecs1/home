@@ -28,10 +28,12 @@ HEADERS += GameSettings.h \
            GameEndDialog.h \
            ConfirmMoveDialog.h \
             ../gnugo/engine/gnugo.h \
-    ../gnugo/engine/liberty.h
+    ../gnugo/engine/liberty.h \
+    RoundInfo.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
            GameEndDialog.ui \
-           ConfirmMoveDialog.ui
+           ConfirmMoveDialog.ui \
+    RoundInfo.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
@@ -39,7 +41,8 @@ SOURCES += GameSettings.cpp \
            mainwindow.cpp \
            PlayerWidget.cpp \
            GameEndDialog.cpp \
-    ConfirmMoveDialog.cpp
+    ConfirmMoveDialog.cpp \
+    RoundInfo.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

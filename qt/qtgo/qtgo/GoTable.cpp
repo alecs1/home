@@ -265,8 +265,11 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
         //TODO - ask if we want to lose progress
     }
     else if (state == GameState::AutoResumed){
-        state = GameState::Stopped;
-        finish();
+        state = GameState::Started;
+        if(players[crtPlayer] == PlayerType::AI) {
+            QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+        }
+        //also place move if the player was the computer
         //TODO - player settings should be loaded from the save, but the player should be able to modify them
     }
     else {
@@ -327,17 +330,11 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     //TODO - this one can also be optimised
     update();
 
-    QPointF localPos = ev->localPos();
+    //QPointF localPos = ev->localPos();
     //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
-    //static unsigned long lastTimestamp = ev->timestamp();
-    //printf("timestamp: %lu, diff:%lu\n", ev->timestamp(), ev->timestamp() - lastTimestamp);
-    //lastTimestamp = ev->timestamp();
-
-    //printf("timestamp: %lu, lastInputTimestamp: %lu, diff:%lu, block duration:%lu\n",
-    //       ev->timestamp(), lastInputTimestamp, ev->timestamp() - lastInputTimestamp, inputBlockingDuration);
 
     if (shouldRejectInput(ev)) {
         return;
@@ -353,13 +350,15 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
 
     QPoint pos = mouseToGameCoordinates(ev);
 
-    //QPointF localPos = ev->localPos();
-    //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
+    //printf("%s - x=%d, y=%d, newX=%d, newY=%d, unconfirmedX=%d, unconfirmedY=%d\n",
+    //       __func__, pos.x(), pos.y(), newStoneCol, newStoneRow, unconfirmedStoneCol, unconfirmedStoneRow);
     if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
         if (askPlayConfirmation) {
+            //printf("%s - will ask for user confirmation for %d %d\n", __func__, newStoneRow, newStoneCol);
             if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
                 //user confirmed by double clicking this
                 placeStone(pos.y(), pos.x());
+                //printf("%s - %d %d confirmed with double click, hiding confirmation window\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
                 unconfirmedStoneRow = -1;
@@ -369,6 +368,7 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
             else {
                 unconfirmedStoneRow = newStoneRow;
                 unconfirmedStoneCol = newStoneCol;
+                //printf("%s - show confirmation window for %d %d\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
                 emit askUserConfirmation(true);
@@ -627,34 +627,51 @@ bool GoTable::placeStone(int row, int col) {
         retVal = GamePlaceStone(&game, row, col, crtPlayer);
     }
 
-    if (retVal) {
-        sgftreeAddPlay(sgfTree, crtPlayer, row, col);
-        writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
-
-        if (crtPlayer == WHITE)
-            crtPlayer = BLACK;
-        else
-            crtPlayer = WHITE;
-
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
-        updateCursor();
-        lastMoveRow = row;
-        lastMoveCol = col;
+    if (retVal == false) {
+        //refresh and go home
+        update();
+        return retVal;
     }
 
-    if (retVal && state == GameState::Initial) {
+
+    //Here we're sure a move has been played
+    sgftreeAddPlay(sgfTree, crtPlayer, row, col);
+    writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
+
+    if (crtPlayer == WHITE)
+        crtPlayer = BLACK;
+    else
+        crtPlayer = WHITE;
+
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    updateCursor();
+    lastMoveRow = row;
+    lastMoveCol = col;
+
+
+    if (state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
-        launchGame(false);
+        launchGame(false); //launch game will take of calling AI moves
         emit gameStateChanged(state);
     }
-    else if (retVal && state == GameState::AutoResumed) {
-        state = GameState::Started;
-        emit gameStateChanged(state);
+    else {
+
+        if (state == GameState::AutoResumed) {
+            state = GameState::Started;
+            emit gameStateChanged(state);
+        }
+        if (players[crtPlayer] == PlayerType::AI) {
+            QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+        }
     }
 
+    if (players[crtPlayer] != PlayerType::AI) {
+        inputBlockingDuration = blockTime->elapsed();
+        cursorBlocked = false;
+        updateCursor();
+    }
 
-    update();
 
     if (estimateScore) {
         printf("%s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
@@ -669,17 +686,7 @@ bool GoTable::placeStone(int row, int col) {
         }
     }
 
-
-    //depending on the type of the next player, we might need to play one more move, without recursing into this function :D
-    if (players[crtPlayer] == PlayerType::AI) {
-        QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
-    }
-    else {
-        inputBlockingDuration = blockTime->elapsed();
-        cursorBlocked = false;
-        updateCursor();
-    }
-
+    update();
     return retVal;
 }
 
@@ -781,18 +788,19 @@ void GoTable::launchGame(bool resetTable) {
 
     update();
     if (players[crtPlayer] == PlayerType::AI) {
-        QTimer::singleShot(5, this, SLOT(AIPlayNextMove()));
+        QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
     }
 }
 
 
 bool GoTable::AIPlayNextMove() {
+    computing = true;
+    update();
     //printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
     float AIStrength = settings.blackAIStrength;
     if (crtPlayer == WHITE)
         AIStrength = settings.whiteAIStrength;
     AIStrength /= 10;
-    computing = true;
     aiThread->run_do_genmove(crtPlayer, AIStrength, NULL);
     return false;
 }
@@ -859,6 +867,9 @@ void GoTable::finish() {
     endDialog.setPixmap((winnerPixmap));
     endDialog.setModal(true);
     endDialog.exec();
+
+    state = GameState::Stopped;
+    emit gameStateChanged(state);
 
     gnuGoMutex->unlock();
 }

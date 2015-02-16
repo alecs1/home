@@ -12,8 +12,8 @@ v 1.4 Highlight last move! Low quality but works.
 3. Save current game.
     v - introduced basic loading of a saved game
     - load player types
-    - when the one to move was the computer we should ask the user to resume
-    - continuing does not work on Android
+    v - when the one to move was the computer we should ask the user to resume
+    v - continuing does not work on Android
 
 3.1 Android UI
     v - remove top menu

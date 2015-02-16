@@ -8,6 +8,7 @@
 #include "PlayerWidget.h"
 #include "GameStruct.h"
 #include "ConfirmMoveDialog.h"
+#include "RoundInfo.h"
 
 GameSettings::GameSettings(QWidget *parent):
     ui(new Ui::GameSettings())
@@ -55,6 +56,7 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPixmap(whiteStone);
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
+    connect(ui->finishButton, SIGNAL(clicked()), this, SIGNAL(finishGamePerform()));
     connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
 
     connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
@@ -92,8 +94,10 @@ GameSettings::GameSettings(QWidget *parent):
     ui->menuLauncher1->hide();
 
     mainMenu = new QMenu(this);
-    mainMenu->addAction("Bla bla bla");
-    mainMenu->addAction("Bla bla bla 2");
+    mainMenu->addAction("Help");
+    mainMenu->addAction("Save game");
+    mainMenu->addAction("Open saved game");
+    mainMenu->addAction("About");
 
     printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
@@ -107,7 +111,8 @@ void GameSettings::setGameState(GameState state) {
     gameState = state;
     if (state == GameState::AutoResumed) {
         ui->roundInfoWidget->show();
-        ui->launchButton->setText("Finish");
+        ui->launchButton->setText("Resume");
+        ui->finishButton->show();
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
@@ -120,10 +125,12 @@ void GameSettings::setGameState(GameState state) {
     }
     else if (state == GameState::Initial) {
         ui->scoreEstimateButton->hide();
+        ui->finishButton->hide();
         setScoreEstimate(0);
     }
     else if (state == GameState::Started) {
         ui->launchButton->setText("Finish");
+        ui->finishButton->hide();
         ui->tableSizeGroupBox->setEnabled(false);
         ui->roundInfoWidget->show();
         ui->menuLauncher1->show();
@@ -140,6 +147,7 @@ void GameSettings::setGameState(GameState state) {
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
+        ui->finishButton->hide();
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             ui->roundInfoWidget->hide();
@@ -194,13 +202,14 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type) {
 }
 
 void GameSettings::showConfirmButton(bool show) {
+    //printf("%s - show=%d\n", __func__, show);
     if (show == false) {
         if (confirmMoveDialog != NULL) {
             confirmMoveDialog->hide();
         }
         return;
     }
-    if ((gameState != GameState::Started) && (gameState != GameState::Initial))
+    if ((gameState != GameState::Started) && (gameState != GameState::Initial) && (gameState != GameState::AutoResumed))
         return;
 
     if (confirmMoveDialog == NULL) {
@@ -282,68 +291,13 @@ void GameSettings::launchGameClicked() {
     emit launchGamePerform(settings);
 }
 
-RoundInfo::RoundInfo(QWidget* parent) :
-    QWidget(parent)
-{
-    QSvgRenderer svgR;
 
-    //this is a fixed size during gameplay, but yet computed at program start-up.
-    //find the system font size and make the drawing a couple of times larger
-
-    QFont font;
-    QString defaultFont = font.defaultFamily();
-    int defaultFontSize = font.pixelSize();
-    if (defaultFontSize <= 0)
-        defaultFontSize = font.pointSize();
-    if (defaultFontSize <= 0) {
-        printf("%s - error - could not establish a fonst size!\n", __func__);
-    }
-
-
-
-    printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
-    const int SCALE= 5;
-    int diameter = SCALE * defaultFontSize;
-    resize(diameter, diameter);
-
-    printf("%s - size:%dx%d\n", __func__, width(), height());
-
-    blackStone = new QPixmap(diameter, diameter);
-    blackStone->fill(Qt::transparent);
-    svgR.load(QString(":/resources/cursorBlack.svg"));
-    QPainter bPainter(blackStone);
-    svgR.render(&bPainter);
-
-    whiteStone = new QPixmap(diameter, diameter);
-    whiteStone->fill(Qt::transparent);
-    svgR.load(QString(":/resources/cursorWhite.svg"));
-    QPainter wPainter(whiteStone);
-    svgR.render(&wPainter);
-
-    crtPixmap = blackStone;
-}
-
+/*
 void RoundInfo::paintEvent(QPaintEvent *) {
     //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
     QPainter painter(this);
-    painter.drawPixmap(0, 0, crtPixmap->width(), crtPixmap->height(), *crtPixmap);
+    painter.drawPixmap(0, 0, crtStonePixmap->width(), crtStonePixmap->height(), *crtStonePixmap);
 }
-
-void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
-    player = aPlayer;
-    playerType = aType;
-    if (player == BLACK) {
-        crtPixmap = blackStone;
-    }
-    else if (player == WHITE) {
-        crtPixmap = whiteStone;
-    }
-    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
-    update();
-}
-
-//TODO - implement later, as it needs math
-void RoundInfo::computeAnim(float pos) {
+*/
 
 
-}

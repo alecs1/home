@@ -126,7 +126,7 @@ private:
     int lastMoveCol = -1;
 
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
-    bool acceptDoubleClickConfirmation = false;
+    bool acceptDoubleClickConfirmation = true;
     GameState state = GameState::Stopped;
 
     //populate this with some default settings, which are then passed to the game
