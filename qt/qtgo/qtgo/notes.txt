@@ -13,7 +13,7 @@ v 1.4 Highlight last move! Low quality but works.
     v - introduced basic loading of a saved game
     - load player types
     v - when the one to move was the computer we should ask the user to resume
-    v - continuing does not work on Android
+    v git - continuing does not work on Android
 
 3.1 Android UI
     v - remove top menu
@@ -48,3 +48,4 @@ git update-index --no-assume-unchanged path/to/file.txt
 
 Other bugs:
 1. The compilation says: warning, failure to find engine/liberty.h
+2. After finishing the game the current player type icon is wrong.
