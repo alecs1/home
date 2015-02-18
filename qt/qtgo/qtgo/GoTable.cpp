@@ -168,7 +168,7 @@ GoTable::GoTable(QWidget *parent) :
     askPlayConfirmation = true;
     #endif
 
-    game.size = settings.size;
+    game.size = settings.tableSize;
     players[EMPTY] = PlayerType::None;
     players[BLACK]= settings.black;
     players[WHITE] = settings.white;
@@ -726,7 +726,7 @@ void GoTable::updateCursor() {
 }
 
 void GoTable::resetGnuGo() {
-    board_size = settings.size;
+    board_size = settings.tableSize;
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
@@ -772,7 +772,7 @@ int GoTable::populateStructFromGnuGo() {
 
 //TODO - customise to allow restarting sa saved game
 void GoTable::launchGame(bool resetTable) {
-    game.size = settings.size;
+    game.size = settings.tableSize;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
     if (resetTable) {

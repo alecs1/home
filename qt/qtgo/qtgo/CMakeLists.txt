@@ -37,7 +37,7 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
-    mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp
+    mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 #TODO - why don't I have to link libpatterns.a?

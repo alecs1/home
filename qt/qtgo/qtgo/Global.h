@@ -21,11 +21,21 @@ enum class PlayerType:uint8_t {
 };
 
 struct SGameSettings {
-    int size = 19;
+    int tableSize = 19;
     int blackAIStrength = 0;
     int whiteAIStrength = 0;
     PlayerType black = PlayerType::LocalHuman;
     PlayerType white = PlayerType::AI;
+    //information used for saving
+    int crtPlayer; //is this obvious from the SGF?
+};
+
+//Extra information about a game, don't know if this is the right place
+#include <QString>
+struct SAuxGameInfo {
+    QString comment;
+    QString freeGoVersion;
+    QString gameDate;
 };
 
 #endif // GLOBAL_H

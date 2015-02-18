@@ -252,7 +252,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
         return false;
     if (s1.whiteAIStrength != s2.whiteAIStrength)
         return false;
-    if (s1.size != s2.size)
+    if (s1.tableSize != s2.tableSize)
         return false;
     if (s1.black != s2.black)
         return false;
@@ -264,13 +264,13 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 void GameSettings::populateSettings() {
     printf("%s\n", __func__);
     SGameSettings newSettings;
-    newSettings.size = 19;
+    newSettings.tableSize = 19;
     if (ui->button9x9->isChecked())
-        newSettings.size = 9;
+        newSettings.tableSize = 9;
     else if (ui->button13x13->isChecked())
-        newSettings.size = 13;
+        newSettings.tableSize = 13;
     else if (ui->button19x19->isChecked())
-        newSettings.size = 19;
+        newSettings.tableSize = 19;
 
     newSettings.black = (PlayerType)blackPlayer->playerType();
     newSettings.blackAIStrength = blackPlayer->getAIStrength();
