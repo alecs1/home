@@ -4,10 +4,12 @@ v 1.1 Make pass work.
 1.2 Provide undo
 1.3 Show move numbers
 v 1.4 Highlight last move! Low quality but works.
+1.5 Maybe show a moves tree with undo and sutff.
 
 2. Give feedback that the computer is currently calculating and block interaction while computing.
     ? - introduced a timer to reject clicks; not very needed after introducing AIThread. There may still be situations when a wrong click could be performed.
     v - change background colour as a very easy fix
+    v - added a new icon for the type of player
 
 3. Save current game.
     v - introduced basic loading of a saved game
@@ -50,4 +52,6 @@ Other bugs:
 1. The compilation says: warning, failure to find engine/liberty.h
 2. After finishing the game the current player type icon is wrong.
 3. LG G3 fonts are too big, everything looks messy.
-4. When finishing the game the current player might reported wrongly.
+4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
+
+
