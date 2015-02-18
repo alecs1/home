@@ -49,3 +49,5 @@ git update-index --no-assume-unchanged path/to/file.txt
 Other bugs:
 1. The compilation says: warning, failure to find engine/liberty.h
 2. After finishing the game the current player type icon is wrong.
+3. LG G3 fonts are too big, everything looks messy.
+4. When finishing the game the current player might reported wrongly.
