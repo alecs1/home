@@ -1,4 +1,7 @@
 #include <QJsonObject>
+#include <QFile>
+
+#include "sgftree.h"
 
 #include "SaveFile.h"
 
@@ -16,11 +19,11 @@ QString SaveFile::qetDefSaveFName() const {
     return defSaveFName;
 }
 
-static bool SaveFile::loadSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
+bool SaveFile::loadSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
 
 }
 
-static bool SaveFile::writeSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
+bool SaveFile::writeSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
     QFile outFile(saveFName);
 
     QJsonObject json;
@@ -28,6 +31,7 @@ static bool SaveFile::writeSave(QString saveFName, SGFNode* sgfNode, SGameSettin
     json["freeGoVersion"] = auxGameInfo->freeGoVersion;
     json["gameDate"] = auxGameInfo->gameDate;
 
-    json["tableSize"] = gameSettings->
+    json["tableSize"] = gameSettings->tableSize;
+
 }
 
