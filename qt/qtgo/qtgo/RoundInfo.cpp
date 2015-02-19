@@ -29,9 +29,10 @@ RoundInfo::RoundInfo(QWidget *parent) :
 
 
     printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
-    const int STONE_SCALE= 5;
+    const float STONE_SCALE= 5;
     float diameter = STONE_SCALE * defaultFontSize;
     ui->colourLabel->resize(diameter, diameter);
+    //ui->colourLabel->setMinimumSize(QSize(diameter, diameter));
 
     setMinimumHeight(diameter);
 
@@ -53,6 +54,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
     //smaller sizes for the player type
     diameter /= 1.5;
     ui->playerTypeLabel->resize(diameter, diameter);
+    //ui->playerTypeLabel->setMinimumSize(QSize(diameter, diameter));
     playerAI = new QPixmap(diameter, diameter);
     playerAI->fill(Qt::transparent);
     svgR.load(QString(":/resources/playerAI--picmi.svg"));
@@ -73,6 +75,10 @@ RoundInfo::RoundInfo(QWidget *parent) :
 
 
     setCurrentPlayer(BLACK, PlayerType::LocalHuman);
+
+    printf("%s - final sizes: widget:%dx%d, colourLabel:%dx%d, playerTypeLabel:%dx%d\n",
+           __func__, width(), height(), ui->colourLabel->width(), ui->colourLabel->height(),
+           ui->playerTypeLabel->width(), ui->playerTypeLabel->height());
 }
 
 RoundInfo::~RoundInfo()
@@ -121,3 +127,7 @@ void RoundInfo::computeAnim(float pos) {
 
 
 }
+
+//QSize RoundInfo::sizeHint() const {
+//    int width = ui->colourLabel->wi
+//}

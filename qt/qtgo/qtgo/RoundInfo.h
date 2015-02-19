@@ -19,6 +19,8 @@ public:
     //void paintEvent(QPaintEvent *);
     void setCurrentPlayer(int aPlayer, PlayerType aType);
 
+//    QSize sizeHint() const;
+
 
 private:
     void computeAnim(float pos);

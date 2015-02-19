@@ -72,10 +72,12 @@ GameSettings::GameSettings(QWidget *parent):
 
     populateSettings();
 
-    roundInfo = new RoundInfo(ui->roundInfoWidget);
-    ui->roundInfoWidget->setMinimumHeight(roundInfo->height());
+    roundInfo = new RoundInfo(this);
+    ui->topRow->insertWidget(0, roundInfo);
     showingRoundInfo = false;
-    ui->roundInfoWidget->hide();
+    roundInfo->hide();
+    printf("%s - roundInfo:%dx%d\n",
+           __func__, roundInfo->width(), roundInfo->height());
 
 
     ui->hintButton->hide();
@@ -99,7 +101,6 @@ GameSettings::GameSettings(QWidget *parent):
     mainMenu->addAction("Open saved game");
     mainMenu->addAction("About");
 
-    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
 }
 
@@ -110,7 +111,7 @@ GameSettings::~GameSettings() {
 void GameSettings::setGameState(GameState state) {
     gameState = state;
     if (state == GameState::AutoResumed) {
-        ui->roundInfoWidget->show();
+        roundInfo->show();
         ui->launchButton->setText("Resume");
         ui->finishButton->show();
         ui->menuLauncher1->show();
@@ -132,7 +133,7 @@ void GameSettings::setGameState(GameState state) {
         ui->launchButton->setText("Finish");
         ui->finishButton->hide();
         ui->tableSizeGroupBox->setEnabled(false);
-        ui->roundInfoWidget->show();
+        roundInfo->show();
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
@@ -143,14 +144,13 @@ void GameSettings::setGameState(GameState state) {
         ui->scoreEstimateButton->show();
         setScoreEstimate(0);
         showingRoundInfo = true;//TODO - get rid of this variable
-        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
         ui->finishButton->hide();
         ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
-            ui->roundInfoWidget->hide();
+            roundInfo->hide();
             ui->menuLauncher1->hide();
         }
         ui->menuLauncher2->show();
@@ -161,7 +161,6 @@ void GameSettings::setGameState(GameState state) {
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();
         showingRoundInfo = false;
-        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
 }
 
