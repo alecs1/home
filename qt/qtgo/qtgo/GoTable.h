@@ -32,6 +32,7 @@ Q_OBJECT
 public:
     AIThread(QMutex* mutex);
     bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
+    bool run_gnugo_estimate_score();
 
 signals:
     void AIThreadPlaceStone(int row, int col);
@@ -39,7 +40,16 @@ signals:
 
 private:
     bool running = false;
+    enum class OpType:uint8_t {
+        //keep the operation names in sync with the corresponding functions
+        do_genmove = 1,
+        gnugo_estimate_score
+    };
+
     struct Parameters {
+        OpType operation;
+
+        //params for do_genmove
         int color;
         float pure_threat_value;
         int* allowed_moves;
@@ -74,6 +84,8 @@ public slots:
 
 private slots:
     bool AIPlayNextMove();
+    void computeScoreAndUpdate();
+
 
 signals:
     void gameStateChanged(GameState state);
@@ -100,6 +112,7 @@ private:
     void launchGame(bool resetTable = true);
     bool loadStartupSave();
 
+    float wrapper_gnugo_estimate_score(float* upper, float* lower);
     void resetGnuGo();
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used

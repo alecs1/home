@@ -88,6 +88,7 @@ RoundInfo::~RoundInfo()
 
 
 void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
+    printf("%s - playerType=%u\n", __func__, aType);
     player = aPlayer;
     playerType = aType;
     if (player == BLACK) {

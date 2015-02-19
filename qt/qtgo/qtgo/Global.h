@@ -28,6 +28,7 @@ struct SGameSettings {
     PlayerType white = PlayerType::AI;
     //information used for saving
     int crtPlayer; //is this obvious from the SGF?
+    bool estimateScore;
 };
 
 //Extra information about a game, don't know if this is the right place

@@ -32,6 +32,6 @@ bool SaveFile::writeSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gam
     json["gameDate"] = auxGameInfo->gameDate;
 
     json["tableSize"] = gameSettings->tableSize;
-
+    json["estimateScore"] = gameSettings->estimateScore;
 }
 

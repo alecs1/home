@@ -673,20 +673,13 @@ bool GoTable::placeStone(int row, int col) {
     }
 
 
+    update();
+
     if (estimateScore) {
-        printf("%s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
-        float score = gnugo_estimate_score(NULL, NULL);
-        printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
-        emit estimateScoreChanged(score);
-        if (score > 0) {
-            //printf("%s - estimates: white winning by %f\n", __func__, score);
-        }
-        else {
-            //printf("%s - estimates: black winning by %f\n", __func__, -score);
-        }
+        //hack to give GUI time to update
+        QTimer::singleShot(2, this, SLOT(computeScoreAndUpdate()));
     }
 
-    update();
     return retVal;
 }
 
@@ -723,6 +716,22 @@ void GoTable::updateCursor() {
         setCursor(*blackCursor);
     else
         setCursor(*whiteCursor);
+}
+
+void GoTable::computeScoreAndUpdate() {
+    float score = wrapper_gnugo_estimate_score(NULL, NULL);
+    emit estimateScoreChanged(score);
+    //printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
+}
+
+float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower) {
+    if (gnuGoMutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        gnuGoMutex->lock();
+    }
+    float score= gnugo_estimate_score(upper, lower);
+    gnuGoMutex->unlock();
+    return score;
 }
 
 void GoTable::resetGnuGo() {
@@ -779,6 +788,7 @@ void GoTable::launchGame(bool resetTable) {
         crtPlayer = BLACK;
         lastMoveRow = lastMoveCol = -1;
     }
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
     updateSizes();
     if (useGNUGO) {
         if (resetTable)
@@ -806,6 +816,8 @@ bool GoTable::AIPlayNextMove() {
 }
 
 void GoTable::finish() {
+    float score = wrapper_gnugo_estimate_score(NULL, NULL);
+
     //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
     //maybe show the user a dialog explaining what's hapening.
     if (gnuGoMutex->tryLock() == false) {
@@ -814,7 +826,6 @@ void GoTable::finish() {
     }
 
     //TODO - find the GnuGo fancy end computations
-    float score = gnugo_estimate_score(NULL, NULL);
     QString winner = "White";
     if (score < 0)
         winner = "Black";
@@ -877,15 +888,7 @@ void GoTable::finish() {
 void GoTable::activateEstimatingScore(bool estimate) {
     estimateScore = estimate;
     if (estimate) {
-        printf("gnugo: %s, calling gnugo_estimate_score, ts=%s\n", __func__, timer.getTimestampStr().toUtf8().constData());
-        if (gnuGoMutex->tryLock() == false) {
-            printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
-            gnuGoMutex->lock();
-        }
-        float score = gnugo_estimate_score(NULL, NULL);
-        gnuGoMutex->unlock();
-        printf("gnugo: %s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
-        emit estimateScoreChanged(score);
+        QTimer::singleShot(2, this, SLOT(computeScoreAndUpdate()));
     }
 }
 
@@ -905,18 +908,29 @@ AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
 }
 
+//TODO - fix this function, at the moment I don't know how to make it safe and clean
 bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
     printf("%s - color=%d, pure_threat_value=%f\n", __func__, color, pure_threat_value);
     if(running)
         return false;
 
     running = true;
+    p.operation = OpType::do_genmove;
     p.color = color;
     p.pure_threat_value = pure_threat_value;
     p.allowed_moves = allowed_moves;
     p.value = 0;
     p.resign = 0;
     p.result = 0;
+    start();
+    return true;
+}
+
+bool AIThread::run_gnugo_estimate_score() {
+    if(running)
+        return false;
+    running = true;
+    p.operation = OpType::gnugo_estimate_score;
     start();
     return true;
 }
