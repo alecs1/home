@@ -9,6 +9,7 @@
 #include <sgf/sgftree.h>
 
 class QMutex;
+class SaveFile;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
@@ -112,7 +113,7 @@ private:
     void launchGame(bool resetTable = true);
     bool loadStartupSave();
 
-    float wrapper_gnugo_estimate_score(float* upper, float* lower);
+    float wrapper_gnugo_estimate_score(float* upper, float* lower, bool waitForLock = true, bool *success = NULL);
     void resetGnuGo();
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
@@ -166,6 +167,8 @@ private:
     bool computing = false;
     SGFTree* sgfTree;
     QString crtGameSfgFName = "FreeGoCrt.sgf";
+
+    SaveFile* saver;
 
     ElapsedTimerWrapper timer;
     QString timerDelta;

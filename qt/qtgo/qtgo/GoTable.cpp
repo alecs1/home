@@ -27,6 +27,7 @@ int get_sgfmove(SGFProperty *property);
 #include "GoTable.h"
 #include "GameStruct.h"
 #include "GameEndDialog.h"
+#include "SaveFile.h"
 
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
@@ -194,6 +195,7 @@ GoTable::GoTable(QWidget *parent) :
         resetGnuGo();
     }
 
+    saver = new SaveFile();
 }
 
 
@@ -638,6 +640,12 @@ bool GoTable::placeStone(int row, int col) {
     sgftreeAddPlay(sgfTree, crtPlayer, row, col);
     writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
 
+    SAuxGameInfo auxInfo;
+    auxInfo.comment = "test save";
+    auxInfo.freeGoVersion = "1000";
+    auxInfo.gameDate = "2015-02-19T00:31";
+    saver->writeSave("FreeGoCrt.sgf.aux", sgfTree->root, &this->settings, &auxInfo);
+
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;
     else
@@ -677,7 +685,7 @@ bool GoTable::placeStone(int row, int col) {
 
     if (estimateScore) {
         //hack to give GUI time to update
-        QTimer::singleShot(2, this, SLOT(computeScoreAndUpdate()));
+        QTimer::singleShot(20, this, SLOT(computeScoreAndUpdate()));
     }
 
     return retVal;
@@ -718,15 +726,33 @@ void GoTable::updateCursor() {
         setCursor(*whiteCursor);
 }
 
+//When failing to compute the score will try later
 void GoTable::computeScoreAndUpdate() {
-    float score = wrapper_gnugo_estimate_score(NULL, NULL);
-    emit estimateScoreChanged(score);
+    static int tries = 0;
+    const int maxTries = 100;
+    bool success = true;
+    float score = wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
+    if (success) {
+        emit estimateScoreChanged(score);
+        tries = 0;
+    }
+    else {
+        QTimer::singleShot(100, this, SLOT(computeScoreAndUpdate()));
+        tries += 1;
+        if (tries > maxTries) {
+            printf("%s - failed %d times in a row. Why did we block for so long?", __func__, tries);
+        }
+    }
     //printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
 }
 
-float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower) {
+//whenever waitForLock is false also executed has to be non-null
+float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower, bool waitForLock, bool* success) {
     if (gnuGoMutex->tryLock() == false) {
-        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        if (waitForLock == false) {
+            *success = false;
+            return -INFINITY;
+        }
         gnuGoMutex->lock();
     }
     float score= gnugo_estimate_score(upper, lower);
@@ -888,7 +914,7 @@ void GoTable::finish() {
 void GoTable::activateEstimatingScore(bool estimate) {
     estimateScore = estimate;
     if (estimate) {
-        QTimer::singleShot(2, this, SLOT(computeScoreAndUpdate()));
+        QTimer::singleShot(20, this, SLOT(computeScoreAndUpdate()));
     }
 }
 

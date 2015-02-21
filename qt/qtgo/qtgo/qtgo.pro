@@ -48,9 +48,11 @@ SOURCES += GameSettings.cpp \
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \
-    ../AndroidSpecificSetup.cmake
+    ../AndroidSpecificSetup.cmake \
+    save-format.json
 
 RESOURCES += \
     res.qrc
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+

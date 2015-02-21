@@ -78,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     printf("%s - computed min sizes: %dx%d\n", __func__, minWidth, minHeight);
+    printf("%s - Widget style name=%s\n", __func__, QApplication::style()->objectName().toUtf8().constData());
     setMinimumSize(minWidth, minHeight);
 
 }

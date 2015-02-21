@@ -11,6 +11,7 @@
 #include "RoundInfo.h"
 
 GameSettings::GameSettings(QWidget *parent):
+    QWidget(parent),
     ui(new Ui::GameSettings())
 {
     printf("gtgo: %s - start\n", __func__);
@@ -69,6 +70,8 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
+
+    ui->button9x9->setChecked(true);
 
     populateSettings();
 
@@ -132,7 +135,6 @@ void GameSettings::setGameState(GameState state) {
     else if (state == GameState::Started) {
         ui->launchButton->setText("Finish");
         ui->finishButton->hide();
-        ui->tableSizeGroupBox->setEnabled(false);
         roundInfo->show();
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
@@ -148,7 +150,6 @@ void GameSettings::setGameState(GameState state) {
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
         ui->finishButton->hide();
-        ui->tableSizeGroupBox->setEnabled(true);
         if (showingRoundInfo == true) {
             roundInfo->hide();
             ui->menuLauncher1->hide();
