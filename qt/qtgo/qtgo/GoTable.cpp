@@ -194,8 +194,6 @@ GoTable::GoTable(QWidget *parent) :
         init_gnugo(50, 314);
         resetGnuGo();
     }
-
-    saver = new SaveFile();
 }
 
 
@@ -644,7 +642,7 @@ bool GoTable::placeStone(int row, int col) {
     auxInfo.comment = "test save";
     auxInfo.freeGoVersion = "1000";
     auxInfo.gameDate = "2015-02-19T00:31";
-    saver->writeSave("FreeGoCrt.sgf.aux", sgfTree->root, &this->settings, &auxInfo);
+    SaveFile::writeSave("FreeGoCrt.sgf.aux", sgfTree->root, &this->settings, &auxInfo);
 
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;

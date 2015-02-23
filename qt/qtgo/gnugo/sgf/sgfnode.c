@@ -1527,6 +1527,29 @@ writesgf(SGFNode *root, const char *filename)
   return 1;
 }
 
+int
+writesgfToStream(SGFNode *root, FILE* outfile)
+{
+
+  if (!outfile) {
+    fprintf(stderr, "Can not open %s\n", filename);
+    return 0;
+  }
+
+  sgf_write_header_reduced(root, 0);
+
+  sgf_column = 0;
+  unparse_game(outfile, root, 1);
+
+  /* Remove "printed" marks so that the tree can be written multiple
+   * times.
+   */
+  restore_node(root);
+
+  return 1;
+}
+
+
 
 #ifdef TEST_SGFPARSER
 int

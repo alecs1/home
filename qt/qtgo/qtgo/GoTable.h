@@ -9,7 +9,7 @@
 #include <sgf/sgftree.h>
 
 class QMutex;
-class SaveFile;
+//class SaveFile;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
@@ -167,8 +167,6 @@ private:
     bool computing = false;
     SGFTree* sgfTree;
     QString crtGameSfgFName = "FreeGoCrt.sgf";
-
-    SaveFile* saver;
 
     ElapsedTimerWrapper timer;
     QString timerDelta;

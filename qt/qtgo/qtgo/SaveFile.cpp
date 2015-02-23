@@ -37,6 +37,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     json["estimateScore"] = gameSettings->estimateScore;
 
     QString SGFSaveString;
+    writesgfToStream(SGFNode *root, FILE* outfile)
     json["SGFSaveString"] = SGFSaveString;
 
     //hash some stuff to validate the save file;
