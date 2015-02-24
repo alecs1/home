@@ -1527,12 +1527,13 @@ writesgf(SGFNode *root, const char *filename)
   return 1;
 }
 
+//This is a lazy man's way to save; TODO: rewrite the function to use an internal buffer;
 int
 writesgfToStream(SGFNode *root, FILE* outfile)
 {
 
   if (!outfile) {
-    fprintf(stderr, "Can not open %s\n", filename);
+    fprintf(stderr, "outFile is null");
     return 0;
   }
 

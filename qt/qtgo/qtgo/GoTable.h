@@ -168,6 +168,9 @@ private:
     SGFTree* sgfTree;
     QString crtGameSfgFName = "FreeGoCrt.sgf";
 
+    //game save related
+    SAuxGameInfo auxInfo;
+
     ElapsedTimerWrapper timer;
     QString timerDelta;
 

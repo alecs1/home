@@ -40,5 +40,4 @@ add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-#TODO - why don't I have to link libpatterns.a?
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg board engine utils sgf patterns)

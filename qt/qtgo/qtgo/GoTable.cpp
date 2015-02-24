@@ -194,6 +194,10 @@ GoTable::GoTable(QWidget *parent) :
         init_gnugo(50, 314);
         resetGnuGo();
     }
+
+    auxInfo.comment = "test save";
+    auxInfo.freeGoVersion = "1000";
+    auxInfo.gameDate = "2015-02-19T00:31";
 }
 
 
@@ -636,13 +640,8 @@ bool GoTable::placeStone(int row, int col) {
 
     //Here we're sure a move has been played
     sgftreeAddPlay(sgfTree, crtPlayer, row, col);
-    writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
 
-    SAuxGameInfo auxInfo;
-    auxInfo.comment = "test save";
-    auxInfo.freeGoVersion = "1000";
-    auxInfo.gameDate = "2015-02-19T00:31";
-    SaveFile::writeSave("FreeGoCrt.sgf.aux", sgfTree->root, &this->settings, &auxInfo);
+    SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &this->settings, &auxInfo);
 
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;
@@ -693,8 +692,7 @@ bool GoTable::placeStone(int row, int col) {
 bool GoTable::passMove() {
     //should insert some logic for counting
     sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
-    //TODO - this actually has to be done with rename and other safety stuff
-    writesgf(sgfTree->root, crtGameSfgFName.toUtf8().constData());
+    SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &settings, &auxInfo);
 
 
     if (crtPlayer == WHITE)
