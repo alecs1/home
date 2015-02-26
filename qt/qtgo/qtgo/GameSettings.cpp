@@ -1,6 +1,7 @@
 #include <QSvgRenderer>
 #include <QPainter>
 #include <QMenu>
+#include <QMessageBox>
 
 #include "GameSettings.h"
 #include "ui_GameSettings.h"
@@ -57,7 +58,7 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPixmap(whiteStone);
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
-    connect(ui->finishButton, SIGNAL(clicked()), this, SIGNAL(finishGamePerform()));
+    connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
     connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
 
     connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
@@ -133,8 +134,8 @@ void GameSettings::setGameState(GameState state) {
         setScoreEstimate(0);
     }
     else if (state == GameState::Started) {
-        ui->launchButton->setText("Finish");
-        ui->finishButton->hide();
+        ui->launchButton->hide();
+        ui->finishButton->show();
         roundInfo->show();
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
@@ -148,6 +149,7 @@ void GameSettings::setGameState(GameState state) {
         showingRoundInfo = true;//TODO - get rid of this variable
     }
     else if (state == GameState::Stopped) {
+        ui->launchButton->show();
         ui->launchButton->setText("Start");
         ui->finishButton->hide();
         if (showingRoundInfo == true) {
@@ -252,7 +254,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
         return false;
     if (s1.whiteAIStrength != s2.whiteAIStrength)
         return false;
-    if (s1.tableSize != s2.tableSize)
+    if (s1.size != s2.size)
         return false;
     if (s1.black != s2.black)
         return false;
@@ -264,13 +266,13 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 void GameSettings::populateSettings() {
     printf("%s\n", __func__);
     SGameSettings newSettings;
-    newSettings.tableSize = 19;
+    newSettings.size = 19;
     if (ui->button9x9->isChecked())
-        newSettings.tableSize = 9;
+        newSettings.size = 9;
     else if (ui->button13x13->isChecked())
-        newSettings.tableSize = 13;
+        newSettings.size = 13;
     else if (ui->button19x19->isChecked())
-        newSettings.tableSize = 19;
+        newSettings.size = 19;
 
     newSettings.black = (PlayerType)blackPlayer->playerType();
     newSettings.blackAIStrength = blackPlayer->getAIStrength();
@@ -286,18 +288,36 @@ void GameSettings::populateSettings() {
     }
 }
 
+void GameSettings::receiveSettings(SGameSettings settings) {
+    printf("%s\n", __func__);
+    switch (settings.size) {
+        case 9:
+            ui->button9x9->setChecked(true);
+            break;
+        case 13:
+            ui->button13x13->setChecked(true);
+            break;
+        case 19:
+            ui->button19x19->setChecked(true);
+            break;
+    }
+
+    blackPlayer->setPlayerType(settings.black);
+    blackPlayer->setAIStrength(settings.blackAIStrength);
+    whitePlayer->setPlayerType(settings.white);
+    whitePlayer->setAIStrength(settings.whiteAIStrength);
+
+}
+
+void GameSettings::askConfirmFinishGame() {
+    int ret = QMessageBox::question(this, "FreeGo", "Do you want to finish the game?",
+                                    QMessageBox::Cancel | QMessageBox::Ok);
+    if (ret == QMessageBox::Ok)
+        emit finishGamePerform();
+}
+
 void GameSettings::launchGameClicked() {
     populateSettings();
     emit launchGamePerform(settings);
 }
-
-
-/*
-void RoundInfo::paintEvent(QPaintEvent *) {
-    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
-    QPainter painter(this);
-    painter.drawPixmap(0, 0, crtStonePixmap->width(), crtStonePixmap->height(), *crtStonePixmap);
-}
-*/
-
 

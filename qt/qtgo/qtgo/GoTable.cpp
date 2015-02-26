@@ -167,7 +167,7 @@ GoTable::GoTable(QWidget *parent) :
     askPlayConfirmation = true;
     #endif
 
-    game.size = settings.tableSize;
+    game.size = settings.size;
     players[EMPTY] = PlayerType::None;
     players[BLACK]= settings.black;
     players[WHITE] = settings.white;
@@ -190,7 +190,7 @@ GoTable::GoTable(QWidget *parent) :
     sgfTree->root = sgfNewNode();
     if (useGNUGO) {
         init_gnugo(50, 314);
-        resetGnuGo();
+        resetGnuGo(settings.size);
     }
 
     auxInfo.comment = "test save";
@@ -231,6 +231,8 @@ bool GoTable::loadStartupSave() {
         return false;
 
     changeGameSettings(auxSettings);
+    emit pushGameSettings(auxSettings);
+    resetGnuGo(auxSettings.size);
     auxInfo = auxGameInfo;
 
 
@@ -269,12 +271,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     printf("%s\n", __func__);
 
-    if (state == GameState::Started) {
-        state = GameState::Stopped;
-        finish();
-        //TODO - ask if we want to lose progress
-    }
-    else if (state == GameState::AutoResumed){
+    if (state == GameState::AutoResumed){
         state = GameState::Started;
         if(players[crtPlayer] == PlayerType::AI) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
@@ -282,7 +279,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
         //also place move if the player was the computer
         //TODO - player settings should be loaded from the save, but the player should be able to modify them
     }
-    else {
+    else if (state == GameState::Initial || state == GameState::Stopped){
         launchGame();
         state = GameState::Started;
     }
@@ -297,7 +294,7 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     //TODO - check if there are other settings to be written here; should be the only place to change settings
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
-    game.size = settings.tableSize;
+    game.size = settings.size;
     updateSizes();
     update();
 }
@@ -766,8 +763,8 @@ float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower, bool wai
     return score;
 }
 
-void GoTable::resetGnuGo() {
-    board_size = settings.tableSize;
+void GoTable::resetGnuGo(int newSize) {
+    board_size = newSize;
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
@@ -813,7 +810,7 @@ int GoTable::populateStructFromGnuGo() {
 
 //TODO - customise to allow restarting sa saved game
 void GoTable::launchGame(bool resetTable) {
-    game.size = settings.tableSize;
+    game.size = settings.size;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
     if (resetTable) {
@@ -824,7 +821,7 @@ void GoTable::launchGame(bool resetTable) {
     updateSizes();
     if (useGNUGO) {
         if (resetTable)
-            resetGnuGo();
+            resetGnuGo(settings.size);
         populateStructFromGnuGo();
     }
 

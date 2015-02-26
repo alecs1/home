@@ -21,15 +21,18 @@ public:
     ~PlayerWidget();
     void setPixmap(QPixmap aPixmap);
 
-    int playerType() const;
-    int getAIStrength() const;
+
     void enableChoosingPlayer(bool enable);
 
-private:
-
+//not all of these need to be slots, just keeping them together
 public slots:
+    int playerType() const;
     void setPlayerType(PlayerType type);
     void setPlayerTypeInt(int type);
+
+    int getAIStrength() const;
+    void setAIStrength(int strength);
+
     void showMenuExplicit();
     void showMenu(int playerTypeInt=0);
     void AIActionActivated(QAction* action);
