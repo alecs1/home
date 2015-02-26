@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
     printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
     #endif
 
+    //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
+    GameSettings* settings = new GameSettings(this);
+
     GoTable* table = new GoTable(this);
     ui->centralWidget->setLayout(ui->gridLayout);
 
@@ -53,8 +56,6 @@ MainWindow::MainWindow(QWidget *parent) :
     int minHeight = table->minimumSize().height();
 
 
-    //seems Q_OS_LINUX also applies to Android
-    GameSettings* settings = new GameSettings(this);
     ui->gridLayout->addWidget(settings, 0, 1);
     ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
@@ -62,10 +63,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(table, SIGNAL(crtPlayerChanged(int,PlayerType)), settings, SLOT(setCurrentPlayer(int,PlayerType)));
     QObject::connect(table, SIGNAL(askUserConfirmation(bool)), settings, SLOT(showConfirmButton(bool)));
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    QObject::connect(settings, SIGNAL(finishGamePerform()), table, SLOT(finish()));
     QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(settings, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
     QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
     QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+
+
+    table->checkForResumeGame();
 
     minWidth += settings->sizeHint().width();
     minWidth *= 1.1;
@@ -73,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     printf("%s - computed min sizes: %dx%d\n", __func__, minWidth, minHeight);
+    printf("%s - Widget style name=%s\n", __func__, QApplication::style()->objectName().toUtf8().constData());
     setMinimumSize(minWidth, minHeight);
 
 }

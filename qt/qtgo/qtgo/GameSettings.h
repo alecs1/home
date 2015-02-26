@@ -22,7 +22,9 @@ public:
     ~GameSettings();
 
 signals:
+    //TODO - having two functions with SGameSettigns seems like duplicating
     void launchGamePerform(SGameSettings settings);
+    void finishGamePerform();
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void userPassedMove();
@@ -63,24 +65,5 @@ private:
     QMenu* mainMenu;
 };
 
-
-//Show the colour of the current player and maybe some animation, that he is currently "thinking", in case of the computer
-class RoundInfo : public QWidget {
-//Q_OBJECT
-public:
-    RoundInfo(QWidget* parent);
-    void paintEvent(QPaintEvent *);
-    void setCurrentPlayer(int aPlayer, PlayerType aType);
-
-private:
-    void computeAnim(float pos);
-
-private:
-    QPixmap* blackStone;
-    QPixmap* whiteStone;
-    QPixmap* crtPixmap;
-    int player;
-    PlayerType playerType;
-};
 
 #endif // GAMESETTINGS_H

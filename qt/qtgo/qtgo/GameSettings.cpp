@@ -8,8 +8,10 @@
 #include "PlayerWidget.h"
 #include "GameStruct.h"
 #include "ConfirmMoveDialog.h"
+#include "RoundInfo.h"
 
 GameSettings::GameSettings(QWidget *parent):
+    QWidget(parent),
     ui(new Ui::GameSettings())
 {
     printf("gtgo: %s - start\n", __func__);
@@ -55,6 +57,7 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPixmap(whiteStone);
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
+    connect(ui->finishButton, SIGNAL(clicked()), this, SIGNAL(finishGamePerform()));
     connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
 
     connect(blackPlayer, SIGNAL(playerTypeChanged(int)), this, SLOT(populateSettings()));
@@ -68,12 +71,16 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
 
+    ui->button9x9->setChecked(true);
+
     populateSettings();
 
-    roundInfo = new RoundInfo(ui->roundInfoWidget);
-    ui->roundInfoWidget->setMinimumHeight(roundInfo->height());
+    roundInfo = new RoundInfo(this);
+    ui->topRow->insertWidget(0, roundInfo);
     showingRoundInfo = false;
-    ui->roundInfoWidget->hide();
+    roundInfo->hide();
+    printf("%s - roundInfo:%dx%d\n",
+           __func__, roundInfo->width(), roundInfo->height());
 
 
     ui->hintButton->hide();
@@ -92,10 +99,11 @@ GameSettings::GameSettings(QWidget *parent):
     ui->menuLauncher1->hide();
 
     mainMenu = new QMenu(this);
-    mainMenu->addAction("Bla bla bla");
-    mainMenu->addAction("Bla bla bla 2");
+    mainMenu->addAction("Help");
+    mainMenu->addAction("Save game");
+    mainMenu->addAction("Open saved game");
+    mainMenu->addAction("About");
 
-    printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     printf("%s - end\n", __func__);
 }
 
@@ -105,14 +113,29 @@ GameSettings::~GameSettings() {
 
 void GameSettings::setGameState(GameState state) {
     gameState = state;
-    if (state == GameState::Initial) {
+    if (state == GameState::AutoResumed) {
+        roundInfo->show();
+        ui->launchButton->setText("Resume");
+        ui->finishButton->show();
+        ui->menuLauncher1->show();
+        ui->menuLauncher2->hide();
+        ui->tableSizeGroupBox->hide();
+        ui->hintButton->show();
+        ui->passButton->show();
+        whitePlayer->enableChoosingPlayer(true);
+        blackPlayer->enableChoosingPlayer(true);
+        ui->scoreEstimateButton->show();
+        showingRoundInfo = true;
+    }
+    else if (state == GameState::Initial) {
         ui->scoreEstimateButton->hide();
+        ui->finishButton->hide();
         setScoreEstimate(0);
     }
-    if (state == GameState::Started) {
+    else if (state == GameState::Started) {
         ui->launchButton->setText("Finish");
-        ui->tableSizeGroupBox->setEnabled(false);
-        ui->roundInfoWidget->show();
+        ui->finishButton->hide();
+        roundInfo->show();
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
@@ -122,14 +145,13 @@ void GameSettings::setGameState(GameState state) {
         blackPlayer->enableChoosingPlayer(false);
         ui->scoreEstimateButton->show();
         setScoreEstimate(0);
-        showingRoundInfo = true;
-        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
+        showingRoundInfo = true;//TODO - get rid of this variable
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->setText("Start");
-        ui->tableSizeGroupBox->setEnabled(true);
+        ui->finishButton->hide();
         if (showingRoundInfo == true) {
-            ui->roundInfoWidget->hide();
+            roundInfo->hide();
             ui->menuLauncher1->hide();
         }
         ui->menuLauncher2->show();
@@ -140,7 +162,6 @@ void GameSettings::setGameState(GameState state) {
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();
         showingRoundInfo = false;
-        //printf("%s - roundInfoWidget size:%dx%d\n", __func__, ui->roundInfoWidget->width(), ui->roundInfoWidget->height());
     }
 }
 
@@ -181,13 +202,14 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type) {
 }
 
 void GameSettings::showConfirmButton(bool show) {
+    //printf("%s - show=%d\n", __func__, show);
     if (show == false) {
         if (confirmMoveDialog != NULL) {
             confirmMoveDialog->hide();
         }
         return;
     }
-    if ((gameState != GameState::Started) && (gameState != GameState::Initial))
+    if ((gameState != GameState::Started) && (gameState != GameState::Initial) && (gameState != GameState::AutoResumed))
         return;
 
     if (confirmMoveDialog == NULL) {
@@ -230,7 +252,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
         return false;
     if (s1.whiteAIStrength != s2.whiteAIStrength)
         return false;
-    if (s1.size != s2.size)
+    if (s1.tableSize != s2.tableSize)
         return false;
     if (s1.black != s2.black)
         return false;
@@ -242,13 +264,13 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 void GameSettings::populateSettings() {
     printf("%s\n", __func__);
     SGameSettings newSettings;
-    newSettings.size = 19;
+    newSettings.tableSize = 19;
     if (ui->button9x9->isChecked())
-        newSettings.size = 9;
+        newSettings.tableSize = 9;
     else if (ui->button13x13->isChecked())
-        newSettings.size = 13;
+        newSettings.tableSize = 13;
     else if (ui->button19x19->isChecked())
-        newSettings.size = 19;
+        newSettings.tableSize = 19;
 
     newSettings.black = (PlayerType)blackPlayer->playerType();
     newSettings.blackAIStrength = blackPlayer->getAIStrength();
@@ -269,68 +291,13 @@ void GameSettings::launchGameClicked() {
     emit launchGamePerform(settings);
 }
 
-RoundInfo::RoundInfo(QWidget* parent) :
-    QWidget(parent)
-{
-    QSvgRenderer svgR;
 
-    //this is a fixed size during gameplay, but yet computed at program start-up.
-    //find the system font size and make the drawing a couple of times larger
-
-    QFont font;
-    QString defaultFont = font.defaultFamily();
-    int defaultFontSize = font.pixelSize();
-    if (defaultFontSize <= 0)
-        defaultFontSize = font.pointSize();
-    if (defaultFontSize <= 0) {
-        printf("%s - error - could not establish a fonst size!\n", __func__);
-    }
-
-
-
-    printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
-    const int SCALE= 5;
-    int diameter = SCALE * defaultFontSize;
-    resize(diameter, diameter);
-
-    printf("%s - size:%dx%d\n", __func__, width(), height());
-
-    blackStone = new QPixmap(diameter, diameter);
-    blackStone->fill(Qt::transparent);
-    svgR.load(QString(":/resources/cursorBlack.svg"));
-    QPainter bPainter(blackStone);
-    svgR.render(&bPainter);
-
-    whiteStone = new QPixmap(diameter, diameter);
-    whiteStone->fill(Qt::transparent);
-    svgR.load(QString(":/resources/cursorWhite.svg"));
-    QPainter wPainter(whiteStone);
-    svgR.render(&wPainter);
-
-    crtPixmap = blackStone;
-}
-
+/*
 void RoundInfo::paintEvent(QPaintEvent *) {
     //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
     QPainter painter(this);
-    painter.drawPixmap(0, 0, crtPixmap->width(), crtPixmap->height(), *crtPixmap);
+    painter.drawPixmap(0, 0, crtStonePixmap->width(), crtStonePixmap->height(), *crtStonePixmap);
 }
-
-void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
-    player = aPlayer;
-    playerType = aType;
-    if (player == BLACK) {
-        crtPixmap = blackStone;
-    }
-    else if (player == WHITE) {
-        crtPixmap = whiteStone;
-    }
-    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
-    update();
-}
-
-//TODO - implement later, as it needs math
-void RoundInfo::computeAnim(float pos) {
+*/
 
 
-}

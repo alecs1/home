@@ -80,6 +80,31 @@ const char *result_to_string(int result);
 #define SURROUNDED 1
 #define WEAKLY_SURROUNDED 2
 
+/* Also used for unconditional status in struct worm_data and for the
+ * final status computed by the aftermath code.
+ */
+
+enum dragon_status {
+  DEAD,
+  ALIVE,
+  CRITICAL,
+  UNKNOWN,
+  UNCHECKED,
+  CAN_THREATEN_ATTACK,
+  CAN_THREATEN_DEFENSE,
+  INESSENTIAL,
+  TACTICALLY_DEAD,
+  ALIVE_IN_SEKI,
+  STRONGLY_ALIVE,
+  INVINCIBLE,
+  INSUBSTANTIAL,
+  WHITE_TERRITORY,
+  BLACK_TERRITORY,
+  DAME,
+  NUM_DRAGON_STATUS
+};
+
+
 /* ================================================================ */
 /*                        Board manipulation                        */
 /* ================================================================ */

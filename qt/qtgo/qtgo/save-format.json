@@ -1,0 +1,21 @@
+{
+  "comment": "Example save file",
+  "freeGoVersion": "0.71",
+  "gameDate" : "2015-02-19T00:31",
+  "tableSize": 19,
+  "white": {
+    "type": "AI",
+    "level": "5"
+  },
+  "black": {
+    "type": "Human"
+  },
+  "white2": {
+    "type": "Network",
+    "server": "go-server.org",
+    "game-id": "123456"
+  },
+  "SGFSaveString": "(;GM[1]FF[4]DT[2015-02-16]AP[GNU Go:3.9.1];B[md];W[gd];B[lc];W[ge];B[kd];W[hh];B[le])",
+  "hashMD5": "xyz"
+}
+    
