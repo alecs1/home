@@ -10,7 +10,7 @@
 int main(int argc, char* argv[]) {
 
     uint64_t buf_count = 10*1024*1024;
-    uint64_t buf[buf_size];
+    uint64_t buf[buf_count];
     uint64_t buf_size = sizeof(buf);
     printf("working with bufer size %" PRIu64 "\n", buf_size);
 
