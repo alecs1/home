@@ -39,6 +39,10 @@ shutdown: qdbus org.kde.ksmserver /KSMServer logout 0 0 0
 3    This is the "when" parameter, but it isn't clear what the impact is.
 
 
+Git:
+#show differences between what's commited localy and what's remote (what will be pushed)
+git diff --stat origin/master
+
 
 Kernel:
 Harddisk
@@ -55,3 +59,4 @@ OsX:
 harddisk trashing:
     iotop -C 5 12
     fs_usage
+    
