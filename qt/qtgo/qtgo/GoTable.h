@@ -5,6 +5,7 @@
 #include <QThread>
 
 #include "Global.h"
+#include "GameStruct.h"
 
 #include <sgf/sgftree.h>
 
@@ -140,12 +141,14 @@ private:
     int lastMoveCol = -1;
 
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
-    bool acceptDoubleClickConfirmation = true;
+    bool acceptDoubleClickConfirmation = false;
     GameState state = GameState::Stopped;
 
     //populate this with some default settings, which are then passed to the game
     SGameSettings settings;
 
+    //TODO - game and settings size duplicate info!
+    GameStruct game;
     int crtPlayer = 1;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK
 
@@ -166,7 +169,7 @@ private:
     AIThread* aiThread = NULL;
     bool computing = false;
     SGFTree* sgfTree;
-    QString crtGameSfgFName = "FreeGoCrt.sgf";
+    QString crtGameSfgFName = "FreeGoSave.json";
 
     //game save related
     SAuxGameInfo auxInfo;

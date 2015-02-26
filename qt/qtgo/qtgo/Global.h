@@ -27,9 +27,17 @@ struct SGameSettings {
     PlayerType black = PlayerType::LocalHuman;
     PlayerType white = PlayerType::AI;
     //information used for saving
-    int crtPlayer; //is this obvious from the SGF?
     bool estimateScore;
+
+    //game state, move to another struct if there are more elements
+    int crtPlayer;
 };
+
+/*
+struct SGameState {
+    int crtPlayer;
+};
+*/
 
 //Extra information about a game, don't know if this is the right place
 #include <QString>

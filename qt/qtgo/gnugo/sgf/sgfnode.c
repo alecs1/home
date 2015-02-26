@@ -1240,6 +1240,53 @@ readsgffile(const char *filename)
 
 
 
+/*
+ * Will fclose() the file!!!
+ * Same as readsgffile. A hack to use existing GnuGo code.
+ */
+
+SGFNode *
+readsgfStream(FILE* auxFile)
+{
+  SGFNode *root;
+  int tmpi = 0;
+
+
+  sgffile = auxFile;
+
+  nexttoken();
+  gametree(&root, NULL, LAX_SGF);
+
+  if (sgffile != stdin)
+    fclose(sgffile);
+
+  if (sgferr) {
+    fprintf(stderr, "Parse error: %s at position %d\n", sgferr, sgferrpos);
+    sgfFreeNode(root);
+    return NULL;
+  }
+
+  /* perform some simple checks on the file */
+  if (!sgfGetIntProperty(root, "GM", &tmpi)) {
+    if (VERBOSE_WARNINGS)
+      fprintf(stderr, "Couldn't find the game type (GM) attribute!\n");
+  }
+  else if (tmpi != 1) {
+    fprintf(stderr, "SGF file might be for game other than go: %d\n", tmpi);
+    fprintf(stderr, "Trying to load anyway.\n");
+  }
+
+  if (!sgfGetIntProperty(root, "FF", &tmpi)) {
+    if (VERBOSE_WARNINGS)
+      fprintf(stderr, "Can not determine SGF spec version (FF)!\n");
+  }
+  else if ((tmpi < 3 || tmpi > 4) && VERBOSE_WARNINGS)
+    fprintf(stderr, "Unsupported SGF spec version: %d\n", tmpi);
+
+  return root;
+}
+
+
 /* ================================================================ */
 /*                          Write SGF tree                          */
 /* ================================================================ */

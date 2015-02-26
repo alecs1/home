@@ -32,8 +32,6 @@ int get_sgfmove(SGFProperty *property);
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
 
-extern GameStruct game;
-
 //From play_test.c
 void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
                  float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree)
@@ -224,12 +222,21 @@ bool GoTable::loadStartupSave() {
     if (!f.exists())
         return false;
 
-    //looks like an unfinished game exists, let's load it
-    SGFNode* aux = readsgffile(crtGameSfgFName.toUtf8().constData());
+    SGFNode* aux = NULL;
+    SGameSettings auxSettings;
+    SAuxGameInfo auxGameInfo;
+    bool success = SaveFile::loadSave("FreeGoSave.json", &aux, &auxSettings, &auxGameInfo);
+
+    if (!success)
+        return false;
+
+    changeGameSettings(auxSettings);
+    auxInfo = auxGameInfo;
+
+
     if (aux == NULL)
         return false;
 
-    //all checks done, now replay somehow
     bool retVal = false;
     float replayScore = 0.0;
     float totalScore = 0.0;
@@ -238,12 +245,10 @@ bool GoTable::loadStartupSave() {
     while (node) {
       replay_node(node, EMPTY, &replayScore, &totalScore, &playedMoves, &crtPlayer, sgfTree);
       node = node->child;
-      //TODO - we must also add the move to our Tree
     }
 
     printf("%s - done replaying, replayScore=%f, totalScore=%f\n", __func__, replayScore, totalScore);
     if (playedMoves > 0) {
-        //now who is the next to play? Let's see this loaded first
         populateStructFromGnuGo();
         if (crtPlayer == BLACK)
             crtPlayer = WHITE;
@@ -254,6 +259,7 @@ bool GoTable::loadStartupSave() {
 
     sgfFreeNode(aux);
 
+    updateSizes();
     update();
     return retVal;
 }
@@ -291,6 +297,9 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     //TODO - check if there are other settings to be written here; should be the only place to change settings
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
+    game.size = settings.tableSize;
+    updateSizes();
+    update();
 }
 
 void GoTable::mouseMoveEvent(QMouseEvent* ev) {
@@ -742,7 +751,8 @@ void GoTable::computeScoreAndUpdate() {
     //printf("%s, called gnugo_estimate_score, delta=%s\n", __func__, timer.getElapsedStr().toUtf8().constData());
 }
 
-//whenever waitForLock is false also executed has to be non-null
+//whenever waitForLock is false also sucess has to be non-null
+//TODO - maybe move to AIThread to not block GUI
 float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower, bool waitForLock, bool* success) {
     if (gnuGoMutex->tryLock() == false) {
         if (waitForLock == false) {

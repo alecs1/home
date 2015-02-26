@@ -113,6 +113,9 @@ SGFNode *sgfCreateHeaderNode(int boardsize, float komi, int handicap);
 
 /* Read SGF tree from file. */
 SGFNode *readsgffile(const char *filename);
+/* Kludge version of the aboe, reading from an open file. */
+SGFNode *
+readsgfStream(FILE* auxFile);
 /* Specific solution for fuseki */
 SGFNode *readsgffilefuseki(const char *filename, int moves_per_game);
 

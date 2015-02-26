@@ -5,13 +5,13 @@
 
 #include <QDir>
 
-GameStruct game;
+//GameStruct game;
 
 int main(int argc, char *argv[])
 {
 
     Q_INIT_RESOURCE(res);
-    game.size = 19;
+    //game.size = 19;
 
     QApplication a(argc, argv);
     MainWindow w;

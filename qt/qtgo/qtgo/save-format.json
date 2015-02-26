@@ -1,5 +1,5 @@
 {
-  "comment": "The fille will contain all the data except bellow; newlines deleted; ordering matters; the last field is hash which contains a hash of all previous contents",
+  "comment": "Example save file",
   "freeGoVersion": "0.71",
   "gameDate" : "2015-02-19T00:31",
   "tableSize": 19,
