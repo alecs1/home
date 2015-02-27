@@ -80,6 +80,7 @@ public slots:
     void changeGameSettings(SGameSettings newSettings);
     bool placeStone(int row, int col);
     bool passMove();
+    bool undoMove();
     void finish();
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);

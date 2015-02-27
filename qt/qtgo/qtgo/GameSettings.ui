@@ -77,23 +77,6 @@
        <property name="verticalSpacing">
         <number>1</number>
        </property>
-       <item row="4" column="0">
-        <widget class="QPushButton" name="passButton">
-         <property name="text">
-          <string>Pass</string>
-         </property>
-         <property name="flat">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QPushButton" name="hintButton">
-         <property name="text">
-          <string>Hint</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout2">
          <property name="spacing">
@@ -166,6 +149,37 @@
             </spacer>
            </item>
           </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="5" column="0">
+        <widget class="QPushButton" name="passButton">
+         <property name="text">
+          <string>Pass</string>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="hintButton">
+           <property name="text">
+            <string>Hint</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="undoButton">
+           <property name="text">
+            <string>Undo</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

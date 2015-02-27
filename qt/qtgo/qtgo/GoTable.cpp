@@ -718,6 +718,17 @@ bool GoTable::passMove() {
     return true;
 }
 
+bool GoTable::undoMove() {
+    //human-computer: undo twice, computer's and yours
+    //human-human: undo once, players will cooperate somehow
+    //network-x:no undo for now
+    if (player[crtPlayer] == PlayerType::LocalHuman) {
+        if (player[otherColour(crtPlayer)] = PlayerType::AI) {
+
+        }
+    }
+}
+
 //change colour of mouse cursor to reflect the current player
 void GoTable::updateCursor() {
     if ( (state == GameState::Stopped) || cursorBlocked)

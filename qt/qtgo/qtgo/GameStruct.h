@@ -30,5 +30,7 @@ struct GameStruct {
 bool GamePlaceStone(GameStruct* game, int row, int col, int player);
 bool GameCanPlaceStone(GameStruct* game, int row, int col, int player);
 
+int otherColour(int crtColour);
+
 
 #endif // GAMESTRUCT_H

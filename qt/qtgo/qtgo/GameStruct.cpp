@@ -14,3 +14,12 @@ bool GameCanPlaceStone(GameStruct* game, int row, int col, int player) {
         return true;
     return false;
 }
+
+int otherColour(int crtColour) {
+    if (crtColour == WHITE)
+        return BLACK;
+    else if (crtColour == BLACK)
+        return WHITE;
+    else
+        return -1;
+}
