@@ -38,6 +38,8 @@ public slots:
     void showConfirmButton(bool show);
     void toggleShowEstimateScore();
     void showMenu();
+    void receiveSettings(SGameSettings settings);
+    void askConfirmFinishGame();
 
 private slots:
     void launchGameClicked();

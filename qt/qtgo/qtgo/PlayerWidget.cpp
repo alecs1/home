@@ -10,7 +10,6 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget)
 {
-    AIMenu = NULL;
     printf("%s\n", __func__);
     ui->setupUi(this);
     ui->playerComboBox->insertItem((int)PlayerType::AI, "Computer (weak)");
@@ -21,6 +20,20 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     connect(ui->playerComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setPlayerTypeInt(int)));
     connect(ui->playerSettingsButton, SIGNAL(clicked()), this, SLOT(showMenuExplicit()));
     connect(ui->playerComboBox, SIGNAL(activated(int)), this, SLOT(showMenu(int)));
+
+
+    AIMenu = new QMenu(this);
+    AIMenu->setTitle("Computer strength");
+    QAction* titleAct = AIMenu->addAction("Computer strength");
+    titleAct->setEnabled(false);
+    //TODO - on Android can't show too many levels. Fix.
+    QAction* defAct = AIMenu->addAction("0 - Weak");
+    AIMenu->setDefaultAction(defAct);
+    for(int i = 1; i <= 4; i++) {
+        AIMenu->addAction(QString::number(i));
+    }
+    AIMenu->addAction("5 - Strong");
+    connect(AIMenu, SIGNAL(triggered(QAction*)), this, SLOT(AIActionActivated(QAction*)));
 }
 
 PlayerWidget::~PlayerWidget()
@@ -35,6 +48,10 @@ int PlayerWidget::playerType() const {
 int PlayerWidget::getAIStrength() const {
     //because we have to show a limited number of options on Android screens
     return AIStrength * 2;
+}
+
+void PlayerWidget::setAIStrength(int strength) {
+    AIActionActivated(AIMenu->actions()[strength/2 + 1]);
 }
 
 void PlayerWidget::setPlayerTypeInt(int type) {
@@ -93,21 +110,6 @@ void PlayerWidget::showMenuExplicit() {
 void PlayerWidget::showMenu(int playerTypeInt) {
     printf("%s - playerType=%d\n", __func__, playerTypeInt);
     PlayerType type = (PlayerType)playerTypeInt;
-
-    if (AIMenu == NULL) {
-        AIMenu = new QMenu(this);
-        AIMenu->setTitle("Computer strength");
-        QAction* titleAct = AIMenu->addAction("Computer strength");
-        titleAct->setEnabled(false);
-        //TODO - on Android can't show too many levels. Fix.
-        QAction* defAct = AIMenu->addAction("0 - Weak");
-        AIMenu->setDefaultAction(defAct);
-        for(int i = 1; i <= 4; i++) {
-            AIMenu->addAction(QString::number(i));
-        }
-        AIMenu->addAction("5 - Strong");
-        connect(AIMenu, SIGNAL(triggered(QAction*)), this, SLOT(AIActionActivated(QAction*)));
-    }
 
     if (type == PlayerType::AI) {
         //AIMenu->setWindowFlags(Qt::FramelessWindowHint | AIMenu->windowFlags());

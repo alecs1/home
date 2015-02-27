@@ -94,6 +94,7 @@ signals:
     void estimateScoreChanged(float score);
     void crtPlayerChanged(int player, PlayerType type);
     void askUserConfirmation(bool ask); //ask the user for confirmation, dialog belongs to another widget
+    void pushGameSettings(SGameSettings newSettings);
 
 protected:
     void resizeEvent(QResizeEvent *event);
@@ -115,7 +116,7 @@ private:
     bool loadStartupSave();
 
     float wrapper_gnugo_estimate_score(float* upper, float* lower, bool waitForLock = true, bool *success = NULL);
-    void resetGnuGo();
+    void resetGnuGo(int newSize);
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
 

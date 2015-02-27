@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int,PlayerType)), settings, SLOT(setCurrentPlayer(int,PlayerType)));
     QObject::connect(table, SIGNAL(askUserConfirmation(bool)), settings, SLOT(showConfirmButton(bool)));
+    QObject::connect(table, SIGNAL(pushGameSettings(SGameSettings)), settings, SLOT(receiveSettings(SGameSettings)));
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
     QObject::connect(settings, SIGNAL(finishGamePerform()), table, SLOT(finish()));
     QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));

@@ -43,7 +43,7 @@ bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gam
     auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
     auxGameInfo->gameDate = json["gameDate"].toString();
 
-    gameSettings->tableSize = json["tableSize"].toInt();
+    gameSettings->size = json["tableSize"].toInt();
     gameSettings->estimateScore = json["estimateScore"].toBool();
 
     gameSettings->white = (PlayerType)json["white"].toObject()["type"].toInt();
@@ -83,7 +83,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     json["freeGoVersion"] = auxGameInfo->freeGoVersion;
     json["gameDate"] = auxGameInfo->gameDate;
 
-    json["tableSize"] = gameSettings->tableSize;
+    json["tableSize"] = gameSettings->size;
     json["estimateScore"] = gameSettings->estimateScore;
 
     QJsonObject white;

@@ -17,7 +17,7 @@ v 1.4 Highlight last move! Low quality but works.
     v - load player types
     v - when the one to move was the computer we should ask the user to resume
     v - continuing does not work on Android
-    - push loaded settings from table to settings widget
+    v - push loaded settings from table to settings widget
 
 3.1 Android UI
     v - remove top menu
@@ -57,5 +57,6 @@ Bugs:
 v 4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
 5. With Sony Xperia the radio buttons don't show what's selected, altough they seem to work. Seems like a Qt bug, won't fix now.
 6. At startup table size is not the one selected by buttons.
+7. Not showing the last move when loading a saved game.
 
 

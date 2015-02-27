@@ -21,7 +21,7 @@ enum class PlayerType:uint8_t {
 };
 
 struct SGameSettings {
-    int tableSize = 19;
+    int size = 19;
     int blackAIStrength = 0;
     int whiteAIStrength = 0;
     PlayerType black = PlayerType::LocalHuman;
