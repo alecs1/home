@@ -722,11 +722,31 @@ bool GoTable::undoMove() {
     //human-computer: undo twice, computer's and yours
     //human-human: undo once, players will cooperate somehow
     //network-x:no undo for now
-    if (player[crtPlayer] == PlayerType::LocalHuman) {
-        if (player[otherColour(crtPlayer)] = PlayerType::AI) {
-
-        }
+    //can't undo on computer's turn, but you can undo after the match finishes
+    int count = 0;
+    if (players[crtPlayer] == PlayerType::LocalHuman) {
+        if (players[otherColour(crtPlayer)] == PlayerType::AI)
+            count = 2;
+        else if (players[otherColour(crtPlayer)] == PlayerType::LocalHuman)
+            count = 1;
+        else
+            printf("%s - can't undo against network game\n", __func__);
     }
+    int result = undo_move(count);
+    if (result == 1) {
+        //success: go back in history too
+        for(int i = 0; i < count; i++) {
+            crtPlayer = otherColour(crtPlayer);
+            sgftreeBack(sgfTree);
+        }
+        SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &settings, &auxInfo);
+        populateStructFromGnuGo();
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        update();
+        updateCursor();
+        return true;
+    }
+    return false;
 }
 
 //change colour of mouse cursor to reflect the current player

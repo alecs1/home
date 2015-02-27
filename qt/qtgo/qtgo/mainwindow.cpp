@@ -68,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(settings, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
     QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+    QObject::connect(settings, SIGNAL(undoMove()), table, SLOT(undoMove()));
     QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
 
 

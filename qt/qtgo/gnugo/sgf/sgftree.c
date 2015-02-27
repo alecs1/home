@@ -142,6 +142,18 @@ sgftreeAddPlay(SGFTree *tree, int color, int movex, int movey)
   tree->lastnode = sgfAddPlay(node, color, movex, movey);
 }
 
+/*
+ * Undo n moves, will try to keep them in some sort of history. Likely useless.
+ */
+
+//int
+//sgftreeUndoPlay(SGFTree* tree, int count) {
+//    for(int i= 0; i < count; i++) {
+//        sgftreeBack(tree);
+//    }
+//}
+
+
 
 /*
  * Add a move to the gametree. New variations are added after the old

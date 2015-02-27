@@ -28,6 +28,7 @@ signals:
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void userPassedMove();
+    void undoMove();
     void gameSettingsChanged(SGameSettings settings);
 
 

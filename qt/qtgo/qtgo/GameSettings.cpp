@@ -69,6 +69,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->button13x13, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
+    connect(ui->undoButton, SIGNAL(clicked()), this, SIGNAL(undoMove()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
 
@@ -86,6 +87,7 @@ GameSettings::GameSettings(QWidget *parent):
 
     ui->hintButton->hide();
     ui->passButton->hide();
+    ui->undoButton->hide();
 
     showScore = false;
     setGameState(GameState::Initial);
@@ -121,8 +123,8 @@ void GameSettings::setGameState(GameState state) {
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
-        ui->hintButton->show();
-        ui->passButton->show();
+        ui->hintButton->hide();
+        ui->passButton->hide();
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         ui->scoreEstimateButton->show();
@@ -142,6 +144,7 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->hide();
         ui->hintButton->show();
         ui->passButton->show();
+        ui->undoButton->show();
         whitePlayer->enableChoosingPlayer(false);
         blackPlayer->enableChoosingPlayer(false);
         ui->scoreEstimateButton->show();
@@ -160,6 +163,7 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->show();
         ui->hintButton->hide();
         ui->passButton->hide();
+        ui->undoButton->show();
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();
@@ -201,6 +205,7 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     ui->scoreEstimateButton->setEnabled(enableBlockingGroup);
     ui->hintButton->setEnabled(enableBlockingGroup);
     ui->passButton->setEnabled(enableBlockingGroup);
+    ui->undoButton->setEnabled(enableBlockingGroup);
 }
 
 void GameSettings::showConfirmButton(bool show) {
