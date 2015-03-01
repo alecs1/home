@@ -44,7 +44,8 @@ SOURCES += GameSettings.cpp \
            GameEndDialog.cpp \
     ConfirmMoveDialog.cpp \
     RoundInfo.cpp \
-    SaveFile.cpp
+    SaveFile.cpp \
+    Global.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

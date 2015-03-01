@@ -76,6 +76,11 @@ public:
     int toGnuGoPos(int row, int col);
     void checkForResumeGame();
 
+    //direction: 0 - width, 1 - height
+    static int getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction = 1,
+                                   QString text = QString("O"));
+
+
 public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(SGameSettings newSettings);

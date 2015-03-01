@@ -7,7 +7,7 @@
 #endif
 
 enum class GameState:uint8_t  {
-    Initial, //At GUI start-up, clicking on the board will start the game
+    Initial = 0, //At GUI start-up, clicking on the board will start the game
     AutoResumed,
     Stopped,
     Started
@@ -33,11 +33,13 @@ struct SGameSettings {
     int crtPlayer;
 };
 
-/*
-struct SGameState {
-    int crtPlayer;
+enum class PlatformType:uint8_t {
+    LinuxDesktop = 0,
+    Android,
+    WindowsDesktop
 };
-*/
+
+PlatformType platformType();
 
 //Extra information about a game, don't know if this is the right place
 #include <QString>

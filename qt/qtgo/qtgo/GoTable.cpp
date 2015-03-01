@@ -490,10 +490,13 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
 
+    QString fontName = "DejaVu Sans";
+    int targetHeight = dist * 0.7;
+    int auxSmaller, auxLarger;
+    int pointSize = getClosestPointSize(fontName, targetHeight, auxSmaller, auxLarger, 1);
+
     //numbering: from bottom left corner
-    //consider the simbol should fit into a square with length 1/3 of dist;
-    //for perfect results will use QFontMetrics, for now we make assumptions
-    QFont font("DejaVu Sans", dist/3.5);
+    QFont font("DejaVu Sans", pointSize);
     painter.setFont(font);
     qreal margin = 1.0/8 * dist;
     for (int i = 0 ; i < game.size; i++) {
@@ -567,8 +570,6 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
 
-    //float best_move_values[10];
-    //int   best_moves[10];
     if (showHints) {
         for(int i = 0; i < 10; i++) {
             QPoint move = fromGnuGoPos(best_moves[i]);
@@ -576,15 +577,13 @@ void GoTable::paintEvent(QPaintEvent *) {
                 continue;
 
             float val = best_move_values[i];
-            QString printable;
-            printable.sprintf("%1.1f", val);
-            printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
             QPointF moveHintPos(dist + move.x()*dist, dist + move.y()*dist);
-            const float drawRadius = 0.4 * dist;
-            QRectF textRect(moveHintPos.x() - drawRadius, moveHintPos.y() - drawRadius,
-                            2 * drawRadius, 2 * drawRadius);
+            const float drawDiameter = 0.9 * dist;
+            QRectF textRect(moveHintPos.x() - drawDiameter/2, moveHintPos.y() - drawDiameter/2,
+                            drawDiameter, drawDiameter);
 
-            QColor backColour (0, 0, 0, 127);
+            //more transparent as the move is considered weaker
+            QColor backColour (0, 0, 64, 220 - 20 * i);
             pen.setWidthF(0);
             pen.setColor(backColour);
             painter.setPen(pen);
@@ -593,7 +592,20 @@ void GoTable::paintEvent(QPaintEvent *) {
 
             pen.setColor(QColor(255, 255, 255, 255));
             painter.setPen(pen);
-            font = QFont("DejaVu Sans", dist/4.5);
+            QString printable;
+            int pointSize = -1;
+            //TODO - these sizes must be computed at resize time only, avoid expensive stuff.
+            if (platformType() == PlatformType::Android) {
+                //smaller screen, we'll show shorter hints
+                printable.sprintf("%d", 9 - i);
+                pointSize = getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 1, "0");
+            }
+            else {
+                printable.sprintf("%1.1f", val);
+                pointSize = getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 0, "22.2.");
+            }
+            //printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
+            font = QFont(fontName, pointSize);
             painter.setFont(font);
             painter.drawText(textRect, Qt::AlignCenter, printable);
         }
@@ -1045,7 +1057,7 @@ void AIThread::run_value_moves(int colour) {
     //run genmove to fill in best_move_values
     set_level(2);
     int val = genmove(colour, NULL, NULL);
-
+    Q_UNUSED(val);
     mutex->unlock();;
 }
 
@@ -1131,4 +1143,49 @@ QString ElapsedTimerWrapper::getElapsedStr() {
     stream << getElapsed();
     stream.flush();
     return retVal;
+}
+
+#include <limits>
+int GoTable::getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction, QString text) {
+    //haha - clumsy c++ syntax :)))
+    int closestSize = std::numeric_limits<int>::max();
+    int nextSmallerSize = std::numeric_limits<int>::max();
+    int nextLargerSize = std::numeric_limits<int>::max();
+    int closest = -1;
+    nextSmaller = -1;
+    nextLarger = -1;
+    int pointSize = 1;
+    int maxPointSize = 96;
+    while(pointSize <= maxPointSize) {
+        QFontMetrics fontMetrics = QFontMetrics(QFont(fontName, pointSize));
+        int crtSize = 0;
+        if (direction == 0) {
+            crtSize = fontMetrics.width(text);
+        }
+        else {
+            crtSize = fontMetrics.height();
+        }
+        printf("%s - pointSize=%d. Results in height=%d, we need height=%d\n",
+               __func__, pointSize, crtSize, targetSize);
+        if (abs(crtSize - targetSize) < abs(crtSize - closestSize)) {
+            closest = pointSize;
+            closestSize = crtSize;
+        }
+        if ( (crtSize < targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextSmallerSize)) ) {
+            nextSmaller = pointSize;
+            nextSmallerSize = crtSize;
+        }
+        if ( (crtSize > targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextLargerSize)) ) {
+            nextLarger = pointSize;
+            nextLargerSize = crtSize;
+        }
+        if ((closestSize != std::numeric_limits<int>::max()) &&
+            (nextSmallerSize != std::numeric_limits<int>::max()) &&
+            (nextLargerSize != std::numeric_limits<int>::max()))
+            break;
+        pointSize += 1;
+    }
+    printf("%s, closest:%d:%d, smaller:%d:%d, larger:%d:%d\n", __func__,
+           closest, closestSize, nextSmaller, nextSmallerSize, nextLarger, nextLargerSize);
+    return closest;
 }
