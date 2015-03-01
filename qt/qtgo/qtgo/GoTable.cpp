@@ -13,10 +13,11 @@ extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
 #include "engine/gnugo.h"
 #include "engine/liberty.h"
-int do_genmove(int color, float pure_threat_value, int allowed_moves[BOARDMAX], float *value, int *resign);
 void init_gnugo(float memory, unsigned int seed);
 //void compute_scores(int use_chinese_rules);
 float gnugo_estimate_score(float *upper, float *lower);
+void value_moves(int color, float pure_threat_value, float our_score,
+            int use_thrashing_dragon_heuristics);
 }
 
 extern "C" {
@@ -33,7 +34,7 @@ QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
 
 //From play_test.c
-void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
+void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_score,
                  float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree)
 {
     SGFProperty *sgf_prop;  /* iterate over properties of the node */
@@ -136,6 +137,8 @@ void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     play_move(old_move, color);
     QPoint point = GoTable::fromGnuGoPos(old_move);
     sgftreeAddPlay(outTree, color, point.y(), point.x());
+    lastMoveRow = point.y();
+    lastMoveCol = point.x();
 
     (*playedMoves) += 1;
     (*crtColour) = color;
@@ -563,6 +566,38 @@ void GoTable::paintEvent(QPaintEvent *) {
         }
     }
 
+
+    //float best_move_values[10];
+    //int   best_moves[10];
+    if (showHints) {
+        for(int i = 0; i < 10; i++) {
+            QPoint move = fromGnuGoPos(best_moves[i]);
+            if (move.x() < 0)
+                continue;
+
+            float val = best_move_values[i];
+            QString printable;
+            printable.sprintf("%1.1f", val);
+            printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
+            QPointF moveHintPos(dist + move.x()*dist, dist + move.y()*dist);
+            const float drawRadius = 0.4 * dist;
+            QRectF textRect(moveHintPos.x() - drawRadius, moveHintPos.y() - drawRadius,
+                            2 * drawRadius, 2 * drawRadius);
+
+            QColor backColour (0, 0, 0, 127);
+            pen.setWidthF(0);
+            pen.setColor(backColour);
+            painter.setPen(pen);
+            painter.setBrush(QBrush(backColour, Qt::SolidPattern));
+            painter.drawEllipse(textRect);
+
+            pen.setColor(QColor(255, 255, 255, 255));
+            painter.setPen(pen);
+            font = QFont("DejaVu Sans", dist/4.5);
+            painter.setFont(font);
+            painter.drawText(textRect, Qt::AlignCenter, printable);
+        }
+    }
 }
 
 
@@ -603,6 +638,8 @@ bool GoTable::buildPixmaps(int diameter) {
 
 bool GoTable::placeStone(int row, int col) {
     printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    showHints = false;
+
     inputBlockingDuration = 0;
     if (players[crtPlayer] == PlayerType::LocalHuman)
         blockTime->start();
@@ -698,7 +735,7 @@ bool GoTable::passMove() {
     sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
     SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &settings, &auxInfo);
 
-
+    showHints = false;
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;
     else
@@ -722,7 +759,7 @@ bool GoTable::undoMove() {
     //network-x:no undo for now
     //can't undo on computer's turn, but you can undo after the match finishes
     int count = 0;
-    if (players[crtPlayer] == PlayerType::LocalHuman) {
+    if ((players[crtPlayer] == PlayerType::LocalHuman) /* || (state == GameState::Stopped)*/) {
         if (players[otherColour(crtPlayer)] == PlayerType::AI)
             count = 2;
         else if (players[otherColour(crtPlayer)] == PlayerType::LocalHuman)
@@ -730,6 +767,7 @@ bool GoTable::undoMove() {
         else
             printf("%s - can't undo against network game\n", __func__);
     }
+
     int result = undo_move(count);
     if (result == 1) {
         //success: go back in history too
@@ -842,6 +880,7 @@ void GoTable::launchGame(bool resetTable) {
     game.size = settings.size;
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
+    showHints = false;
     if (resetTable) {
         crtPlayer = BLACK;
         lastMoveRow = lastMoveCol = -1;
@@ -961,6 +1000,12 @@ void GoTable::userConfirmedMove(int confirmed) {
     update();
 }
 
+void GoTable::showPlayHints() {
+    showHints = true;
+    aiThread->run_value_moves(crtPlayer);
+    update();
+}
+
 AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
 }
@@ -988,6 +1033,20 @@ bool AIThread::run_gnugo_estimate_score() {
     p.operation = OpType::gnugo_estimate_score;
     start();
     return true;
+}
+
+void AIThread::run_value_moves(int colour) {
+    if (mutex->tryLock() == false) {
+        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        mutex->lock();
+    }
+
+    //value_moves(colour, 0.0, 0.0, 1);
+    //run genmove to fill in best_move_values
+    set_level(2);
+    int val = genmove(colour, NULL, NULL);
+
+    mutex->unlock();;
 }
 
 void AIThread::run() {

@@ -70,6 +70,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->button19x19, SIGNAL(toggled(bool)), this, SLOT(populateSettings()));
     connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
     connect(ui->undoButton, SIGNAL(clicked()), this, SIGNAL(undoMove()));
+    connect(ui->hintButton, SIGNAL(clicked()), this, SIGNAL(showHints()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
 
@@ -163,7 +164,8 @@ void GameSettings::setGameState(GameState state) {
         ui->tableSizeGroupBox->show();
         ui->hintButton->hide();
         ui->passButton->hide();
-        ui->undoButton->show();
+        ui->undoButton->hide();
+        ui->undoButton->setEnabled(true);
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();

@@ -29,6 +29,7 @@ signals:
     void userConfirmedMove(int confirmed);
     void userPassedMove();
     void undoMove();
+    void showHints();
     void gameSettingsChanged(SGameSettings settings);
 
 

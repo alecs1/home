@@ -35,6 +35,7 @@ public:
     AIThread(QMutex* mutex);
     bool run_genmove(int color, int AIStrength);
     bool run_gnugo_estimate_score();
+    void run_value_moves(int colour);
 
 signals:
     void AIThreadPlaceStone(int row, int col);
@@ -84,6 +85,7 @@ public slots:
     void finish();
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);
+    void showPlayHints();
 
 private slots:
     bool AIPlayNextMove();
@@ -120,6 +122,8 @@ private:
     void resetGnuGo(int newSize);
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
+    void replay_node(SGFNode *node, int color_to_replay, float *replay_score,
+                     float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree);
 
 private:
     QCursor* blackCursor;
@@ -141,6 +145,8 @@ private:
     //-1 -> not showing; -2 -> passed; TODO - also show passes
     int lastMoveRow = -1;
     int lastMoveCol = -1;
+
+    bool showHints = false;
 
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
     bool acceptDoubleClickConfirmation = false;

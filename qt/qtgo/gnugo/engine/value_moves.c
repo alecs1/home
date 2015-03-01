@@ -3297,31 +3297,31 @@ value_moves(int color, float pure_threat_value, float our_score,
   int pos;
 
   TRACE("\nMove valuation:\n");
-  
+
   /* Visit the moves in the standard lexicographical order */
   for (n = 0; n < board_size; n++)
     for (m = board_size-1; m >= 0; m--) {
       pos = POS(m, n);
 
-      move[pos].value = value_move_reasons(pos, color, 
-					   pure_threat_value, our_score,
-					   use_thrashing_dragon_heuristics);
+      move[pos].value = value_move_reasons(pos, color,
+                       pure_threat_value, our_score,
+                       use_thrashing_dragon_heuristics);
       if (move[pos].value == 0.0)
-	continue;
-      
+        continue;
+
       /* Maybe this test should be performed elsewhere. This is just
        * to get some extra safety. We don't filter out illegal ko
        * captures here though, because if that is the best move, we
        * should reevaluate ko threats.
        */
       if (is_legal(pos, color) || is_illegal_ko_capture(pos, color)) {
-	/* Add a random number between 0 and 0.01 to use in comparisons. */
-	move[pos].value += 
-	  0.01 * move[pos].random_number * move[pos].randomness_scaling;
+        /* Add a random number between 0 and 0.01 to use in comparisons. */
+        move[pos].value +=
+          0.01 * move[pos].random_number * move[pos].randomness_scaling;
       }
       else {
-	move[pos].value = 0.0;
-	TRACE("Move at %1m wasn't legal.\n", pos);
+        move[pos].value = 0.0;
+        TRACE("Move at %1m wasn't legal.\n", pos);
       }
     }
 }
