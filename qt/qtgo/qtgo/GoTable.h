@@ -33,7 +33,7 @@ Q_OBJECT
 
 public:
     AIThread(QMutex* mutex);
-    bool run_do_genmove(int color, float pure_threat_value, int* allowed_moves);
+    bool run_genmove(int color, int AIStrength);
     bool run_gnugo_estimate_score();
 
 signals:
@@ -52,9 +52,9 @@ private:
         OpType operation;
 
         //params for do_genmove
+        int strength;
         int color;
-        float pure_threat_value;
-        int* allowed_moves;
+        float move_value;
         float value;
         int resign;
         int result;

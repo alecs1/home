@@ -276,8 +276,6 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
         if(players[crtPlayer] == PlayerType::AI) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
         }
-        //also place move if the player was the computer
-        //TODO - player settings should be loaded from the save, but the player should be able to modify them
     }
     else if (state == GameState::Initial || state == GameState::Stopped){
         launchGame();
@@ -867,11 +865,10 @@ bool GoTable::AIPlayNextMove() {
     computing = true;
     update();
     //printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
-    float AIStrength = settings.blackAIStrength;
+    int AIStrength = settings.blackAIStrength;
     if (crtPlayer == WHITE)
         AIStrength = settings.whiteAIStrength;
-    AIStrength /= 10;
-    aiThread->run_do_genmove(crtPlayer, AIStrength, NULL);
+    aiThread->run_genmove(crtPlayer, AIStrength);
     return false;
 }
 
@@ -968,17 +965,15 @@ AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
 }
 
-//TODO - fix this function, at the moment I don't know how to make it safe and clean
-bool AIThread::run_do_genmove(int color, float pure_threat_value, int* allowed_moves) {
-    printf("%s - color=%d, pure_threat_value=%f\n", __func__, color, pure_threat_value);
+bool AIThread::run_genmove(int color, int AIStrength) {
+    printf("%s - color=%d\n", __func__, color);
     if(running)
         return false;
 
     running = true;
     p.operation = OpType::do_genmove;
     p.color = color;
-    p.pure_threat_value = pure_threat_value;
-    p.allowed_moves = allowed_moves;
+    p.strength = AIStrength;
     p.value = 0;
     p.resign = 0;
     p.result = 0;
@@ -1002,7 +997,8 @@ void AIThread::run() {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         mutex->lock();
     }
-    p.result = do_genmove(p.color, p.pure_threat_value, p.allowed_moves, &p.value, &p.resign);
+    set_level(p.strength);
+    p.result = genmove(p.color, &p.move_value, &p.resign);
     mutex->unlock();
 
     int move = p.result;
@@ -1020,7 +1016,7 @@ void AIThread::run() {
     }
     else {
         QPoint point = GoTable::fromGnuGoPos(move);
-        printf("%s - AI has finished\n", __func__);
+        printf("%s - AI has finished, move of value=%f, at %d, %d\n", __func__, p.move_value, point.y(), point.x());
         emit AIThreadPlaceStone(point.y(), point.x());
     }
 
