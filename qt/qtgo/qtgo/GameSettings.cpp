@@ -74,7 +74,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
 
-    ui->button9x9->setChecked(true);
+    ui->button19x19->setChecked(true);
 
     populateSettings();
 
