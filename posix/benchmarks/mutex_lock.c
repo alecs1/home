@@ -31,7 +31,7 @@ int main() {
     }
     else if (task==2) {
         //test lock unlock from 2 threads, which lock rarely
-        //multi-threaded program, around 500000 lock+unlock paris per second
+        //multi-threaded program, around 500000-1000000 lock+unlock pairs per second
         pthread_t t1;
         pthread_t t2;
         pthread_t t3;

@@ -1,6 +1,12 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <stdint.h>
+
+#ifdef WIN32
+#define __func__ __FUNCTION__
+#endif
+
 #if defined(Q_OS_ANDROID)
 #include <log.h>
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);

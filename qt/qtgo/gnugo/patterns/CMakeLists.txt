@@ -65,6 +65,9 @@ TARGET_LINK_LIBRARIES(uncompress_fuseki utils board sgf)
 
 
 ########### extract_fuseki program ###############
+IF(UNIX)
+    SET(PLATFORM_LIBRARIES m)
+ENDIF(UNIX)
 
 SET(extract_fuseki_SRCS
     extract_fuseki.c
@@ -73,7 +76,7 @@ SET(extract_fuseki_SRCS
 ADD_EXECUTABLE(extract_fuseki ${extract_fuseki_SRCS})
 
 TARGET_LINK_LIBRARIES(extract_fuseki engine patterns
-                      engine patterns sgf utils m)
+                      engine patterns sgf utils ${PLATFORM_LIBRARIES})
 
 
 ########### next target ###############
