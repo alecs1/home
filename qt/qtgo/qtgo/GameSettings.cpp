@@ -261,9 +261,14 @@ void GameSettings::showMenu() {
     mainMenu->move(globalPos);
 }
 
+#include <QtQuick/QQuickView>
 void GameSettings::showAbout() {
     AboutDialog dialog;
     dialog.exec();
+    //QQuickView* view = new QQuickView();
+    //view->setSource(QUrl("qrc:/Example.qml"));
+    //view->show();
+    printf("%s - done\n", __func__);
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {

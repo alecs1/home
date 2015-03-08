@@ -3,6 +3,7 @@
 
 class QQuickWidget;
 class QQuickView;
+class QLabel;
 
 #include <QDialog>
 
@@ -18,11 +19,13 @@ protected:
     void resizeEvent(QResizeEvent* event);
 
 
+
 private:
     //QQmlEngine* qmlEngine;
     //QQmlComponent* component;
-    QQuickView* quickView = NULL; //desktop
+    //QQuickView* quickView = NULL; //desktop
     QQuickWidget* quickWidget = NULL; //Android: https://bugreports.qt.io/browse/QTBUG-39454
+    QLabel* androidLabel = NULL;
     QPushButton* okButton;
 };
 

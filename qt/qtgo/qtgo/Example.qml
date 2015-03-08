@@ -2,13 +2,13 @@ import QtQuick 2.0
 
 
 Rectangle {
-    width: 700
-    height: 700
+    width: 400
+    height: 400
 
     color: "#000000"
 
     Rectangle {
-        height: 600
+        height: 300
         anchors.left: parent.left; anchors.right: parent.right
         anchors.leftMargin: 30; anchors.rightMargin: 30
         anchors.bottom: parent.bottom
