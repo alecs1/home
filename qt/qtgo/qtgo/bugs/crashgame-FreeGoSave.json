@@ -1,0 +1,18 @@
+{
+    "SGFSaveString": "(;GM[1]FF[4]DT[2015-03-06]AP[GNU Go:3.9.1];B[ne];W[qq];B[ji];W[cc];B[pj];W[qh];B[if];W[cc];B[kj];W[pp];B[pd];W[gd];B[ei];W[dp];B[in];W[pf];B[mh];W[nf];B[qn];W[ql];B[mm];W[pn];B[lk];W[ro];B[md];W[qo])",
+    "black": {
+        "AILevel": 0,
+        "type": 1
+    },
+    "comment": "test save",
+    "estimateScore": false,
+    "freeGoVersion": "1000",
+    "gameDate": "2015-02-19T00:31",
+    "hashMD5": "71db6cefb9aa17b856615425c0072c32",
+    "hashedStuff": "comment+freeGoVersion+gameDate+SGFSaveString",
+    "tableSize": 19,
+    "white": {
+        "AILevel": 0,
+        "type": 0
+    }
+}

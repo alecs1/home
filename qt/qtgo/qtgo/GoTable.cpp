@@ -134,8 +134,9 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
     }
 
     /* Finally, do play the move from the file. */
-    play_move(old_move, color);
     QPoint point = GoTable::fromGnuGoPos(old_move);
+    printf("%s - move=%d (%d:%d), color=%d\n", __func__, old_move, point.y(), point.x(), color);
+    play_move(old_move, color);
     sgftreeAddPlay(outTree, color, point.y(), point.x());
     lastMoveRow = point.y();
     lastMoveCol = point.x();
@@ -208,8 +209,8 @@ GoTable::~GoTable() {
 
 //code outside the constructor because this is executed after the signals of this object are connected
 void GoTable::checkForResumeGame() {
-    if (loadStartupSave()) {
-        state = GameState::AutoResumed;
+    if (loadSaveGameFile(crtGameSfgFName)) {
+        state = GameState::Resumed;
     }
     else {
         crtPlayer = BLACK;
@@ -220,18 +221,40 @@ void GoTable::checkForResumeGame() {
     emit gameStateChanged(state);
 }
 
-bool GoTable::loadStartupSave() {
-    QFile f(crtGameSfgFName);
+bool GoTable::loadGame(QString fileName) {
+    bool result = loadSaveGameFile(fileName);
+    if (result) {
+        state = GameState::Resumed;
+    }
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit gameStateChanged(state);
+    return result;
+}
+
+bool GoTable::saveGame(QString fileName) {
+    printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->settings, &auxInfo);
+    return result;
+}
+
+bool GoTable::loadSaveGameFile(QString fileName) {
+    printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    QFile f(fileName);
+
     if (!f.exists())
         return false;
 
     SGFNode* aux = NULL;
     SGameSettings auxSettings;
     SAuxGameInfo auxGameInfo;
-    bool success = SaveFile::loadSave("FreeGoSave.json", &aux, &auxSettings, &auxGameInfo);
-
+    bool success = SaveFile::loadSave(fileName, &aux, &auxSettings, &auxGameInfo);
+    //bool success = SaveFile::loadSave()
     if (!success)
         return false;
+
+    sgfFreeNode(sgfTree->root);
+    sgfTree->lastnode = NULL;
+    sgfTree->root = sgfNewNode();
 
     changeGameSettings(auxSettings);
     emit pushGameSettings(auxSettings);
@@ -274,7 +297,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
     printf("%s\n", __func__);
 
-    if (state == GameState::AutoResumed){
+    if (state == GameState::Resumed){
         state = GameState::Started;
         if(players[crtPlayer] == PlayerType::AI) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
@@ -694,7 +717,7 @@ bool GoTable::placeStone(int row, int col) {
     //Here we're sure a move has been played
     sgftreeAddPlay(sgfTree, crtPlayer, row, col);
 
-    SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &this->settings, &auxInfo);
+    SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &this->settings, &auxInfo);
 
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;
@@ -715,7 +738,7 @@ bool GoTable::placeStone(int row, int col) {
     }
     else {
 
-        if (state == GameState::AutoResumed) {
+        if (state == GameState::Resumed) {
             state = GameState::Started;
             emit gameStateChanged(state);
         }
@@ -745,7 +768,7 @@ bool GoTable::placeStone(int row, int col) {
 bool GoTable::passMove() {
     //should insert some logic for counting
     sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
-    SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &settings, &auxInfo);
+    SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
 
     showHints = false;
     if (crtPlayer == WHITE)
@@ -787,7 +810,7 @@ bool GoTable::undoMove() {
             crtPlayer = otherColour(crtPlayer);
             sgftreeBack(sgfTree);
         }
-        SaveFile::writeSave("FreeGoSave.json", sgfTree->root, &settings, &auxInfo);
+        SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
         populateStructFromGnuGo();
         emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
         update();
@@ -1165,8 +1188,8 @@ int GoTable::getClosestPointSize(QString fontName, int targetSize, int& nextSmal
         else {
             crtSize = fontMetrics.height();
         }
-        printf("%s - pointSize=%d. Results in height=%d, we need height=%d\n",
-               __func__, pointSize, crtSize, targetSize);
+        //printf("%s - pointSize=%d. Results in height=%d, we need height=%d\n",
+        //       __func__, pointSize, crtSize, targetSize);
         if (abs(crtSize - targetSize) < abs(crtSize - closestSize)) {
             closest = pointSize;
             closestSize = crtSize;
@@ -1185,7 +1208,8 @@ int GoTable::getClosestPointSize(QString fontName, int targetSize, int& nextSmal
             break;
         pointSize += 1;
     }
-    printf("%s, closest:%d:%d, smaller:%d:%d, larger:%d:%d\n", __func__,
-           closest, closestSize, nextSmaller, nextSmallerSize, nextLarger, nextLargerSize);
+    //printf("%s, closest:%d:%d, smaller:%d:%d, larger:%d:%d\n", __func__,
+    //       closest, closestSize, nextSmaller, nextSmallerSize, nextLarger, nextLargerSize);
     return closest;
 }
+

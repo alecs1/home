@@ -9,6 +9,7 @@ class RoundInfo;
 class ConfirmMoveDialog;
 class QMenu;
 class QToolButton;
+class QAction;
 
 namespace Ui {
 class GameSettings;
@@ -31,6 +32,8 @@ signals:
     void undoMove();
     void showHints();
     void gameSettingsChanged(SGameSettings settings);
+    void saveGame();
+    void loadGame();
 
 
 public slots:
@@ -40,6 +43,7 @@ public slots:
     void showConfirmButton(bool show);
     void toggleShowEstimateScore();
     void showMenu();
+    void showAbout();
     void receiveSettings(SGameSettings settings);
     void askConfirmFinishGame();
 
@@ -67,6 +71,11 @@ private:
     GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;
     QMenu* mainMenu;
+
+    QAction* saveGameAction;
+    QAction* loadGameAction;
+    QAction* aboutAction;
+    QAction* debugAction;
 };
 
 

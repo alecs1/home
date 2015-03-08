@@ -15,6 +15,11 @@ extern "C" {
 
 #include "SaveFile.h"
 
+//************* SaveFile
+/*!
+    \class SaveFile
+    \brief The SaveFile class does stuff.
+*/
 SaveFile::SaveFile()
 {
 
@@ -29,6 +34,9 @@ QString SaveFile::qetDefSaveFName() const {
     return defSaveFName;
 }
 
+/*!
+    loadSave does stuff.
+*/
 bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
     QFile inFile(saveFName);
     if (!inFile.exists())

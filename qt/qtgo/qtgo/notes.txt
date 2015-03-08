@@ -31,6 +31,7 @@ v 1.6 Make hint work - works very very nicely
       - disable portrait layout
       - make sidebar hideable
       - triggering the AI menu during play may make the menu not fit on the screen.
+      - write Save and Open game dialogs that are usable on Android
 
 4. Correct score computation.
 
@@ -63,4 +64,8 @@ v 7. Not showing the last move when loading a saved game.
 8. If the last move in a game was an undo, restoring the game will be wrong.
 9. Undoing won't correctly show the last move.
 10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
+
+
+About
+
 

@@ -79,6 +79,8 @@ public:
     //direction: 0 - width, 1 - height
     static int getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction = 1,
                                    QString text = QString("O"));
+    bool saveGame(QString fileName);
+    bool loadGame(QString fileName);
 
 
 public slots:
@@ -121,7 +123,7 @@ private:
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);
-    bool loadStartupSave();
+    bool loadSaveGameFile(QString fileName);
 
     float wrapper_gnugo_estimate_score(float* upper, float* lower, bool waitForLock = true, bool *success = NULL);
     void resetGnuGo(int newSize);

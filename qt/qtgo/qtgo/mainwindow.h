@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+class GoTable;
+
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
 //    DesktopWindows,
@@ -22,9 +24,14 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+public slots:
+    void saveGame();
+    void loadGame();
+
 
 private:
     Ui::MainWindow *ui;
+    GoTable* table;
 };
 
 #endif // MAINWINDOW_H

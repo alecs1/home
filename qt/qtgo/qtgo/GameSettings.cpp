@@ -10,6 +10,7 @@
 #include "GameStruct.h"
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
+#include "AboutDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
@@ -57,6 +58,13 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPlayerType(settings.white);
     whitePlayer->setPixmap(whiteStone);
 
+    mainMenu = new QMenu(this);
+    mainMenu->addAction("Help");
+    saveGameAction = mainMenu->addAction("Save game");
+    loadGameAction = mainMenu->addAction("Open saved game");
+    aboutAction = mainMenu->addAction("About");
+    debugAction = mainMenu->addAction("Debug helper");
+
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
     connect(ui->scoreEstimateButton, SIGNAL(clicked()), this, SLOT(toggleShowEstimateScore()));
@@ -73,6 +81,9 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->hintButton, SIGNAL(clicked()), this, SIGNAL(showHints()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
+    connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
+    connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
+    connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     ui->button19x19->setChecked(true);
 
@@ -102,12 +113,6 @@ GameSettings::GameSettings(QWidget *parent):
     ui->menuLauncher2->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
     ui->menuLauncher1->hide();
 
-    mainMenu = new QMenu(this);
-    mainMenu->addAction("Help");
-    mainMenu->addAction("Save game");
-    mainMenu->addAction("Open saved game");
-    mainMenu->addAction("About");
-
     printf("%s - end\n", __func__);
 }
 
@@ -117,7 +122,7 @@ GameSettings::~GameSettings() {
 
 void GameSettings::setGameState(GameState state) {
     gameState = state;
-    if (state == GameState::AutoResumed) {
+    if (state == GameState::Resumed) {
         roundInfo->show();
         ui->launchButton->setText("Resume");
         ui->finishButton->show();
@@ -218,7 +223,7 @@ void GameSettings::showConfirmButton(bool show) {
         }
         return;
     }
-    if ((gameState != GameState::Started) && (gameState != GameState::Initial) && (gameState != GameState::AutoResumed))
+    if ((gameState != GameState::Started) && (gameState != GameState::Initial) && (gameState != GameState::Resumed))
         return;
 
     if (confirmMoveDialog == NULL) {
@@ -254,6 +259,11 @@ void GameSettings::showMenu() {
     QPoint globalPos = menuLauncher->mapToGlobal(QPoint(0, 0));
     globalPos.setX(globalPos.x() - mainMenu->size().width());
     mainMenu->move(globalPos);
+}
+
+void GameSettings::showAbout() {
+    AboutDialog dialog;
+    dialog.exec();
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {

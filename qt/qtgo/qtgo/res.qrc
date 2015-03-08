@@ -10,5 +10,7 @@
         <file>resources/playerAI--picmi.svg</file>
         <file>resources/playerHuman--user-identity.svg</file>
         <file>resources/playerNetwork--network-wired.svg</file>
+        <file>Example.qml</file>
+        <file>AboutDialog.qml</file>
     </qresource>
 </RCC>

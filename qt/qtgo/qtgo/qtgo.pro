@@ -8,7 +8,7 @@ INCLUDEPATH += .
 
 #CONFIG += debug
 
-QT += widgets svg
+QT += widgets svg qml quick
 
 QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
 
@@ -27,14 +27,15 @@ HEADERS += GameSettings.h \
            PlayerWidget.h \
            GameEndDialog.h \
            ConfirmMoveDialog.h \
-            ../gnugo/engine/gnugo.h \
-    ../gnugo/engine/liberty.h \
-    RoundInfo.h \
-    SaveFile.h
+           ../gnugo/engine/gnugo.h \
+           ../gnugo/engine/liberty.h \
+           RoundInfo.h \
+           SaveFile.h \
+           AboutDialog.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
-           GameEndDialog.ui \
-           ConfirmMoveDialog.ui \
-    RoundInfo.ui
+         GameEndDialog.ui \
+         ConfirmMoveDialog.ui \
+         RoundInfo.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
@@ -42,10 +43,11 @@ SOURCES += GameSettings.cpp \
            mainwindow.cpp \
            PlayerWidget.cpp \
            GameEndDialog.cpp \
-    ConfirmMoveDialog.cpp \
-    RoundInfo.cpp \
-    SaveFile.cpp \
-    Global.cpp
+           ConfirmMoveDialog.cpp \
+           RoundInfo.cpp \
+           SaveFile.cpp \
+           Global.cpp \
+           AboutDialog.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

@@ -1,3 +1,5 @@
+#include <QFileDialog>
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -43,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
     GameSettings* settings = new GameSettings(this);
 
-    GoTable* table = new GoTable(this);
+    table = new GoTable(this);
     ui->centralWidget->setLayout(ui->gridLayout);
 
     ui->gridLayout->addWidget(table, 0, 0);
@@ -71,6 +73,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(settings, SIGNAL(undoMove()), table, SLOT(undoMove()));
     QObject::connect(settings, SIGNAL(showHints()), table, SLOT(showPlayHints()));
     QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+    QObject::connect(settings, SIGNAL(saveGame()), this, SLOT(saveGame()));
+    QObject::connect(settings, SIGNAL(loadGame()), this, SLOT(loadGame()));
 
 
     table->checkForResumeGame();
@@ -89,4 +93,24 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::saveGame() {
+    QString fileName = QFileDialog::getSaveFileName(this, "Save game", "", "Json files(*.json)");
+    bool result = false;
+    if (fileName != "") {
+        if (!fileName.endsWith(".json"))
+            fileName += ".json";
+        result = table->saveGame(fileName);
+    }
+    printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
+}
+
+void MainWindow::loadGame() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Save game", "", "Json files(*.json)");
+    bool result = false;
+    if (fileName != "") {
+        result = table->loadGame(fileName);
+    }
+    printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
 }

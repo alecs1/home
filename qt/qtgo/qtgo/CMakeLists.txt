@@ -8,6 +8,8 @@ set (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(Qt5Widgets)
 find_package(Qt5Svg)
+find_package(Qt5Quick)
+find_package(Qt5Qml)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${Qt5Svg_INCLUDE_DIRS})
 include_directories("../gnugo")
@@ -37,7 +39,8 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
-    mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp
+    mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp
+    ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg board engine utils sgf patterns)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick board engine utils sgf patterns)
