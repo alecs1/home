@@ -14,9 +14,12 @@ Item {
             id: tabAbout
             title: "About FreeGo"
 
-            Rectangle {
+            Item {
                 id: shitItem
                 anchors {fill: parent}
+                //Why the fuck do you change your center on animations?
+                //if I don't createm and Item inside Tab these Text components will overlap
+                //if I do create Item, then textFreeGo will look like changing the center, making a jerky and headache producing animation
                 Text {
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
