@@ -7,8 +7,9 @@ TARGET = FreeGo
 INCLUDEPATH += .
 
 #CONFIG += debug
+CONFIG+=qml_debug
 
-QT += widgets svg qml quick
+QT += widgets svg qml quick quickwidgets
 
 QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
 

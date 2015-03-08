@@ -10,6 +10,7 @@ find_package(Qt5Widgets)
 find_package(Qt5Svg)
 find_package(Qt5Quick)
 find_package(Qt5Qml)
+find_package(Qt5QuickWidgets)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${Qt5Svg_INCLUDE_DIRS})
 include_directories("../gnugo")
@@ -43,4 +44,4 @@ add_executable(FreeGo
     ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick board engine utils sgf patterns)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets board engine utils sgf patterns)

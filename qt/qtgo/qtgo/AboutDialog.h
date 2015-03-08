@@ -1,26 +1,29 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-class QQmlEngine;
-class QQmlComponent;
+class QQuickWidget;
 class QQuickView;
 
 #include <QDialog>
 
 class AboutDialog : public QDialog {
 public:
-    AboutDialog();
+    AboutDialog(QWidget* parent=0);
     ~AboutDialog();
-//    QSize sizeHint();
+    void printSizeInfo(const char *func) const;
+public slots:
+    void show();
+    int exec();
+protected:
+    void resizeEvent(QResizeEvent* event);
+
 
 private:
     //QQmlEngine* qmlEngine;
     //QQmlComponent* component;
-    QQuickView* quickView;
-    QWidget* container;
-
-public slots:
-    //int exec();
+    QQuickView* quickView = NULL; //desktop
+    QQuickWidget* quickWidget = NULL; //Android: https://bugreports.qt.io/browse/QTBUG-39454
+    QPushButton* okButton;
 };
 
 

@@ -2,6 +2,10 @@ import QtQuick 2.0
 import QtQuick.Controls 1.2
 
 Item {
+
+    width: 500
+    height: 500
+
     anchors {fill: parent}
     id: window
 
