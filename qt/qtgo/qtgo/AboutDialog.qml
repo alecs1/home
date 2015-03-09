@@ -12,21 +12,33 @@ Item {
 
         Tab {
             id: tabAbout
-            title: "About FreeGo"
+            title: 'About FreeGo'
 
             Item {
                 id: shitItem
                 anchors {fill: parent}
+
+                Image {
+                    id: imageLogo
+                    source: "qrc:/resources/ko-rule-185-orig.png"
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    fillMode: Image.PreserveAspectFit
+                    width: textFreeGo.width/3
+
+                }
+
+
                 //Why the fuck do you change your center on animations?
                 //if I don't createm and Item inside Tab these Text components will overlap
                 //if I do create Item, then textFreeGo will look like changing the center, making a jerky and headache producing animation
                 Text {
-                    anchors.top: parent.top
+                    anchors.top: imageLogo.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     horizontalAlignment: Text.AlignHCenter
                     id: textFreeGo
                     text: "FreeGo"
-                    font.pixelSize: tabAbout.width/10
+                    font.pixelSize: tabAbout.width/7
                     SequentialAnimation on font.letterSpacing {
                         loops: Animation.Infinite
                         NumberAnimation {
@@ -72,10 +84,30 @@ Item {
         }
 
         Tab {
-            title: "Components"
+            id: tabComponents
+            title: 'Components'
+            Text {
+                wrapMode: Text.Wrap
+                textFormat: Text.RichText
+                font.pixelSize: (parent.width + parent.height)/50
+                text: '<b>GNU Go</b><br>The open source Go playing software, provides all the gameplay.<br>
+                       <br><b>Qt</b><br> Qt widgets and Quick provide the visual interface on Linux, Windows and Android.<br>
+                       <br><b>CMake</b><br> Make it very easy to build FreeGo everywhere.'
+            }
         }
         Tab {
-            title: "License"
+            id: tabLicense
+            title: 'License'
+            Text {
+                wrapMode: Text.Wrap
+                textFormat: Text.RichText
+                font.pixelSize: (parent.width + parent.height)/50
+                text: 'The license is GNU GPL v3.
+                       <br>Souce code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>'
+                onLinkActivated: {
+                    Qt.openUrlExternally(link)
+                }
+            }
         }
 
     }
