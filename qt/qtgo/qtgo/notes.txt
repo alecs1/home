@@ -69,3 +69,7 @@ v 7. Not showing the last move when loading a saved game.
 About
 
 
+Small shit:
+-stop showing hints at: pressing hint again, finish game, undo
+-take that animation out for Android
+-
