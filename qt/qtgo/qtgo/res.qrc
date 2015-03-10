@@ -12,5 +12,6 @@
         <file>resources/playerNetwork--network-wired.svg</file>
         <file>Example.qml</file>
         <file>AboutDialog.qml</file>
+        <file>RoundInfoAnimation.qml</file>
     </qresource>
 </RCC>

@@ -84,6 +84,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
     connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
+    connect(debugAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
 
     ui->button19x19->setChecked(true);
 
@@ -269,6 +270,10 @@ void GameSettings::showAbout() {
     //view->setSource(QUrl("qrc:/Example.qml"));
     //view->show();
     printf("%s - done\n", __func__);
+}
+
+void GameSettings::showDebugWindow() {
+    QMessageBox::aboutQt(this);
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {

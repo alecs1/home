@@ -44,6 +44,7 @@ public slots:
     void toggleShowEstimateScore();
     void showMenu();
     void showAbout();
+    void showDebugWindow();
     void receiveSettings(SGameSettings settings);
     void askConfirmFinishGame();
 

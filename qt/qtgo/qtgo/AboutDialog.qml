@@ -3,7 +3,6 @@ import QtQuick.Controls 1.2
 
 Item {
 
-    //anchors {fill: parent}
     id: window
 
     TabView {
@@ -25,7 +24,6 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     fillMode: Image.PreserveAspectFit
                     width: textFreeGo.width/3
-
                 }
 
 

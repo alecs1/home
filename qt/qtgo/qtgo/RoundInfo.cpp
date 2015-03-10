@@ -1,6 +1,8 @@
 #include <QSvgRenderer>
 #include <QPainter>
 
+#include <QtQuickWidgets/QQuickWidget>
+
 #include "RoundInfo.h"
 #include "ui_RoundInfo.h"
 
@@ -73,6 +75,11 @@ RoundInfo::RoundInfo(QWidget *parent) :
     QPainter NetworkPainter(playerNetwork);
     svgR.render(&NetworkPainter);
 
+    QQuickWidget* animationWidget = new QQuickWidget(this);
+    animationWidget->setSource(QUrl("qrc:/RoundInfoAnimation.qml"));
+    //animationWidget->setSource(QUrl("qrc:/AboutDialog.qml"));
+    animationWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    ui->layoutQuick->addWidget(animationWidget, 0, 0);
 
     setCurrentPlayer(BLACK, PlayerType::LocalHuman);
 

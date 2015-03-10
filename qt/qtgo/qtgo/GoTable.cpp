@@ -557,42 +557,7 @@ void GoTable::paintEvent(QPaintEvent *) {
         painter.drawEllipse(lastMovePos, highlightRadius, highlightRadius);
     }
 
-    //new stone, mouse button pressed/tapped
-    if ((newStoneCol != -1) && (state != GameState::Stopped)){
-        QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
-        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        if (crtPlayer == BLACK)
-            painter.drawPixmap(newStonePos, *blackStonePixmap);
-        else if (crtPlayer == WHITE)
-            painter.drawPixmap(newStonePos, *whiteStonePixmap);
-    }
-
-    if ((unconfirmedStoneCol != -1) && (state != GameState::Stopped)){
-        QPointF unconfirmedStonePos(dist + unconfirmedStoneCol * dist - blackStonePixmap->width()/2, dist + unconfirmedStoneRow * dist - blackStonePixmap->width()/2);
-        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        if (crtPlayer == BLACK)
-            painter.drawPixmap(unconfirmedStonePos, *blackStonePixmap);
-        else if (crtPlayer == WHITE)
-            painter.drawPixmap(unconfirmedStonePos, *whiteStonePixmap);
-    }
-
-    //all stones already on the table
-    for(int i = 0; i < game.size; i++) {
-        for(int j = 0; j < game.size; j++) {
-            if (game.state[i][j] > 0) {
-                QPointF stonePos(dist + j*dist - blackStonePixmap->width()/2, dist + i*dist - blackStonePixmap->width()/2);
-                int colour = 0;
-                colour = game.state[i][j];
-
-                if (colour == BLACK)
-                    painter.drawPixmap(stonePos, *blackStonePixmap);
-                else if (colour == WHITE)
-                    painter.drawPixmap(stonePos, *whiteStonePixmap);
-            }
-        }
-    }
-
-
+    //hints, the last move must be painted over the hints
     if (showHints) {
         for(int i = 0; i < 10; i++) {
             QPoint move = fromGnuGoPos(best_moves[i]);
@@ -631,6 +596,41 @@ void GoTable::paintEvent(QPaintEvent *) {
             font = QFont(fontName, pointSize);
             painter.setFont(font);
             painter.drawText(textRect, Qt::AlignCenter, printable);
+        }
+    }
+
+    //new stone, mouse button pressed/tapped
+    if ((newStoneCol != -1) && (state != GameState::Stopped)){
+        QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
+        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        if (crtPlayer == BLACK)
+            painter.drawPixmap(newStonePos, *blackStonePixmap);
+        else if (crtPlayer == WHITE)
+            painter.drawPixmap(newStonePos, *whiteStonePixmap);
+    }
+
+    if ((unconfirmedStoneCol != -1) && (state != GameState::Stopped)){
+        QPointF unconfirmedStonePos(dist + unconfirmedStoneCol * dist - blackStonePixmap->width()/2, dist + unconfirmedStoneRow * dist - blackStonePixmap->width()/2);
+        //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
+        if (crtPlayer == BLACK)
+            painter.drawPixmap(unconfirmedStonePos, *blackStonePixmap);
+        else if (crtPlayer == WHITE)
+            painter.drawPixmap(unconfirmedStonePos, *whiteStonePixmap);
+    }
+
+    //all stones already on the table
+    for(int i = 0; i < game.size; i++) {
+        for(int j = 0; j < game.size; j++) {
+            if (game.state[i][j] > 0) {
+                QPointF stonePos(dist + j*dist - blackStonePixmap->width()/2, dist + i*dist - blackStonePixmap->width()/2);
+                int colour = 0;
+                colour = game.state[i][j];
+
+                if (colour == BLACK)
+                    painter.drawPixmap(stonePos, *blackStonePixmap);
+                else if (colour == WHITE)
+                    painter.drawPixmap(stonePos, *whiteStonePixmap);
+            }
         }
     }
 }
