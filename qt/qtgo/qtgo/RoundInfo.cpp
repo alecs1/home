@@ -1,5 +1,6 @@
 #include <QSvgRenderer>
 #include <QPainter>
+#include <QTimer>
 
 #include <QtQuickWidgets/QQuickWidget>
 
@@ -32,7 +33,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
 
     printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
     const float STONE_SCALE= 5;
-    float diameter = STONE_SCALE * defaultFontSize;
+    diameter = STONE_SCALE * defaultFontSize;
     ui->colourLabel->resize(diameter, diameter);
     //ui->colourLabel->setMinimumSize(QSize(diameter, diameter));
 
@@ -54,42 +55,45 @@ RoundInfo::RoundInfo(QWidget *parent) :
     svgR.render(&wPainter);
 
     //smaller sizes for the player type
-    diameter /= 1.5;
-    ui->playerTypeLabel->resize(diameter, diameter);
-    //ui->playerTypeLabel->setMinimumSize(QSize(diameter, diameter));
-    playerAI = new QPixmap(diameter, diameter);
+    float playerTypeSize = diameter / 1.5;
+    ui->playerTypeLabel->resize(playerTypeSize, playerTypeSize);
+    playerAI = new QPixmap(playerTypeSize, playerTypeSize);
     playerAI->fill(Qt::transparent);
     svgR.load(QString(":/resources/playerAI--picmi.svg"));
     QPainter AIPainter(playerAI);
     svgR.render(&AIPainter);
 
-    playerHuman = new QPixmap(diameter, diameter);
+    playerHuman = new QPixmap(playerTypeSize, playerTypeSize);
     playerHuman->fill(Qt::transparent);
     svgR.load(QString(":/resources/playerHuman--user-identity.svg"));
     QPainter HumanPainter(playerHuman);
     svgR.render(&HumanPainter);
 
-    playerNetwork = new QPixmap(diameter, diameter);
+    playerNetwork = new QPixmap(playerTypeSize, playerTypeSize);
     playerNetwork->fill(Qt::transparent);
     svgR.load(QString(":/resources/playerNetwork--network-wired.svg"));
     QPainter NetworkPainter(playerNetwork);
     svgR.render(&NetworkPainter);
 
+    crtStoneRotated = new QPixmap(diameter, diameter);
+
     /* TODO:
      * - work with Qt 5.4; - with 5.3 calling show() after hide() "loses the context" and becomes black: https://bugreports.qt.io/browse/QTBUG-41622
      * - disable on Android or invalidate the entire main window; calling show() after hide() hide corrupts the main window
      */
-    QQuickWidget* animationWidget = new QQuickWidget(this);
-    animationWidget->setSource(QUrl("qrc:/RoundInfoAnimation.qml"));
-    //animationWidget->setSource(QUrl("qrc:/AboutDialog.qml"));
-    animationWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    ui->layoutQuick->addWidget(animationWidget, 0, 0);
+    if (platformType() != PlatformType::Android) {
+        QQuickWidget* animationWidget = new QQuickWidget(this);
+        animationWidget->setSource(QUrl("qrc:/RoundInfoAnimation.qml"));
+        animationWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+        ui->layoutQuick->addWidget(animationWidget, 0, 0);
+    }
 
     setCurrentPlayer(BLACK, PlayerType::LocalHuman);
 
     printf("%s - final sizes: widget:%dx%d, colourLabel:%dx%d, playerTypeLabel:%dx%d\n",
            __func__, width(), height(), ui->colourLabel->width(), ui->colourLabel->height(),
            ui->playerTypeLabel->width(), ui->playerTypeLabel->height());
+
 }
 
 RoundInfo::~RoundInfo()
@@ -114,6 +118,12 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
     if (playerType == PlayerType::AI) {
         crtPlayerPixmap = playerAI;
         playerTypeString = "Computer's\n turn";
+        angle = 0;
+        printf("%s - starting animation\n", __func__);
+        if (animationChains == 0) {
+            animationChains = 1;
+            animationStep();
+        }
     }
     else if (playerType == PlayerType::LocalHuman) {
         crtPlayerPixmap = playerHuman;
@@ -134,10 +144,22 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
     update();
 }
 
-//TODO - implement later, as it needs math
-void RoundInfo::computeAnim(float pos) {
+void RoundInfo::animationStep() {
+    printf("%s - angle=%g, animationChains=%d\n", __func__, angle, animationChains);
+    if (playerType != PlayerType::AI) {
+        animationChains -= 1;
+        return;
+    }
 
+    crtStoneRotated->fill(Qt::transparent);
+    QPainter painter(crtStoneRotated);
+    painter.translate(diameter/2, diameter/2);
+    painter.rotate(angle);
+    painter.drawPixmap(-diameter/2, -diameter/2, diameter, diameter, *crtStonePixmap);
+    ui->colourLabel->setPixmap(*crtStoneRotated);
 
+    angle += rotationPerPeriod;
+    QTimer::singleShot(rotationPeriod, this, SLOT(animationStep()));
 }
 
 //QSize RoundInfo::sizeHint() const {

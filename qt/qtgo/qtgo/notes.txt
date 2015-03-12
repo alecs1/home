@@ -12,7 +12,7 @@ v 1.6 Make hint work - works very very nicely
     ? - introduced a timer to reject clicks; not very needed after introducing AIThread. There may still be situations when a wrong click could be performed.
     v - change background colour as a very easy fix
     v - added a new icon for the type of player
-    - confirm button when stopping and other actions that might be triggered by mistake, especially on phone.
+    v - confirm button when stopping and other actions that might be triggered by mistake, especially on phone.
 
 3. Save current game.
     v - introduced basic loading of a saved game
@@ -56,7 +56,7 @@ git update-index --no-assume-unchanged path/to/file.txt
 Bugs:
 1. The compilation says: warning, failure to find engine/liberty.h
 2. After finishing the game the current player type icon is wrong.
-3. LG G3 fonts are too big, everything looks messy. Fixed player info, nothing about font size yet.
+v 3. LG G3 fonts are too big, everything looks messy. Fixed player info, nothing about font size yet.
 v 4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
 5. With Sony Xperia the radio buttons don't show what's selected, altough they seem to work. Seems like a Qt bug, won't fix now.
 6. At startup table size is not the one selected by buttons.
@@ -66,10 +66,11 @@ v 7. Not showing the last move when loading a saved game.
 10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
 
 
-About
-
-
 Small shit:
--stop showing hints at: pressing hint again, finish game, undo
--take that animation out for Android
--
+
+
+Bugs to Qt Android:
+1. dialog.setWindowState(Qt::WindowFullScreen); makes the window not fit the screen.
+2. cannot correctly initialise QML window over the main software window.
+3. hide() and then show() on QQuickWidget creates garbage on the screen.
+4. Sony Xperia Z theme - radio buttons don't show the selected option.

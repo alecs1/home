@@ -96,7 +96,19 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::saveGame() {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save game", "", "Json files(*.json)");
+    //QString fileName = QFileDialog::getSaveFileName(this, "Save game", "", "Json files(*.json)");
+    QString fileName = "";
+    QFileDialog dialog(this, "Save game", "", "Json files(*.json)");
+    if (platformType() == PlatformType::Android) {
+        //dialog.setWindowState(Qt::WindowFullScreen); //does not work correctly on Android
+        dialog.resize(this->size());
+        dialog.setOption(QFileDialog::HideNameFilterDetails);
+        dialog.setViewMode(QFileDialog::List);
+    }
+    dialog.setFileMode(QFileDialog::AnyFile);
+    if (dialog.exec()) {
+        fileName = dialog.selectedFiles()[0];
+    }
     bool result = false;
     if (fileName != "") {
         if (!fileName.endsWith(".json"))
@@ -107,10 +119,23 @@ void MainWindow::saveGame() {
 }
 
 void MainWindow::loadGame() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Save game", "", "Json files(*.json)");
+    QString fileName = "";
+    QFileDialog dialog(this, "Open saved game", "", "Json files(*.json)");
+    if (platformType() == PlatformType::Android) {
+        //dialog.setWindowState(Qt::WindowFullScreen);
+        dialog.resize(this->size());
+        dialog.setOption(QFileDialog::HideNameFilterDetails);
+        dialog.setViewMode(QFileDialog::List);
+    }
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    if (dialog.exec()) {
+        fileName = dialog.selectedFiles()[0];
+    }
+
     bool result = false;
     if (fileName != "") {
         result = table->loadGame(fileName);
     }
+    //TODO - note an error somewhere
     printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
 }
