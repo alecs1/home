@@ -225,14 +225,14 @@ bool GoTable::loadGame(QString fileName) {
     bool result = loadSaveGameFile(fileName);
     if (result) {
         state = GameState::Resumed;
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        emit gameStateChanged(state);
     }
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
-    emit gameStateChanged(state);
     return result;
 }
 
 bool GoTable::saveGame(QString fileName) {
-    printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
     bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->settings, &auxInfo);
     return result;
 }
@@ -813,6 +813,7 @@ bool GoTable::undoMove() {
         SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
         populateStructFromGnuGo();
         emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        showHints = false;
         update();
         updateCursor();
         return true;
@@ -988,6 +989,7 @@ void GoTable::finish() {
     QPainter bPainter(&winnerPixmap);
     svgR.render(&bPainter);
     crtPlayer = EMPTY;
+    showHints = false;
     update();
 
     //File saving stuff
@@ -1036,8 +1038,10 @@ void GoTable::userConfirmedMove(int confirmed) {
 }
 
 void GoTable::showPlayHints() {
-    showHints = true;
-    aiThread->run_value_moves(crtPlayer);
+    showHints = !showHints;
+    if (showHints) {
+        aiThread->run_value_moves(crtPlayer);
+    }
     update();
 }
 

@@ -120,7 +120,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     //hash some stuff to validate the save file;
     QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
             auxGameInfo->gameDate + SGFSaveString;
-    printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
+    //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
     json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     json["hashMD5"] = hashBytes.toHex().constData();

@@ -19,11 +19,11 @@ public:
     //void paintEvent(QPaintEvent *);
     void setCurrentPlayer(int aPlayer, PlayerType aType);
 
-//    QSize sizeHint() const;
+public slots:
+    void animationStep();
 
-
-private:
-    void computeAnim(float pos);
+signals:
+    void nextAnimationStep(double);
 
 private:
     Ui::RoundInfo *ui;
@@ -31,6 +31,7 @@ private:
     QPixmap* blackStone;
     QPixmap* whiteStone;
     QPixmap* crtStonePixmap;
+    QPixmap* crtStoneRotated;
 
     QPixmap* playerAI;
     QPixmap* playerHuman;
@@ -39,6 +40,12 @@ private:
 
     int player;
     PlayerType playerType;
+
+    double diameter;
+    const int rotationPeriod = 30;
+    const float rotationPerPeriod = 5;
+    double angle = 0;
+    int animationChains = 0;
 };
 
 #endif // ROUNDINFO_H

@@ -12,6 +12,7 @@
 //find the main window so we can create the dialog as large as the main window is
 #include <QMainWindow>
 #include <QApplication>
+
 QMainWindow* getMainWindow()
 {
     QWidgetList widgets = qApp->topLevelWidgets();
