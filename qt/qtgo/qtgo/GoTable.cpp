@@ -766,6 +766,8 @@ bool GoTable::placeStone(int row, int col) {
 
 //TODO - redirect this to placeStone
 bool GoTable::passMove() {
+
+    //askUserConfirmation(true);
     //should insert some logic for counting
 
     unconfirmedStoneCol = -2;
