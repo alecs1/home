@@ -681,7 +681,7 @@ bool GoTable::placeStone(int row, int col) {
     else if (players[crtPlayer] == PlayerType::AI)
         computing = false;
 
-    if (!isPosInsideTable(row, col))
+    if (!moveIsLegal(row, col))
         return false;
 
     if (state == GameState::Stopped)
@@ -767,6 +767,11 @@ bool GoTable::placeStone(int row, int col) {
 //TODO - redirect this to placeStone
 bool GoTable::passMove() {
     //should insert some logic for counting
+
+    unconfirmedStoneCol = -2;
+    emit askUserConfirmation(true);
+
+    //this goes to placeStone
     sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
     SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
 
@@ -896,7 +901,7 @@ void GoTable::printfGnuGoStruct() {
     }
 }
 
-bool GoTable::isPosInsideTable(int row, int col) {
+bool GoTable::moveIsLegal(int row, int col) {
     if (row < 0 || row >= game.size || col < 0 || col >= game.size) {
         return false;
     }

@@ -119,7 +119,7 @@ protected:
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
-    bool isPosInsideTable(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
+    bool moveIsLegal(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);

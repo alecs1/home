@@ -43,6 +43,9 @@ Git:
 #show differences between what's commited localy and what's remote (what will be pushed)
 git diff --stat origin/master
 
+#revert one file:
+git checkout origin/master path/to/file
+
 
 Kernel:
 Harddisk
