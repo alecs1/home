@@ -40,7 +40,7 @@ public slots:
     void setGameState(GameState state);
     void setScoreEstimate(float score);
     void setCurrentPlayer(int player, PlayerType type);
-    void showConfirmButton(bool show);
+    void showConfirmButton(bool show, int colour);
     void toggleShowEstimateScore();
     void showMenu();
     void showAbout();

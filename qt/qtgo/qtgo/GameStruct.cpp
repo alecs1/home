@@ -9,6 +9,7 @@ bool GamePlaceStone(GameStruct* game, int row, int col, int player) {
     return false;
 }
 
+//TODO - replace with is_legal
 bool GameCanPlaceStone(GameStruct* game, int row, int col, int player) {
     if (game->state[row][col] == 0)
         return true;

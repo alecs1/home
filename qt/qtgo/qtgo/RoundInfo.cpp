@@ -81,7 +81,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
      * - work with Qt 5.4; - with 5.3 calling show() after hide() "loses the context" and becomes black: https://bugreports.qt.io/browse/QTBUG-41622
      * - disable on Android or invalidate the entire main window; calling show() after hide() hide corrupts the main window
      */
-    if (platformType() != PlatformType::Android) {
+    if ( (platformType() != PlatformType::Android) && false) {
         QQuickWidget* animationWidget = new QQuickWidget(this);
         animationWidget->setSource(QUrl("qrc:/RoundInfoAnimation.qml"));
         animationWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);

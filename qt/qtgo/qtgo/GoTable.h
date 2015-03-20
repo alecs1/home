@@ -86,7 +86,7 @@ public:
 public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(SGameSettings newSettings);
-    bool placeStone(int row, int col);
+    bool playMove(int row, int col);
     bool passMove();
     bool undoMove();
     void finish();
@@ -103,7 +103,7 @@ signals:
     void gameStateChanged(GameState state);
     void estimateScoreChanged(float score);
     void crtPlayerChanged(int player, PlayerType type);
-    void askUserConfirmation(bool ask); //ask the user for confirmation, dialog belongs to another widget
+    void askUserConfirmation(bool ask, int colour=EMPTY); //ask the user for confirmation, dialog belongs to another widget
     void pushGameSettings(SGameSettings newSettings);
 
 protected:
@@ -119,7 +119,7 @@ protected:
 private:
     bool buildPixmaps(int diameter);
     void updateCursor();
-    bool moveIsLegal(int row, int col); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
+    bool moveIsLegal(int row, int col, int colour); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     void updateSizes();
     bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);

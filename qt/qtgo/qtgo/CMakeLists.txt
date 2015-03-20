@@ -45,3 +45,5 @@ add_executable(FreeGo
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets board engine utils sgf patterns)
+
+add_custom_target(Doc Notes.txt)

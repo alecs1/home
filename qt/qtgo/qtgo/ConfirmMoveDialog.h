@@ -18,7 +18,7 @@ public:
 
 private:
     Ui::ConfirmMoveDialog *ui;
-    //QIcon icon;
+    QIcon* icon;
 };
 
 #endif // CONFIRMMOVEDIALOG_H

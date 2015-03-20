@@ -8,14 +8,32 @@ ConfirmMoveDialog::ConfirmMoveDialog(QWidget *parent) :
     ui->setupUi(this);
     QObject::connect(ui->confirmButton, SIGNAL(clicked()), this, SLOT(accept()));
     QObject::connect(ui->cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+    icon = new QIcon;
 }
 
 ConfirmMoveDialog::~ConfirmMoveDialog()
 {
     delete ui;
+    delete icon;
 }
 
 void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
-    //icon = QIcon(pixmap);
-    //ui->confirmButton->setIcon(icon);
+    *icon = QIcon(pixmap);
+    ui->confirmButton->setIcon(*icon);
+    int diameter = this->size().width()/5;
+    ui->confirmButton->setIconSize(QSize(diameter, diameter));
+    //ui->confirmButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    //ui->confirmButton->setToolButtonStyle((Qt::ToolButtonTextBesideIcon));
+
+    //TODO - now set a stylesheet.
+    //QString styleSheet = "QToolButton { image-position: bottom center; }";
+    QString styleSheet =
+            "QToolButton {\
+                background-image: url(\":/resources/cursorBlack.svg\");\
+                background-repeat: repeat-n;\
+                background-position: center;\
+                background-clip: padding;\
+                border: 0 px;\
+            }";
+    //ui->confirmButton->setStyleSheet(styleSheet);
 }

@@ -216,7 +216,7 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type) {
     ui->undoButton->setEnabled(enableBlockingGroup);
 }
 
-void GameSettings::showConfirmButton(bool show) {
+void GameSettings::showConfirmButton(bool show, int colour) {
     //printf("%s - show=%d\n", __func__, show);
     if (show == false) {
         if (confirmMoveDialog != NULL) {
@@ -235,6 +235,24 @@ void GameSettings::showConfirmButton(bool show) {
     QPoint globalPos = mapToGlobal(QPoint(0, 0));
     confirmMoveDialog->setGeometry(QRect(globalPos, this->size()));
     confirmMoveDialog->setWindowFlags(Qt::FramelessWindowHint | confirmMoveDialog->windowFlags());
+
+    int diameter =this->size().width();
+    QSvgRenderer svgR;
+    QPixmap stone(diameter, diameter);
+    stone.fill(Qt::transparent);
+    if (colour == BLACK) {
+        svgR.load(QString(":/resources/cursorBlack.svg"));
+    }
+    else if (colour == WHITE){
+        svgR.load(QString(":/resources/cursorWhite.svg"));
+    }
+    else {
+        printf("%s - why are we setting and colour %d?\n", __func__, colour);
+    }
+    QPainter bPainter(&stone);
+    svgR.render(&bPainter);
+
+    confirmMoveDialog->setPixmap(stone);
     confirmMoveDialog->show();
     confirmMoveDialog->raise();
     confirmMoveDialog->activateWindow();

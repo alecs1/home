@@ -178,7 +178,7 @@ GoTable::GoTable(QWidget *parent) :
 
     gnuGoMutex = new QMutex;
     aiThread = new AIThread(gnuGoMutex);
-    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(placeStone(int,int)));
+    connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(playMove(int,int)));
     connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
 
 
@@ -391,7 +391,7 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
             //printf("%s - will ask for user confirmation for %d %d\n", __func__, newStoneRow, newStoneCol);
             if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
                 //user confirmed by double clicking this
-                placeStone(pos.y(), pos.x());
+                playMove(pos.y(), pos.x());
                 //printf("%s - %d %d confirmed with double click, hiding confirmation window\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
@@ -405,11 +405,11 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
                 //printf("%s - show confirmation window for %d %d\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
-                emit askUserConfirmation(true);
+                emit askUserConfirmation(true, crtPlayer);
             }
         }
         else {
-            placeStone(pos.y(), pos.x());
+            playMove(pos.y(), pos.x());
         }
     }
     else if (askPlayConfirmation) {
@@ -671,7 +671,7 @@ bool GoTable::buildPixmaps(int diameter) {
 }
 
 
-bool GoTable::placeStone(int row, int col) {
+bool GoTable::playMove(int row, int col) {
     printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     showHints = false;
 
@@ -681,7 +681,7 @@ bool GoTable::placeStone(int row, int col) {
     else if (players[crtPlayer] == PlayerType::AI)
         computing = false;
 
-    if (!moveIsLegal(row, col))
+    if (!moveIsLegal(row, col, crtPlayer))
         return false;
 
     if (state == GameState::Stopped)
@@ -726,8 +726,15 @@ bool GoTable::placeStone(int row, int col) {
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
     updateCursor();
-    lastMoveRow = row;
-    lastMoveCol = col;
+
+    if (row == QTGO_PASS_MOVE) {
+        lastMoveRow = -2;
+        lastMoveCol = -2;
+    }
+    else {
+        lastMoveRow = row;
+        lastMoveCol = col;
+    }
 
 
     if (state == GameState::Initial) {
@@ -764,34 +771,11 @@ bool GoTable::placeStone(int row, int col) {
     return retVal;
 }
 
-//TODO - redirect this to placeStone
 bool GoTable::passMove() {
-
-    //askUserConfirmation(true);
     //should insert some logic for counting
 
-    unconfirmedStoneCol = -2;
-    emit askUserConfirmation(true);
-
-    //this goes to placeStone
-    sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
-    SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
-
-    showHints = false;
-    if (crtPlayer == WHITE)
-        crtPlayer = BLACK;
-    else
-        crtPlayer = WHITE;
-
-    lastMoveRow = lastMoveCol = -2;
-
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
-    cursorBlocked = false;
-    update();
-    updateCursor();
-    if (players[crtPlayer] == PlayerType::AI) {
-        QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
-    }
+    unconfirmedStoneRow = QTGO_PASS_MOVE;
+    emit askUserConfirmation(true, crtPlayer);
     return true;
 }
 
@@ -885,7 +869,10 @@ void GoTable::resetGnuGo(int newSize) {
 }
 
 int GoTable::toGnuGoPos(int row, int col) {
-    return (row+1) * 20 + col + 1;
+    int pos = (row+1) * 20 + col + 1;
+    if (row == QTGO_PASS_MOVE)
+        pos = 0;
+    return pos;
 }
 
 //TODO - here we're just supposing that that table will stay the same size
@@ -903,11 +890,11 @@ void GoTable::printfGnuGoStruct() {
     }
 }
 
-bool GoTable::moveIsLegal(int row, int col) {
-    if (row < 0 || row >= game.size || col < 0 || col >= game.size) {
-        return false;
-    }
-    return true;
+bool GoTable::moveIsLegal(int row, int col, int colour) {
+    int pos = toGnuGoPos(row, col);
+    if (row == QTGO_PASS_MOVE)
+        pos = PASS_MOVE;
+    return (is_legal(pos, colour));
 }
 
 int GoTable::populateStructFromGnuGo() {
@@ -1037,7 +1024,7 @@ void GoTable::userConfirmedMove(int confirmed) {
     printf("%s - confirmed=%d\n", __func__, confirmed);
     const int QTDIALOG_CONFIRMED_CODE = 1;
     if (confirmed == QTDIALOG_CONFIRMED_CODE) {
-        placeStone(unconfirmedStoneRow, unconfirmedStoneCol);
+        playMove(unconfirmedStoneRow, unconfirmedStoneCol);
     }
     unconfirmedStoneRow = -1;
     unconfirmedStoneCol = -1;
