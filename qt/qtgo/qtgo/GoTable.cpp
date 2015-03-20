@@ -766,6 +766,8 @@ bool GoTable::placeStone(int row, int col) {
 
 //TODO - redirect this to placeStone
 bool GoTable::passMove() {
+
+    //askUserConfirmation(true);
     //should insert some logic for counting
     sgftreeAddPlay(sgfTree, crtPlayer, -1, -1);
     SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
