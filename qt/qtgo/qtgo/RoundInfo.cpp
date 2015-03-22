@@ -124,6 +124,9 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
             animationChains = 1;
             animationStep();
         }
+        else {
+            //animationChains = 0;
+        }
     }
     else if (playerType == PlayerType::LocalHuman) {
         crtPlayerPixmap = playerHuman;

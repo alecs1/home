@@ -40,6 +40,7 @@ struct SGameSettings {
         int handicap = 0;
         bool handicapPlacementFree = false;
     };
+    Handicap handicap;
 
     //information used for saving
     bool estimateScore;

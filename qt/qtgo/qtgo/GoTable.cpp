@@ -173,8 +173,7 @@ GoTable::GoTable(QWidget *parent) :
 
     game.size = settings.size;
     players[EMPTY] = PlayerType::None;
-    players[BLACK]= settings.black;
-    players[WHITE] = settings.white;
+    changeGameSettings(settings);
 
     gnuGoMutex = new QMutex;
     aiThread = new AIThread(gnuGoMutex);
@@ -293,7 +292,7 @@ bool GoTable::loadSaveGameFile(QString fileName) {
 }
 
 void GoTable::launchGamePressed(SGameSettings newSettings) {
-    settings = newSettings;
+    changeGameSettings(newSettings);
 
     printf("%s\n", __func__);
 
@@ -319,6 +318,7 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
     game.size = settings.size;
+    komi = settings.handicap.komi;
     updateSizes();
     update();
 }
@@ -905,7 +905,7 @@ int GoTable::populateStructFromGnuGo() {
     return 0;
 }
 
-//TODO - customise to allow restarting sa saved game
+//TODO - customise to allow restarting saved game
 void GoTable::launchGame(bool resetTable) {
     game.size = settings.size;
     players[BLACK] = settings.black;

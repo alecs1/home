@@ -33,12 +33,14 @@ HEADERS += GameSettings.h \
            RoundInfo.h \
            SaveFile.h \
            AboutDialog.h \
-    HandicapSettings.h
+    Handicap.h \
+    HandicapDialog.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
          RoundInfo.ui \
-    HandicapSettings.ui
+    Handicap.ui \
+    HandicapDialog.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
@@ -51,7 +53,8 @@ SOURCES += GameSettings.cpp \
            SaveFile.cpp \
            Global.cpp \
            AboutDialog.cpp \
-    HandicapSettings.cpp
+    Handicap.cpp \
+    HandicapDialog.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

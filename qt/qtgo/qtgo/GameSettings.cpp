@@ -11,7 +11,7 @@
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
 #include "AboutDialog.h"
-#include "HandicapSettings.h"
+#include "HandicapDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
@@ -91,6 +91,11 @@ GameSettings::GameSettings(QWidget *parent):
     ui->button19x19->setChecked(true);
 
     populateSettings();
+    updateHandicap(settings.handicap);
+
+    //TODO - this is another Qt bug on Android.
+    if (platformType() == PlatformType::Android)
+        ui->handicapButton->setStyleSheet("");
 
     roundInfo = new RoundInfo(this);
     ui->topRow->insertWidget(0, roundInfo);
@@ -178,6 +183,7 @@ void GameSettings::setGameState(GameState state) {
         ui->passButton->hide();
         ui->undoButton->hide();
         ui->undoButton->setEnabled(true);
+        ui->handicapButton->show();
         ui->scoreEstimateButton->hide();
         setShowScoreEstimate(false);
         whitePlayer->enableChoosingPlayer(true);
@@ -306,9 +312,40 @@ void GameSettings::showDebugWindow() {
 }
 
 void GameSettings::showHandicapWindow() {
-    HandicapSettings handicapWindow;
+    SGameSettings::Handicap newHandicap = settings.handicap;
+    HandicapDialog handicapWindow(newHandicap);
     handicapWindow.setWindowTitle("Handicap");
-    handicapWindow.exec();
+    int result = handicapWindow.exec();
+    printf("%s - result=%d\n", __func__, result);
+    if (result == QDialog::Accepted) {
+        updateHandicap(newHandicap);
+    }
+}
+
+void GameSettings::updateHandicap(SGameSettings::Handicap newHandicap) {
+    settings.handicap = newHandicap;
+    printf("%s - new handicap: komi:%f, stones:%d, placement:%d\n",
+           __func__, newHandicap.komi, newHandicap.handicap, newHandicap.handicapPlacementFree);
+    QString handicapText = "Komi: ";
+    handicapText += QString::number(newHandicap.komi, 'g', 2);
+    handicapText += "\nHandicap: ";
+    handicapText += QString::number(newHandicap.handicap);
+    handicapText += " stones, ";
+    if (newHandicap.handicapPlacementFree)
+        handicapText += "free";
+    else
+        handicapText += "fixed";
+    ui->handicapButton->setText(handicapText);
+}
+
+bool operator==(const SGameSettings::Handicap& h1, const SGameSettings::Handicap& h2) {
+    if (h1.komi != h2.komi)
+        return false;
+    if (h1.handicap != h2.handicap)
+        return false;
+    if (h1.handicapPlacementFree != h2.handicapPlacementFree)
+        return false;
+    return true;
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
@@ -321,6 +358,8 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
     if (s1.black != s2.black)
         return false;
     if (s1.white != s2.white)
+        return false;
+    if (!(s1.handicap == s2.handicap))
         return false;
     return true;
 }
@@ -340,6 +379,7 @@ void GameSettings::populateSettings() {
     newSettings.blackAIStrength = blackPlayer->getAIStrength();
     newSettings.white = (PlayerType)whitePlayer->playerType();
     newSettings.whiteAIStrength = whitePlayer->getAIStrength();
+    newSettings.handicap = settings.handicap;
 
     if (newSettings == settings)
         return;
@@ -350,9 +390,9 @@ void GameSettings::populateSettings() {
     }
 }
 
-void GameSettings::receiveSettings(SGameSettings settings) {
+void GameSettings::receiveSettings(SGameSettings newSettings) {
     printf("%s\n", __func__);
-    switch (settings.size) {
+    switch (newSettings.size) {
         case 9:
             ui->button9x9->setChecked(true);
             break;
@@ -364,11 +404,11 @@ void GameSettings::receiveSettings(SGameSettings settings) {
             break;
     }
 
-    blackPlayer->setPlayerType(settings.black);
-    blackPlayer->setAIStrength(settings.blackAIStrength);
-    whitePlayer->setPlayerType(settings.white);
-    whitePlayer->setAIStrength(settings.whiteAIStrength);
-
+    blackPlayer->setPlayerType(newSettings.black);
+    blackPlayer->setAIStrength(newSettings.blackAIStrength);
+    whitePlayer->setPlayerType(newSettings.white);
+    whitePlayer->setAIStrength(newSettings.whiteAIStrength);
+    updateHandicap(newSettings.handicap);
 }
 
 void GameSettings::askConfirmFinishGame() {

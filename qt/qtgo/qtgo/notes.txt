@@ -29,7 +29,7 @@ v 1.6 Make hint work - works very very nicely
     v - add player colour to the confirmation button
       - make the feedback circle more obvious (a large finger on a touchscreen); an intersection of lines is also a solution I saw in some programs
       - double tap
-      - disable portrait layout
+    n - disable portrait layout; won't do
       - make sidebar hideable
       - triggering the AI menu during play may make the menu not fit on the screen.
       - write Save and Open game dialogs that are usable on Android
@@ -37,6 +37,7 @@ v 1.6 Make hint work - works very very nicely
 4. Correct score computation.
 
 5. Learn about Komi and and options.
+    - move the handicap button to the bottom, like semi statusbar.
 
 v 6. AI should be selectable.
 
@@ -66,6 +67,7 @@ v 7. Not showing the last move when loading a saved game.
 9. Undoing won't correctly show the last move.
 10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
 v 11. Undo after pass undoes the last valid move, not the pass.
+12. At the end of the game the AI stone animation does not stop.
 
 
 Crt:
@@ -77,3 +79,4 @@ Bugs to Qt Android:
 2. cannot correctly initialise QML window over the main software window.
 3. hide() and then show() on QQuickWidget creates garbage on the screen.
 4. Sony Xperia Z theme - radio buttons don't show the selected option.
+5. Set stylesheed with alignment to QPushButton and it will duplicate the text.

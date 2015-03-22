@@ -47,6 +47,7 @@ public slots:
     void showAbout();
     void showDebugWindow();
     void showHandicapWindow();
+    void updateHandicap(SGameSettings::Handicap newHandicap);
     void receiveSettings(SGameSettings settings);
     void askConfirmFinishGame();
 
