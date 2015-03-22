@@ -11,6 +11,7 @@
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
 #include "AboutDialog.h"
+#include "HandicapSettings.h"
 
 GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
@@ -79,6 +80,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->passButton, SIGNAL(clicked()), this, SIGNAL(userPassedMove()));
     connect(ui->undoButton, SIGNAL(clicked()), this, SIGNAL(undoMove()));
     connect(ui->hintButton, SIGNAL(clicked()), this, SIGNAL(showHints()));
+    connect(ui->handicapButton, SIGNAL(clicked()), this, SLOT(showHandicapWindow()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
@@ -101,6 +103,8 @@ GameSettings::GameSettings(QWidget *parent):
     ui->hintButton->hide();
     ui->passButton->hide();
     ui->undoButton->hide();
+
+    //ui->komiEdit->hide();
 
     showScore = false;
     setGameState(GameState::Initial);
@@ -130,6 +134,7 @@ void GameSettings::setGameState(GameState state) {
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
+        ui->handicapButton->hide();
         ui->hintButton->hide();
         ui->passButton->hide();
         whitePlayer->enableChoosingPlayer(true);
@@ -149,6 +154,7 @@ void GameSettings::setGameState(GameState state) {
         ui->menuLauncher1->show();
         ui->menuLauncher2->hide();
         ui->tableSizeGroupBox->hide();
+        ui->handicapButton->hide();
         ui->hintButton->show();
         ui->passButton->show();
         ui->undoButton->show();
@@ -172,6 +178,8 @@ void GameSettings::setGameState(GameState state) {
         ui->passButton->hide();
         ui->undoButton->hide();
         ui->undoButton->setEnabled(true);
+        ui->scoreEstimateButton->hide();
+        setShowScoreEstimate(false);
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();
@@ -260,10 +268,13 @@ void GameSettings::showConfirmButton(bool show, int colour) {
 
 void GameSettings::toggleShowEstimateScore() {
     if (showScore)
-        showScore = false;
+        setShowScoreEstimate(false);
     else
-        showScore = true;
+        setShowScoreEstimate(true);
+}
 
+void GameSettings::setShowScoreEstimate(bool show) {
+    showScore = show;
     updateScoreEstimateButton();
     emit doEstimateScore(showScore);
 }
@@ -292,6 +303,12 @@ void GameSettings::showAbout() {
 
 void GameSettings::showDebugWindow() {
     QMessageBox::aboutQt(this);
+}
+
+void GameSettings::showHandicapWindow() {
+    HandicapSettings handicapWindow;
+    handicapWindow.setWindowTitle("Handicap");
+    handicapWindow.exec();
 }
 
 bool operator==(const SGameSettings& s1, const SGameSettings& s2) {

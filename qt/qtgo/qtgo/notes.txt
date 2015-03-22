@@ -68,7 +68,8 @@ v 7. Not showing the last move when loading a saved game.
 v 11. Undo after pass undoes the last valid move, not the pass.
 
 
-Small shit:
+Crt:
+Add handicap and komi, show estimates will default to false after each match.
 
 
 Bugs to Qt Android:

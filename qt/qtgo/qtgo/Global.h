@@ -35,6 +35,12 @@ struct SGameSettings {
     int whiteAIStrength = 0;
     PlayerType black = PlayerType::LocalHuman;
     PlayerType white = PlayerType::AI;
+    struct Handicap {
+        float komi = 6.5;
+        int handicap = 0;
+        bool handicapPlacementFree = false;
+    };
+
     //information used for saving
     bool estimateScore;
 

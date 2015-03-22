@@ -32,11 +32,13 @@ HEADERS += GameSettings.h \
            ../gnugo/engine/liberty.h \
            RoundInfo.h \
            SaveFile.h \
-           AboutDialog.h
+           AboutDialog.h \
+    HandicapSettings.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
-         RoundInfo.ui
+         RoundInfo.ui \
+    HandicapSettings.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
            GoTable.cpp \
@@ -48,7 +50,8 @@ SOURCES += GameSettings.cpp \
            RoundInfo.cpp \
            SaveFile.cpp \
            Global.cpp \
-           AboutDialog.cpp
+           AboutDialog.cpp \
+    HandicapSettings.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

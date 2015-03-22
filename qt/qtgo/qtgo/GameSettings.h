@@ -42,9 +42,11 @@ public slots:
     void setCurrentPlayer(int player, PlayerType type);
     void showConfirmButton(bool show, int colour);
     void toggleShowEstimateScore();
+    void setShowScoreEstimate(bool show);
     void showMenu();
     void showAbout();
     void showDebugWindow();
+    void showHandicapWindow();
     void receiveSettings(SGameSettings settings);
     void askConfirmFinishGame();
 

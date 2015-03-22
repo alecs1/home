@@ -88,6 +88,8 @@ MainWindow::MainWindow(QWidget *parent) :
     printf("%s - Widget style name=%s\n", __func__, QApplication::style()->objectName().toUtf8().constData());
     setMinimumSize(minWidth, minHeight);
 
+    setWindowTitle("FreeGo");
+
 }
 
 MainWindow::~MainWindow()

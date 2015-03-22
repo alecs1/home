@@ -26,7 +26,7 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 #qt UI
-qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui RoundInfo.ui)
+qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui RoundInfo.ui HandicapSettings.ui)
 
 
 #how to debug a CMake script:
@@ -34,14 +34,14 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 
 #qt moc
-qt5_wrap_cpp(HEADER_MOC  mainwindow.h GoTable.h GameSettings.h PlayerWidget.h GameEndDialog.h ConfirmMoveDialog.h RoundInfo.h)
+qt5_wrap_cpp(HEADER_MOC  mainwindow.h GoTable.h GameSettings.h PlayerWidget.h GameEndDialog.h ConfirmMoveDialog.h RoundInfo.h HandicapSettings.h)
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp
-    ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
+    ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp HandicapSettings.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets board engine utils sgf patterns)
