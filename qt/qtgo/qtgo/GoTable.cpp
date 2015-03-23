@@ -687,6 +687,18 @@ bool GoTable::playMove(int row, int col) {
     if (state == GameState::Stopped)
         return false;
 
+    if (row == FREEGO_PASS_MOVE) {
+        passCount += 1;
+        if (passCount >= PASS_COUNT_TO_FINISH) {
+            //time to finish the game
+            printf("%s - both players have passed consecutively, will end game\n", __func__);
+            finish();
+        }
+    }
+    else {
+        passCount = 0;
+    }
+
     cursorBlocked = true;
     updateCursor();
 
@@ -727,7 +739,7 @@ bool GoTable::playMove(int row, int col) {
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
     updateCursor();
 
-    if (row == QTGO_PASS_MOVE) {
+    if (row == FREEGO_PASS_MOVE) {
         lastMoveRow = -2;
         lastMoveCol = -2;
     }
@@ -774,7 +786,7 @@ bool GoTable::playMove(int row, int col) {
 bool GoTable::passMove() {
     //should insert some logic for counting
 
-    unconfirmedStoneRow = QTGO_PASS_MOVE;
+    unconfirmedStoneRow = FREEGO_PASS_MOVE;
     emit askUserConfirmation(true, crtPlayer);
     return true;
 }
@@ -870,7 +882,7 @@ void GoTable::resetGnuGo(int newSize) {
 
 int GoTable::toGnuGoPos(int row, int col) {
     int pos = (row+1) * 20 + col + 1;
-    if (row == QTGO_PASS_MOVE)
+    if (row == FREEGO_PASS_MOVE)
         pos = 0;
     return pos;
 }
@@ -879,6 +891,11 @@ int GoTable::toGnuGoPos(int row, int col) {
 QPoint GoTable::fromGnuGoPos(int pos) {
     int row = pos / 20 - 1;
     int col = pos - (row+1)*20 - 1;
+
+    if (pos == 0) {
+        col = FREEGO_PASS_MOVE;
+        row = FREEGO_PASS_MOVE;
+    }
     return QPoint(col, row);
 }
 
@@ -892,7 +909,7 @@ void GoTable::printfGnuGoStruct() {
 
 bool GoTable::moveIsLegal(int row, int col, int colour) {
     int pos = toGnuGoPos(row, col);
-    if (row == QTGO_PASS_MOVE)
+    if (row == FREEGO_PASS_MOVE)
         pos = PASS_MOVE;
     return (is_legal(pos, colour));
 }
@@ -942,7 +959,9 @@ bool GoTable::AIPlayNextMove() {
 }
 
 void GoTable::finish() {
-    float score = wrapper_gnugo_estimate_score(NULL, NULL);
+    //float score = wrapper_gnugo_estimate_score(NULL, NULL);
+
+    float blackScore = aftermath_compute_score(BLACK, NULL);
 
     //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
     //maybe show the user a dialog explaining what's hapening.
@@ -953,14 +972,22 @@ void GoTable::finish() {
 
     //TODO - find the GnuGo fancy end computations
     QString winner = "White";
-    if (score < 0)
+    if (blackScore > 0.0)
         winner = "Black";
+    else if (blackScore == 0.0) {
+        winner = "Tie";
+    }
     QString finisher = "White";
     if (crtPlayer == BLACK)
         finisher = "Black";
     QString finalText;
     QTextStream stream(&finalText);
-    stream << winner << " won with a score of " << fabs(score) << ".\n" << finisher << " ended the game.";
+    if (blackScore == 0.0) {
+        stream << "Game ended with a tie.";
+    }
+    else {
+        stream << winner << " won with a score of " << fabs(blackScore) << ".\n" << finisher << " ended the game.";
+    }
     stream.flush();
 
     QFont font;
@@ -976,10 +1003,13 @@ void GoTable::finish() {
     QPixmap winnerPixmap(diameter, diameter);
     winnerPixmap.fill(Qt::transparent);
     QSvgRenderer svgR;
-    if (score < 0)
+    if (blackScore > 0.0)
         svgR.load(QString(":/resources/cursorBlack.svg"));
-    else
+    else if (blackScore < 0.0)
         svgR.load(QString(":/resources/cursorWhite.svg"));
+    else
+        svgR.load(QString(":/resources/cursorBlackWhite.svg"));
+
     QPainter bPainter(&winnerPixmap);
     svgR.render(&bPainter);
     crtPlayer = EMPTY;
@@ -1094,9 +1124,8 @@ void AIThread::run() {
     mutex->unlock();
 
     int move = p.result;
-    if (move == 0) {
-        //TODO - this is so wrong; what we're interested in is p.resign!
-        printf("%s - AI has decided not to move anymore, will compute finals scores.\n", __func__);
+    if (p.resign) {
+        printf("%s - AI has decided to resign, will compute finals scores.\n", __func__);
         float score = gnugo_estimate_score(NULL, NULL);
         if (score > 0) {
             printf("%s - estimates: white winning by %f\n", __func__, score);

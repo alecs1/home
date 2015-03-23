@@ -13,5 +13,6 @@
         <file>Example.qml</file>
         <file>AboutDialog.qml</file>
         <file>RoundInfoAnimation.qml</file>
+        <file>resources/cursorBlackWhite.svg</file>
     </qresource>
 </RCC>

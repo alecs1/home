@@ -12,8 +12,9 @@
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
 #endif
 
-#define QTGO_PASS_MOVE (-2)
-#define QTGO_VERSION "0.83"
+#define FREEGO_PASS_MOVE (-2)
+#define FREEGO_VERSION "0.83"
+#define PASS_COUNT_TO_FINISH (4)
 
 enum class GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game

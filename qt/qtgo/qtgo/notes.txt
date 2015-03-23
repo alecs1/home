@@ -2,7 +2,7 @@ TODO:
 v 1. Use genmove for playing against the computer. Also look at other functions in the file for computing the score.
 v 1.0 Make choosing the AI level work.
 v 1.1 Make pass work.
-v 1.2 Provide undo - seems to work.
+v 1.2 Provide undo.
 1.3 Show move numbers
 v 1.4 Highlight last move! Low quality but works.
 1.5 Maybe show a moves tree with undo and sutff.
@@ -71,6 +71,7 @@ v 7. Not showing the last move when loading a saved game.
 v 11. Undo after pass undoes the last valid move, not the pass.
 12. At the end of the game the AI stone animation does not stop.
 13. Not differentiang well between two local human players.
+14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
 
 
 Crt:

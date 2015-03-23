@@ -42,7 +42,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     }
     else {
         quickWidget = new QQuickWidget(); //unused, just initialised
-        QString labelContent = "<h2><b>FreeGo " + QString(QTGO_VERSION) + "</b></hr></h2><br/>Written with the excellent Qt and CMake.<br/>Gameplay entirely provided by GNU Go.<br/>License GNU GPLv3.<br/>Source code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>";
+        QString labelContent = "<h2><b>FreeGo " + QString(FREEGO_VERSION) + "</b></hr></h2><br/>Written with the excellent Qt and CMake.<br/>Gameplay entirely provided by GNU Go.<br/>License GNU GPLv3.<br/>Source code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>";
         androidLabel = new QLabel(labelContent);
         androidLabel->setAlignment(Qt::AlignCenter);
         gridLayout->addWidget(androidLabel, 0, 0);

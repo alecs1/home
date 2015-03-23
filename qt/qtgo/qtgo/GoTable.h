@@ -166,6 +166,7 @@ private:
     GameStruct game;
     int crtPlayer = 1;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK
+    int passCount = 0;
 
     /*we need to block input on the widget, with this hackish way:
     time difference between the click that triggered blocking and current click must be bigger than the amount of time we decided to block input:
