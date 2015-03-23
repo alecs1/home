@@ -26,7 +26,6 @@ void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
     //ui->confirmButton->setToolButtonStyle((Qt::ToolButtonTextBesideIcon));
 
     //TODO - now set a stylesheet.
-    //QString styleSheet = "QToolButton { image-position: bottom center; }";
     QString styleSheet =
             "QToolButton {\
                 background-image: url(\":/resources/cursorBlack.svg\");\
@@ -35,5 +34,6 @@ void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
                 background-clip: padding;\
                 border: 0 px;\
             }";
+    Q_UNUSED(styleSheet);
     //ui->confirmButton->setStyleSheet(styleSheet);
 }
