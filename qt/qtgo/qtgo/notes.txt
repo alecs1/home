@@ -68,6 +68,7 @@ v 7. Not showing the last move when loading a saved game.
 10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
 v 11. Undo after pass undoes the last valid move, not the pass.
 12. At the end of the game the AI stone animation does not stop.
+13. Not differentiang well between two local human players.
 
 
 Crt:

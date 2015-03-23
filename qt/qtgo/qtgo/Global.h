@@ -13,7 +13,7 @@
 #endif
 
 #define QTGO_PASS_MOVE (-2)
-#define QTGO_VERSION "0.82"
+#define QTGO_VERSION "0.83"
 
 enum class GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game
