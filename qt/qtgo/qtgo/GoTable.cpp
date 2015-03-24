@@ -962,14 +962,20 @@ bool GoTable::AIPlayNextMove() {
 void GoTable::finish() {
     //float score = wrapper_gnugo_estimate_score(NULL, NULL);
 
-    float blackScore = aftermath_compute_score(BLACK, NULL);
+    //GnuGo crashes if we attempt to aftermath_compute_score on an empty board;
+    float blackScore = 0.0;
 
-    //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
-    //maybe show the user a dialog explaining what's hapening.
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
     }
+
+    if (countStones(&game) > 0)
+        blackScore = aftermath_compute_score(BLACK, NULL);
+
+
+    //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
+    //maybe show the user a dialog explaining what's hapening.
 
     //TODO - find the GnuGo fancy end computations
     QString winner = "White";

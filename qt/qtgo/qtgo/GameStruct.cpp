@@ -16,6 +16,16 @@ bool GameCanPlaceStone(GameStruct* game, int row, int col, int player) {
     return false;
 }
 
+unsigned int countStones(GameStruct* game) {
+    unsigned int count = 0;
+    for(int i = 0; i < game->size; i++) {
+        for(int j = 0; j < game->size; j++)
+            if (game->state[i][j] > 0)
+                count += 1;
+    }
+    return count;
+}
+
 int otherColour(int crtColour) {
     if (crtColour == WHITE)
         return BLACK;
