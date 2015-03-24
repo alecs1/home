@@ -693,6 +693,7 @@ bool GoTable::playMove(int row, int col) {
             //time to finish the game
             printf("%s - both players have passed consecutively, will end game\n", __func__);
             finish();
+			return false;
         }
     }
     else {
