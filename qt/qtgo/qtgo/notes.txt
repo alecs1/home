@@ -63,7 +63,7 @@ Bugs:
 v 3. LG G3 fonts are too big, everything looks messy. Fixed player info, nothing about font size yet.
 v 4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
 5. With Sony Xperia the radio buttons don't show what's selected, altough they seem to work. Seems like a Qt bug, won't fix now.
-6. At startup table size is not the one selected by buttons.
+v 6. At startup table size is not the one selected by buttons.
 v 7. Not showing the last move when loading a saved game.
 8. If the last move in a game was an undo, restoring the game will be wrong.
 9. Undoing won't correctly show the last move.
@@ -71,7 +71,7 @@ v 7. Not showing the last move when loading a saved game.
 v 11. Undo after pass undoes the last valid move, not the pass.
 12. At the end of the game the AI stone animation does not stop.
 13. Not differentiang well between two local human players.
-14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
+v 14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
 
 
 Crt:

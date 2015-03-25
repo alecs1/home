@@ -66,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(table, SIGNAL(askUserConfirmation(bool, int)), settings, SLOT(showConfirmButton(bool, int)));
     QObject::connect(table, SIGNAL(pushGameSettings(SGameSettings)), settings, SLOT(receiveSettings(SGameSettings)));
     QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
-    QObject::connect(settings, SIGNAL(finishGamePerform()), table, SLOT(finish()));
+    QObject::connect(settings, SIGNAL(finishGamePerform(bool)), table, SLOT(finish(bool)));
     QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
     QObject::connect(settings, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
     QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));

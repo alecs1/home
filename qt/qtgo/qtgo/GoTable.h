@@ -39,7 +39,7 @@ public:
 
 signals:
     void AIThreadPlaceStone(int row, int col);
-    void AIQuitsGame();
+    void AIQuitsGame(bool accurate);
 
 private:
     bool running = false;
@@ -89,7 +89,7 @@ public slots:
     bool playMove(int row, int col);
     bool passMove();
     bool undoMove();
-    void finish();
+    void finish(bool accurateScore);
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void showPlayHints();

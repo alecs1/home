@@ -171,14 +171,14 @@ GoTable::GoTable(QWidget *parent) :
     askPlayConfirmation = true;
     #endif
 
-    game.size = settings.size;
-    players[EMPTY] = PlayerType::None;
-    changeGameSettings(settings);
-
     gnuGoMutex = new QMutex;
     aiThread = new AIThread(gnuGoMutex);
     connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(playMove(int,int)));
-    connect(aiThread, SIGNAL(AIQuitsGame()), this, SLOT(finish()));
+    connect(aiThread, SIGNAL(AIQuitsGame(bool)), this, SLOT(finish(bool)));
+
+    game.size = settings.size;
+    players[EMPTY] = PlayerType::None;
+    changeGameSettings(settings);
 
 
     blockTime = new QTime();
@@ -318,6 +318,7 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     players[BLACK] = settings.black;
     players[WHITE] = settings.white;
     game.size = settings.size;
+    resetGnuGo(game.size);
     komi = settings.handicap.komi;
     updateSizes();
     update();
@@ -692,7 +693,7 @@ bool GoTable::playMove(int row, int col) {
         if (passCount >= PASS_COUNT_TO_FINISH) {
             //time to finish the game
             printf("%s - both players have passed consecutively, will end game\n", __func__);
-            finish();
+            finish(true);
 			return false;
         }
     }
@@ -959,41 +960,62 @@ bool GoTable::AIPlayNextMove() {
     return false;
 }
 
-void GoTable::finish() {
-    //float score = wrapper_gnugo_estimate_score(NULL, NULL);
-
-    //GnuGo crashes if we attempt to aftermath_compute_score on an empty board;
-    float blackScore = 0.0;
+//TODO - actually the guy ending the game prematurely should lose
+void GoTable::finish(bool accurateScore) {
+    float score = 0.0;
+    int stoneCount = countStones(&game);
+    if (stoneCount == 0) {
+        //just finish
+        state = GameState::Stopped;
+        emit gameStateChanged(state);
+        return;
+    }
 
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
     }
 
-    if (countStones(&game) > 0)
-        blackScore = aftermath_compute_score(BLACK, NULL);
+    //if the game hasn't been played too much we don't want to
+    bool computeAccurateScore = false;
+
+    if ( (accurateScore) || (stoneCount  > game.size * game.size / 10) )
+        computeAccurateScore = true;
+
+    if (computeAccurateScore) {
+        score = aftermath_compute_score(BLACK, NULL);
+    }
+    else {
+        score = gnugo_estimate_score(NULL, NULL);
+    }
 
 
     //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
     //maybe show the user a dialog explaining what's hapening.
 
     //TODO - find the GnuGo fancy end computations
-    QString winner = "White";
-    if (blackScore > 0.0)
-        winner = "Black";
-    else if (blackScore == 0.0) {
-        winner = "Tie";
+    const float approximateZero = 0.001;
+    int winner = WHITE;
+    QString winnerStr = "White";
+    if (score < -approximateZero) {
+        winner = BLACK;
+        winnerStr = "Black";
     }
+    else if (fabs(score) < approximateZero) {
+        winner = EMPTY;
+        winnerStr = "Tie";
+    }
+
     QString finisher = "White";
     if (crtPlayer == BLACK)
         finisher = "Black";
     QString finalText;
     QTextStream stream(&finalText);
-    if (blackScore == 0.0) {
+    if (winner == EMPTY) {
         stream << "Game ended with a tie.";
     }
     else {
-        stream << winner << " won with a score of " << fabs(blackScore) << ".\n" << finisher << " ended the game.";
+        stream << winnerStr << " won with a score of " << QString::number(fabs(score), 'g', 2) << ".\n" << finisher << " ended the game.";
     }
     stream.flush();
 
@@ -1010,9 +1032,9 @@ void GoTable::finish() {
     QPixmap winnerPixmap(diameter, diameter);
     winnerPixmap.fill(Qt::transparent);
     QSvgRenderer svgR;
-    if (blackScore > 0.0)
+    if (winner == BLACK)
         svgR.load(QString(":/resources/cursorBlack.svg"));
-    else if (blackScore < 0.0)
+    else if (winner == WHITE)
         svgR.load(QString(":/resources/cursorWhite.svg"));
     else
         svgR.load(QString(":/resources/cursorBlackWhite.svg"));
@@ -1140,7 +1162,7 @@ void AIThread::run() {
         else {
             printf("%s - estimates: black winning by %f\n", __func__, -score);
         }
-        emit AIQuitsGame();
+        emit AIQuitsGame(true);
     }
     else {
         QPoint point = GoTable::fromGnuGoPos(move);

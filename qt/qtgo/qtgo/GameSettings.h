@@ -25,7 +25,7 @@ public:
 signals:
     //TODO - having two functions with SGameSettigns seems like duplicating
     void launchGamePerform(SGameSettings settings);
-    void finishGamePerform();
+    void finishGamePerform(bool accurate);
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void userPassedMove();

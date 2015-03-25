@@ -415,7 +415,7 @@ void GameSettings::askConfirmFinishGame() {
     int ret = QMessageBox::question(this, "FreeGo", "Do you want to finish the game?",
                                     QMessageBox::Cancel | QMessageBox::Ok);
     if (ret == QMessageBox::Ok)
-        emit finishGamePerform();
+        emit finishGamePerform(false);
 }
 
 void GameSettings::launchGameClicked() {
