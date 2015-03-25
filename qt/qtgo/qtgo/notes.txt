@@ -75,7 +75,8 @@ v 14. After loading a game of size 9 and starting to play, GnuGo will actually a
 
 
 Crt:
-Add handicap and komi, show estimates will default to false after each match.
+1. Add handicap and komi, show estimates will default to false after each match.
+2. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
 
 
 Bugs to Qt Android:

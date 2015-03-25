@@ -37,17 +37,17 @@ function(qtc_option name doc def_val)
     set("${name}" "${def_val}" PARENT_SCOPE)
   endif()
 endfunction()
-qtc_option(ENABLE_QT4 "Building Qt4 theme." On)
+qtc_option(ENABLE_QT4 "Building Qt4 theme." Off)
 qtc_option(ENABLE_QT5 "Building Qt5 theme." On)
-qtc_option(ENABLE_GTK2 "Building Gtk2 theme." On)
+qtc_option(ENABLE_GTK2 "Building Gtk2 theme." Off)
 # option(ENABLE_GTK3 "Building Gtk3 theme." On)
 option(ENABLE_TEST "Enable testing." On)
-option(QTC_ENABLE_X11 "Enable X11" On)
+option(QTC_ENABLE_X11 "Enable X11" Off)
 option(QTC_INSTALL_PO "Install translation files." On)
 
 qtc_option(QTC_QT4_ENABLE_KDE "Building Qt4 style with KDE4 support." On)
 qtc_option(QTC_QT5_ENABLE_KDE
-  "Building Qt5 style with KDE Frameworks 5 support." On)
+  "Building Qt5 style with KDE Frameworks 5 support." Off)
 
 option(QTC_QT4_STYLE_SUPPORT
   "Qt4 support for creating a style for each QtCurve theme." Off)
