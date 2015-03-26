@@ -93,6 +93,7 @@ public slots:
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void showPlayHints();
+    void insertDefaultHandicap(int handicap);
 
 private slots:
     bool AIPlayNextMove();

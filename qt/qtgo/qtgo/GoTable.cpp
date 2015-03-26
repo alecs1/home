@@ -1098,6 +1098,16 @@ void GoTable::showPlayHints() {
     update();
 }
 
+void GoTable::insertDefaultHandicap(int handicap) {
+    //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
+    //call place_fixed_handicap
+
+    resetGnuGo(game.size);
+    place_fixed_handicap(handicap);
+    populateStructFromGnuGo();
+    update();
+}
+
 AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
 }

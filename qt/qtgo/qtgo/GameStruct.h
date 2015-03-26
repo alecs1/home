@@ -31,6 +31,7 @@ bool GamePlaceStone(GameStruct* game, int row, int col, int player);
 bool GameCanPlaceStone(GameStruct* game, int row, int col, int player);
 unsigned int countStones(GameStruct* game);
 
+
 int otherColour(int crtColour);
 
 

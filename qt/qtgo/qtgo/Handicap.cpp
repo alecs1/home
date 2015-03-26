@@ -24,7 +24,8 @@ Handicap::Handicap(SGameSettings::Handicap &handicap, QWidget *parent) :
         komiMenu->addAction(text);
     }
 
-    for(int i = 0; i <= maxHandicap; i++) {
+    ui->handicapCombo->insertItem(0, "No handicap");
+    for(int i = 2; i <= maxHandicap; i++) {
         QString text = QString::number(i) + " stones";
         ui->handicapCombo->insertItem(i, text);
     }
@@ -103,7 +104,10 @@ void Handicap::komiEditFinished() {
 
 void Handicap::handicapSelected(int value) {
     printf("%s - handicap set to %d\n", __func__, value);
-    handicap.handicap = value;
+    if (value < 1)
+        handicap.handicap = 0;
+    else
+        handicap.handicap = value + 1;
 }
 
 void Handicap::handicapPlacementSelected(int value) {
@@ -117,7 +121,10 @@ void Handicap::handicapPlacementSelected(int value) {
 void Handicap::populateHandicap(SGameSettings::Handicap aHandicap) {
     handicap = aHandicap;
     setKomi(handicap.komi);
-    ui->handicapCombo->setCurrentIndex(handicap.handicap);
+    if (handicap.handicap < 2)
+        ui->handicapCombo->setCurrentIndex(0);
+    else
+        ui->handicapCombo->setCurrentIndex(handicap.handicap-1);
     if (handicap.handicapPlacementFree)
         ui->handicapPlacementCombo->setCurrentIndex(1);
     else
