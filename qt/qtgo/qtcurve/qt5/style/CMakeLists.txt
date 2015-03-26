@@ -58,16 +58,24 @@ if(NOT QTC_QT5_ENABLE_KDE)
 else()
   set(qtcurve_MOC_SRCS)
 endif()
-add_library(qtcurve-qt5 MODULE ${qtcurve_SRCS} ${qtcurve_MOC_SRCS})
+
+if (DEFINED ANDROID_ABI)
+    message("Doing Android build")
+    add_library(qtcurve-qt5 STATIC ${qtcurve_SRCS} ${qtcurve_MOC_SRCS})
+else (DEFINED_ANDROID_ABI)
+    add_library(qtcurve-qt5 MODULE ${qtcurve_SRCS} ${qtcurve_MOC_SRCS})
+endif()
+
 set_target_properties(qtcurve-qt5 PROPERTIES
-  OUTPUT_NAME "qtcurve"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  PREFIX "")
+      OUTPUT_NAME "qtcurve"
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      PREFIX "")
+
 add_dependencies(qtcurve-qt5 qtc_qt5_check_on_hdr qtc_qt5_check_x_on_hdr
   qtc_qt5_dialog_error_hdr qtc_qt5_dialog_information_hdr
   qtc_qt5_dialog_warning_hdr)
 target_link_libraries(qtcurve-qt5 ${QTC_QT5_LINK_LIBS} qtcurve-utils)
-install(TARGETS qtcurve-qt5 LIBRARY DESTINATION ${QTCURVE_STYLE_DIR})
+#install(TARGETS qtcurve-qt5 LIBRARY DESTINATION ${QTCURVE_STYLE_DIR})
 
 if(QTC_QT5_ENABLE_KDE)
   foreach(dir DATA_INSTALL_DIR KDE_INSTALL_DATADIR CMAKE_INSTALL_DATADIR
