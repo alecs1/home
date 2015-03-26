@@ -45,7 +45,7 @@ option(ENABLE_TEST "Enable testing." On)
 option(QTC_ENABLE_X11 "Enable X11" Off)
 option(QTC_INSTALL_PO "Install translation files." On)
 
-qtc_option(QTC_QT4_ENABLE_KDE "Building Qt4 style with KDE4 support." On)
+qtc_option(QTC_QT4_ENABLE_KDE "Building Qt4 style with KDE4 support." Off)
 qtc_option(QTC_QT5_ENABLE_KDE
   "Building Qt5 style with KDE Frameworks 5 support." Off)
 
@@ -70,14 +70,14 @@ else()
   set(QTC_KDE4_DEFAULT_HOME_DEFAULT False)
 endif()
 
-find_package(KDE4 QUIET)
-set(KDE4_KDECONFIG_EXECUTABLE)
-find_program(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config
-  PATHS "${CMAKE_INSTALL_PREFIX}/bin" ${_KDEDIRS} /opt/kde4/bin
-  NO_DEFAULT_PATH)
-if(NOT KDE4_KDECONFIG_EXECUTABLE)
-  find_program(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config)
-endif()
+# find_package(KDE4 QUIET)
+# set(KDE4_KDECONFIG_EXECUTABLE)
+# find_program(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config
+#   PATHS "${CMAKE_INSTALL_PREFIX}/bin" ${_KDEDIRS} /opt/kde4/bin
+#   NO_DEFAULT_PATH)
+# if(NOT KDE4_KDECONFIG_EXECUTABLE)
+#   find_program(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config)
+# endif()
 
 function(get_cmd_var varname def cmd)
   if(DEFINED ${varname})
