@@ -319,6 +319,7 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     players[WHITE] = settings.white;
     game.size = settings.size;
     resetGnuGo(game.size);
+    insertDefaultHandicap(settings.handicap.handicap);
     komi = settings.handicap.komi;
     updateSizes();
     update();
@@ -937,8 +938,11 @@ void GoTable::launchGame(bool resetTable) {
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
     updateSizes();
     if (useGNUGO) {
-        if (resetTable)
+        if (resetTable) {
             resetGnuGo(settings.size);
+            if (settings.handicap.handicapPlacementFree == false)
+                insertDefaultHandicap(settings.handicap.handicap);
+        }
         populateStructFromGnuGo();
     }
 
@@ -1098,13 +1102,18 @@ void GoTable::showPlayHints() {
     update();
 }
 
-void GoTable::insertDefaultHandicap(int handicap) {
+void GoTable::insertDefaultHandicap(int newHandicap) {
     //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
     //call place_fixed_handicap
-
+    printf("%s - newHandicap=%d", __func__, newHandicap);
     resetGnuGo(game.size);
-    place_fixed_handicap(handicap);
+    place_fixed_handicap(newHandicap);
     populateStructFromGnuGo();
+    //handicap mai actually be inappropriate for the table size
+    if (newHandicap != handicap) {
+        settings.handicap.handicap = handicap;
+        emit pushGameSettings(settings);
+    }
     update();
 }
 
