@@ -16,7 +16,8 @@ include_directories(${Qt5Svg_INCLUDE_DIRS})
 include_directories("../gnugo")
 include_directories("../gnugo/sgf")
 include_directories("../gnugo/utils")
-
+#include_directories("../qtcurve/qt5")
+#include_directories("../qtcurve/lib")
 
 # Add compiler flags for building executables (-fPIE), required by Qt
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")

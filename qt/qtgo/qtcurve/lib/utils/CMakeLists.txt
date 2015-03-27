@@ -1,3 +1,4 @@
+message("inside qtcurve-utils CMAKE_INCLUDE_PATH=" ${CMAKE_INCLUDE_PATH})
 set(qtcurve_utils_SRCS
   color.cpp
   dirs.cpp
@@ -17,10 +18,16 @@ set(qtcurve_utils_SRCS
   x11helpers.cpp
   x11wrap.cpp)
 
-set(qtcurve_utils_LINKS ${LIBEXECINFO_LIBRARIES} pthread)
+if (NOT DEFINED ANDROID_ABI)
+    set(qtcurve_utils_LINKS ${LIBEXECINFO_LIBRARIES} pthread)
+endif()
 
 if(NOT APPLE)
-  set(qtcurve_utils_LINKS ${qtcurve_utils_LINKS} m rt dl)
+    if (NOT DEFINED ANDROID_ABI)
+        set(qtcurve_utils_LINKS ${qtcurve_utils_LINKS} m rt dl)
+    else (NOT DEFINED ANDROID_ABI)
+        set(qtcurve_utils_LINKS ${qtcurve_utils_LINKS} m dl)
+    endif()
 endif()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -31,8 +38,13 @@ endif()
 
 add_definitions("-DQTC_UTILS_INTERNAL -pthread")
 
-add_library(qtcurve-utils SHARED ${qtcurve_utils_SRCS}
-  "${CMAKE_BINARY_DIR}/version.cpp")
+if (NOT DEFINED ANDROID_ABI)
+    add_library(qtcurve-utils SHARED ${qtcurve_utils_SRCS}
+      "${CMAKE_BINARY_DIR}/version.cpp")
+else (NOT DEFINED ANDROID_ABI)
+    add_library(qtcurve-utils STATIC ${qtcurve_utils_SRCS}
+      "${CMAKE_BINARY_DIR}/version.cpp")
+endif()
 set_source_files_properties("${CMAKE_BINARY_DIR}/version.cpp"
   PROPERTIES GENERATED 1)
 
@@ -46,5 +58,7 @@ set_target_properties(qtcurve-utils PROPERTIES
   COMPILE_FLAGS "-fvisibility=hidden"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
   OUTPUT_NAME "qtcurve-utils${QTC_UTILSLIB_INFIX}")
-install(TARGETS qtcurve-utils LIBRARY
-  DESTINATION "${LIB_INSTALL_DIR}")
+if (NOT DEFINED ANDROID_ABI)
+    install(TARGETS qtcurve-utils LIBRARY
+      DESTINATION "${LIB_INSTALL_DIR}")
+endif()

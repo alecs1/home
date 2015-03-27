@@ -5,7 +5,7 @@ else()
 endif()
 
 if(ENABLE_QT5 AND NOT ENABLE_QT5_DEFINED)
-  message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
+  message("ENABLE_QT5=" ${ENABLE_QT5})
   # ENABLE_QT5 is not defined on the command line
   foreach(QtModule ${QTC_QT5_MODULES})
     find_package(${QtModule})
@@ -21,7 +21,7 @@ endif()
 
 add_definitions(-DQTC_UTILS_QT5 -DQTC_UTILS_QT)
 
-
+message("ENABLE_QT5=" ${ENABLE_QT5})
 if(ENABLE_QT5)
   set(QTC_QT5_LINK_LIBS)
   set(QTC_QT5_DEFS)

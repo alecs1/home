@@ -9,7 +9,7 @@ INCLUDEPATH += .
 #CONFIG += debug
 CONFIG+=qml_debug
 
-QT += widgets svg qml quick quickwidgets
+QT += widgets svg qml quick quickwidgets dbus
 
 QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
 
@@ -17,7 +17,8 @@ INCLUDEPATH +=  "../gnugo_include/gnugo" \
                 "../gnugo_include/gnugo/sgf" \
                 "../gnugo_include/gnugo/utils"
 
-LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L ../gnugo/patterns -lboard -lengine -lutils -lsgf -lpatterns
+LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L../qtcurve/qt5/style -L../qtcurve/lib/utils \
+    -lboard -lengine -lutils -lsgf -lpatterns -lqtcurve -lqtcurve-utils
 
 # Input
 HEADERS += GameSettings.h \

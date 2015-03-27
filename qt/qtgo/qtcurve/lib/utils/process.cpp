@@ -24,7 +24,7 @@
 #include "timer.h"
 #include <unistd.h>
 #if !defined(__APPLE__) && !defined(__MACH__)
-#  include <wait.h>
+#include <wait.h>
 #endif
 #include <signal.h>
 #include <sys/stat.h>

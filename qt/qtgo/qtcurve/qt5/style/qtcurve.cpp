@@ -143,7 +143,7 @@ subControlToIcon(QStyle::SubControl sc)
 QtcThemedApp theThemedApp = APP_OTHER;
 
 static QString getFile(const QString &f);
-QString appName = getFile(qApp->arguments()[0]);
+QString appName;
 
 static QColor
 checkColour(const QStyleOption *option, QPalette::ColorRole role)
@@ -341,6 +341,7 @@ Style::Style() :
     m_blurHelper(new BlurHelper(this)),
     m_shortcutHandler(new ShortcutHandler(this))
 {
+    appName = getFile(qApp->arguments()[0]);
     const char *env = getenv(QTCURVE_PREVIEW_CONFIG);
     if (env && strcmp(env, QTCURVE_PREVIEW_CONFIG) == 0) {
         // To enable preview of QtCurve settings, the style config module will set QTCURVE_PREVIEW_CONFIG
