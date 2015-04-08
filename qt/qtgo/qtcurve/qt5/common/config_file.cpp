@@ -233,6 +233,8 @@ toShade(const char *str, bool allowMenu, EShade def,
 static ERound
 toRound(const char *str, ERound def)
 {
+    printf("str=%s\n\n\n", str);
+    printf("\n\n\n");
     if (str && str[0]) {
         if(0==memcmp(str, "none", 4) || 0==memcmp(str, "false", 5))
             return ROUND_NONE;
@@ -1061,6 +1063,7 @@ void qtcCheckConfig(Options *opts)
 
 bool qtcReadConfig(const QString &file, Options *opts, Options *defOpts, bool checkImages)
 {
+    printf("%s - file=%s\n", __func__, file.toUtf8().constData());
     if (file.isEmpty()) {
         const char *env=getenv("QTCURVE_CONFIG_FILE");
 

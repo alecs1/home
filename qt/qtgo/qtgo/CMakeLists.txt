@@ -22,9 +22,6 @@ include_directories("../gnugo/utils")
 # Add compiler flags for building executables (-fPIE), required by Qt
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
-if (${CMAKE_COMPILER_IS_GNUCXX})
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11")
-endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 #qt UI
 qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui RoundInfo.ui

@@ -80,9 +80,12 @@ set_target_properties(qtcurve-qt5 PROPERTIES
 add_dependencies(qtcurve-qt5 qtc_qt5_check_on_hdr qtc_qt5_check_x_on_hdr
   qtc_qt5_dialog_error_hdr qtc_qt5_dialog_information_hdr
   qtc_qt5_dialog_warning_hdr)
-#if (NOT DEFINED ANDROID_ABI)
-    target_link_libraries(qtcurve-qt5 ${QTC_QT5_LINK_LIBS} qtcurve-utils)
-#endif()
+  target_link_libraries(qtcurve-qt5 ${QTC_QT5_LINK_LIBS} qtcurve-utils)
+
+if (DEFINED ANDROID_ABI)
+    target_link_libraries(qtcurve-qt5_static ${QTC_QT5_LINK_LIBS} qtcurve-utils)
+endif()
+
 #install(TARGETS qtcurve-qt5 LIBRARY DESTINATION ${QTCURVE_STYLE_DIR})
 
 if(QTC_QT5_ENABLE_KDE)

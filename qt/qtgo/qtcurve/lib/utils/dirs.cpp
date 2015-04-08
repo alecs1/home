@@ -29,6 +29,11 @@
 #include <pwd.h>
 #include <forward_list>
 
+#if defined(Q_OS_ANDROID)
+#include <log.h>
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
+#endif
+
 namespace QtCurve {
 
 QTC_EXPORT void
@@ -87,12 +92,16 @@ getXDGConfigHome()
 {
     static uniqueStr dir = [] {
         const char *env_home = getenv("XDG_CONFIG_HOME");
+        printf("%s - env_home=%s\n", __func__, env_home);
         if (env_home && *env_home == '/') {
+            printf("%s - 1\n", __func__);
             return Str::cat(env_home, "/");
         } else {
+            printf("%s - 2\n", __func__);
             return Str::cat(getHome(), ".config/");
         }
     };
+    printf("%s - 3\n", __func__);
     return dir.get();
 }
 

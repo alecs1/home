@@ -39,12 +39,22 @@ ENDIF(MSVC80)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+# -fsanitize=address gives us crashes in all kinds of stupid situations
+#TODO - add -fsanitize=address when it doesn't fail anymore
 if (${CMAKE_COMPILER_IS_GNUCXX})
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_DEBUG -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
+    if (NOT DEFINED ANDROID_ABI)
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -fstack-check")
+        #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+    endif (NOT DEFINED ANDROID_ABI)
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 if (${CMAKE_COMPILER_IS_GNUCC})
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -fstack-check -g -O0 -Wall")
+    set (CMAKE_CC_FLAGS "${CMAKE_CC_FLAGS}  -g -O0 -fno-omit-frame-pointer -Wall")
+    if (NOT DEFINED ANDROID_ABI)
+        set (CMAKE_CC_FLAGS "${CMAKE_CC_FLAGS} -fstack-protector-all -fstack-check")
+        #set (CMAKE_CC_FLAGS "${CMAKE_CC_FLAGS} -fsanitize=address")
+    endif (NOT DEFINED ANDROID_ABI)
 endif (${CMAKE_COMPILER_IS_GNUCC})
 
 # Make sure all files know about and can find config.h
