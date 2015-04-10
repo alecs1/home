@@ -8,7 +8,7 @@
 #include "GameStruct.h"
 #include "Global.h"
 
-#include <unistd.h>
+//#include <unistd.h>
 
 #if defined(Q_OS_ANDROID)
 namespace QtCurve {

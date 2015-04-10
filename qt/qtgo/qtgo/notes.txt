@@ -1,3 +1,6 @@
+Next:
+submit back qtgo/CMakeLists.txt
+
 TODO:
 v 1. Use genmove for playing against the computer. Also look at other functions in the file for computing the score.
 v 1.0 Make choosing the AI level work.
