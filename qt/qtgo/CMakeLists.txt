@@ -28,19 +28,19 @@ message(${CMAKE_SYSTEM_NAME})
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
-    if (NOT DEFINED ANDROID_ABI)
+    #if (NOT DEFINED ANDROID_ABI)
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check")
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
         set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-    endif (NOT DEFINED ANDROID_ABI)
+    #endif (NOT DEFINED ANDROID_ABI)
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 if ($CMAKE_COMPILER_IS_GNUCC})
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall")
-    if (NOT DEFINED ANDROID_ABI)
+    #if (NOT DEFINED ANDROID_ABI)
         set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -fstack-check")
         set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-    endif (NOT DEFINED ANDROID_ABI)
+    #endif (NOT DEFINED ANDROID_ABI)
 endif ($CMAKE_COMPILER_IS_GNUCC})
 
 if (DEFINED ANDROID_ABI)
@@ -85,8 +85,8 @@ if (DEFINED ANDROID_ABI)
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
                     #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
                     COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
-                    #Remember, remember, remember!!! Not to commit this line.
-
+                    #TODO - do some security here
+                    #COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose --release --sign release.keystore androidrelease --storepass androidfebruarie --keypass androidfebruarie
                     DEPENDS gnugo AndroidSpecificSetup qtcurve
                     COMMENT "Running qmake outside of CMake system" VERBATIM)
     add_dependencies(FreeGo_Android qtcurve-qt5_static)
