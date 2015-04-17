@@ -335,9 +335,9 @@ Style::Style() :
     m_animateStep(0),
     m_titlebarHeight(0),
     m_dBus(0),
-    m_shadowHelper(new ShadowHelper(this)),
+    //m_shadowHelper(new ShadowHelper(this)),
     m_sViewSBar(0L),
-    m_windowManager(new WindowManager(this)),
+    //m_windowManager(new WindowManager(this)),
     m_blurHelper(new BlurHelper(this)),
     m_shortcutHandler(new ShortcutHandler(this))
 {
@@ -431,7 +431,7 @@ void Style::init(bool initial)
 //    setupKde4();
 //#endif
 
-    m_windowManager->initialize(opts.windowDrag, opts.windowDragWhiteList.toList(), opts.windowDragBlackList.toList());
+    //m_windowManager->initialize(opts.windowDrag, opts.windowDragWhiteList.toList(), opts.windowDragBlackList.toList());
 
     switch(opts.shadeSliders)
     {
@@ -4201,7 +4201,7 @@ void Style::kdeGlobalSettingsChange(int type, int)
 #endif
 
     m_blurHelper->setEnabled(Utils::compositingActive());
-    m_windowManager->initialize(opts.windowDrag);
+    //m_windowManager->initialize(opts.windowDrag);
 }
 
 void Style::borderSizesChanged()

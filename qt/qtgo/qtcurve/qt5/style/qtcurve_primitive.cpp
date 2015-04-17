@@ -717,7 +717,7 @@ Style::drawPrimitivePanelTipLabel(PrimitiveElement,
     QColor col = palette.toolTipBase().color();
 
     if (widget && widget->window()) {
-        m_shadowHelper->registerWidget(widget->window());
+        //m_shadowHelper->registerWidget(widget->window());
     }
     if (rounded) {
         painter->setRenderHint(QPainter::Antialiasing, true);

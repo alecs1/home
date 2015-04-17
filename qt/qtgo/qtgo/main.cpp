@@ -8,7 +8,7 @@
 #include "GameStruct.h"
 #include "Global.h"
 
-//#include <unistd.h>
+#include <unistd.h>
 
 #if defined(Q_OS_ANDROID)
 namespace QtCurve {
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         printf("%s - waiting for debugger\n", __func__);
         bool waiting = true;
         int waitCount = 0;
-        while ((waiting) && (waitCount < 1)) {
+        while ((waiting) && (waitCount < 10)) {
             sleep(1);
             waitCount += 1;
             printf("%s - step:%d\n\n\n", __func__, waitCount);

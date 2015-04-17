@@ -189,24 +189,24 @@ cmake_c_fix_include_path(lib/cairo qtcurve-cairo)
 # glibc 2.20 warns about _BSD_SOURCE if _DEFAULT_SOURCE is not defined.
 cmake_c_add_flags(CMAKE_C_FLAGS -fno-omit-frame-pointer -Wall -Wextra -Wno-cast-align -g -O0
   -std=gnu99 -D_DEFAULT_SOURCE)
-if (NOT DEFINED ANDROID_ABI)
+#if (NOT DEFINED ANDROID_ABI)
     cmake_c_add_flags(CMAKE_C_FLAGS -fstack-protector-all -fstack-check)
-    #cmake_c_add_flags(CMAKE_C_FLAGS -fsanitize=address)
-endif (NOT DEFINED ANDROID_ABI)
+    cmake_c_add_flags(CMAKE_C_FLAGS -fsanitize=address)
+#endif (NOT DEFINED ANDROID_ABI)
 # Register storage class is deprecated in C++11 but is still used in Qt.
 # Use compiler option (-Wno-deprecated-register) to suppress
 # the warning in clang++.
 # We use `override` in certain Qt Classes but the QObject macro does not use it
 # Use compiler option (-Wno-inconsistent-missing-override) to suppress
 # the warning in clang++ 3.6+.
-cmake_c_add_flags(CMAKE_CXX_FLAGS -fno-omit-frame-pointer -Wall -Wextra -D_GLIBCXX_DEBUG -g -O0
+cmake_c_add_flags(CMAKE_CXX_FLAGS -fno-omit-frame-pointer -Wall -Wextra -g -O0
   -Wno-deprecated-register -Wno-cast-align
   -Wno-inconsistent-missing-override)
 
-if (NOT DEFINED ANDROID_ABI)
-    cmake_c_add_flags(CMAKE_CXX_FLAGS -fstack-protector-all -fstack-check)
-    #cmake_c_add_flags(CMAKE_CXX_FLAGS -fsanitize=address)
-endif (NOT DEFINED ANDROID_ABI)
+#if (NOT DEFINED ANDROID_ABI)
+    cmake_c_add_flags(CMAKE_CXX_FLAGS -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check)
+    cmake_c_add_flags(CMAKE_CXX_FLAGS -fsanitize=address)
+#endif (NOT DEFINED ANDROID_ABI)
 
 if(NOT APPLE)
   # -std=c++0x is deprecated but gcc < 4.7 do not recognise c++11 ....

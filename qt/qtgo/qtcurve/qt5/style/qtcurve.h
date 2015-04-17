@@ -551,10 +551,10 @@ private:
     mutable int m_titlebarHeight;
 
     QDBusInterface *m_dBus;
-    ShadowHelper *m_shadowHelper;
+    //ShadowHelper *m_shadowHelper;
     mutable QScrollBar *m_sViewSBar;
     mutable QMap<QWidget*, QSet<QWidget*> > m_sViewContainers;
-    WindowManager *m_windowManager;
+    //WindowManager *m_windowManager;
     BlurHelper *m_blurHelper;
     ShortcutHandler *m_shortcutHandler;
 };

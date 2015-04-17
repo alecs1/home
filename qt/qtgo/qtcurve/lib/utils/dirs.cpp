@@ -30,7 +30,7 @@
 #include <forward_list>
 
 #if defined(Q_OS_ANDROID)
-#include <log.h>
+#include <android/log.h>
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
 #endif
 

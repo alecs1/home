@@ -150,6 +150,11 @@ Style::polish(QApplication *app)
     }
 }
 
+#if defined(Q_OS_ANDROID)
+#include <android/log.h>
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
+#endif
+
 void Style::polish(QPalette &palette)
 {
     int  contrast(QSettings(QLatin1String("Trolltech")).value("/Qt/KDE/contrast", DEFAULT_CONTRAST).toInt());
@@ -163,6 +168,7 @@ void Style::polish(QPalette &palette)
         newContrast = true;
     }
 
+    printf("%s - 1\n", __func__);
     bool newHighlight(newContrast ||
                       m_highlightCols[ORIGINAL_SHADE]!=palette.color(QPalette::Active, QPalette::Highlight)),
         newGray(newContrast ||
@@ -194,6 +200,7 @@ void Style::polish(QPalette &palette)
                         m_sortedLvColors!=m_progressCols && m_checkRadioSelCols!=m_progressCols && (newContrast || newButton));
 
     if (newGray) {
+        printf("%s - 2\n", __func__);
         shadeColors(palette.color(QPalette::Active, QPalette::Background), m_backgroundCols);
         if (oneOf(opts.bgndImage.type, IMG_PLAIN_RINGS, IMG_BORDERED_RINGS,
                   IMG_SQUARE_RINGS) ||
@@ -206,19 +213,24 @@ void Style::polish(QPalette &palette)
         }
     }
 
-    if (newButton)
+    if (newButton) {
+        printf("%s - 3\n", __func__);
         shadeColors(palette.color(QPalette::Active, QPalette::Button),
                     m_buttonCols);
+    }
 
-    if (newHighlight)
+    if (newHighlight) {
+        printf("%s - 4\n", __func__);
         shadeColors(palette.color(QPalette::Active, QPalette::Highlight),
                     m_highlightCols);
+    }
 
 // Dont set these here, they will be updated in setDecorationColors()...
 //     shadeColors(QApplication::palette().color(QPalette::Active, QPalette::Highlight), m_focusCols);
 //     if(opts.coloredMouseOver)
 //         shadeColors(QApplication::palette().color(QPalette::Active, QPalette::Highlight), m_mouseOverCols);
 
+    printf("%s - 5\n", __func__);
     setMenuColors(palette.color(QPalette::Active, QPalette::Background));
 
     if (newSlider) {
@@ -263,12 +275,14 @@ void Style::polish(QPalette &palette)
 
     switch (opts.shadeCheckRadio) {
     default:
+        printf("%s - 6\n", __func__);
         m_checkRadioCol = palette.color(QPalette::Active,
                                          opts.crButton ? QPalette::ButtonText :
                                          QPalette::Text);
         break;
     case SHADE_BLEND_SELECTED:
     case SHADE_SELECTED:
+        printf("%s - 7\n", __func__);
         m_checkRadioCol = palette.color(QPalette::Active, QPalette::Highlight);
         break;
     case SHADE_CUSTOM:
@@ -362,8 +376,8 @@ void Style::polish(QWidget *widget)
         qtcProps->noEtch = true;
     }
 
-    m_windowManager->registerWidget(widget);
-    m_shadowHelper->registerWidget(widget);
+    //m_windowManager->registerWidget(widget);
+    //m_shadowHelper->registerWidget(widget);
 
     // Need to register all widgets to blur helper, in order to have proper
     // blur_behind region set have proper regions removed for opaque widgets.
@@ -783,8 +797,8 @@ void Style::unpolish(QWidget *widget)
     if (!widget)
         return;
     widget->removeEventFilter(this);
-    m_windowManager->unregisterWidget(widget);
-    m_shadowHelper->unregisterWidget(widget);
+    //m_windowManager->unregisterWidget(widget);
+    //m_shadowHelper->unregisterWidget(widget);
     m_blurHelper->unregisterWidget(widget);
 
     // Sometimes get background errors with QToolBox (e.g. in Bespin config),

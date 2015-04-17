@@ -26,10 +26,34 @@ message(${CMAKE_SYSTEM_NAME})
 
 #add_library(bogus AndroidSpecificSetup.cmake)
 
+if (${CMAKE_COMPILER_IS_GNUCXX})
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
+    if (NOT DEFINED ANDROID_ABI)
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    endif (NOT DEFINED ANDROID_ABI)
+endif (${CMAKE_COMPILER_IS_GNUCXX})
+
+if ($CMAKE_COMPILER_IS_GNUCC})
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall")
+    if (NOT DEFINED ANDROID_ABI)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -fstack-check")
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+    endif (NOT DEFINED ANDROID_ABI)
+endif ($CMAKE_COMPILER_IS_GNUCC})
+
 if (DEFINED ANDROID_ABI)
     message("Doing Android build")
     file(COPY AndroidSpecificSetup.cmake DESTINATION .)
-    set(QT_DIR "/home/alex/exec/Qt/5.4/android_armv7/")
+    set(QT_DIR "/home/alex/exec/Qt/5.4/android_armv7")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Core")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Gui")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Widgets")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Svg")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5DBus")
+    message("CMAKE_MODULE_PATH=" ${CMAKE_MODULE_PATH})
+    #set(QT_DIR "/home/alex/exec/Qt/5.3/android_armv7/")
     set(ENV{QMAKESPEC} ${QT_DIR}/mkspecs/android-g++)
     set(ANDROID_TEMPLATE ${QT_DIR}/src/android/java)
     set(BUILD_APK_TARGET_DIR "android-apk")
@@ -40,7 +64,14 @@ if (DEFINED ANDROID_ABI)
 
     #TODO - this is also a sorry hack
     set (ANDROID_NDK_INCLUDES ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android)
+    set (ANDROID_NDK_UNIX_INCLUDES ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/sys)
+    message("INCLUDE_DIRECTORIES=" ${INCLUDE_DIRECTORIES})
+    #set (CMAKE_SYSROOT ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME})
+    include_directories(SYSTEM ${ANDROID_NDK_UNIX_INCLUDES})
+    message("INCLUDE_DIRECTORIES=" ${INCLUDE_DIRECTORIES})
+    message("CMAKE_SYSROOT=" ${CMAKE_SYSROOT})
 
+    add_subdirectory("qtcurve")
     add_custom_target(AndroidSpecificSetup
                     ALL
                     COMMAND ${CMAKE_COMMAND} -D SOURCE=${CMAKE_CURRENT_SOURCE_DIR} -D BUILD_APK_TARGET_DIR=${BUILD_APK_TARGET_DIR} -D ANDROID_TEMPLATE=${ANDROID_TEMPLATE} -P AndroidSpecificSetup.cmake
@@ -48,17 +79,26 @@ if (DEFINED ANDROID_ABI)
     add_custom_target(FreeGo_Android
                     ALL
                     WORKING_DIRECTORY FreeGo
-                    COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES}
+                    COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES} INCLUDE_PATH+=${ANDROID_NDK_UNIX_INCLUDES}
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
                     #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
                     COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
-                    DEPENDS gnugo AndroidSpecificSetup
+                    #Remember, remember, remember!!! Not to commit this line.
+
+                    DEPENDS gnugo AndroidSpecificSetup qtcurve
                     COMMENT "Running qmake outside of CMake system" VERBATIM)
+    add_dependencies(FreeGo_Android qtcurve-qt5_static)
 else (DEFINED ANDROID_ABI)
     message("Doing desktop build")
+    add_subdirectory("qtcurve")
     add_subdirectory("qtgo")
 endif (DEFINED ANDROID_ABI)
 
 add_subdirectory("gnugo")
+
+message("Disable qtcurve from the build if it fails, it's optional")
+message("ANDROID_SDK=" ${ANDROID_SDK})
+message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
+message("CMAKE_SYSROOT=" ${CMAKE_SYSROOT})
