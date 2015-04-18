@@ -292,8 +292,6 @@ bool GoTable::loadSaveGameFile(QString fileName) {
 }
 
 void GoTable::launchGamePressed(SGameSettings newSettings) {
-    changeGameSettings(newSettings);
-
     printf("%s\n", __func__);
 
     if (state == GameState::Resumed){
@@ -302,7 +300,8 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
         }
     }
-    else if (state == GameState::Initial || state == GameState::Stopped){
+    else if (state == GameState::Initial || state == GameState::Stopped) {
+        changeGameSettings(newSettings);
         launchGame();
         state = GameState::Started;
     }
@@ -1104,7 +1103,6 @@ void GoTable::showPlayHints() {
 
 void GoTable::insertDefaultHandicap(int newHandicap) {
     //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
-    //call place_fixed_handicap
     printf("%s - newHandicap=%d", __func__, newHandicap);
     resetGnuGo(game.size);
     place_fixed_handicap(newHandicap);

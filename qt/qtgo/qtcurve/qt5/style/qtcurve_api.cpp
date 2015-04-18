@@ -67,6 +67,12 @@
 
 #include <QDebug>
 
+//the dynamic build will fail because of missing __android_log_print
+#if defined(Q_OS_ANDROID)
+#include <android/log.h>
+//#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
+#endif
+
 namespace QtCurve {
 
 void
@@ -149,11 +155,6 @@ Style::polish(QApplication *app)
         app->installEventFilter(m_shortcutHandler);
     }
 }
-
-#if defined(Q_OS_ANDROID)
-#include <android/log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
-#endif
 
 void Style::polish(QPalette &palette)
 {

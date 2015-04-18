@@ -10,7 +10,11 @@
 
 #include <unistd.h>
 
-#if defined(Q_OS_ANDROID)
+//QtCurve causes start-up crashes on Android, and debugging on Android is such a pain
+#define USE_QTCURVE 1
+#undef USE_QTCURVE
+
+#if defined(Q_OS_ANDROID) && defined(USE_QTCURVE)
 namespace QtCurve {
     class Style : public QCommonStyle {
     public:
@@ -32,19 +36,18 @@ int main(int argc, char *argv[])
     printf("%s - init QApplication-done\n", __func__);
 
     //can't use "platformType()
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) && defined(USE_QTCURVE)
         /**/
         printf("%s - waiting for debugger\n", __func__);
-        bool waiting = true;
+        bool waitingForDebugger = false;
         int waitCount = 0;
-        while ((waiting) && (waitCount < 10)) {
+        while ((waitingForDebugger) && (waitCount < 60)) {
             sleep(1);
             waitCount += 1;
             printf("%s - step:%d\n\n\n", __func__, waitCount);
         }
         printf("%s - constructing QStyle\n", __func__);
         QtCurve::Style* qtCurve = new QtCurve::Style();
-        //QtCurve::Style* qtCurve = NULL;
         printf("%s - calling setStyle\n", __func__);
         a.setStyle(qtCurve);
         printf("%s - done setting up style\n", __func__);
