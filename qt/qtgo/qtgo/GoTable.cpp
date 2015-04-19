@@ -312,14 +312,20 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
 void GoTable::changeGameSettings(SGameSettings newSettings) {
     printf("%s\n", __func__);
-    settings = newSettings;
     //TODO - check if there are other settings to be written here; should be the only place to change settings
-    players[BLACK] = settings.black;
-    players[WHITE] = settings.white;
-    game.size = settings.size;
-    resetGnuGo(game.size);
-    insertDefaultHandicap(settings.handicap.handicap);
+    players[BLACK] = newSettings.black;
+    players[WHITE] = newSettings.white;
+    game.size = newSettings.size;
+    if (settings.size != newSettings.size) {
+        printf("%s - settings.size=%d, newSettings.size=%d\n", __func__, settings.size, newSettings.size);
+        resetGnuGo(game.size);
+    }
+    if (newSettings.handicap.handicap != settings.handicap.handicap) {
+        resetGnuGo((game.size));
+        insertDefaultHandicap(settings.handicap.handicap);
+    }
     komi = settings.handicap.komi;
+    settings = newSettings;
     updateSizes();
     update();
 }
@@ -931,7 +937,10 @@ void GoTable::launchGame(bool resetTable) {
     players[WHITE] = settings.white;
     showHints = false;
     if (resetTable) {
-        crtPlayer = BLACK;
+        if (settings.handicap.handicap && settings.handicap.handicapPlacementFree == false)
+            crtPlayer = WHITE;
+        else
+            crtPlayer = BLACK;
         lastMoveRow = lastMoveCol = -1;
     }
     emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
@@ -1104,10 +1113,18 @@ void GoTable::showPlayHints() {
 void GoTable::insertDefaultHandicap(int newHandicap) {
     //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
     printf("%s - newHandicap=%d", __func__, newHandicap);
-    resetGnuGo(game.size);
     place_fixed_handicap(newHandicap);
     populateStructFromGnuGo();
-    //handicap mai actually be inappropriate for the table size
+    //register all moves, since this is not done by GnuGo
+    for(int row = 0; row < game.size; row++) {
+        for(int col = 0; col < game.size; col++) {
+            if (game.state[row][col] != 0) {
+                sgftreeAddPlay(sgfTree, game.state[row][col], row, col);
+            }
+        }
+    }
+
+    //GnuGo may have decided the handicap is inappropriate for the table size
     if (newHandicap != handicap) {
         settings.handicap.handicap = handicap;
         emit pushGameSettings(settings);
