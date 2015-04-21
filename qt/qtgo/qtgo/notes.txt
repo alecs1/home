@@ -16,6 +16,7 @@ v 1.6 Make hint work - works very very nicely
     v - change background colour as a very easy fix
     v - added a new icon for the type of player
     v - confirm button when stopping and other actions that might be triggered by mistake, especially on phone.
+    - when computing the final score (ex. after two passes) there's no feedback about the current action.
 
 3. Save current game.
     v - introduced basic loading of a saved game
