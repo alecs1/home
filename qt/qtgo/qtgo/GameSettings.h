@@ -39,7 +39,7 @@ signals:
 public slots:
     void setGameState(GameState state);
     void setScoreEstimate(float score);
-    void setCurrentPlayer(int player, PlayerType type);
+    void setCurrentPlayer(int player, PlayerType type, PlayerType opponentType);
     void showConfirmButton(bool show, int colour);
     void toggleShowEstimateScore();
     void setShowScoreEstimate(bool show);

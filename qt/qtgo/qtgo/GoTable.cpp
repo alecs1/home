@@ -214,9 +214,11 @@ void GoTable::checkForResumeGame() {
     else {
         crtPlayer = BLACK;
         state = GameState::Initial;
+        resetGnuGo(settings.size);
+        populateStructFromGnuGo();
     }
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     emit gameStateChanged(state);
 }
 
@@ -224,7 +226,7 @@ bool GoTable::loadGame(QString fileName) {
     bool result = loadSaveGameFile(fileName);
     if (result) {
         state = GameState::Resumed;
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         emit gameStateChanged(state);
     }
     return result;
@@ -744,7 +746,7 @@ bool GoTable::playMove(int row, int col) {
     else
         crtPlayer = WHITE;
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     updateCursor();
 
     if (row == FREEGO_PASS_MOVE) {
@@ -823,7 +825,7 @@ bool GoTable::undoMove() {
         }
         SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
         populateStructFromGnuGo();
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         showHints = false;
         update();
         updateCursor();
@@ -943,7 +945,7 @@ void GoTable::launchGame(bool resetTable) {
             crtPlayer = BLACK;
         lastMoveRow = lastMoveCol = -1;
     }
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     updateSizes();
     if (useGNUGO) {
         if (resetTable) {
