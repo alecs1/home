@@ -8,6 +8,8 @@
 #include <QTime>
 #include <QTextStream>
 #include <QMutex>
+#include <QProgressDialog>
+#include <QLabel>
 
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
@@ -996,11 +998,19 @@ void GoTable::finish(bool accurateScore) {
     if ( (accurateScore) || (stoneCount  > game.size * game.size / 10) )
         computeAccurateScore = true;
 
+    QProgressDialog progressDialog("", "", 0, 0, this);
+    progressDialog.setMinimumDuration(0);
     if (computeAccurateScore) {
+        progressDialog.setLabel(new QLabel("Computing final score"));
+        progressDialog.setValue(0);
         score = aftermath_compute_score(BLACK, NULL);
+        progressDialog.cancel();
     }
     else {
+        progressDialog.setLabel(new QLabel("Estimating final score"));
+        progressDialog.setValue(0);
         score = gnugo_estimate_score(NULL, NULL);
+        progressDialog.cancel();
     }
 
 
