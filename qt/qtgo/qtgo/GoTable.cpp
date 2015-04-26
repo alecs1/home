@@ -8,8 +8,10 @@
 #include <QTime>
 #include <QTextStream>
 #include <QMutex>
-#include <QProgressDialog>
+//#include <QProgressDialog>
 #include <QLabel>
+
+#include <unistd.h>
 
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
@@ -31,6 +33,7 @@ int get_sgfmove(SGFProperty *property);
 #include "GameStruct.h"
 #include "GameEndDialog.h"
 #include "SaveFile.h"
+#include "BusyDialog.h"
 
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
@@ -998,21 +1001,20 @@ void GoTable::finish(bool accurateScore) {
     if ( (accurateScore) || (stoneCount  > game.size * game.size / 10) )
         computeAccurateScore = true;
 
-    QProgressDialog progressDialog("", "", 0, 0, this);
-    progressDialog.setMinimumDuration(0);
+    BusyDialog busyDialog(this);
     if (computeAccurateScore) {
-        progressDialog.setLabel(new QLabel("Computing final score"));
-        progressDialog.setValue(0);
+        busyDialog.setText("Computing final score");
+        busyDialog.show();
+        qApp->processEvents();
         score = aftermath_compute_score(BLACK, NULL);
-        progressDialog.cancel();
     }
     else {
-        progressDialog.setLabel(new QLabel("Estimating final score"));
-        progressDialog.setValue(0);
+        busyDialog.setText("Estimating final score");
+        busyDialog.show();
+        qApp->processEvents();
         score = gnugo_estimate_score(NULL, NULL);
-        progressDialog.cancel();
     }
-
+    busyDialog.hide();
 
     //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
     //maybe show the user a dialog explaining what's hapening.

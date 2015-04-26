@@ -15,6 +15,7 @@ class BusyDialog : public QDialog
 public:
     explicit BusyDialog(QWidget *parent = 0);
     ~BusyDialog();
+    void setText(QString text);
     void show();
 
 private:
