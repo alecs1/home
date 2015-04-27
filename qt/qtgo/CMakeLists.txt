@@ -84,9 +84,9 @@ if (DEFINED ANDROID_ABI)
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
                     #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
-                    COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
+                    #COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
                     #TODO - do some security here
-                    #COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose --release --sign release.keystore androidrelease --storepass androidfebruarie --keypass androidfebruarie
+                    COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose --release --sign release.keystore androidrelease --storepass androidfebruarie --keypass androidfebruarie
                     DEPENDS gnugo AndroidSpecificSetup #qtcurve
                     COMMENT "Running qmake outside of CMake system" VERBATIM)
     #add_dependencies(FreeGo_Android qtcurve-qt5_static)
