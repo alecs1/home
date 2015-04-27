@@ -11,15 +11,17 @@ CONFIG+=qml_debug
 
 QT += widgets svg qml quick quickwidgets dbus
 
-# TODO use when available: -fsanitize=address
-QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
+# TODO - use when available: -fsanitize=address
+# TODO - fix config debug/release
+#QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
+QMAKE_CXXFLAGS += -Wall -std=c++11
 
 INCLUDEPATH +=  "../gnugo_include/gnugo" \
                 "../gnugo_include/gnugo/sgf" \
                 "../gnugo_include/gnugo/utils"
 
 LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L../qtcurve/qt5/style -L../qtcurve/lib/utils \
-    -lboard -lengine -lutils -lsgf -lpatterns -lqtcurve -lqtcurve-utils
+    -lboard -lengine -lutils -lsgf -lpatterns #-lqtcurve -lqtcurve-utils
 
 # Input
 HEADERS += GameSettings.h \

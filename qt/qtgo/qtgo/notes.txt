@@ -53,6 +53,8 @@ v 8. Protect calls to GnuGo. Making multiple calls will crash it. Ex: press the 
 
 10. Add sounds.
 
+11. Fix compiler flags, organise everything in the top script.
+
 
 How-to:
 1. Omit a file from commit:
