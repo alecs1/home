@@ -15,5 +15,6 @@
         <file>RoundInfoAnimation.qml</file>
         <file>resources/cursorBlackWhite.svg</file>
         <file>resources/cursorBlackWhite.png</file>
+        <file>resources/sounds/click.wav</file>
     </qresource>
 </RCC>

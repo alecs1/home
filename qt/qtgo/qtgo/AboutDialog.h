@@ -8,6 +8,7 @@ class QLabel;
 #include <QDialog>
 
 class AboutDialog : public QDialog {
+Q_OBJECT
 public:
     AboutDialog(QWidget* parent=0);
     ~AboutDialog();
@@ -18,7 +19,9 @@ public slots:
 protected:
     void resizeEvent(QResizeEvent* event);
 
-
+public slots:
+    void showDebugWindow();
+    void showThirdPartiesWindow();
 
 private:
     //QQmlEngine* qmlEngine;
@@ -27,6 +30,8 @@ private:
     QQuickWidget* quickWidget = NULL; //Android: https://bugreports.qt.io/browse/QTBUG-39454
     QLabel* androidLabel = NULL;
     QPushButton* okButton;
+    QPushButton* thirdPartyCreditsButton;
+    QPushButton* debugButton;
 };
 
 

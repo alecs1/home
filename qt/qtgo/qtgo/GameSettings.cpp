@@ -64,7 +64,6 @@ GameSettings::GameSettings(QWidget *parent):
     saveGameAction = mainMenu->addAction("Save game");
     loadGameAction = mainMenu->addAction("Open saved game");
     aboutAction = mainMenu->addAction("About");
-    debugAction = mainMenu->addAction("Debug helper");
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
@@ -86,7 +85,6 @@ GameSettings::GameSettings(QWidget *parent):
     connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
     connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
-    connect(debugAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
 
     ui->button19x19->setChecked(true);
 
@@ -307,9 +305,6 @@ void GameSettings::showAbout() {
     printf("%s - done\n", __func__);
 }
 
-void GameSettings::showDebugWindow() {
-    QMessageBox::aboutQt(this);
-}
 
 void GameSettings::showHandicapWindow() {
     SGameSettings::Handicap newHandicap = settings.handicap;

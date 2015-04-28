@@ -9,7 +9,8 @@ INCLUDEPATH += .
 #CONFIG += debug
 CONFIG+=qml_debug
 
-QT += widgets svg qml quick quickwidgets dbus
+QT += widgets svg qml quick quickwidgets multimedia
+#QT += dbus
 
 # TODO - use when available: -fsanitize=address
 # TODO - fix config debug/release
@@ -39,7 +40,8 @@ HEADERS += GameSettings.h \
            AboutDialog.h \
            Handicap.h \
            HandicapDialog.h \
-           BusyDialog.h
+           BusyDialog.h \
+           ThirdPartyInfo.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
@@ -61,7 +63,8 @@ SOURCES += GameSettings.cpp \
            AboutDialog.cpp \
            Handicap.cpp \
            HandicapDialog.cpp \
-           BusyDialog.cpp
+           BusyDialog.cpp \
+           ThirdPartyInfo.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

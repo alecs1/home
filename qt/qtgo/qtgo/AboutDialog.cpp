@@ -1,13 +1,14 @@
-#include <QDialog>
 #include <QtQuick/QQuickView>
 #include <QtQuickWidgets/QQuickWidget>
 #include <QLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include <QMessageBox>
 
 #include "Global.h"
 #include "AboutDialog.h"
+#include "ThirdPartyInfo.h"
 
 //find the main window so we can create the dialog as large as the main window is
 #include <QMainWindow>
@@ -31,14 +32,23 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     setLayout(gridLayout);
 
     okButton = new QPushButton("Close", this);
-    gridLayout->addWidget(okButton, 1, 0);
+    gridLayout->addWidget(okButton, 1, 0, 1, 2);
+
+    thirdPartyCreditsButton = new QPushButton("Third-party credits", this);
+    gridLayout->addWidget(thirdPartyCreditsButton, 2, 0);
+
+    debugButton = new QPushButton("Debug info", this);
+    gridLayout->addWidget(debugButton, 2, 1);
+
+    connect(debugButton, SIGNAL(clicked()), this, SLOT(showDebugWindow()));
+    connect(thirdPartyCreditsButton, SIGNAL(clicked()), this, SLOT(showThirdPartiesWindow()));
 
     if ( (platformType() != PlatformType::Android) && true) {
         quickWidget = new QQuickWidget();
         quickWidget->setSource(QUrl("qrc:/AboutDialog.qml"));
         //quickWidget->setSource(QUrl("qrc:/Example.qml"));
         quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-        gridLayout->addWidget(quickWidget, 0, 0);
+        gridLayout->addWidget(quickWidget, 0, 0, 1, 2);
     }
     else {
         quickWidget = new QQuickWidget(); //unused, just initialised
@@ -97,4 +107,15 @@ void AboutDialog::printSizeInfo(const char* func) const {
            quickWidget->x(), quickWidget->y(), quickWidget->width(), quickWidget->height()
            );
 }
+
+void AboutDialog::showDebugWindow() {
+    QMessageBox::aboutQt(this);
+}
+
+void AboutDialog::showThirdPartiesWindow() {
+    ThirdPartyInfo* info = new ThirdPartyInfo(this);
+    info->exec();
+    delete info;
+}
+
 

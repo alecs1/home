@@ -8,8 +8,8 @@
 #include <QTime>
 #include <QTextStream>
 #include <QMutex>
-//#include <QProgressDialog>
 #include <QLabel>
+#include <QtMultimedia/QSound>
 
 #include <unistd.h>
 
@@ -739,6 +739,8 @@ bool GoTable::playMove(int row, int col) {
         update();
         return retVal;
     }
+
+    QSound::play(QString(":/resources/sounds/click.wav"));
 
 
     //Here we're sure a move has been played
