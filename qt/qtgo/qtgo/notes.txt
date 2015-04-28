@@ -55,6 +55,10 @@ v 8. Protect calls to GnuGo. Making multiple calls will crash it. Ex: press the 
 
 11. Fix compiler flags, organise everything in the top script.
 
+12. Options:
+*Sounds - default
+*Choose table colour -> colourpicker
+
 
 How-to:
 1. Omit a file from commit:
