@@ -14,7 +14,7 @@
    id="svg3024"
    version="1.1"
    inkscape:version="0.48.5 r10040"
-   sodipodi:docname="cursorWhite.svg">
+   sodipodi:docname="cursorBlackWhite.svg">
   <defs
      id="defs3026">
     <clipPath
@@ -45,9 +45,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="128.504"
-     inkscape:cy="118.835"
+     inkscape:zoom="1.4"
+     inkscape:cx="490.81455"
+     inkscape:cy="-85.073317"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -70,7 +70,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -104,7 +104,8 @@
     </g>
     <g
        id="g3059"
-       clip-path="url(#clipPath3063)">
+       clip-path="url(#clipPath3063)"
+       transform="matrix(1.0033145,0,0,1.0033146,-0.72670026,-3.9002065)">
       <path
          sodipodi:type="arc"
          style="fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -113,7 +114,7 @@
          sodipodi:cy="107.85714"
          sodipodi:rx="83.571426"
          sodipodi:ry="83.571426"
-         d="m 178.57143,107.85714 a 83.571426,83.571426 0 1 1 -167.142856,0 83.571426,83.571426 0 1 1 167.142856,0 z"
+         d="m 178.57143,107.85714 c 0,46.15522 -37.41621,83.57143 -83.57143,83.57143 -46.155224,0 -83.571426,-37.41621 -83.571426,-83.57143 0,-46.155225 37.416202,-83.571427 83.571426,-83.571427 46.15522,0 83.57143,37.416202 83.57143,83.571427 z"
          transform="matrix(1.1558969,0,0,1.1558969,206.61837,954.8333)" />
       <path
          sodipodi:type="arc"
@@ -123,11 +124,11 @@
          sodipodi:cy="61.07143"
          sodipodi:rx="26.428572"
          sodipodi:ry="13.928572"
-         d="m 89.285715,61.07143 a 26.428572,13.928572 0 1 1 -52.857143,0 26.428572,13.928572 0 1 1 52.857143,0 z"
+         d="m 89.285715,61.07143 c 0,7.692538 -11.832474,13.928572 -26.428572,13.928572 -14.596097,0 -26.428571,-6.236034 -26.428571,-13.928572 0,-7.692538 11.832474,-13.928571 26.428571,-13.928571 14.596098,0 26.428572,6.236033 26.428572,13.928571 z"
          transform="matrix(1.5913425,-0.98020903,0.32152989,1.4171073,169.26504,1008.9812)" />
     </g>
     <g
-       transform="translate(-215.83684,-127.64793)"
+       transform="matrix(1.0033146,0,0,1.0033145,-217.47739,-130.72085)"
        id="g3059-6"
        clip-path="url(#clipPath3063-3)">
       <path

@@ -27,20 +27,22 @@ message(${CMAKE_SYSTEM_NAME})
 #add_library(bogus AndroidSpecificSetup.cmake)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check")
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check")
     if (NOT DEFINED ANDROID_ABI)
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
+        set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+        #set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
     endif (NOT DEFINED ANDROID_ABI)
+    set  (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -std=c++11")
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 if ($CMAKE_COMPILER_IS_GNUCC})
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -fno-omit-frame-pointer -Wall")
-        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -fstack-check")
+    set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -fno-omit-frame-pointer -Wall")
+        set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fstack-protector-all -fstack-check")
     if (NOT DEFINED ANDROID_ABI)
-        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -static-libasan")
+        set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -static-libasan")
     endif (NOT DEFINED ANDROID_ABI)
+    set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -Wall")
 endif ($CMAKE_COMPILER_IS_GNUCC})
 
 if (DEFINED ANDROID_ABI)
@@ -83,12 +85,27 @@ if (DEFINED ANDROID_ABI)
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo
-                    #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
-                    COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
-                    #TODO - do some security here
+                    #COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
                     #COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose --release --sign release.keystore androidrelease --storepass androidfebruarie --keypass androidfebruarie
                     DEPENDS gnugo AndroidSpecificSetup #qtcurve
                     COMMENT "Running qmake outside of CMake system" VERBATIM)
+
+     #replace this androiddeployqt command with the private command to generate a release build uploadable to Google Play
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message("androiddeployqt Debug")
+        add_custom_target(FreeGo_Android_APK
+                        ALL
+                        WORKING_DIRECTORY FreeGo
+                        COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
+                        DEPENDS FreeGo_Android )
+    else (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message("androiddeployqt Release")
+        add_custom_target(FreeGo_Android_APK
+                        ALL
+                        WORKING_DIRECTORY FreeGo
+                        COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR}  --verbose --release --sign release.keystore androidrelease --storepass androidfebruarie --keypass androidfebruarie
+                        DEPENDS FreeGo_Android)
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
     #add_dependencies(FreeGo_Android qtcurve-qt5_static)
 else (DEFINED ANDROID_ABI)
     message("Doing desktop build")

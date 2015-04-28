@@ -88,7 +88,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
         ui->layoutQuick->addWidget(animationWidget, 0, 0);
     }
 
-    setCurrentPlayer(BLACK, PlayerType::LocalHuman);
+    setCurrentPlayer(BLACK, PlayerType::LocalHuman, PlayerType::AI);
 
     printf("%s - final sizes: widget:%dx%d, colourLabel:%dx%d, playerTypeLabel:%dx%d\n",
            __func__, width(), height(), ui->colourLabel->width(), ui->colourLabel->height(),
@@ -102,7 +102,7 @@ RoundInfo::~RoundInfo()
 }
 
 
-void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
+void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType) {
     printf("%s - playerType=%u\n", __func__, aType);
     player = aPlayer;
     playerType = aType;
@@ -130,7 +130,15 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType) {
     }
     else if (playerType == PlayerType::LocalHuman) {
         crtPlayerPixmap = playerHuman;
-        playerTypeString = "Your turn";
+        if (opponentType == PlayerType::LocalHuman) {
+            if (player == WHITE)
+                playerTypeString = "White's turn";
+            else
+                playerTypeString = "Black's turn";
+        }
+        else {
+            playerTypeString = "Your turn";
+        }
     }
     else if (playerType == PlayerType::Network) {
         crtPlayerPixmap = playerNetwork;

@@ -8,6 +8,10 @@
 #include <QTime>
 #include <QTextStream>
 #include <QMutex>
+//#include <QProgressDialog>
+#include <QLabel>
+
+#include <unistd.h>
 
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
@@ -29,6 +33,7 @@ int get_sgfmove(SGFProperty *property);
 #include "GameStruct.h"
 #include "GameEndDialog.h"
 #include "SaveFile.h"
+#include "BusyDialog.h"
 
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
@@ -214,9 +219,11 @@ void GoTable::checkForResumeGame() {
     else {
         crtPlayer = BLACK;
         state = GameState::Initial;
+        resetGnuGo(settings.size);
+        populateStructFromGnuGo();
     }
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     emit gameStateChanged(state);
 }
 
@@ -224,7 +231,7 @@ bool GoTable::loadGame(QString fileName) {
     bool result = loadSaveGameFile(fileName);
     if (result) {
         state = GameState::Resumed;
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         emit gameStateChanged(state);
     }
     return result;
@@ -312,14 +319,20 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
 
 void GoTable::changeGameSettings(SGameSettings newSettings) {
     printf("%s\n", __func__);
-    settings = newSettings;
     //TODO - check if there are other settings to be written here; should be the only place to change settings
-    players[BLACK] = settings.black;
-    players[WHITE] = settings.white;
-    game.size = settings.size;
-    resetGnuGo(game.size);
-    insertDefaultHandicap(settings.handicap.handicap);
+    players[BLACK] = newSettings.black;
+    players[WHITE] = newSettings.white;
+    game.size = newSettings.size;
+    if (settings.size != newSettings.size) {
+        printf("%s - settings.size=%d, newSettings.size=%d\n", __func__, settings.size, newSettings.size);
+        resetGnuGo(game.size);
+    }
+    if (newSettings.handicap.handicap != settings.handicap.handicap) {
+        resetGnuGo((game.size));
+        insertDefaultHandicap(settings.handicap.handicap);
+    }
     komi = settings.handicap.komi;
+    settings = newSettings;
     updateSizes();
     update();
 }
@@ -738,7 +751,7 @@ bool GoTable::playMove(int row, int col) {
     else
         crtPlayer = WHITE;
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     updateCursor();
 
     if (row == FREEGO_PASS_MOVE) {
@@ -817,7 +830,7 @@ bool GoTable::undoMove() {
         }
         SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
         populateStructFromGnuGo();
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         showHints = false;
         update();
         updateCursor();
@@ -931,10 +944,13 @@ void GoTable::launchGame(bool resetTable) {
     players[WHITE] = settings.white;
     showHints = false;
     if (resetTable) {
-        crtPlayer = BLACK;
+        if (settings.handicap.handicap && settings.handicap.handicapPlacementFree == false)
+            crtPlayer = WHITE;
+        else
+            crtPlayer = BLACK;
         lastMoveRow = lastMoveCol = -1;
     }
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer]);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     updateSizes();
     if (useGNUGO) {
         if (resetTable) {
@@ -985,13 +1001,20 @@ void GoTable::finish(bool accurateScore) {
     if ( (accurateScore) || (stoneCount  > game.size * game.size / 10) )
         computeAccurateScore = true;
 
+    BusyDialog busyDialog(this);
     if (computeAccurateScore) {
+        busyDialog.setText("Computing final score");
+        busyDialog.show();
+        qApp->processEvents();
         score = aftermath_compute_score(BLACK, NULL);
     }
     else {
+        busyDialog.setText("Estimating final score");
+        busyDialog.show();
+        qApp->processEvents();
         score = gnugo_estimate_score(NULL, NULL);
     }
-
+    busyDialog.hide();
 
     //TODO - actually here the mutex makes sense; because we can't kill the GnuGo thread and we still want the stop button to have effect
     //maybe show the user a dialog explaining what's hapening.
@@ -1104,10 +1127,18 @@ void GoTable::showPlayHints() {
 void GoTable::insertDefaultHandicap(int newHandicap) {
     //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
     printf("%s - newHandicap=%d", __func__, newHandicap);
-    resetGnuGo(game.size);
     place_fixed_handicap(newHandicap);
     populateStructFromGnuGo();
-    //handicap mai actually be inappropriate for the table size
+    //register all moves, since this is not done by GnuGo
+    for(int row = 0; row < game.size; row++) {
+        for(int col = 0; col < game.size; col++) {
+            if (game.state[row][col] != 0) {
+                sgftreeAddPlay(sgfTree, game.state[row][col], row, col);
+            }
+        }
+    }
+
+    //GnuGo may have decided the handicap is inappropriate for the table size
     if (newHandicap != handicap) {
         settings.handicap.handicap = handicap;
         emit pushGameSettings(settings);

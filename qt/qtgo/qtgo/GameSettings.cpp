@@ -216,8 +216,8 @@ void GameSettings::updateScoreEstimateButton() {
     ui->scoreEstimateButton->setText(text);
 }
 
-void GameSettings::setCurrentPlayer(int player, PlayerType type) {
-    roundInfo->setCurrentPlayer(player, type);
+void GameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
+    roundInfo->setCurrentPlayer(player, type, opponentType);
     roundInfo->update();
 
     bool enableBlockingGroup = true;

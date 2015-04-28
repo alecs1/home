@@ -16,6 +16,7 @@ v 1.6 Make hint work - works very very nicely
     v - change background colour as a very easy fix
     v - added a new icon for the type of player
     v - confirm button when stopping and other actions that might be triggered by mistake, especially on phone.
+    - when computing the final score (ex. after two passes) there's no feedback about the current action.
 
 3. Save current game.
     v - introduced basic loading of a saved game
@@ -52,6 +53,12 @@ v 8. Protect calls to GnuGo. Making multiple calls will crash it. Ex: press the 
 
 10. Add sounds.
 
+11. Fix compiler flags, organise everything in the top script.
+
+12. Options:
+*Sounds - default
+*Choose table colour -> colourpicker
+
 
 How-to:
 1. Omit a file from commit:
@@ -62,7 +69,7 @@ git update-index --no-assume-unchanged path/to/file.txt
 
 Bugs:
 1. The compilation says: warning, failure to find engine/liberty.h
-2. After finishing the game the current player type icon is wrong.
+v 2. After finishing the game the current player type icon is wrong.
 v 3. LG G3 fonts are too big, everything looks messy. Fixed player info, nothing about font size yet.
 v 4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
 5. With Sony Xperia the radio buttons don't show what's selected, altough they seem to work. Seems like a Qt bug, won't fix now.
@@ -73,13 +80,14 @@ v 7. Not showing the last move when loading a saved game.
 10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
 v 11. Undo after pass undoes the last valid move, not the pass.
 12. At the end of the game the AI stone animation does not stop.
-13. Not differentiang well between two local human players.
+v 13. Not differentiating well between two local human players.
 v 14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
 
 
 Crt:
 1. Add handicap and komi, show estimates will default to false after each match.
-2. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
+2. Maybe push qtcurve changes to the local trunk.
+3. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
 
 
 Bugs to Qt Android:

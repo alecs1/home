@@ -32,6 +32,7 @@ Handicap::Handicap(SGameSettings::Handicap &handicap, QWidget *parent) :
 
     ui->handicapPlacementCombo->insertItem(0, "fixed");
     ui->handicapPlacementCombo->insertItem(1, "free");
+    ui->handicapPlacementCombo->setItemData(1, false, Qt::UserRole - 1);
 
     populateHandicap(handicap);
 

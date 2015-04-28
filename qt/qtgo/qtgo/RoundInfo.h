@@ -17,7 +17,7 @@ public:
     explicit RoundInfo(QWidget *parent = 0);
     ~RoundInfo();
     //void paintEvent(QPaintEvent *);
-    void setCurrentPlayer(int aPlayer, PlayerType aType);
+    void setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType);
 
 public slots:
     void animationStep();

@@ -14,7 +14,7 @@
    id="svg3024"
    version="1.1"
    inkscape:version="0.48.5 r10040"
-   sodipodi:docname="cursorWhite.svg">
+   sodipodi:docname="cursorRed.svg">
   <defs
      id="defs3026" />
   <sodipodi:namedview
@@ -43,7 +43,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -54,7 +54,8 @@
      transform="translate(0,-852.36218)">
     <g
        id="g3108"
-       style="fill:#ff5555">
+       style="fill:#ff5555"
+       transform="matrix(1.0033146,0,0,1.0033145,-0.33144872,-3.1565841)">
       <path
          transform="matrix(1.1558969,0,0,1.1558969,-9.8102097,827.69044)"
          d="m 178.57143,107.85714 c 0,46.15522 -37.41621,83.57143 -83.57143,83.57143 -46.155224,0 -83.571426,-37.41621 -83.571426,-83.57143 0,-46.155225 37.416202,-83.571427 83.571426,-83.571427 46.15522,0 83.57143,37.416202 83.57143,83.571427 z"

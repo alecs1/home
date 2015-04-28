@@ -103,7 +103,7 @@ private slots:
 signals:
     void gameStateChanged(GameState state);
     void estimateScoreChanged(float score);
-    void crtPlayerChanged(int player, PlayerType type);
+    void crtPlayerChanged(int player, PlayerType type, PlayerType oponentType);
     void askUserConfirmation(bool ask, int colour=EMPTY); //ask the user for confirmation, dialog belongs to another widget
     void pushGameSettings(SGameSettings newSettings);
 
