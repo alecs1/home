@@ -8,7 +8,7 @@
 #include "GameStruct.h"
 #include "Global.h"
 
-#include <unistd.h>
+//#include <unistd.h>
 
 //QtCurve causes start-up crashes on Android, and debugging on Android is such a pain
 #define USE_QTCURVE 1
