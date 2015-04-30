@@ -47,6 +47,7 @@ git diff --stat origin/master
 git checkout origin/master path/to/file
 
 
+
 Kernel:
 Harddisk
 smartctl
