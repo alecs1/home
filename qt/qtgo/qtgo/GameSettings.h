@@ -45,6 +45,8 @@ public slots:
     void setShowScoreEstimate(bool show);
     void showMenu();
     void showAbout();
+    void showSettings();
+    void showHelp();
     void showHandicapWindow();
     void updateHandicap(SGameSettings::Handicap newHandicap);
     void receiveSettings(SGameSettings settings);
@@ -78,6 +80,8 @@ private:
     QAction* saveGameAction;
     QAction* loadGameAction;
     QAction* aboutAction;
+    QAction* helpAction;
+    QAction* settingsAction;
 };
 
 

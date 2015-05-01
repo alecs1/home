@@ -50,6 +50,11 @@ struct SGameSettings {
     int crtPlayer;
 };
 
+struct SProgramSettings {
+    bool useSounds = true;
+    uint32_t tableColour;
+};
+
 enum class PlatformType:uint8_t {
     LinuxDesktop = 0,
     Android,

@@ -12,6 +12,7 @@
 #include "RoundInfo.h"
 #include "AboutDialog.h"
 #include "HandicapDialog.h"
+#include "SettingsDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
@@ -60,10 +61,12 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPixmap(whiteStone);
 
     mainMenu = new QMenu(this);
-    mainMenu->addAction("Help");
     saveGameAction = mainMenu->addAction("Save game");
     loadGameAction = mainMenu->addAction("Open saved game");
+    settingsAction = mainMenu->addAction("Settings");
+    helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
+
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
@@ -85,6 +88,8 @@ GameSettings::GameSettings(QWidget *parent):
     connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
     connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
+    connect(helpAction, SIGNAL(triggered()), this, SLOT(showHelp()));
+    connect(settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     ui->button19x19->setChecked(true);
 
@@ -295,16 +300,20 @@ void GameSettings::showMenu() {
     mainMenu->move(globalPos);
 }
 
-#include <QtQuick/QQuickView>
+
 void GameSettings::showAbout() {
     AboutDialog dialog;
     dialog.exec();
-    //QQuickView* view = new QQuickView();
-    //view->setSource(QUrl("qrc:/Example.qml"));
-    //view->show();
     printf("%s - done\n", __func__);
 }
 
+void GameSettings::showSettings() {
+    SettingsDialog dialog;
+    dialog.exec();
+}
+
+void GameSettings::showHelp() {
+}
 
 void GameSettings::showHandicapWindow() {
     SGameSettings::Handicap newHandicap = settings.handicap;
