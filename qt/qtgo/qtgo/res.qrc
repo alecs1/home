@@ -16,5 +16,6 @@
         <file>resources/cursorBlackWhite.svg</file>
         <file>resources/cursorBlackWhite.png</file>
         <file>resources/sounds/click.wav</file>
+        <file>resources/defaultValue--edit-undo.svg</file>
     </qresource>
 </RCC>

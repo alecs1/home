@@ -43,7 +43,8 @@ HEADERS += GameSettings.h \
            BusyDialog.h \
            ThirdPartyInfo.h \
            SettingsWidget.h \
-           SettingsDialog.h
+           SettingsDialog.h \
+    Utils.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
@@ -70,7 +71,8 @@ SOURCES += GameSettings.cpp \
            BusyDialog.cpp \
            ThirdPartyInfo.cpp \
            SettingsWidget.cpp \
-           SettingsDialog.cpp
+           SettingsDialog.cpp \
+           Utils.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

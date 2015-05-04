@@ -34,6 +34,9 @@ int get_sgfmove(SGFProperty *property);
 #include "GameEndDialog.h"
 #include "SaveFile.h"
 #include "BusyDialog.h"
+#include "Utils.h"
+//likely temporary
+#include "SettingsWidget.h"
 
 QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
 QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
@@ -181,9 +184,9 @@ GoTable::GoTable(QWidget *parent) :
     connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(playMove(int,int)));
     connect(aiThread, SIGNAL(AIQuitsGame(bool)), this, SLOT(finish(bool)));
 
-    game.size = settings.size;
+    game.size = gameSettings.size;
     players[EMPTY] = PlayerType::None;
-    changeGameSettings(settings);
+    changeGameSettings(gameSettings);
 
 
     blockTime = new QTime();
@@ -198,12 +201,16 @@ GoTable::GoTable(QWidget *parent) :
     sgfTree->root = sgfNewNode();
     if (useGNUGO) {
         init_gnugo(50, 314);
-        resetGnuGo(settings.size);
+        resetGnuGo(gameSettings.size);
     }
 
     auxInfo.comment = "test save";
     auxInfo.freeGoVersion = "1000";
     auxInfo.gameDate = "2015-02-19T00:31";
+
+    //settings
+    populateDefaultProgramSettings(&programSettings);
+    settingsSetGoTable(this);
 }
 
 
@@ -219,7 +226,7 @@ void GoTable::checkForResumeGame() {
     else {
         crtPlayer = BLACK;
         state = GameState::Initial;
-        resetGnuGo(settings.size);
+        resetGnuGo(gameSettings.size);
         populateStructFromGnuGo();
     }
 
@@ -237,9 +244,18 @@ bool GoTable::loadGame(QString fileName) {
     return result;
 }
 
+void GoTable::changeProgramSettings(SProgramSettings* newSettings) {
+    programSettings = *newSettings;
+    update();
+}
+
+SProgramSettings* GoTable::getProgramSettings() {
+    return &programSettings;
+}
+
 bool GoTable::saveGame(QString fileName) {
     //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
-    bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->settings, &auxInfo);
+    bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
 
@@ -323,16 +339,16 @@ void GoTable::changeGameSettings(SGameSettings newSettings) {
     players[BLACK] = newSettings.black;
     players[WHITE] = newSettings.white;
     game.size = newSettings.size;
-    if (settings.size != newSettings.size) {
-        printf("%s - settings.size=%d, newSettings.size=%d\n", __func__, settings.size, newSettings.size);
+    if (gameSettings.size != newSettings.size) {
+        printf("%s - settings.size=%d, newSettings.size=%d\n", __func__, gameSettings.size, newSettings.size);
         resetGnuGo(game.size);
     }
-    if (newSettings.handicap.handicap != settings.handicap.handicap) {
+    if (newSettings.handicap.handicap != gameSettings.handicap.handicap) {
         resetGnuGo((game.size));
-        insertDefaultHandicap(settings.handicap.handicap);
+        insertDefaultHandicap(gameSettings.handicap.handicap);
     }
-    komi = settings.handicap.komi;
-    settings = newSettings;
+    komi = gameSettings.handicap.komi;
+    gameSettings = newSettings;
     updateSizes();
     update();
 }
@@ -501,7 +517,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     QPainter painter(this);
 
     //background
-    QColor background(206, 170, 57);
+    QColor background(programSettings.tableColour);
     if (players[crtPlayer] == PlayerType::AI && computing) {
         background = QColor(210, 200, 200);
     }
@@ -530,7 +546,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     QString fontName = "DejaVu Sans";
     int targetHeight = dist * 0.7;
     int auxSmaller, auxLarger;
-    int pointSize = getClosestPointSize(fontName, targetHeight, auxSmaller, auxLarger, 1);
+    int pointSize = Utils::getClosestPointSize(fontName, targetHeight, auxSmaller, auxLarger, 1);
 
     //numbering: from bottom left corner
     QFont font("DejaVu Sans", pointSize);
@@ -600,11 +616,11 @@ void GoTable::paintEvent(QPaintEvent *) {
             if (platformType() == PlatformType::Android) {
                 //smaller screen, we'll show shorter hints
                 printable.sprintf("%d", 9 - i);
-                pointSize = getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 1, "0");
+                pointSize = Utils::getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 1, "0");
             }
             else {
                 printable.sprintf("%1.1f", val);
-                pointSize = getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 0, "22.2.");
+                pointSize = Utils::getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 0, "22.2.");
             }
             //printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
             font = QFont(fontName, pointSize);
@@ -740,13 +756,14 @@ bool GoTable::playMove(int row, int col) {
         return retVal;
     }
 
-    QSound::play(QString(":/resources/sounds/click.wav"));
-
+    if (programSettings.useSounds) {
+        QSound::play(QString(":/resources/sounds/click.wav"));
+    }
 
     //Here we're sure a move has been played
     sgftreeAddPlay(sgfTree, crtPlayer, row, col);
 
-    SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &this->settings, &auxInfo);
+    SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &this->gameSettings, &auxInfo);
 
     if (crtPlayer == WHITE)
         crtPlayer = BLACK;
@@ -830,7 +847,7 @@ bool GoTable::undoMove() {
             crtPlayer = otherColour(crtPlayer);
             sgftreeBack(sgfTree);
         }
-        SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &settings, &auxInfo);
+        SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &gameSettings, &auxInfo);
         populateStructFromGnuGo();
         emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         showHints = false;
@@ -941,12 +958,12 @@ int GoTable::populateStructFromGnuGo() {
 
 //TODO - customise to allow restarting saved game
 void GoTable::launchGame(bool resetTable) {
-    game.size = settings.size;
-    players[BLACK] = settings.black;
-    players[WHITE] = settings.white;
+    game.size = gameSettings.size;
+    players[BLACK] = gameSettings.black;
+    players[WHITE] = gameSettings.white;
     showHints = false;
     if (resetTable) {
-        if (settings.handicap.handicap && settings.handicap.handicapPlacementFree == false)
+        if (gameSettings.handicap.handicap && gameSettings.handicap.handicapPlacementFree == false)
             crtPlayer = WHITE;
         else
             crtPlayer = BLACK;
@@ -956,9 +973,9 @@ void GoTable::launchGame(bool resetTable) {
     updateSizes();
     if (useGNUGO) {
         if (resetTable) {
-            resetGnuGo(settings.size);
-            if (settings.handicap.handicapPlacementFree == false)
-                insertDefaultHandicap(settings.handicap.handicap);
+            resetGnuGo(gameSettings.size);
+            if (gameSettings.handicap.handicapPlacementFree == false)
+                insertDefaultHandicap(gameSettings.handicap.handicap);
         }
         populateStructFromGnuGo();
     }
@@ -974,9 +991,9 @@ bool GoTable::AIPlayNextMove() {
     computing = true;
     update();
     //printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
-    int AIStrength = settings.blackAIStrength;
+    int AIStrength = gameSettings.blackAIStrength;
     if (crtPlayer == WHITE)
-        AIStrength = settings.whiteAIStrength;
+        AIStrength = gameSettings.whiteAIStrength;
     aiThread->run_genmove(crtPlayer, AIStrength);
     return false;
 }
@@ -1142,8 +1159,8 @@ void GoTable::insertDefaultHandicap(int newHandicap) {
 
     //GnuGo may have decided the handicap is inappropriate for the table size
     if (newHandicap != handicap) {
-        settings.handicap.handicap = handicap;
-        emit pushGameSettings(settings);
+        gameSettings.handicap.handicap = handicap;
+        emit pushGameSettings(gameSettings);
     }
     update();
 }
@@ -1272,50 +1289,5 @@ QString ElapsedTimerWrapper::getElapsedStr() {
     stream << getElapsed();
     stream.flush();
     return retVal;
-}
-
-#include <limits>
-int GoTable::getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction, QString text) {
-    //haha - clumsy c++ syntax :)))
-    int closestSize = std::numeric_limits<int>::max();
-    int nextSmallerSize = std::numeric_limits<int>::max();
-    int nextLargerSize = std::numeric_limits<int>::max();
-    int closest = -1;
-    nextSmaller = -1;
-    nextLarger = -1;
-    int pointSize = 1;
-    int maxPointSize = 96;
-    while(pointSize <= maxPointSize) {
-        QFontMetrics fontMetrics = QFontMetrics(QFont(fontName, pointSize));
-        int crtSize = 0;
-        if (direction == 0) {
-            crtSize = fontMetrics.width(text);
-        }
-        else {
-            crtSize = fontMetrics.height();
-        }
-        //printf("%s - pointSize=%d. Results in height=%d, we need height=%d\n",
-        //       __func__, pointSize, crtSize, targetSize);
-        if (abs(crtSize - targetSize) < abs(crtSize - closestSize)) {
-            closest = pointSize;
-            closestSize = crtSize;
-        }
-        if ( (crtSize < targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextSmallerSize)) ) {
-            nextSmaller = pointSize;
-            nextSmallerSize = crtSize;
-        }
-        if ( (crtSize > targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextLargerSize)) ) {
-            nextLarger = pointSize;
-            nextLargerSize = crtSize;
-        }
-        if ((closestSize != std::numeric_limits<int>::max()) &&
-            (nextSmallerSize != std::numeric_limits<int>::max()) &&
-            (nextLargerSize != std::numeric_limits<int>::max()))
-            break;
-        pointSize += 1;
-    }
-    //printf("%s, closest:%d:%d, smaller:%d:%d, larger:%d:%d\n", __func__,
-    //       closest, closestSize, nextSmaller, nextSmallerSize, nextLarger, nextLargerSize);
-    return closest;
 }
 

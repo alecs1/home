@@ -77,10 +77,11 @@ public:
     void checkForResumeGame();
 
     //direction: 0 - width, 1 - height
-    static int getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction = 1,
-                                   QString text = QString("O"));
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
+
+    void changeProgramSettings(SProgramSettings* newSettings);
+    SProgramSettings* getProgramSettings();
 
 
 public slots:
@@ -161,7 +162,8 @@ private:
     GameState state = GameState::Stopped;
 
     //populate this with some default settings, which are then passed to the game
-    SGameSettings settings;
+    SGameSettings gameSettings;
+    SProgramSettings programSettings;
 
     //TODO - game and settings size duplicate info!
     GameStruct game;

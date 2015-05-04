@@ -43,7 +43,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp
     ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp Handicap.cpp HandicapDialog.cpp
-    BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp SettingsDialog.cpp
+    BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp SettingsDialog.cpp Utils.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets Qt5::Multimedia board engine utils sgf patterns)
