@@ -1,0 +1,3 @@
+alias find="/usr/bin/find"
+alias dumpbin32="/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 12.0/VC/bin/dumpbin.exe"
+alias dumpbin64="/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 12.0/VC/bin/x86_amd64/dumpbin.exe"

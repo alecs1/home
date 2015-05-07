@@ -1,0 +1,5 @@
+cygwin
+altdrag
+ditto
+notepad++
+totalCommander
