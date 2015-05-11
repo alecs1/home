@@ -16,7 +16,7 @@ route -n
 
 
 Utilities:
-find . -iname <name1> -o -iname <name2> -print0 | xargs -0 grep -i "<expression1>\|<expression2>"
+find . \( -iname <name1> -o -iname <name2> \) -print0 | xargs -0 grep -i "<expression1>\|<expression2>"
 
 #grep in files that are not in directories with .svn in name.
 grep -ri "log_tag" --exclude="*.svn*" *
