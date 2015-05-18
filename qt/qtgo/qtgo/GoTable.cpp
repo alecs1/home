@@ -756,7 +756,7 @@ bool GoTable::playMove(int row, int col) {
         return retVal;
     }
 
-    if (programSettings.useSounds) {
+    if (programSettings.soundsVolume > 0) {
         QSound::play(QString(":/resources/sounds/click.wav"));
     }
 

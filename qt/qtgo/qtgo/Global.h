@@ -51,7 +51,7 @@ struct SGameSettings {
 };
 
 struct SProgramSettings {
-    bool useSounds = true;
+    uint32_t soundsVolume = 100;
     uint32_t tableColour;
 };
 
