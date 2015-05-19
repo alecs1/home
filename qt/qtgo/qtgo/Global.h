@@ -51,6 +51,7 @@ struct SGameSettings {
 };
 
 struct SProgramSettings {
+    static const int maxSoundsVolume = 1; //hack, we only accept 0 or 1 for now
     uint32_t soundsVolume = 100;
     uint32_t tableColour;
 };
