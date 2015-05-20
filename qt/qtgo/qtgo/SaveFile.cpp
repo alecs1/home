@@ -20,7 +20,7 @@ extern "C" {
     \class SaveFile
     \brief The SaveFile class does stuff.
 */
-SaveFile::SaveFile()
+/*SaveFile::SaveFile()
 {
 
 }
@@ -29,6 +29,7 @@ SaveFile::~SaveFile()
 {
 
 }
+*/
 
 QString SaveFile::qetDefSaveFName() const {
     return defSaveFName;
@@ -131,6 +132,45 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     outFile.open(QIODevice::WriteOnly);
     outFile.write(contents);
     outFile.close();
+
+    return true;
+}
+
+QString SaveFile::getDefSettingsFName() const {
+    return defSettingsFName;
+}
+
+bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSettings) {
+    QFile inFile(settingsFName);
+    if (!inFile.exists())
+        return false;
+
+    inFile.open(QIODevice::ReadOnly);
+
+    QByteArray saveData = inFile.readAll();
+
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(saveData);
+    QJsonObject json = jsonDoc.object();
+
+    //auxGameInfo->comment = json["comment"].toString();
+    //auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
+
+    programSettings->soundsVolume = json["soundsVolume"].toInt();
+    programSettings->tableColour = json["tableColour"].toInt();
+
+
+    QString wantedHashVal = json["hashMD5"].toString();
+
+
+    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString();
+    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
+    QString hashVal(hashBytes.toHex().constData());
+
+    if (! (hashVal == wantedHashVal)) {
+        printf("%s - hash %s does not match %s\n",
+               __func__, wantedHashVal.toUtf8().constData(), hashVal.toUtf8().constData());
+        return false;
+    }
 
     return true;
 }

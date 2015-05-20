@@ -84,3 +84,6 @@ RESOURCES += \
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
+DISTFILES += \
+    settings-format.json
+

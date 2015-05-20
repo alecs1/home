@@ -50,6 +50,8 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     connect(ui->colourButton, SIGNAL(clicked()), this, SLOT(showColourDialog()));
     //TODO - play sound at each move, to give feedback on the sound volume.
     connect(ui->soundVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(applySettings()));
+    connect(ui->revertSoundsButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSounds()));
+    connect(ui->revertColourButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultColour()));
     getProgramSettings(&settings);
     populateSettings();
 
@@ -121,11 +123,19 @@ void SettingsWidget::applySettings() {
 }
 
 void SettingsWidget::setDefaultColour() {
-
+    SProgramSettings aux;
+    populateDefaultProgramSettings(&aux);
+    settings.tableColour = aux.tableColour;
+    populateSettings();
+    applySettings();
 }
 
 void SettingsWidget::setDefaultSounds() {
-
+    SProgramSettings aux;
+    populateDefaultProgramSettings(&aux);
+    settings.soundsVolume = aux.soundsVolume;
+    populateSettings();
+    applySettings();
 }
 
 void SettingsWidget::show() {
