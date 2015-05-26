@@ -50,10 +50,11 @@ struct SGameSettings {
     int crtPlayer;
 };
 
+#include <QString>
 struct SProgramSettings {
     static const int maxSoundsVolume = 1; //hack, we only accept 0 or 1 for now
     uint32_t soundsVolume = 100;
-    uint32_t tableColour;
+    QString tableColour;
 };
 
 enum class PlatformType:uint8_t {
@@ -65,7 +66,6 @@ enum class PlatformType:uint8_t {
 PlatformType platformType();
 
 //Extra information about a game, don't know if this is the right place
-#include <QString>
 struct SAuxGameInfo {
     QString comment;
     QString freeGoVersion;

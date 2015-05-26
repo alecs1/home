@@ -8,12 +8,6 @@
 
 #include "Global.h"
 
-//ComputingPlatform PlatformType()
-//{
-//    if (d)
-//   return ComputingPlatform::DesktopLinux;
-//}
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

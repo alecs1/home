@@ -22,17 +22,8 @@ bool applyProgramSettings(SProgramSettings* newSettings) {
 
 void populateDefaultProgramSettings(SProgramSettings* defaults) {
     QColor defaultColour(206, 170, 57, 255);
-    defaults->tableColour = defaultColour.rgba();
-
+    defaults->tableColour = defaultColour.name();
     defaults->soundsVolume = 100;
-}
-
-bool loadProgramSettings(SProgramSettings* settings) {
-
-}
-
-bool writeProgramSettings(SProgramSettings* settings) {
-
 }
 
 bool getProgramSettings(SProgramSettings* settings) {
@@ -92,10 +83,11 @@ SettingsWidget::~SettingsWidget()
 
 void SettingsWidget::showColourDialog() {
     QColorDialog colorDialog;
+    colorDialog.setCurrentColor(settings.tableColour);
 
     if (colorDialog.exec() == QDialog::Accepted) {
         QColor colour = colorDialog.selectedColor();
-        settings.tableColour = colour.rgba();
+        settings.tableColour = colour.name();
         QString colourStyleSheet = "background-color: " + colour.name() + ";";
         ui->colourButton->setStyleSheet(colourStyleSheet);
         applySettings();

@@ -20,19 +20,9 @@ extern "C" {
     \class SaveFile
     \brief The SaveFile class does stuff.
 */
-/*SaveFile::SaveFile()
-{
 
-}
-
-SaveFile::~SaveFile()
-{
-
-}
-*/
-
-QString SaveFile::qetDefSaveFName() const {
-    return defSaveFName;
+QString SaveFile::qetDefSaveFName() {
+    return "FreeGoCrt.json";
 }
 
 /*!
@@ -136,8 +126,8 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     return true;
 }
 
-QString SaveFile::getDefSettingsFName() const {
-    return defSettingsFName;
+QString SaveFile::getDefSettingsFName() {
+    return "FreeGoSettings.json";
 }
 
 bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSettings) {
@@ -156,7 +146,7 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
     //auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
 
     programSettings->soundsVolume = json["soundsVolume"].toInt();
-    programSettings->tableColour = json["tableColour"].toInt();
+    programSettings->tableColour = json["tableColour"].toString();
 
 
     QString wantedHashVal = json["hashMD5"].toString();
@@ -175,3 +165,30 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
     return true;
 }
 
+bool SaveFile::writeSettings(QString settingsFName, SProgramSettings* gameSettings) {
+    QFile outFile(settingsFName);
+
+    QJsonObject json;
+//    json["comment"] = auxGameInfo->comment;
+//    json["freeGoVersion"] = auxGameInfo->freeGoVersion;
+
+    json["soundsVolume"] = (int)gameSettings->soundsVolume;
+    json["tableColour"] = gameSettings->tableColour;
+
+    //hash some stuff to validate the save file;
+    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString();
+
+    //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
+    json["hashedStuff"] = "soundsVolume+tableColour";
+    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
+    json["hashMD5"] = hashBytes.toHex().constData();
+
+    QJsonDocument doc;
+    doc.setObject(json);
+    QByteArray contents = doc.toJson(QJsonDocument::Indented);
+    outFile.open(QIODevice::WriteOnly);
+    outFile.write(contents);
+    outFile.close();
+
+    return true;
+}

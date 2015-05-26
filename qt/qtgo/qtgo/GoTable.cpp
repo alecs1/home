@@ -209,7 +209,8 @@ GoTable::GoTable(QWidget *parent) :
     auxInfo.gameDate = "2015-02-19T00:31";
 
     //settings
-    populateDefaultProgramSettings(&programSettings);
+    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), &programSettings) == false)
+        populateDefaultProgramSettings(&programSettings);
     settingsSetGoTable(this);
 }
 
@@ -218,7 +219,7 @@ GoTable::~GoTable() {
     printf("%s - Implement destructor!\n", __func__);
 }
 
-//code outside the constructor because this is executed after the signals of this object are connected
+//This code is outside the constructor because this is executed after the signals of this object are connected
 void GoTable::checkForResumeGame() {
     if (loadSaveGameFile(crtGameSfgFName)) {
         state = GameState::Resumed;
@@ -247,6 +248,7 @@ bool GoTable::loadGame(QString fileName) {
 void GoTable::changeProgramSettings(SProgramSettings* newSettings) {
     programSettings = *newSettings;
     update();
+    SaveFile::writeSettings(SaveFile::getDefSettingsFName(), &programSettings);
 }
 
 SProgramSettings* GoTable::getProgramSettings() {

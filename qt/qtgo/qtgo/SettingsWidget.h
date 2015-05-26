@@ -11,10 +11,6 @@ class GoTable;
 void settingsSetGoTable(GoTable *aTable);
 bool applyProgramSettings(SProgramSettings* newSettings);
 void populateDefaultProgramSettings(SProgramSettings* defaults);
-//load from default save file
-bool loadProgramSettings(SProgramSettings* settings);
-//write to default save file
-bool writeProgramSettings(SProgramSettings* settings);
 //get program settings from table
 bool getProgramSettings(SProgramSettings* settins);
 
