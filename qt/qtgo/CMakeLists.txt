@@ -98,7 +98,7 @@ if (DEFINED ANDROID_ABI)
                         WORKING_DIRECTORY FreeGo
                         COMMAND ${QT_DIR}/bin/androiddeployqt --output ${BUILD_APK_TARGET_DIR} --verbose
                         DEPENDS FreeGo_Android )
-    else (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    else (CMAKE_BUILD_TYPE STREQUAL "Release")
         message("androiddeployqt Release")
         add_custom_target(FreeGo_Android_APK
                         ALL
