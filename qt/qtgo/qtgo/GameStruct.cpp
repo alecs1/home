@@ -34,3 +34,12 @@ int otherColour(int crtColour) {
     else
         return -1;
 }
+
+QString colourName(int colour) {
+    if (colour == EMPTY)
+        return "Empty";
+    else if (colour == WHITE)
+        return "White";
+    else if (colour == BLACK)
+        return "Black";
+}

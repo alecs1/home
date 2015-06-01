@@ -14,7 +14,7 @@
 
 #define FREEGO_PASS_MOVE (-2)
 #define FREEGO_VERSION "0.84"
-#define PASS_COUNT_TO_FINISH (4)
+#define PASS_COUNT_TO_FINISH (2)
 
 enum class GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game

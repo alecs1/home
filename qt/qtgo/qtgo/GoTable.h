@@ -90,7 +90,7 @@ public slots:
     bool playMove(int row, int col);
     bool passMove();
     bool undoMove();
-    void finish(bool accurateScore);
+    void finish(bool finishByResign);
     void activateEstimatingScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void showPlayHints();

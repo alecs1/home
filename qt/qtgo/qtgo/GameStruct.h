@@ -1,6 +1,8 @@
 #ifndef GAMESTRUCT_H
 #define GAMESTRUCT_H
 
+#include <QString>
+
 //use the same definitions as GnuGo. If board.h is not included, define here
 #ifndef _BOARD_H_
 enum colors {
@@ -33,6 +35,7 @@ unsigned int countStones(GameStruct* game);
 
 
 int otherColour(int crtColour);
+QString colourName(int colour);
 
 
 #endif // GAMESTRUCT_H

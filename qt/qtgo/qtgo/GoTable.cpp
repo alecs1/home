@@ -724,7 +724,7 @@ bool GoTable::playMove(int row, int col) {
         if (passCount >= PASS_COUNT_TO_FINISH) {
             //time to finish the game
             printf("%s - both players have passed consecutively, will end game\n", __func__);
-            finish(true);
+            finish(false);
 			return false;
         }
     }
@@ -1001,36 +1001,36 @@ bool GoTable::AIPlayNextMove() {
 }
 
 //TODO - actually the guy ending the game prematurely should lose
-void GoTable::finish(bool accurateScore) {
+void GoTable::finish(bool finishByResign) {
+    float approximateZero = 0.001;
     float score = 0.0;
     int stoneCount = countStones(&game);
-    if (stoneCount == 0) {
-        //just finish
-        state = GameState::Stopped;
-        emit gameStateChanged(state);
-        return;
-    }
 
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
     }
 
-    //if the game hasn't been played too much we don't want to
-    bool computeAccurateScore = false;
+    bool showEstimateScore = false;
 
-    if ( (accurateScore) || (stoneCount  > game.size * game.size / 10) )
-        computeAccurateScore = true;
+    //if the game was played quite a bit before quitting, we show the winner but also a score estimate
+    if (stoneCount  > game.size * game.size / 2) {
+        showEstimateScore = true;
+        printf("%s - stoneCount=%d, will force estimating a score\n", __func__, stoneCount);
+    }
 
     BusyDialog busyDialog(this);
-    if (computeAccurateScore) {
+    if (finishByResign == false) {
+        printf("%s - finished normally. Computing final score.\n", __func__);
         busyDialog.setText("Computing final score");
         busyDialog.show();
         qApp->processEvents();
         score = aftermath_compute_score(BLACK, NULL);
     }
-    else {
-        busyDialog.setText("Estimating final score");
+    else if (showEstimateScore){
+        printf("%s - finished by resign. Estimating a score.\n", __func__);
+        busyDialog.setText(colourName(otherColour(crtPlayer)) + " won by " +
+                           colourName(crtPlayer) + "'s resignation.\n Computing a score estimate.");
         busyDialog.show();
         qApp->processEvents();
         score = gnugo_estimate_score(NULL, NULL);
@@ -1041,29 +1041,46 @@ void GoTable::finish(bool accurateScore) {
     //maybe show the user a dialog explaining what's hapening.
 
     //TODO - find the GnuGo fancy end computations
-    const float approximateZero = 0.001;
-    int winner = WHITE;
-    QString winnerStr = "White";
-    if (score < -approximateZero) {
-        winner = BLACK;
-        winnerStr = "Black";
-    }
-    else if (fabs(score) < approximateZero) {
-        winner = EMPTY;
-        winnerStr = "Tie";
-    }
-
-    QString finisher = "White";
-    if (crtPlayer == BLACK)
-        finisher = "Black";
-    QString finalText;
-    QTextStream stream(&finalText);
-    if (winner == EMPTY) {
-        stream << "Game ended with a tie.";
+    int winner = EMPTY;
+    if (finishByResign) {
+        winner = otherColour(crtPlayer);
     }
     else {
-        stream << winnerStr << " won with a score of " << QString::number(fabs(score), 'g', 2) << ".\n" << finisher << " ended the game.";
+        winner = WHITE;
+        if (score < -approximateZero) {
+            winner = BLACK;
+        }
+        else if (fabs(score) < approximateZero) {
+            winner = EMPTY;
+        }
     }
+
+    QString finalText;
+    QTextStream stream(&finalText);
+    if (finishByResign) {
+        stream << "<h3>" << colourName(winner) << " won.</h3>" +
+                  colourName(otherColour(winner)) << " resigned.\n<br>";
+        if (showEstimateScore) {
+            int estimatedWinner = WHITE;
+            if (score < -approximateZero) {
+                estimatedWinner = BLACK;
+            }
+
+            if (fabs(score) < approximateZero) {
+                estimatedWinner = EMPTY;
+                stream << "Estimate: tie.";
+            }
+            else {
+                stream << "Estimate: " + colourName(estimatedWinner) + " winning with a score of " +
+                          QString::number(fabs(score), 'g', 2) + ".";
+            }
+        }
+    }
+    else {
+        stream << "<h4>" << colourName(winner) << " won. Score: " <<
+                  QString::number(fabs(score), 'g', 2) << ".</h4>";
+    }
+
     stream.flush();
 
     QFont font;

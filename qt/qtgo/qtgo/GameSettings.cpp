@@ -416,10 +416,10 @@ void GameSettings::receiveSettings(SGameSettings newSettings) {
 }
 
 void GameSettings::askConfirmFinishGame() {
-    int ret = QMessageBox::question(this, "FreeGo", "Do you want to finish the game?",
+    int ret = QMessageBox::question(this, "FreeGo", "Do you want to resign the game?",
                                     QMessageBox::Cancel | QMessageBox::Ok);
     if (ret == QMessageBox::Ok)
-        emit finishGamePerform(false);
+        emit finishGamePerform(true);
 }
 
 void GameSettings::launchGameClicked() {
