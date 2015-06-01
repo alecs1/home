@@ -6,7 +6,6 @@ GameEndDialog::GameEndDialog(QWidget *parent) :
     ui(new Ui::GameEndDialog)
 {
     ui->setupUi(this);
-    ui->endGameText->setWordWrap(true);
 }
 
 GameEndDialog::~GameEndDialog()
