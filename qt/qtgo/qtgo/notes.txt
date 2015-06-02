@@ -85,9 +85,12 @@ v 14. After loading a game of size 9 and starting to play, GnuGo will actually a
 
 
 Crt:
-1. Add handicap and komi, show estimates will default to false after each match.
-2. Maybe push qtcurve changes to the local trunk.
-3. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
+v 1. Add handicap and komi, show estimates will default to false after each match.
+x 2. Maybe push qtcurve changes to the local trunk.
+x 3. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
+4. Don't mix saves with settings.
+5. Write a small help page.
+6. Increase the size of the main menus.
 
 
 Bugs to Qt Android:

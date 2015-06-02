@@ -32,7 +32,7 @@ void ThirdPartyInfo::populateAckLabel() {
             "License: CC Attribution 3.0 Unported (http://creativecommons.org/licenses/by/3.0/legalcode)<br/>"
             "<br/>"
             "<b>Images:</b></hr><br/>"
-            "playerAI.svg<br/"
+            "playerAI.svg<br/>"
             "playerHuman.svg<br/>"
             "playerNetwork.svg<br/>"
             "By the Oxygen Project: https://techbase.kde.org/Projects/Oxygen<br/>"

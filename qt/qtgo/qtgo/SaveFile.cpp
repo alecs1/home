@@ -22,7 +22,7 @@ extern "C" {
 */
 
 QString SaveFile::qetDefSaveFName() {
-    return "FreeGoCrt.json";
+    return "FreeGoCrt.save";
 }
 
 /*!
