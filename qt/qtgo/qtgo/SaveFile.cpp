@@ -22,7 +22,7 @@ extern "C" {
 */
 
 QString SaveFile::qetDefSaveFName() {
-    return "FreeGoCrt.save";
+    return "FreeGoCrt.autosave";
 }
 
 /*!
@@ -127,7 +127,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
 }
 
 QString SaveFile::getDefSettingsFName() {
-    return "FreeGoSettings.json";
+    return "FreeGoSettings.config";
 }
 
 bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSettings) {

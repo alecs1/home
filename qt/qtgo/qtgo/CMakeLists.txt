@@ -35,15 +35,15 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 #qt moc
 qt5_wrap_cpp(HEADER_MOC  mainwindow.h GoTable.h GameSettings.h PlayerWidget.h GameEndDialog.h ConfirmMoveDialog.h
-    RoundInfo.h Handicap.h HandicapDialog.h BusyDialog.h AboutDialog.h SettingsWidget.h SettingsDialog.h)
+    RoundInfo.h Handicap.h HandicapDialog.h BusyDialog.h AboutDialog.h HelpDialog.h SettingsWidget.h SettingsDialog.h)
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp GoTable.cpp main.cpp GameSettings.cpp PlayerWidget.cpp GameEndDialog.cpp
-    ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp Handicap.cpp HandicapDialog.cpp
-    BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp SettingsDialog.cpp Utils.cpp
+    ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp HelpDialog.cpp Handicap.cpp
+    HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp SettingsDialog.cpp Utils.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets Qt5::Multimedia board engine utils sgf patterns)

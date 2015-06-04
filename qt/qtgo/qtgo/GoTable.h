@@ -188,7 +188,7 @@ private:
     AIThread* aiThread = NULL;
     bool computing = false;
     SGFTree* sgfTree;
-    QString crtGameSfgFName = "FreeGoSave.save";
+    QString crtGameSfgFName = "FreeGoSave.autosave";
 
     //game save related
     SAuxGameInfo auxInfo;

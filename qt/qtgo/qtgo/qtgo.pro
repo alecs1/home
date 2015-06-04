@@ -38,6 +38,7 @@ HEADERS += GameSettings.h \
            RoundInfo.h \
            SaveFile.h \
            AboutDialog.h \
+           HelpDialog.h \
            Handicap.h \
            HandicapDialog.h \
            BusyDialog.h \
@@ -66,6 +67,7 @@ SOURCES += GameSettings.cpp \
            SaveFile.cpp \
            Global.cpp \
            AboutDialog.cpp \
+           HelpDialog.cpp \
            Handicap.cpp \
            HandicapDialog.cpp \
            BusyDialog.cpp \

@@ -10,11 +10,12 @@
 #include "AboutDialog.h"
 #include "ThirdPartyInfo.h"
 
+
+
 //find the main window so we can create the dialog as large as the main window is
 #include <QMainWindow>
 #include <QApplication>
-
-QMainWindow* getMainWindow()
+static QMainWindow* getMainWindow()
 {
     QWidgetList widgets = qApp->topLevelWidgets();
     for (QWidgetList::iterator i = widgets.begin(); i != widgets.end(); ++i)
@@ -22,6 +23,9 @@ QMainWindow* getMainWindow()
             return (QMainWindow*) (*i);
     return NULL;
 }
+
+
+
 
 AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     printf("%s\n", __func__);
@@ -31,14 +35,14 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     QGridLayout* gridLayout= new QGridLayout();
     setLayout(gridLayout);
 
-    okButton = new QPushButton("Close", this);
-    gridLayout->addWidget(okButton, 1, 0, 1, 2);
-
     thirdPartyCreditsButton = new QPushButton("Third-party credits", this);
-    gridLayout->addWidget(thirdPartyCreditsButton, 2, 0);
+    gridLayout->addWidget(thirdPartyCreditsButton, 1, 0);
 
     debugButton = new QPushButton("Debug info", this);
-    gridLayout->addWidget(debugButton, 2, 1);
+    gridLayout->addWidget(debugButton, 1, 1);
+
+    okButton = new QPushButton("Close", this);
+    gridLayout->addWidget(okButton, 2, 0, 1, 2);
 
     connect(debugButton, SIGNAL(clicked()), this, SLOT(showDebugWindow()));
     connect(thirdPartyCreditsButton, SIGNAL(clicked()), this, SLOT(showThirdPartiesWindow()));
@@ -55,7 +59,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         QString labelContent = "<h2><b>FreeGo " + QString(FREEGO_VERSION) + "</b></hr></h2><br/>Written with the excellent Qt and CMake.<br/>Gameplay entirely provided by GNU Go.<br/>License GNU GPLv3.<br/>Source code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>";
         androidLabel = new QLabel(labelContent);
         androidLabel->setAlignment(Qt::AlignCenter);
-        gridLayout->addWidget(androidLabel, 0, 0);
+        gridLayout->addWidget(androidLabel, 0, 0, 1, 2);
         //gridLayout->setRowMinimumHeight(2, 50); //that Close button is too low.
         //setWindowState(windowState() | Qt::WindowFullScreen);
     }
@@ -114,6 +118,15 @@ void AboutDialog::showDebugWindow() {
 
 void AboutDialog::showThirdPartiesWindow() {
     ThirdPartyInfo* info = new ThirdPartyInfo(this);
+
+    QMainWindow* mainWindow = getMainWindow();
+    if (mainWindow != NULL) {
+        resize(mainWindow->size());
+    }
+    else {
+        printf("%s - error, could not find MainWindow\n", __func__);
+    }
+
     info->exec();
     delete info;
 }

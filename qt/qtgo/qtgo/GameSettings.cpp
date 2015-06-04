@@ -11,6 +11,7 @@
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
 #include "AboutDialog.h"
+#include "HelpDialog.h"
 #include "HandicapDialog.h"
 #include "SettingsDialog.h"
 
@@ -66,7 +67,6 @@ GameSettings::GameSettings(QWidget *parent):
     settingsAction = mainMenu->addAction("Settings");
     helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
-
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
@@ -290,6 +290,30 @@ void GameSettings::setShowScoreEstimate(bool show) {
 
 void GameSettings::showMenu() {
     printf("%s\n", __func__);
+
+    if (false) {
+        //typically the menu fonts are too small, so we copy the size of a font know to be decent.
+        //this is however ignored by Qt.
+        QFont actionFont = mainMenu->actions()[0]->font();
+        printf("%s - actionFont: name=%s, pixelSize=%d, pointSize=%d\n", __func__, actionFont.toString().toUtf8().constData(),
+               actionFont.pixelSize(), actionFont.pointSize());
+        QFont menuFont = mainMenu->font();
+        printf("%s - menuFont: name=%s, pixelSize=%d, pointSize=%d\n", __func__, menuFont.toString().toUtf8().constData(),
+               menuFont.pixelSize(), menuFont.pointSize());
+        QFont buttonFont = ui->launchButton->font();
+        printf("%s - buttonFont: name=%s, pixelSize=%d, pointSize=%d\n", __func__,buttonFont.toString().toUtf8().constData(),
+               buttonFont.pixelSize(), buttonFont.pointSize());
+        mainMenu->setFont(ui->launchButton->font());
+        for(int i = 0; i < mainMenu->actions().size(); i++) {
+            mainMenu->actions()[i]->setFont(ui->launchButton->font());
+            printf("%s - crt action: %s changed to font %s\n", __func__, mainMenu->actions()[i]->text().toUtf8().constData(),
+                   mainMenu->actions()[i]->font().toString().toUtf8().constData());
+            actionFont = mainMenu->actions()[0]->font();
+            printf("%s - actionFont: name=%s, pixelSize=%d, pointSize=%d\n", __func__, actionFont.toString().toUtf8().constData(),
+                   actionFont.pixelSize(), actionFont.pointSize());
+        }
+    }
+
     mainMenu->show();
     //now which of the the two guys is visible?
     QToolButton* menuLauncher = ui->menuLauncher1;
@@ -307,12 +331,14 @@ void GameSettings::showAbout() {
     printf("%s - done\n", __func__);
 }
 
-void GameSettings::showSettings() {
-    SettingsDialog dialog;
+void GameSettings::showHelp() {
+    HelpDialog dialog;
     dialog.exec();
 }
 
-void GameSettings::showHelp() {
+void GameSettings::showSettings() {
+    SettingsDialog dialog;
+    dialog.exec();
 }
 
 void GameSettings::showHandicapWindow() {
