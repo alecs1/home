@@ -38,6 +38,9 @@ shutdown: qdbus org.kde.ksmserver /KSMServer logout 0 0 0
 2    Logout (0), Don't know (1), Shutdown (2)
 3    This is the "when" parameter, but it isn't clear what the impact is.
 
+Curl
+curl --dump-header - http://localhost/ | head -
+
 
 Git:
 #show differences between what's commited localy and what's remote (what will be pushed)
@@ -52,8 +55,10 @@ Kernel:
 Harddisk
 smartctl
 
+
 Laptop speaker:
 rmmod pcspkr
+
 
 Blacklisting the pcspkr module will prevent udev from loading it at boot:
 echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
