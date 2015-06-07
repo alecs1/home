@@ -1,5 +1,8 @@
+#ifdef WithQt5Quick
 #include <QtQuick/QQuickView>
 #include <QtQuickWidgets/QQuickWidget>
+#endif
+
 #include <QLayout>
 #include <QPushButton>
 #include <QLabel>
@@ -47,22 +50,17 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     connect(debugButton, SIGNAL(clicked()), this, SLOT(showDebugWindow()));
     connect(thirdPartyCreditsButton, SIGNAL(clicked()), this, SLOT(showThirdPartiesWindow()));
 
-    if ( (platformType() != PlatformType::Android) && true) {
-        quickWidget = new QQuickWidget();
-        quickWidget->setSource(QUrl("qrc:/AboutDialog.qml"));
-        //quickWidget->setSource(QUrl("qrc:/Example.qml"));
-        quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-        gridLayout->addWidget(quickWidget, 0, 0, 1, 2);
-    }
-    else {
-        quickWidget = new QQuickWidget(); //unused, just initialised
-        QString labelContent = "<h2><b>FreeGo " + QString(FREEGO_VERSION) + "</b></hr></h2><br/>Written with the excellent Qt and CMake.<br/>Gameplay entirely provided by GNU Go.<br/>License GNU GPLv3.<br/>Source code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>";
-        androidLabel = new QLabel(labelContent);
-        androidLabel->setAlignment(Qt::AlignCenter);
-        gridLayout->addWidget(androidLabel, 0, 0, 1, 2);
-        //gridLayout->setRowMinimumHeight(2, 50); //that Close button is too low.
-        //setWindowState(windowState() | Qt::WindowFullScreen);
-    }
+#ifdef WithQt5Quick
+    quickWidget = new QQuickWidget();
+    quickWidget->setSource(QUrl("qrc:/AboutDialog.qml"));
+    quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    gridLayout->addWidget(quickWidget, 0, 0, 1, 2);
+#else
+    QString labelContent = "<h2><b>FreeGo " + QString(FREEGO_VERSION) + "</b></hr></h2><br/>Written with the excellent Qt and CMake.<br/>Gameplay entirely provided by GNU Go.<br/>License GNU GPLv3.<br/>Source code at: <a href=\"https://github.com/alecs1/home/tree/master/qt/qtgo/\">https://github.com/alecs1/home/tree/master/qt/qtgo/</a>";
+    androidLabel = new QLabel(labelContent);
+    androidLabel->setAlignment(Qt::AlignCenter);
+    gridLayout->addWidget(androidLabel, 0, 0, 1, 2);
+#endif
     connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
 
     QMainWindow* mainWindow = getMainWindow();
@@ -77,7 +75,9 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
 
 AboutDialog::~AboutDialog() {
     printSizeInfo(__func__);
+#ifdef WithQt5Quick
     delete quickWidget; //will this delete twice on Desktop? we'll see :D
+#endif
 }
 
 void AboutDialog::show() {
@@ -85,10 +85,6 @@ void AboutDialog::show() {
     QDialog::show();
     printSizeInfo(__func__);
 }
-
-//QSize AboutDialog::sizeHint() {
-//    return QSize(400, 400);
-//}
 
 int AboutDialog::exec() {
     printSizeInfo(__func__);
@@ -105,11 +101,14 @@ void AboutDialog::resizeEvent(QResizeEvent* event) {
 }
 
 void AboutDialog::printSizeInfo(const char* func) const {
-    printf("%s - sizes: window: (%d %d) %dx%d;\n\t\t quickWidget:(%d %d) %dx%d\n",
-           func,
-           x(), y(), width(), height(),
+    printf("%s - sizes: window: (%d %d) %dx%d\n",
+            func,
+            x(), y(), width(), height());
+#ifdef WithQt5Quick
+    printf("\t\t quickWidget:(%d %d) %dx%d\n",
            quickWidget->x(), quickWidget->y(), quickWidget->width(), quickWidget->height()
            );
+#endif
 }
 
 void AboutDialog::showDebugWindow() {

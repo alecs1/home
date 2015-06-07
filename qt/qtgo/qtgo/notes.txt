@@ -33,7 +33,7 @@ v 1.6 Make hint work - works very very nicely
     v - add player colour to the confirmation button
       - make the feedback circle more obvious (a large finger on a touchscreen); an intersection of lines is also a solution I saw in some programs
       - double tap
-    n - disable portrait layout; won't do
+    v - disable portrait layout; won't do
       - make sidebar hideable
       - triggering the AI menu during play may make the menu not fit on the screen.
       - write Save and Open game dialogs that are usable on Android
@@ -51,13 +51,13 @@ v 8. Protect calls to GnuGo. Making multiple calls will crash it. Ex: press the 
 
 9. Allow undo to restart a finished game.
 
-10. Add sounds.
+v 10. Add sounds.
 
 11. Fix compiler flags, organise everything in the top script.
 
 12. Options:
-*Sounds - default
-*Choose table colour -> colourpicker
+v Sounds - default
+v Choose table colour -> colourpicker
 
 
 How-to:
@@ -88,9 +88,9 @@ Crt:
 v 1. Add handicap and komi, show estimates will default to false after each match.
 x 2. Maybe push qtcurve changes to the local trunk.
 x 3. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
-4. Don't mix saves with settings.
-5. Write a small help page.
-6. Increase the size of the main menus.
+v 4. Don't mix saves with settings.
+v 5. Write a small help page.
+x 6. Increase the size of the main menus.
 
 
 Bugs to Qt Android:

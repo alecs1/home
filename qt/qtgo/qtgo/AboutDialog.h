@@ -24,9 +24,6 @@ public slots:
     void showThirdPartiesWindow();
 
 private:
-    //QQmlEngine* qmlEngine;
-    //QQmlComponent* component;
-    //QQuickView* quickView = NULL; //desktop
     QQuickWidget* quickWidget = NULL; //Android: https://bugreports.qt.io/browse/QTBUG-39454
     QLabel* androidLabel = NULL;
     QPushButton* okButton;

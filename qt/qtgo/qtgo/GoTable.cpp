@@ -1000,7 +1000,6 @@ bool GoTable::AIPlayNextMove() {
     return false;
 }
 
-//TODO - actually the guy ending the game prematurely should lose
 void GoTable::finish(bool finishByResign) {
     float approximateZero = 0.001;
     float score = 0.0;

@@ -7,14 +7,18 @@ TARGET = FreeGo
 INCLUDEPATH += .
 
 #CONFIG += debug
-CONFIG+=qml_debug
+defined(WithQt5Quick) {
+    CONFIG+=qml_debug
+    QT += qml quick quickwidgets
+}
 
-QT += widgets svg qml quick quickwidgets multimedia
+QT += widgets svg multimedia
+QT += quick #added since on Android we get crash for missing libQt5MultimediaQuick_p.so
 #QT += dbus
 
 # TODO - use when available: -fsanitize=address
 # TODO - fix config debug/release
-#QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
+QMAKE_CXXFLAGS += -fstack-protector-all -fstack-check -D_GLIBCXX_DEBUG -g -O0 -Wall -std=c++11
 QMAKE_CXXFLAGS += -Wall -std=c++11
 
 INCLUDEPATH +=  "../gnugo_include/gnugo" \

@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 2.8)
 message(${CMAKE_SYSTEM_NAME})
 
 #steps:
-#do export QMAKESPEC="/home/alex/exec/Qt/5.4/android_armv7/mkspecs/android-g++"
 #run cmake
 #run make
 #run copy-pc-executables.sh
@@ -48,14 +47,13 @@ endif ($CMAKE_COMPILER_IS_GNUCC})
 if (DEFINED ANDROID_ABI)
     message("Doing Android build")
     file(COPY AndroidSpecificSetup.cmake DESTINATION .)
-    set(QT_DIR "/home/alex/exec/Qt/5.4/android_armv7")
+    set(QT_DIR "/home/alex/exec/Qt2/5.4/android_armv7")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Core")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Gui")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Widgets")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Svg")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5DBus")
     message("CMAKE_MODULE_PATH=" ${CMAKE_MODULE_PATH})
-    #set(QT_DIR "/home/alex/exec/Qt/5.3/android_armv7/")
     set(ENV{QMAKESPEC} ${QT_DIR}/mkspecs/android-g++)
     set(ANDROID_TEMPLATE ${QT_DIR}/src/android/java)
     set(BUILD_APK_TARGET_DIR "android-apk")
@@ -81,7 +79,7 @@ if (DEFINED ANDROID_ABI)
     add_custom_target(FreeGo_Android
                     ALL
                     WORKING_DIRECTORY FreeGo
-                    COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES} INCLUDE_PATH+=${ANDROID_NDK_UNIX_INCLUDES}
+                    COMMAND ${QT_DIR}/bin/qmake -r INCLUDEPATH+=${ANDROID_NDK_INCLUDES} INCLUDE_PATH+=${ANDROID_NDK_UNIX_INCLUDES} DEFINES+=NotWithQt5Quick
                     COMMAND make
                     COMMAND make install INSTALL_ROOT=${BUILD_APK_TARGET_DIR}
                     COMMAND ${ANDROID_SDK}/tools/android update project --path ${BUILD_APK_TARGET_DIR} --target android-10 --name FreeGo

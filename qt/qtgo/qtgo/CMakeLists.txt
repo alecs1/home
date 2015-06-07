@@ -8,9 +8,13 @@ set (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Svg REQUIRED)
-find_package(Qt5Quick REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5QuickWidgets REQUIRED)
+if (NOT DEFINED ANDROID_ABI)
+    add_definitions(-DWithQt5Quick)
+    find_package(Qt5Quick REQUIRED)
+    find_package(Qt5QuickWidgets REQUIRED)
+    find_package(Qt5Qml REQUIRED)
+endif(NOT DEFINED ANDROID_ABI)
+
 find_package(Qt5Multimedia REQUIRED)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${Qt5Svg_INCLUDE_DIRS})
@@ -46,6 +50,9 @@ add_executable(FreeGo
     HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp SettingsDialog.cpp Utils.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Quick Qt5::QuickWidgets Qt5::Multimedia board engine utils sgf patterns)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia board engine utils sgf patterns)
+#if (NOT DEFINED ANDROID_ABI)
+    target_link_libraries(FreeGo Qt5::Quick Qt5::QuickWidgets)
+#endif (NOT DEFINED ANDROID_ABI)
 
 add_custom_target(Doc Notes.txt)
