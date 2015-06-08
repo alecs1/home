@@ -327,6 +327,7 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
     }
     else if (state == GameState::Initial || state == GameState::Stopped) {
         changeGameSettings(newSettings);
+
         launchGame();
         state = GameState::Started;
     }
@@ -722,7 +723,6 @@ bool GoTable::playMove(int row, int col) {
     if (row == FREEGO_PASS_MOVE) {
         passCount += 1;
         if (passCount >= PASS_COUNT_TO_FINISH) {
-            //time to finish the game
             printf("%s - both players have passed consecutively, will end game\n", __func__);
             finish(false);
 			return false;
@@ -763,32 +763,21 @@ bool GoTable::playMove(int row, int col) {
     }
 
     //Here we're sure a move has been played
-    sgftreeAddPlay(sgfTree, crtPlayer, row, col);
+    if (state == GameState::Initial) {
+        sgfFreeNode(sgfTree->root);
+        sgfTree->lastnode = NULL;
+        sgfTree->root = sgfNewNode();
+    }
 
+    sgftreeAddPlay(sgfTree, crtPlayer, row, col);
     SaveFile::writeSave(crtGameSfgFName, sgfTree->root, &this->gameSettings, &auxInfo);
 
-    if (crtPlayer == WHITE)
-        crtPlayer = BLACK;
-    else
-        crtPlayer = WHITE;
-
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-    updateCursor();
-
-    if (row == FREEGO_PASS_MOVE) {
-        lastMoveRow = -2;
-        lastMoveCol = -2;
-    }
-    else {
-        lastMoveRow = row;
-        lastMoveCol = col;
-    }
-
+    crtPlayer = otherColour(crtPlayer);
 
     if (state == GameState::Initial) {
         printf("%s - we just automatically started a new game!\n", __func__);
         state = GameState::Started;
-        launchGame(false); //launch game will take of calling AI moves
+        launchGame(false);
         emit gameStateChanged(state);
     }
     else {
@@ -802,12 +791,21 @@ bool GoTable::playMove(int row, int col) {
         }
     }
 
+    updateCursor();
+
+    if (row == FREEGO_PASS_MOVE) {
+        lastMoveRow = lastMoveCol = -2;
+    }
+    else {
+        lastMoveRow = row;
+        lastMoveCol = col;
+    }
+
     if (players[crtPlayer] != PlayerType::AI) {
         inputBlockingDuration = blockTime->elapsed();
         cursorBlocked = false;
         updateCursor();
     }
-
 
     update();
 
@@ -816,6 +814,7 @@ bool GoTable::playMove(int row, int col) {
         QTimer::singleShot(20, this, SLOT(computeScoreAndUpdate()));
     }
 
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     return retVal;
 }
 
@@ -958,8 +957,14 @@ int GoTable::populateStructFromGnuGo() {
     return 0;
 }
 
-//TODO - customise to allow restarting saved game
+/*
+ * @param resetTable - the table won't be cleaned-up, this allow launching a game with a stone move.
+ */
 void GoTable::launchGame(bool resetTable) {
+    sgfFreeNode(sgfTree->root);
+    sgfTree->lastnode = NULL;
+    sgfTree->root = sgfNewNode();
+
     game.size = gameSettings.size;
     players[BLACK] = gameSettings.black;
     players[WHITE] = gameSettings.white;
@@ -1117,9 +1122,7 @@ void GoTable::finish(bool finishByResign) {
     file.setFileName(crtGameSfgFName);
     file.rename(oldSgfFName);
 
-    sgfFreeNode(sgfTree->root);
-    sgfTree->lastnode = NULL;
-    sgfTree->root = sgfNewNode();
+
 
 
     GameEndDialog endDialog(this);
