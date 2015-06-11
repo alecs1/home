@@ -91,7 +91,7 @@ x 3. For qtcurve install: libqt5x11extras5-dev, qtbase5-private-dev
 v 4. Don't mix saves with settings.
 v 5. Write a small help page.
 x 6. Increase the size of the main menus.
-
+7. For the column number choose a fat font.
 
 Bugs to Qt Android:
 1. dialog.setWindowState(Qt::WindowFullScreen); makes the window not fit the screen.

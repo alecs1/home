@@ -551,7 +551,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     int auxSmaller, auxLarger;
     //TODO: the height of the font is not actually per symbols, so we go the hackish ways: subtract some from the calculated size
     float pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 0,
-                                               rowNumbering[rowNumbering.size()-1]) * 0.85;
+                                               rowNumbering[rowNumbering.size()-1]) * 0.8;
     QFont font(fontName, pointSize);
     QFontMetrics fontMetrics = QFontMetrics(font);
     int textHeight = fontMetrics.height();
