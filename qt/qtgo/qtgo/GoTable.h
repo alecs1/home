@@ -142,6 +142,7 @@ private:
     QPixmap* whiteStonePixmap;
     QPixmap* redStonePixmap;
     float dist; //distance between two table lines
+    float diameter;
     int highlightRow;
     int highlightCol;
     //position of the new stone between mouse press and mouse release

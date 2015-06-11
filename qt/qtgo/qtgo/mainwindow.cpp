@@ -36,6 +36,9 @@ MainWindow::MainWindow(QWidget *parent) :
     printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
     #endif
 
+    int narrowFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraCondensed-Regular.ttf");
+    printf("%s - narrowFontId: %d\n", __func__, narrowFontId);
+
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
     GameSettings* settings = new GameSettings(this);
 

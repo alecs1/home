@@ -501,7 +501,7 @@ void GoTable::updateSizes() {
     if (height() < tableSize)
         tableSize = height();
     dist = tableSize / (game.size + 1.0);
-    int diameter = (int) (dist * 0.95);
+    diameter = (dist * 0.95);
 
     //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
@@ -546,23 +546,48 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
 
-    QString fontName = "DejaVu Sans";
-    int targetHeight = dist * 0.7;
+    QString fontName = "Stint Ultra Condensed";
+    int marginSpace = dist - diameter/2;
     int auxSmaller, auxLarger;
-    int pointSize = Utils::getClosestPointSize(fontName, targetHeight, auxSmaller, auxLarger, 1);
+    //TODO: the height of the font is not actually per symbols, so we go the hackish ways: subtract some from the calculated size
+    float pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 0,
+                                               rowNumbering[rowNumbering.size()-1]) * 0.85;
+    QFont font(fontName, pointSize);
+    QFontMetrics fontMetrics = QFontMetrics(font);
+    int textHeight = fontMetrics.height();
+
+    if (textHeight > marginSpace && false) {
+        pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 1,
+                                               rowNumbering[rowNumbering.size()-1]);
+        font = QFont(fontName, pointSize);
+    }
 
     //numbering: from bottom left corner
-    QFont font("DejaVu Sans", pointSize);
+
+    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
+
     painter.setFont(font);
-    qreal margin = 1.0/8 * dist;
+
     for (int i = 0 ; i < game.size; i++) {
-        painter.drawText(QPointF(margin, dist + i * dist), rowNumbering[game.size-i-1]);
-        painter.drawText(QPointF(tableSize - 1.0/2.5 * dist - margin, dist + i * dist), rowNumbering[game.size-i-1]);
+        QString text = rowNumbering[game.size-i-1];
+        int textWidth = fontMetrics.width(text);
+        qreal yPos = dist + i * dist - textHeight/2;
+        QRectF leftRect((marginSpace - textWidth)/2, yPos, textWidth, textHeight);
+        QRectF rightRect(dist * game.size + diameter/2 + (marginSpace - textWidth)/2, yPos, textWidth, textHeight);
+        painter.drawText(leftRect, Qt::AlignCenter, text);
+        painter.drawText(rightRect, Qt::AlignCenter, text);
     }
 
     for (int i = 0; i < game.size; i++) {
-        painter.drawText(QPointF(dist + i * dist, 1.0/3 * dist + margin), colNumbering[i]);
-        painter.drawText(QPointF(dist + i * dist, tableSize - margin), colNumbering[i]);
+        QString text = colNumbering[i];
+        int textWidth = fontMetrics.width(text);
+        qreal xPos = dist + i * dist - textWidth / 2;
+        QRectF topRect(xPos, (marginSpace - textHeight) / 2, textWidth, textHeight);
+        QRectF bottomRect(xPos, dist * game.size + diameter/2 + (marginSpace - textHeight)/2, textWidth, textHeight);
+        painter.drawText(topRect, Qt::AlignCenter, text);
+        painter.drawText(bottomRect, Qt::AlignCenter, text);
+        //painter.drawText(QPointF(dist + i * dist, 1.0/3 * dist + margin), colNumbering[i]);
+        //painter.drawText(QPointF(dist + i * dist, tableSize - margin), colNumbering[i]);
     }
 
     //highlighted position

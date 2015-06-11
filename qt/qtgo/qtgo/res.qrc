@@ -17,5 +17,6 @@
         <file>resources/cursorBlackWhite.png</file>
         <file>resources/sounds/click.wav</file>
         <file>resources/defaultValue--edit-undo.svg</file>
+        <file>resources/fonts/StintUltraCondensed-Regular.ttf</file>
     </qresource>
 </RCC>

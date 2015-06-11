@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFontDatabase>
 
 class GoTable;
 
@@ -32,6 +33,7 @@ public slots:
 private:
     Ui::MainWindow *ui;
     GoTable* table;
+    QFontDatabase fontDatabase;
 };
 
 #endif // MAINWINDOW_H
