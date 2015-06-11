@@ -546,28 +546,20 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
 
-    QString fontName = "Stint Ultra Condensed";
+    //QString fontName = "Stint Ultra Condensed";
+    QString fontName = "Liberation Sans";
     int marginSpace = dist - diameter/2;
     int auxSmaller, auxLarger;
     //TODO: the height of the font is not actually per symbols, so we go the hackish ways: subtract some from the calculated size
     float pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 0,
-                                               rowNumbering[rowNumbering.size()-1]) * 0.8;
+                                               rowNumbering[rowNumbering.size()-1]);
     QFont font(fontName, pointSize);
     QFontMetrics fontMetrics = QFontMetrics(font);
     int textHeight = fontMetrics.height();
-
-    if (textHeight > marginSpace && false) {
-        pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 1,
-                                               rowNumbering[rowNumbering.size()-1]);
-        font = QFont(fontName, pointSize);
-    }
-
+    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
     //numbering: from bottom left corner
 
-    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
-
     painter.setFont(font);
-
     for (int i = 0 ; i < game.size; i++) {
         QString text = rowNumbering[game.size-i-1];
         int textWidth = fontMetrics.width(text);
@@ -578,6 +570,14 @@ void GoTable::paintEvent(QPaintEvent *) {
         painter.drawText(rightRect, Qt::AlignCenter, text);
     }
 
+    //fontName = "Stint Ultra Expanded";
+    //fontName = "Liberation Sans"
+    pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 1,
+                                           colNumbering[colNumbering.size()-1]) * 1.2;
+    font = QFont(fontName, pointSize);
+    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
+
+    painter.setFont(font);
     for (int i = 0; i < game.size; i++) {
         QString text = colNumbering[i];
         int textWidth = fontMetrics.width(text);

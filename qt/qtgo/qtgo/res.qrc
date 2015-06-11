@@ -18,5 +18,6 @@
         <file>resources/sounds/click.wav</file>
         <file>resources/defaultValue--edit-undo.svg</file>
         <file>resources/fonts/StintUltraCondensed-Regular.ttf</file>
+        <file>resources/fonts/StintUltraExpanded-Regular.ttf</file>
     </qresource>
 </RCC>

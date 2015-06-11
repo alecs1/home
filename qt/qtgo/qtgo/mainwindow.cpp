@@ -37,7 +37,8 @@ MainWindow::MainWindow(QWidget *parent) :
     #endif
 
     int narrowFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraCondensed-Regular.ttf");
-    printf("%s - narrowFontId: %d\n", __func__, narrowFontId);
+    int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
+    printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
 
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
     GameSettings* settings = new GameSettings(this);
