@@ -49,7 +49,8 @@ HEADERS += GameSettings.h \
            ThirdPartyInfo.h \
            SettingsWidget.h \
            SettingsDialog.h \
-    Utils.h
+    Utils.h \
+    DrawAreaWidget.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
@@ -78,7 +79,8 @@ SOURCES += GameSettings.cpp \
            ThirdPartyInfo.cpp \
            SettingsWidget.cpp \
            SettingsDialog.cpp \
-           Utils.cpp
+           Utils.cpp \
+    DrawAreaWidget.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

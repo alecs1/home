@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QFontDatabase>
 
+class DrawAreaWidget;
 class GoTable;
 
 //enum class ComputingPlatform : uint8_t {
@@ -32,6 +33,7 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
+    DrawAreaWidget* drawArea;
     GoTable* table;
     QFontDatabase fontDatabase;
 };

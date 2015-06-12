@@ -3,6 +3,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "DrawAreaWidget.h"
 #include "GoTable.h"
 #include "GameSettings.h"
 
@@ -44,9 +45,12 @@ MainWindow::MainWindow(QWidget *parent) :
     GameSettings* settings = new GameSettings(this);
 
     table = new GoTable(this);
-    ui->centralWidget->setLayout(ui->gridLayout);
+    drawArea = new DrawAreaWidget(this);
+    drawArea->setChildTable(table);
 
-    ui->gridLayout->addWidget(table, 0, 0);
+    ui->centralWidget->setLayout(ui->gridLayout);
+    //ui->gridLayout->addWidget(table, 0, 0);
+    ui->gridLayout->addWidget(drawArea, 0, 0);
     ui->gridLayout->setColumnStretch(0, 5);
     ui->gridLayout->setColumnMinimumWidth(0, table->minimumWidth());
     ui->gridLayout->setRowMinimumHeight(0, table->minimumHeight());
