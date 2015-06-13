@@ -41,23 +41,22 @@ MainWindow::MainWindow(QWidget *parent) :
     int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
     printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
 
-    //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if if settings emits a signal from inside the constructor
+    //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if settings emits a signal from inside the constructor
     GameSettings* settings = new GameSettings(this);
 
-    table = new GoTable(this);
     drawArea = new DrawAreaWidget(this);
+    table = new GoTable(drawArea);
     drawArea->setChildTable(table);
 
     ui->centralWidget->setLayout(ui->gridLayout);
-    //ui->gridLayout->addWidget(table, 0, 0);
     ui->gridLayout->addWidget(drawArea, 0, 0);
     ui->gridLayout->setColumnStretch(0, 5);
-    ui->gridLayout->setColumnMinimumWidth(0, table->minimumWidth());
-    ui->gridLayout->setRowMinimumHeight(0, table->minimumHeight());
+    ui->gridLayout->setColumnMinimumWidth(0, drawArea->minimumWidth());
+    ui->gridLayout->setRowMinimumHeight(0, drawArea->minimumHeight());
 
     //TODO: this type of size computation is a poor hack, instead my table should provide a good minimum hint.
-    int minWidth = table->minimumSize().width();
-    int minHeight = table->minimumSize().height();
+    int minWidth = drawArea->minimumSize().width();
+    int minHeight = drawArea->minimumSize().height();
 
 
     ui->gridLayout->addWidget(settings, 0, 1);

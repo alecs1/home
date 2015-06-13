@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-#include "Global.h"
+//#include "Global.h"
+#include "Settings.h"
 
 namespace Ui {
 class HandicapDialog;

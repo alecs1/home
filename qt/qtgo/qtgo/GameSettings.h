@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "Global.h"
+#include "Settings.h"
 
 class PlayerWidget;
 class RoundInfo;

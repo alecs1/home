@@ -6,6 +6,7 @@
 
 #include "Global.h"
 #include "GameStruct.h"
+#include "Settings.h"
 
 #include <sgf/sgftree.h>
 
@@ -73,6 +74,8 @@ public:
 
     void paintEvent(QPaintEvent *);
     static QPoint fromGnuGoPos(int pos);
+    static float gridDist(int tableSize, int gameSize);
+    static float stoneDiameter(float dist);
     int toGnuGoPos(int row, int col);
     void checkForResumeGame();
 
@@ -80,8 +83,7 @@ public:
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
 
-    void changeProgramSettings(SProgramSettings* newSettings);
-    SProgramSettings* getProgramSettings();
+    void changeProgramSettings();
 
 
 public slots:
@@ -164,7 +166,7 @@ private:
 
     //populate this with some default settings, which are then passed to the game
     SGameSettings gameSettings;
-    SProgramSettings programSettings;
+    SProgramSettings* programSettings;
 
     //TODO - game and settings size duplicate info!
     GameStruct game;

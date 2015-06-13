@@ -32,6 +32,7 @@ LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L
 HEADERS += GameSettings.h \
            GameStruct.h \
            Global.h \
+           DrawAreaWidget.h \
            GoTable.h \
            mainwindow.h \
            PlayerWidget.h \
@@ -49,8 +50,8 @@ HEADERS += GameSettings.h \
            ThirdPartyInfo.h \
            SettingsWidget.h \
            SettingsDialog.h \
-    Utils.h \
-    DrawAreaWidget.h
+           Utils.h \
+           Settings.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
@@ -62,6 +63,7 @@ FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          SettingsDialog.ui
 SOURCES += GameSettings.cpp \
            GameStruct.cpp \
+           DrawAreaWidget.cpp \
            GoTable.cpp \
            main.cpp \
            mainwindow.cpp \
@@ -80,7 +82,7 @@ SOURCES += GameSettings.cpp \
            SettingsWidget.cpp \
            SettingsDialog.cpp \
            Utils.cpp \
-    DrawAreaWidget.cpp
+           Settings.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

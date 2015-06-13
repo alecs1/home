@@ -4,12 +4,12 @@
 #include <QWidget>
 
 #include "Global.h"
+#include "Settings.h"
 
 //A few global functions and variables, move them somewhere else when they accumulate
 //blocking
 class GoTable;
 void settingsSetGoTable(GoTable *aTable);
-bool applyProgramSettings(SProgramSettings* newSettings);
 void populateDefaultProgramSettings(SProgramSettings* defaults);
 //get program settings from table
 bool getProgramSettings(SProgramSettings* settins);

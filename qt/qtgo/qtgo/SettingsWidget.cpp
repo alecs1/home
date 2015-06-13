@@ -11,15 +11,6 @@ void settingsSetGoTable(GoTable* aTable) {
     table = aTable;
 }
 
-bool applyProgramSettings(SProgramSettings* newSettings) {
-    if (table == NULL) {
-        return false;
-    }
-
-    table->changeProgramSettings(newSettings);
-    return true;
-}
-
 void populateDefaultProgramSettings(SProgramSettings* defaults) {
     QColor defaultColour(206, 170, 57, 255);
     defaults->tableColour = defaultColour.name();
@@ -27,7 +18,7 @@ void populateDefaultProgramSettings(SProgramSettings* defaults) {
 }
 
 bool getProgramSettings(SProgramSettings* settings) {
-    *settings = *(table->getProgramSettings());
+    settings = Settings::getProgramSettings();
 }
 
 //end global settings
@@ -111,7 +102,11 @@ void SettingsWidget::readSettings() {
 
 void SettingsWidget::applySettings() {
     readSettings();
-    applyProgramSettings(&settings);
+    *Settings::getProgramSettings() = settings;
+    if (table == NULL)
+        printf("%s - Error - there's not table to apply the settings to\n", __func__);
+    else
+        table->changeProgramSettings();
 }
 
 void SettingsWidget::setDefaultColour() {

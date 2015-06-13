@@ -209,8 +209,9 @@ GoTable::GoTable(QWidget *parent) :
     auxInfo.gameDate = "2015-02-19T00:31";
 
     //settings
-    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), &programSettings) == false)
-        populateDefaultProgramSettings(&programSettings);
+    programSettings = Settings::getProgramSettings();
+    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
+        populateDefaultProgramSettings(programSettings);
     settingsSetGoTable(this);
 }
 
@@ -245,15 +246,15 @@ bool GoTable::loadGame(QString fileName) {
     return result;
 }
 
-void GoTable::changeProgramSettings(SProgramSettings* newSettings) {
-    programSettings = *newSettings;
+void GoTable::changeProgramSettings(/*SProgramSettings* newSettings*/) {
+    //programSettings = *newSettings;
     update();
-    SaveFile::writeSettings(SaveFile::getDefSettingsFName(), &programSettings);
+    SaveFile::writeSettings(SaveFile::getDefSettingsFName(), programSettings);
 }
 
-SProgramSettings* GoTable::getProgramSettings() {
-    return &programSettings;
-}
+//SProgramSettings* GoTable::getProgramSettings() {
+//    return &programSettings;
+//}
 
 bool GoTable::saveGame(QString fileName) {
     //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
@@ -500,13 +501,22 @@ void GoTable::updateSizes() {
     int tableSize = width(); //compute and enforce correctly
     if (height() < tableSize)
         tableSize = height();
-    dist = tableSize / (game.size + 1.0);
-    diameter = (dist * 0.95);
+    //dist = tableSize / (game.size + 1.0);
+    dist = gridDist(tableSize, game.size);
+    diameter = stoneDiameter(dist);
 
     //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
     buildPixmaps(diameter);
     updateCursor();
+}
+
+float GoTable::gridDist(int tableSize, int gameSize) {
+    return tableSize / gameSize;
+}
+
+float GoTable::stoneDiameter(float dist) {
+    return dist * 0.95;
 }
 
 void GoTable::paintEvent(QPaintEvent *) {
@@ -520,7 +530,7 @@ void GoTable::paintEvent(QPaintEvent *) {
     QPainter painter(this);
 
     //background
-    QColor background(programSettings.tableColour);
+    QColor background(programSettings->tableColour);
     if (players[crtPlayer] == PlayerType::AI && computing) {
         background = QColor(210, 200, 200);
     }
@@ -551,8 +561,14 @@ void GoTable::paintEvent(QPaintEvent *) {
     int marginSpace = dist - diameter/2;
     int auxSmaller, auxLarger;
     //TODO: the height of the font is not actually per symbols, so we go the hackish ways: subtract some from the calculated size
-    float pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 0,
-                                               rowNumbering[rowNumbering.size()-1]);
+    Utils::PointSizeParams p;
+    p.fontName = fontName;
+    p.targetSize = marginSpace;
+    p.nextSmaller = &auxSmaller;
+    p.nextLarger = &auxLarger;
+    p.measure = Utils::PointSizeParams::Measure::width;
+    p.text = rowNumbering[rowNumbering.size()-1];
+    float pointSize = Utils::getClosestPointSize(p);
     QFont font(fontName, pointSize);
     QFontMetrics fontMetrics = QFontMetrics(font);
     int textHeight = fontMetrics.height();
@@ -571,9 +587,9 @@ void GoTable::paintEvent(QPaintEvent *) {
     }
 
     //fontName = "Stint Ultra Expanded";
-    //fontName = "Liberation Sans"
-    pointSize = Utils::getClosestPointSize(fontName, marginSpace, auxSmaller, auxLarger, 1,
-                                           colNumbering[colNumbering.size()-1]) * 1.2;
+    p.measure = Utils::PointSizeParams::Measure::heightAscent;
+    p.text = colNumbering[colNumbering.size()-1];
+    pointSize = Utils::getClosestPointSize(p);
     font = QFont(fontName, pointSize);
     printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
 
@@ -641,14 +657,24 @@ void GoTable::paintEvent(QPaintEvent *) {
             QString printable;
             int pointSize = -1;
             //TODO - these sizes must be computed at resize time only, avoid expensive stuff.
+            Utils::PointSizeParams p;
+            p.fontName = fontName;
+            p.targetSize = drawDiameter;
+            p.nextSmaller = &auxSmaller;
+            p.nextLarger = &auxLarger;
+            p.measure = Utils::PointSizeParams::Measure::heightAscent;
+            p.text = "0";
             if (platformType() == PlatformType::Android) {
                 //smaller screen, we'll show shorter hints
                 printable.sprintf("%d", 9 - i);
-                pointSize = Utils::getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 1, "0");
+                pointSize = Utils::getClosestPointSize(p);
             }
             else {
+                //I think this is useless even on desktop
                 printable.sprintf("%1.1f", val);
-                pointSize = Utils::getClosestPointSize(fontName, drawDiameter, auxSmaller, auxLarger, 0, "22.2.");
+                p.measure = Utils::PointSizeParams::Measure::width;
+                p.text = "22.2";
+                pointSize = Utils::getClosestPointSize(p);
             }
             //printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
             font = QFont(fontName, pointSize);
@@ -783,7 +809,7 @@ bool GoTable::playMove(int row, int col) {
         return retVal;
     }
 
-    if (programSettings.soundsVolume > 0) {
+    if (programSettings->soundsVolume > 0) {
         QSound::play(QString(":/resources/sounds/click.wav"));
     }
 

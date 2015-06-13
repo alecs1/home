@@ -3,7 +3,8 @@
 
 #include <QWidget>
 
-#include "Global.h"
+//#include "Global.h"
+#include "Settings.h"
 
 class QMenu;
 

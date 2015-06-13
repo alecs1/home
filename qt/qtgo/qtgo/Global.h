@@ -30,32 +30,6 @@ enum class PlayerType:uint8_t {
     None
 };
 
-struct SGameSettings {
-    int size = 19;
-    int blackAIStrength = 0;
-    int whiteAIStrength = 0;
-    PlayerType black = PlayerType::LocalHuman;
-    PlayerType white = PlayerType::AI;
-    struct Handicap {
-        float komi = 6.5;
-        int handicap = 0;
-        bool handicapPlacementFree = false;
-    };
-    Handicap handicap;
-
-    //information used for saving
-    bool estimateScore;
-
-    //game state, move to another struct if there are more elements
-    int crtPlayer;
-};
-
-#include <QString>
-struct SProgramSettings {
-    static const int maxSoundsVolume = 1; //hack, we only accept 0 or 1 for now
-    uint32_t soundsVolume = 100;
-    QString tableColour;
-};
 
 enum class PlatformType:uint8_t {
     LinuxDesktop = 0,
@@ -64,12 +38,5 @@ enum class PlatformType:uint8_t {
 };
 
 PlatformType platformType();
-
-//Extra information about a game, don't know if this is the right place
-struct SAuxGameInfo {
-    QString comment;
-    QString freeGoVersion;
-    QString gameDate;
-};
 
 #endif // GLOBAL_H

@@ -5,37 +5,46 @@
 #include "Utils.h"
 
 #include <limits>
-int Utils::getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction, QString text) {
+//int Utils::getClosestPointSize(QString fontName, int targetSize, int& nextSmaller, int& nextLarger, int direction, QString text) {
+int Utils::getClosestPointSize(PointSizeParams p) {
     //haha - clumsy c++ syntax :)))
     int closestSize = std::numeric_limits<int>::max();
     int nextSmallerSize = std::numeric_limits<int>::max();
     int nextLargerSize = std::numeric_limits<int>::max();
     int closest = -1;
-    nextSmaller = -1;
-    nextLarger = -1;
+    *p.nextSmaller = -1;
+    *p.nextLarger = -1;
     int pointSize = 1;
     int maxPointSize = 96;
     while(pointSize <= maxPointSize) {
-        QFontMetrics fontMetrics = QFontMetrics(QFont(fontName, pointSize));
+        QFontMetrics fontMetrics = QFontMetrics(QFont(p.fontName, pointSize));
         int crtSize = 0;
-        if (direction == 0) {
-            crtSize = fontMetrics.width(text);
-        }
-        else {
+        switch(p.measure) {
+        case PointSizeParams::Measure::width:
+            crtSize = fontMetrics.width(p.text);
+            break;
+        case PointSizeParams::Measure::heightAscent:
+            crtSize = fontMetrics.ascent();
+            break;
+        case PointSizeParams::Measure::height:
             crtSize = fontMetrics.height();
+            break;
+        default:
+            Q_ASSERT("this should not happen");
+            break;
         }
         //printf("%s - pointSize=%d. Results in height=%d, we need height=%d\n",
         //       __func__, pointSize, crtSize, targetSize);
-        if (abs(crtSize - targetSize) < abs(crtSize - closestSize)) {
+        if (abs(crtSize - p.targetSize) < abs(crtSize - closestSize)) {
             closest = pointSize;
             closestSize = crtSize;
         }
-        if ( (crtSize < targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextSmallerSize)) ) {
-            nextSmaller = pointSize;
+        if ( (crtSize < p.targetSize) && (abs(crtSize - p.targetSize) < abs(crtSize - nextSmallerSize)) ) {
+            *p.nextSmaller = pointSize;
             nextSmallerSize = crtSize;
         }
-        if ( (crtSize > targetSize) && (abs(crtSize - targetSize) < abs(crtSize - nextLargerSize)) ) {
-            nextLarger = pointSize;
+        if ( (crtSize > p.targetSize) && (abs(crtSize - p.targetSize) < abs(crtSize - nextLargerSize)) ) {
+            *p.nextLarger = pointSize;
             nextLargerSize = crtSize;
         }
         if ((closestSize != std::numeric_limits<int>::max()) &&

@@ -3,6 +3,7 @@
 
 #include <QString>
 #include "Global.h"
+#include "Settings.h"
 
 class SaveFile
 {
