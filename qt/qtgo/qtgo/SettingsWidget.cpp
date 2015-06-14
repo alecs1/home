@@ -103,8 +103,9 @@ void SettingsWidget::readSettings() {
 void SettingsWidget::applySettings() {
     readSettings();
     *Settings::getProgramSettings() = settings;
-    if (table == NULL)
+    if (table == NULL) {
         printf("%s - Error - there's not table to apply the settings to\n", __func__);
+    }
     else
         table->changeProgramSettings();
 }

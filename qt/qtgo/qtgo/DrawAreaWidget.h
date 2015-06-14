@@ -31,6 +31,9 @@ private:
     SGameSettings* gameSettings = NULL;
     SProgramSettings* programSettings = NULL;
     bool showBottomAndRightSymbols = true;
+    int tableSize;
+    int hOffset, vOffset;
+    int textPointSize;
 };
 
 #endif // DRAWAREAWIDGET_H

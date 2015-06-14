@@ -38,9 +38,11 @@ int get_sgfmove(SGFProperty *property);
 //likely temporary
 #include "SettingsWidget.h"
 
-QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
-QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
+//TODO - this doesn't belong here
+//QList<QString> rowNumbering { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19" };
+//QList<QString> colNumbering { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T" };
 
+QString fontName = "Liberation Sans";
 //From play_test.c
 void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_score,
                  float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree)
@@ -158,8 +160,8 @@ GoTable::GoTable(QWidget *parent) :
 {
     setMouseTracking(true);
 
-    setMinimumWidth(400);
-    setMinimumHeight(400);
+    setMinimumWidth(250);
+    setMinimumHeight(250);
 
     blackCursor = NULL;
     whiteCursor = NULL;
@@ -495,6 +497,7 @@ QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
 void GoTable::resizeEvent(QResizeEvent* event) {
     Q_UNUSED(event);
     updateSizes();
+    //setMask(QRegion(dist/2, dist/2, (game.size + 1)*dist, (game.size + 1)*dist));
 }
 
 void GoTable::updateSizes() {
@@ -512,7 +515,7 @@ void GoTable::updateSizes() {
 }
 
 float GoTable::gridDist(int tableSize, int gameSize) {
-    return tableSize / gameSize;
+    return tableSize / (gameSize + 1);
 }
 
 float GoTable::stoneDiameter(float dist) {
@@ -521,6 +524,7 @@ float GoTable::stoneDiameter(float dist) {
 
 void GoTable::paintEvent(QPaintEvent *) {
 
+    setAttribute(Qt::WA_TranslucentBackground); //only needed on Android
     //TODO - all of this has to go to off-screen buffers and be called only on resize
     int tableSize = width(); //compute and enforce correctly
     if (height() < tableSize)
@@ -528,14 +532,6 @@ void GoTable::paintEvent(QPaintEvent *) {
     float lineWidth = tableSize / 300.0;
 
     QPainter painter(this);
-
-    //background
-    QColor background(programSettings->tableColour);
-    if (players[crtPlayer] == PlayerType::AI && computing) {
-        background = QColor(210, 200, 200);
-    }
-    painter.fillRect(QRectF(0, 0, width(), height()), background);
-
 
     //lines
     QPen pen;
@@ -547,63 +543,12 @@ void GoTable::paintEvent(QPaintEvent *) {
     //Horizontal lines y is resolved to an int, lines will have exactly same width without AA
     for(int i = 0; i < game.size; i++) {
         int y = dist + i * dist;
-        painter.drawLine(QLineF(dist, y, tableSize-dist, y));
+        painter.drawLine(QLineF(dist, y, game.size*dist, y));
     }
     //Vertical x resolved to an int...
     for (int i = 0; i < game.size; i++) {
         int x = dist + i * dist;
-        painter.drawLine(QLineF(x, dist, x, tableSize - dist));
-    }
-
-
-    //QString fontName = "Stint Ultra Condensed";
-    QString fontName = "Liberation Sans";
-    int marginSpace = dist - diameter/2;
-    int auxSmaller, auxLarger;
-    //TODO: the height of the font is not actually per symbols, so we go the hackish ways: subtract some from the calculated size
-    Utils::PointSizeParams p;
-    p.fontName = fontName;
-    p.targetSize = marginSpace;
-    p.nextSmaller = &auxSmaller;
-    p.nextLarger = &auxLarger;
-    p.measure = Utils::PointSizeParams::Measure::width;
-    p.text = rowNumbering[rowNumbering.size()-1];
-    float pointSize = Utils::getClosestPointSize(p);
-    QFont font(fontName, pointSize);
-    QFontMetrics fontMetrics = QFontMetrics(font);
-    int textHeight = fontMetrics.height();
-    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
-    //numbering: from bottom left corner
-
-    painter.setFont(font);
-    for (int i = 0 ; i < game.size; i++) {
-        QString text = rowNumbering[game.size-i-1];
-        int textWidth = fontMetrics.width(text);
-        qreal yPos = dist + i * dist - textHeight/2;
-        QRectF leftRect((marginSpace - textWidth)/2, yPos, textWidth, textHeight);
-        QRectF rightRect(dist * game.size + diameter/2 + (marginSpace - textWidth)/2, yPos, textWidth, textHeight);
-        painter.drawText(leftRect, Qt::AlignCenter, text);
-        painter.drawText(rightRect, Qt::AlignCenter, text);
-    }
-
-    //fontName = "Stint Ultra Expanded";
-    p.measure = Utils::PointSizeParams::Measure::heightAscent;
-    p.text = colNumbering[colNumbering.size()-1];
-    pointSize = Utils::getClosestPointSize(p);
-    font = QFont(fontName, pointSize);
-    printf("%s - decided for font: %s, size:%f\n", __func__, font.family().toUtf8().constData(), pointSize);
-
-    painter.setFont(font);
-    for (int i = 0; i < game.size; i++) {
-        QString text = colNumbering[i];
-        int textWidth = fontMetrics.width(text);
-        qreal xPos = dist + i * dist - textWidth / 2;
-        QRectF topRect(xPos, (marginSpace - textHeight) / 2, textWidth, textHeight);
-        QRectF bottomRect(xPos, dist * game.size + diameter/2 + (marginSpace - textHeight)/2, textWidth, textHeight);
-        painter.drawText(topRect, Qt::AlignCenter, text);
-        painter.drawText(bottomRect, Qt::AlignCenter, text);
-        //painter.drawText(QPointF(dist + i * dist, 1.0/3 * dist + margin), colNumbering[i]);
-        //painter.drawText(QPointF(dist + i * dist, tableSize - margin), colNumbering[i]);
+        painter.drawLine(QLineF(x, dist, x, game.size*dist));
     }
 
     //highlighted position
@@ -657,6 +602,7 @@ void GoTable::paintEvent(QPaintEvent *) {
             QString printable;
             int pointSize = -1;
             //TODO - these sizes must be computed at resize time only, avoid expensive stuff.
+            int auxSmaller, auxLarger;
             Utils::PointSizeParams p;
             p.fontName = fontName;
             p.targetSize = drawDiameter;
@@ -677,7 +623,7 @@ void GoTable::paintEvent(QPaintEvent *) {
                 pointSize = Utils::getClosestPointSize(p);
             }
             //printf("%s - hint move %d %d -> %s\n", __func__, move.y(), move.x(), printable.toUtf8().constData());
-            font = QFont(fontName, pointSize);
+            QFont font = QFont(fontName, pointSize);
             painter.setFont(font);
             painter.drawText(textRect, Qt::AlignCenter, printable);
         }
