@@ -32,7 +32,9 @@ private:
     SProgramSettings* programSettings = NULL;
     bool showBottomAndRightSymbols = true;
     int tableSize;
-    int hOffset, vOffset;
+    float leftMargin, rightMargin, topMargin, bottomMargin;
+    float hOffset, vOffset;
+    float tablePrivateSize;
     int textPointSize;
 };
 

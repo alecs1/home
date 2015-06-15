@@ -74,8 +74,8 @@ public:
 
     void paintEvent(QPaintEvent *);
     static QPoint fromGnuGoPos(int pos);
-    static float gridDist(int tableSize, int gameSize);
-    static float stoneDiameter(float dist);
+    static float gridDist(float tableSize, int gameSize);
+    static float stoneDiameter();
     int toGnuGoPos(int row, int col);
     void checkForResumeGame();
 
@@ -84,6 +84,9 @@ public:
     bool loadGame(QString fileName);
 
     void changeProgramSettings();
+
+    //TODO - temporary hack
+    SGameSettings* getGameSettingsPointer();
 
 
 public slots:

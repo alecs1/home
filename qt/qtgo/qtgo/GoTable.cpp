@@ -188,7 +188,7 @@ GoTable::GoTable(QWidget *parent) :
 
     game.size = gameSettings.size;
     players[EMPTY] = PlayerType::None;
-    changeGameSettings(gameSettings);
+    changeGameSettings(gameSettings); //an idiotic move of copying gameSettings over gameSettings :D
 
 
     blockTime = new QTime();
@@ -254,9 +254,9 @@ void GoTable::changeProgramSettings(/*SProgramSettings* newSettings*/) {
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), programSettings);
 }
 
-//SProgramSettings* GoTable::getProgramSettings() {
-//    return &programSettings;
-//}
+SGameSettings* GoTable::getGameSettingsPointer() {
+    return &gameSettings;
+}
 
 bool GoTable::saveGame(QString fileName) {
     //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
@@ -506,7 +506,7 @@ void GoTable::updateSizes() {
         tableSize = height();
     //dist = tableSize / (game.size + 1.0);
     dist = gridDist(tableSize, game.size);
-    diameter = stoneDiameter(dist);
+    diameter = dist * stoneDiameter();
 
     //printf("%s - game.size=%d, tableSize=%d, dist=%f, diameter=%d\n", __func__, game.size, tableSize, dist, diameter);
 
@@ -514,12 +514,14 @@ void GoTable::updateSizes() {
     updateCursor();
 }
 
-float GoTable::gridDist(int tableSize, int gameSize) {
-    return tableSize / (gameSize + 1);
+float GoTable::gridDist(float tableSize, int gameSize) {
+    float ret = tableSize / (gameSize + 1);
+    printf("%s - tableSize=%f, gameSize=%d, ret=%f\n", __func__, tableSize, gameSize, ret);
+    return ret;
 }
 
-float GoTable::stoneDiameter(float dist) {
-    return dist * 0.95;
+float GoTable::stoneDiameter() {
+    return 0.95;
 }
 
 void GoTable::paintEvent(QPaintEvent *) {

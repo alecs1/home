@@ -16,6 +16,7 @@ int Utils::getClosestPointSize(PointSizeParams p) {
     *p.nextLarger = -1;
     int pointSize = 1;
     int maxPointSize = 96;
+    QRect boundingRect;
     while(pointSize <= maxPointSize) {
         QFontMetrics fontMetrics = QFontMetrics(QFont(p.fontName, pointSize));
         int crtSize = 0;
@@ -27,7 +28,8 @@ int Utils::getClosestPointSize(PointSizeParams p) {
             crtSize = fontMetrics.ascent();
             break;
         case PointSizeParams::Measure::height:
-            crtSize = fontMetrics.height();
+            boundingRect = fontMetrics.boundingRect(p.text);
+            crtSize = boundingRect.height();
             break;
         default:
             Q_ASSERT("this should not happen");

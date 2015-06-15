@@ -19,6 +19,9 @@ DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
 
 void DrawAreaWidget::setChildTable(GoTable *aTable) {
     table = aTable;
+    delete gameSettings;
+    //TODO - we actually need a signal when this changes
+    gameSettings = table->getGameSettingsPointer();
     setMinimumSize(computeMinSize());
 }
 
@@ -30,29 +33,31 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
 
     QFont font(defaultFont, textPointSize);
     QFontMetrics fontMetrics = QFontMetrics(font);
-    float textHeight = fontMetrics.ascent();
+    float textHeight = fontMetrics.height();
     float dist = GoTable::gridDist(tableSize, gameSettings->size);
-    float marginSpace = dist;
-    float diameter = GoTable::stoneDiameter(dist);
+    float diameter = dist * GoTable::stoneDiameter();
     painter.setFont(font);
+    //left and right
     for (int i = 0 ; i < gameSettings->size; i++) {
         QString text = rowNumbering[gameSettings->size-i-1];
         int textWidth = fontMetrics.width(text);
-        qreal yPos = dist + i * dist - textHeight/2 + vOffset;
-        QRectF leftRect((marginSpace - textWidth)/2, yPos, textWidth, textHeight);
-        QRectF rightRect(dist * gameSettings->size + diameter/2 + (marginSpace - textWidth)/2 + hOffset, yPos, textWidth, textHeight);
+        qreal yPos = vOffset + dist + i * dist - textHeight/2;
+        QRectF leftRect((leftMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
+        QRectF rightRect(leftMargin + tablePrivateSize + (rightMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
         painter.drawText(leftRect, Qt::AlignCenter, text);
         painter.drawText(rightRect, Qt::AlignCenter, text);
     }
 
-    painter.setFont(font);
+    //top and bottom
     for (int i = 0; i < gameSettings->size; i++) {
         QString text = colNumbering[i];
         int textWidth = fontMetrics.width(text);
-        qreal xPos = dist + i * dist - textWidth / 2 + hOffset;
-        QRectF topRect(xPos, (marginSpace - textHeight) / 2, textWidth, textHeight);
-        //TODO - this mat formula got out of hand
-        QRectF bottomRect(xPos + hOffset, dist * gameSettings->size + diameter/2 + (marginSpace - textHeight)/2 + vOffset, textWidth, textHeight);
+        QRect fontRect = fontMetrics.boundingRect(text);
+        //printf("%s - fontRect: %d, %d, %d, %d\n", __func__, fontRect.x(), fontRect.y(),
+        //       fontRect.width(), fontRect.height());
+        qreal xPos = leftMargin + diameter/2 + i * dist - textWidth / 2;
+        QRectF topRect(xPos, 0, textWidth, fontMetrics.height());
+        QRectF bottomRect(xPos, topMargin + tablePrivateSize, textWidth, fontMetrics.height());
         painter.drawText(topRect, Qt::AlignCenter, text);
         painter.drawText(bottomRect, Qt::AlignCenter, text);
     }
@@ -78,25 +83,64 @@ void DrawAreaWidget::resizeEvent(QResizeEvent* event) {
         return;
     }
 
-    int columnCountEquiv = gameSettings->size + 2;
+    int boundingSize = width(); //compute and enforce correctly
+    if (height() < boundingSize)
+        boundingSize = height();
+
+    //Steps (should transform in an iteration, since the formulae cannot be computed perfectly):
+    //1. compute pessimistic size for the table and grid distance
+    //2. based on the size decide for fonts size
+    //3. based on the fonts decide the final table size.
+
+    int columnCountEquiv = gameSettings->size + 1;
     if (showBottomAndRightSymbols)
         columnCountEquiv += 1;
-    float dist = GoTable::gridDist(height(), columnCountEquiv);
-    tableSize = (gameSettings->size + 1) * dist;
-    table->resize(tableSize, tableSize);
-    float diameter = GoTable::stoneDiameter(dist);
-    hOffset = vOffset = diameter/2;
-    table->move(hOffset, vOffset);
-    //width of column symbols is bound by size of a stone
-    //height of row symbols is bound by size of a stone
+    float dist = GoTable::gridDist(boundingSize, columnCountEquiv);
+    float diameter = dist * GoTable::stoneDiameter();
+
+    //top line (bottom line is different because it will have the descent cut out)
     int auxSmaller, auxLarger;
     Utils::PointSizeParams p;
     p.fontName = defaultFont;
     p.targetSize = diameter;
-    p.measure = Utils::PointSizeParams::Measure::heightAscent;
+    p.measure = Utils::PointSizeParams::Measure::height;
     p.nextSmaller = &auxSmaller;
     p.nextLarger = &auxLarger;
     p.text = rowNumbering[0];
     textPointSize = Utils::getClosestPointSize(p);
+    QFont font(p.fontName, textPointSize);
+    QFontMetrics fontMetrics(font);
+    topMargin = fontMetrics.ascent();
+    bottomMargin = 0;
+    if(showBottomAndRightSymbols)
+        bottomMargin = fontMetrics.height();
+    leftMargin = 0;
+    foreach(QString str, colNumbering) {
+        if (fontMetrics.width(str) > leftMargin)
+            leftMargin = fontMetrics.width(str);
+    }
+    leftMargin = leftMargin;
+    rightMargin = 0;
+    if (showBottomAndRightSymbols)
+        rightMargin = leftMargin;
+
+
+    //at this point we've decided on the fonts, let's redistribute the tableSize
+    //Table private drawing takes up: (gameSize - 1 + stoneDiameter) * dist
+    //Total table size = (gameSize + 1) * dist
+
+    int hSpace = width() - leftMargin - rightMargin;
+    int vSpace = height() - topMargin - bottomMargin;
+    boundingSize = hSpace;
+    if (vSpace < hSpace)
+        boundingSize = vSpace;
+    dist = boundingSize / (gameSettings->size - 1 + GoTable::stoneDiameter());
+    tablePrivateSize = (gameSettings->size - 1 + GoTable::stoneDiameter()) * dist;
+    tableSize = (gameSettings->size + 1) * dist;
+    diameter = GoTable::stoneDiameter() * dist;
+    table->resize(tableSize, tableSize);
+    vOffset = topMargin - dist + diameter/2;
+    hOffset = leftMargin - dist + diameter/2;
+    table->move(hOffset, vOffset);
 }
 
