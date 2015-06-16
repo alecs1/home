@@ -89,7 +89,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
         QQuickWidget* animationWidget = new QQuickWidget(this);
         animationWidget->setSource(QUrl("qrc:/RoundInfoAnimation.qml"));
         animationWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-        ui->layoutQuick->addWidget(animationWidget, 0, 0);
+        //ui->layoutQuick->addWidget(animationWidget, 0, 0);
     }
 #endif
 

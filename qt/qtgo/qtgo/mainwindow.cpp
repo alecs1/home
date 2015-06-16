@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->centralWidget->setLayout(ui->gridLayout);
     ui->gridLayout->addWidget(drawArea, 0, 0);
+    ui->gridLayout->setSpacing(0);
     ui->gridLayout->setColumnStretch(0, 5);
     ui->gridLayout->setColumnMinimumWidth(0, drawArea->minimumWidth());
     ui->gridLayout->setRowMinimumHeight(0, drawArea->minimumHeight());
@@ -60,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->gridLayout->addWidget(settings, 0, 1);
-    ui->gridLayout->setColumnStretch(1, 1);
+    //ui->gridLayout->setColumnStretch(1, 1);
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), settings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));

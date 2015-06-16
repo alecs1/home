@@ -30,7 +30,7 @@ private:
     //for now we duplicate stuff from GoTable
     SGameSettings* gameSettings = NULL;
     SProgramSettings* programSettings = NULL;
-    bool showBottomAndRightSymbols = true;
+    bool showBottomAndRightSymbols = false;
     int tableSize;
     float leftMargin, rightMargin, topMargin, bottomMargin;
     float hOffset, vOffset;

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>308</width>
+    <width>191</width>
     <height>333</height>
    </rect>
   </property>
@@ -71,13 +71,16 @@
        <property name="spacing">
         <number>0</number>
        </property>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
+       </property>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
           <number>0</number>
          </property>
          <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
+          <enum>QLayout::SetNoConstraint</enum>
          </property>
          <item>
           <widget class="QToolButton" name="menuLauncher1">
@@ -96,7 +99,7 @@
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_3">
+          <spacer name="launcher1LimitSize">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -139,6 +142,9 @@
       <widget class="QGroupBox" name="tableSizeGroupBox">
        <property name="title">
         <string>Grid settings</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="spacing">
@@ -205,11 +211,14 @@
          <property name="spacing">
           <number>0</number>
          </property>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetNoConstraint</enum>
+         </property>
          <item>
           <widget class="QPushButton" name="launchButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>2</horstretch>
+             <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -221,8 +230,8 @@
          <item>
           <widget class="QPushButton" name="finishButton">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>2</horstretch>
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -277,6 +286,12 @@
        </item>
        <item row="5" column="0">
         <widget class="QPushButton" name="passButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Pass</string>
          </property>
@@ -292,6 +307,12 @@
          </property>
          <item>
           <widget class="QPushButton" name="hintButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Hint</string>
            </property>
@@ -299,6 +320,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="undoButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Undo</string>
            </property>

@@ -63,28 +63,7 @@ void PlayerWidget::setPlayerType(PlayerType type) {
     //printf("%s - type=%d\n", __func__, type);
     ui->playerComboBox->setCurrentIndex((int)type);
     ui->playerSettingsButton->show();
-    ui->playerLabel->hide();
     return;
-
-    //TODO - tried to make a  label and a toolbuton fill the same space and show them alternatively, if there's something to click or not.
-    //doesn't work.
-    if (type == PlayerType::AI) {
-        ui->playerSettingsButton->show();
-        printf("%s - playerSettingsButton: %dx%d\n", __func__,
-               ui->playerSettingsButton->size().width(), ui->playerSettingsButton->size().height());
-        printf("%s - playerLabel: %dx%d\n", __func__,
-               ui->playerLabel->size().width(), ui->playerLabel->size().height());
-        ui->playerLabel->hide();
-    }
-    else {
-        ui->playerLabel->show();
-        ui->playerLabel->resize(ui->playerSettingsButton->size());
-        printf("%s - playerSettingsButton: %dx%d\n", __func__,
-               ui->playerSettingsButton->size().width(), ui->playerSettingsButton->size().height());
-        printf("%s - playerLabel: %dx%d\n", __func__,
-               ui->playerLabel->size().width(), ui->playerLabel->size().height());
-        ui->playerSettingsButton->hide();
-    }
 }
 
 void PlayerWidget::setPixmap(QPixmap aPixmap) {
@@ -94,9 +73,6 @@ void PlayerWidget::setPixmap(QPixmap aPixmap) {
     ui->playerSettingsButton->setMinimumSize(pixmap.size());
     ui->playerSettingsButton->setIconSize(pixmap.size());
     ui->playerSettingsButton->setIcon(QIcon(pixmap));
-
-    ui->playerLabel->setPixmap(pixmap);
-    ui->playerLabel->resize(ui->playerSettingsButton->size());
 }
 
 void PlayerWidget::enableChoosingPlayer(bool enable) {

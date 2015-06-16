@@ -15,6 +15,8 @@ DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
     programSettings = Settings::getProgramSettings();
     gameSettings = new SGameSettings;
     gameSettings->size = 19;
+    setMinimumWidth(300);
+    setMinimumHeight(300);
 }
 
 void DrawAreaWidget::setChildTable(GoTable *aTable) {
@@ -43,9 +45,11 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
         int textWidth = fontMetrics.width(text);
         qreal yPos = vOffset + dist + i * dist - textHeight/2;
         QRectF leftRect((leftMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
-        QRectF rightRect(leftMargin + tablePrivateSize + (rightMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
         painter.drawText(leftRect, Qt::AlignCenter, text);
-        painter.drawText(rightRect, Qt::AlignCenter, text);
+        if (showBottomAndRightSymbols) {
+            QRectF rightRect(leftMargin + tablePrivateSize + (rightMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
+            painter.drawText(rightRect, Qt::AlignCenter, text);
+        }
     }
 
     //top and bottom
@@ -57,9 +61,11 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
         //       fontRect.width(), fontRect.height());
         qreal xPos = leftMargin + diameter/2 + i * dist - textWidth / 2;
         QRectF topRect(xPos, 0, textWidth, fontMetrics.height());
-        QRectF bottomRect(xPos, topMargin + tablePrivateSize, textWidth, fontMetrics.height());
         painter.drawText(topRect, Qt::AlignCenter, text);
-        painter.drawText(bottomRect, Qt::AlignCenter, text);
+        if (showBottomAndRightSymbols) {
+            QRectF bottomRect(xPos, topMargin + tablePrivateSize, textWidth, fontMetrics.height());
+            painter.drawText(bottomRect, Qt::AlignCenter, text);
+        }
     }
 
 

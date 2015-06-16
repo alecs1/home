@@ -53,10 +53,7 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetMinimumSize</enum>
       </property>
-      <property name="horizontalSpacing">
-       <number>7</number>
-      </property>
-      <property name="verticalSpacing">
+      <property name="spacing">
        <number>0</number>
       </property>
      </layout>

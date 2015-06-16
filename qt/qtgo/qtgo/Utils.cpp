@@ -28,8 +28,10 @@ int Utils::getClosestPointSize(PointSizeParams p) {
             crtSize = fontMetrics.ascent();
             break;
         case PointSizeParams::Measure::height:
-            boundingRect = fontMetrics.boundingRect(p.text);
-            crtSize = boundingRect.height();
+            //TODO - this bounding rect seems to be useless; find something else
+            //boundingRect = fontMetrics.boundingRect(p.text);
+            //crtSize = boundingRect.height();
+            crtSize = fontMetrics.height();
             break;
         default:
             Q_ASSERT("this should not happen");
