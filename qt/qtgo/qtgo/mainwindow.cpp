@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->centralWidget->setLayout(ui->gridLayout);
     ui->gridLayout->addWidget(drawArea, 0, 0);
-    ui->gridLayout->setSpacing(0);
+    ui->gridLayout->setSpacing(1);
     ui->gridLayout->setColumnStretch(0, 5);
     ui->gridLayout->setColumnMinimumWidth(0, drawArea->minimumWidth());
     ui->gridLayout->setRowMinimumHeight(0, drawArea->minimumHeight());

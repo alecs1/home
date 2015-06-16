@@ -59,13 +59,6 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="9" column="0">
-      <widget class="QPushButton" name="scoreEstimateButton">
-       <property name="text">
-        <string>Score estimate</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0">
       <layout class="QHBoxLayout" name="topRow">
        <property name="spacing">
@@ -215,10 +208,10 @@
           <enum>QLayout::SetNoConstraint</enum>
          </property>
          <item>
-          <widget class="QPushButton" name="launchButton">
+          <widget class="QToolButton" name="launchButton">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>1</horstretch>
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -228,10 +221,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="finishButton">
+          <widget class="QToolButton" name="finishButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>1</horstretch>
+             <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -284,29 +277,13 @@
          </item>
         </layout>
        </item>
-       <item row="5" column="0">
-        <widget class="QPushButton" name="passButton">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Pass</string>
-         </property>
-         <property name="flat">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
        <item row="2" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <property name="spacing">
           <number>0</number>
          </property>
          <item>
-          <widget class="QPushButton" name="hintButton">
+          <widget class="QToolButton" name="hintButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -319,7 +296,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="undoButton">
+          <widget class="QToolButton" name="undoButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -333,10 +310,23 @@
          </item>
         </layout>
        </item>
+       <item row="5" column="0">
+        <widget class="QToolButton" name="passButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Pass</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item row="8" column="0">
-      <widget class="QPushButton" name="handicapButton">
+      <widget class="QToolButton" name="handicapButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -344,11 +334,24 @@
         </sizepolicy>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton { text-align: left; }</string>
+        <string notr="true">QToolButton { text-align: left; }</string>
        </property>
        <property name="text">
         <string>Komi: 6.5
 Handicap: 9 stones free</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QToolButton" name="scoreEstimateButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Score estimate</string>
        </property>
       </widget>
      </item>
