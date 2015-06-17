@@ -3,25 +3,7 @@
 #include "SettingsWidget.h"
 #include "ui_SettingsWidget.h"
 #include "Utils.h"
-
-//globals:
-#include "GoTable.h"
-GoTable* table = NULL;
-void settingsSetGoTable(GoTable* aTable) {
-    table = aTable;
-}
-
-void populateDefaultProgramSettings(SProgramSettings* defaults) {
-    QColor defaultColour(206, 170, 57, 255);
-    defaults->tableColour = defaultColour.name();
-    defaults->soundsVolume = 100;
-}
-
-bool getProgramSettings(SProgramSettings* settings) {
-    settings = Settings::getProgramSettings();
-}
-
-//end global settings
+#include "SaveFile.h"
 
 SettingsWidget::SettingsWidget(QWidget *parent) :
     QWidget(parent),
@@ -34,7 +16,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     connect(ui->soundVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(applySettings()));
     connect(ui->revertSoundsButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSounds()));
     connect(ui->revertColourButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultColour()));
-    getProgramSettings(&settings);
+    settings = *Settings::getProgramSettings();
     populateSettings();
 
     //TODO - hack because we don't actually control volume yet.
@@ -88,7 +70,6 @@ void SettingsWidget::showColourDialog() {
 
 void SettingsWidget::populateSettings() {
     QColor colour(settings.tableColour);
-    //ui->soundsCheckBox->setChecked(settings.useSounds);
     ui->soundVolumeSlider->setValue(settings.soundsVolume);
     QString colourStyleSheet = "background-color: " + colour.name() + ";";
     ui->colourButton->setStyleSheet(colourStyleSheet);
@@ -103,16 +84,12 @@ void SettingsWidget::readSettings() {
 void SettingsWidget::applySettings() {
     readSettings();
     *Settings::getProgramSettings() = settings;
-    if (table == NULL) {
-        printf("%s - Error - there's not table to apply the settings to\n", __func__);
-    }
-    else
-        table->changeProgramSettings();
+    SaveFile::writeSettings(SaveFile::getDefSettingsFName(), &settings);
 }
 
 void SettingsWidget::setDefaultColour() {
     SProgramSettings aux;
-    populateDefaultProgramSettings(&aux);
+    Settings::populateDefaultProgramSettings(&aux);
     settings.tableColour = aux.tableColour;
     populateSettings();
     applySettings();
@@ -120,7 +97,7 @@ void SettingsWidget::setDefaultColour() {
 
 void SettingsWidget::setDefaultSounds() {
     SProgramSettings aux;
-    populateDefaultProgramSettings(&aux);
+    Settings::populateDefaultProgramSettings(&aux);
     settings.soundsVolume = aux.soundsVolume;
     populateSettings();
     applySettings();

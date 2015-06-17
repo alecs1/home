@@ -5,6 +5,9 @@
 #include "Global.h"
 #include "Settings.h"
 
+//TODO - try to get rid of this include
+#include <sgf/sgftree.h>
+
 class SaveFile
 {
 public:

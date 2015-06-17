@@ -6,6 +6,8 @@
 #include "DrawAreaWidget.h"
 #include "GoTable.h"
 #include "GameSettings.h"
+#include "SaveFile.h"
+#include "Settings.h"
 
 #include "Global.h"
 
@@ -40,6 +42,10 @@ MainWindow::MainWindow(QWidget *parent) :
     int narrowFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraCondensed-Regular.ttf");
     int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
     printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
+
+    SProgramSettings* programSettings;
+    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
+        Settings::populateDefaultProgramSettings(programSettings);
 
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if settings emits a signal from inside the constructor
     GameSettings* settings = new GameSettings(this);

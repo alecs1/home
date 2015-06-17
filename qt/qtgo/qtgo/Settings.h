@@ -38,10 +38,11 @@ struct SAuxGameInfo {
     QString gameDate;
 };
 
+
 class Settings {
 public:
     static SProgramSettings* getProgramSettings();
-
+    static void populateDefaultProgramSettings(SProgramSettings* defaults);
 private:
     static SProgramSettings settings;
     //static SG

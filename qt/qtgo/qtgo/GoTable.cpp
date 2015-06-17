@@ -206,15 +206,12 @@ GoTable::GoTable(QWidget *parent) :
         resetGnuGo(gameSettings.size);
     }
 
+    //TODO - fix these joke data
     auxInfo.comment = "test save";
     auxInfo.freeGoVersion = "1000";
     auxInfo.gameDate = "2015-02-19T00:31";
 
-    //settings
     programSettings = Settings::getProgramSettings();
-    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
-        populateDefaultProgramSettings(programSettings);
-    settingsSetGoTable(this);
 }
 
 
@@ -248,10 +245,8 @@ bool GoTable::loadGame(QString fileName) {
     return result;
 }
 
-void GoTable::changeProgramSettings(/*SProgramSettings* newSettings*/) {
-    //programSettings = *newSettings;
+void GoTable::changeProgramSettings() {
     update();
-    SaveFile::writeSettings(SaveFile::getDefSettingsFName(), programSettings);
 }
 
 SGameSettings* GoTable::getGameSettingsPointer() {

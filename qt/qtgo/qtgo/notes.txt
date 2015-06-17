@@ -82,6 +82,7 @@ v 11. Undo after pass undoes the last valid move, not the pass.
 12. At the end of the game the AI stone animation does not stop.
 v 13. Not differentiating well between two local human players.
 v 14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
+15. With the new numbering arangement, the DrawArea does not go through the size computation logic when changing table dimension.
 
 
 Crt:
