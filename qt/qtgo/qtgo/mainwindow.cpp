@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
     printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
 
-    SProgramSettings* programSettings;
+    SProgramSettings* programSettings = Settings::getProgramSettings();
     if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
         Settings::populateDefaultProgramSettings(programSettings);
 
