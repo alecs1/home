@@ -83,7 +83,6 @@ public:
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
 
-    void changeProgramSettings();
 
     //TODO - temporary hack
     SGameSettings* getGameSettingsPointer();
@@ -92,6 +91,7 @@ public:
 public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(SGameSettings newSettings);
+    void changeProgramSettings();
     bool playMove(int row, int col);
     bool passMove();
     bool undoMove();

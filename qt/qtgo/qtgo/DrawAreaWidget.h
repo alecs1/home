@@ -20,6 +20,7 @@ public:
 signals:
 
 public slots:
+    void changeProgramSettings();
 
 private:
     QSize computeMinSize();

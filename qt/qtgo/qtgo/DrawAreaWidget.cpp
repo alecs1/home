@@ -150,3 +150,7 @@ void DrawAreaWidget::resizeEvent(QResizeEvent* event) {
     table->move(hOffset, vOffset);
 }
 
+void DrawAreaWidget::changeProgramSettings() {
+    resizeEvent(NULL);
+    update();
+}
