@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
     printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
 
+    Settings::setMessageSender(this);
     SProgramSettings* programSettings = Settings::getProgramSettings();
     if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
         Settings::populateDefaultProgramSettings(programSettings);
@@ -67,7 +68,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->gridLayout->addWidget(settings, 0, 1);
-    //ui->gridLayout->setColumnStretch(1, 1);
+
+    QObject::connect(this, SIGNAL(settingsChanged()), table, SLOT(changeProgramSettings()));
+    QObject::connect(this, SIGNAL(settingsChanged()), drawArea, SLOT(changeProgramSettings()));
+
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), settings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
@@ -147,4 +151,9 @@ void MainWindow::loadGame() {
     }
     //TODO - note an error somewhere
     printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
+}
+
+
+void MainWindow::notifyReloadSettings() {
+    emit settingsChanged();
 }

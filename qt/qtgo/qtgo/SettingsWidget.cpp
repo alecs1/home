@@ -85,7 +85,7 @@ void SettingsWidget::applySettings() {
     readSettings();
     *Settings::getProgramSettings() = settings;
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), &settings);
-
+    Settings::notifyReloadSettings();
 }
 
 void SettingsWidget::setDefaultColour() {

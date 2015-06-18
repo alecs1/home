@@ -30,6 +30,11 @@ public slots:
     void saveGame();
     void loadGame();
 
+    void notifyReloadSettings();
+
+signals:
+    void settingsChanged();
+
 
 private:
     Ui::MainWindow *ui;

@@ -38,14 +38,17 @@ struct SAuxGameInfo {
     QString gameDate;
 };
 
+class MainWindow;
 
 class Settings {
 public:
     static SProgramSettings* getProgramSettings();
     static void populateDefaultProgramSettings(SProgramSettings* defaults);
+    static bool notifyReloadSettings();
+    static void setMessageSender(MainWindow* newSender);
 private:
     static SProgramSettings settings;
-    //static SG
+    static MainWindow* messageSender;
 };
 
 #endif // SETTINGS_H
