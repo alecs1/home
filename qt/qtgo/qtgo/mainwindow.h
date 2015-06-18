@@ -30,10 +30,10 @@ public slots:
     void saveGame();
     void loadGame();
 
-    void notifyReloadSettings();
+    void notifyReloadProgramSettings();
 
 signals:
-    void settingsChanged();
+    void programSettingsChanged();
 
 
 private:

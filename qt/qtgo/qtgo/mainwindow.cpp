@@ -69,8 +69,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->gridLayout->addWidget(settings, 0, 1);
 
-    QObject::connect(this, SIGNAL(settingsChanged()), table, SLOT(changeProgramSettings()));
-    QObject::connect(this, SIGNAL(settingsChanged()), drawArea, SLOT(changeProgramSettings()));
+    QObject::connect(this, SIGNAL(programSettingsChanged()), table, SLOT(changeProgramSettings()));
+    QObject::connect(this, SIGNAL(programSettingsChanged()), drawArea, SLOT(changeProgramSettings()));
+    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
 
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
@@ -84,7 +86,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
     QObject::connect(settings, SIGNAL(undoMove()), table, SLOT(undoMove()));
     QObject::connect(settings, SIGNAL(showHints()), table, SLOT(showPlayHints()));
-    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
     QObject::connect(settings, SIGNAL(saveGame()), this, SLOT(saveGame()));
     QObject::connect(settings, SIGNAL(loadGame()), this, SLOT(loadGame()));
 
@@ -154,6 +155,6 @@ void MainWindow::loadGame() {
 }
 
 
-void MainWindow::notifyReloadSettings() {
-    emit settingsChanged();
+void MainWindow::notifyReloadProgramSettings() {
+    emit programSettingsChanged();
 }

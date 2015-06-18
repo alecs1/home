@@ -21,9 +21,11 @@ signals:
 
 public slots:
     void changeProgramSettings();
+    void changeGameSettings(SGameSettings newSettings);
 
 private:
     QSize computeMinSize();
+    void updateSizes();
 
 
 private:

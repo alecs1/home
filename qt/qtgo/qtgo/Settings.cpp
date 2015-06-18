@@ -14,15 +14,16 @@ void Settings::populateDefaultProgramSettings(SProgramSettings* defaults) {
     QColor defaultColour(206, 170, 57, 255);
     defaults->tableColour = defaultColour.name();
     defaults->soundsVolume = 100;
+    defaults->spaceOptimisations = false;
 }
 
 /*
  * MainWindow is the one sending messages using signals and slots.
  * Only let this file know about the existance of a MainWindow;
  */
-bool Settings::notifyReloadSettings() {
+bool Settings::notifyReloadProgramSettings() {
     if (messageSender != NULL) {
-        messageSender->notifyReloadSettings();
+        messageSender->notifyReloadProgramSettings();
         return true;
     }
     return false;

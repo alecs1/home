@@ -16,6 +16,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     connect(ui->soundVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(applySettings()));
     connect(ui->revertSoundsButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSounds()));
     connect(ui->revertColourButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultColour()));
+    connect(ui->revertSpaceOptimisationButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSpaceOptimisations()));
     settings = *Settings::getProgramSettings();
     populateSettings();
 
@@ -77,7 +78,7 @@ void SettingsWidget::populateSettings() {
 
 void SettingsWidget::readSettings() {
     settings.soundsVolume = ui->soundVolumeSlider->value();
-    settings.soundsVolume = ui->soundVolumeSlider->value();
+    settings.spaceOptimisations = ui->spaceOptimisationCheck->isChecked();
     printf("%s - soundVolume=%d\n", __func__, settings.soundsVolume);
 }
 
@@ -85,7 +86,7 @@ void SettingsWidget::applySettings() {
     readSettings();
     *Settings::getProgramSettings() = settings;
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), &settings);
-    Settings::notifyReloadSettings();
+    Settings::notifyReloadProgramSettings();
 }
 
 void SettingsWidget::setDefaultColour() {
@@ -100,6 +101,14 @@ void SettingsWidget::setDefaultSounds() {
     SProgramSettings aux;
     Settings::populateDefaultProgramSettings(&aux);
     settings.soundsVolume = aux.soundsVolume;
+    populateSettings();
+    applySettings();
+}
+
+void SettingsWidget::setDefaultSpaceOptimisations() {
+    SProgramSettings aux;
+    Settings::populateDefaultProgramSettings(&aux);
+    settings.spaceOptimisations = aux.spaceOptimisations;
     populateSettings();
     applySettings();
 }

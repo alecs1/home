@@ -29,6 +29,7 @@ struct SProgramSettings {
     static const int maxSoundsVolume = 1; //hack, we only accept 0 or 1 for now
     uint32_t soundsVolume = 100;
     QString tableColour;
+    bool spaceOptimisations;
 };
 
 //Extra information about a game, don't know if this is the right place
@@ -44,7 +45,7 @@ class Settings {
 public:
     static SProgramSettings* getProgramSettings();
     static void populateDefaultProgramSettings(SProgramSettings* defaults);
-    static bool notifyReloadSettings();
+    static bool notifyReloadProgramSettings();
     static void setMessageSender(MainWindow* newSender);
 private:
     static SProgramSettings settings;

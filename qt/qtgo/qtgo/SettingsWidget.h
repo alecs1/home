@@ -26,6 +26,7 @@ public slots:
     void applySettings();
     void setDefaultColour();
     void setDefaultSounds();
+    void setDefaultSpaceOptimisations();
     void show();
 
 private:

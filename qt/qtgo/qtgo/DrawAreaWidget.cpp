@@ -23,7 +23,7 @@ void DrawAreaWidget::setChildTable(GoTable *aTable) {
     table = aTable;
     delete gameSettings;
     //TODO - we actually need a signal when this changes
-    gameSettings = table->getGameSettingsPointer();
+    gameSettings = new SGameSettings(*table->getGameSettingsPointer());
     setMinimumSize(computeMinSize());
 }
 
@@ -84,6 +84,10 @@ QSize DrawAreaWidget::computeMinSize() {
 
 void DrawAreaWidget::resizeEvent(QResizeEvent* event) {
     Q_UNUSED(event);
+    updateSizes();
+}
+
+void DrawAreaWidget::updateSizes() {
     if ( !(table && gameSettings)) {
         printf("%s - it's to early to do resizing, we don't have table and settings yet' :)\n", __func__);
         return;
@@ -151,6 +155,13 @@ void DrawAreaWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void DrawAreaWidget::changeProgramSettings() {
-    resizeEvent(NULL);
+    updateSizes();
+    update();
+}
+
+void DrawAreaWidget::changeGameSettings(SGameSettings newSettings) {
+    delete gameSettings;
+    gameSettings = new SGameSettings(newSettings);
+    updateSizes();
     update();
 }
