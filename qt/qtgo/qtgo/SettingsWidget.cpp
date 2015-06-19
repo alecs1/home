@@ -11,14 +11,17 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    settings = *Settings::getProgramSettings();
+    populateSettings();
+
     connect(ui->colourButton, SIGNAL(clicked()), this, SLOT(showColourDialog()));
     //TODO - play sound at each move, to give feedback on the sound volume.
     connect(ui->soundVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(applySettings()));
+    connect(ui->spaceOptimisationCheck, SIGNAL(stateChanged(int)), this, SLOT(applySettings()));
     connect(ui->revertSoundsButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSounds()));
     connect(ui->revertColourButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultColour()));
     connect(ui->revertSpaceOptimisationButton, SIGNAL(clicked(bool)), this, SLOT(setDefaultSpaceOptimisations()));
-    settings = *Settings::getProgramSettings();
-    populateSettings();
+
 
     //TODO - hack because we don't actually control volume yet.
     ui->soundVolumeSlider->setSingleStep(SProgramSettings::maxSoundsVolume);
@@ -30,6 +33,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     qToolButtons.append(ui->colourButton);
     qToolButtons.append(ui->revertColourButton);
     qToolButtons.append(ui->revertSoundsButton);
+    qToolButtons.append(ui->revertSpaceOptimisationButton);
     for (int i = 0; i < qToolButtons.size(); i++) {
         qToolButtons[i]->setMinimumWidth(qToolButtonMinSize);
         qToolButtons[i]->setMinimumHeight(qToolButtonMinSize);
@@ -42,6 +46,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
     QList<QToolButton*> resetDefaultButtons;
     resetDefaultButtons.append(ui->revertColourButton);
     resetDefaultButtons.append(ui->revertSoundsButton);
+    resetDefaultButtons.append(ui->revertSpaceOptimisationButton);
 
     for (int i = 0; i < resetDefaultButtons.size(); i++) {
         resetDefaultButtons[i]->setIcon(setDefaultIcon);
@@ -74,6 +79,7 @@ void SettingsWidget::populateSettings() {
     ui->soundVolumeSlider->setValue(settings.soundsVolume);
     QString colourStyleSheet = "background-color: " + colour.name() + ";";
     ui->colourButton->setStyleSheet(colourStyleSheet);
+    ui->spaceOptimisationCheck->setChecked(settings.spaceOptimisations);
 }
 
 void SettingsWidget::readSettings() {

@@ -13,6 +13,7 @@ QString defaultFont = "Liberation Sans";
 DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
 {
     programSettings = Settings::getProgramSettings();
+    showBottomAndRightSymbols = !programSettings->spaceOptimisations;
     gameSettings = new SGameSettings;
     gameSettings->size = 19;
     setMinimumWidth(300);
@@ -155,6 +156,7 @@ void DrawAreaWidget::updateSizes() {
 }
 
 void DrawAreaWidget::changeProgramSettings() {
+    showBottomAndRightSymbols = !programSettings->spaceOptimisations;
     updateSizes();
     update();
 }

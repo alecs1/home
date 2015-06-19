@@ -147,12 +147,14 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
 
     programSettings->soundsVolume = json["soundsVolume"].toInt();
     programSettings->tableColour = json["tableColour"].toString();
+    programSettings->spaceOptimisations = json["spaceOptimisations"].toBool();
 
 
     QString wantedHashVal = json["hashMD5"].toString();
 
 
-    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString();
+    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString()
+            + json["spaceOptimisations"].toString();
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     QString hashVal(hashBytes.toHex().constData());
 
@@ -174,9 +176,11 @@ bool SaveFile::writeSettings(QString settingsFName, SProgramSettings* gameSettin
 
     json["soundsVolume"] = (int)gameSettings->soundsVolume;
     json["tableColour"] = gameSettings->tableColour;
+    json["spaceOptimisations"] = gameSettings->spaceOptimisations;
 
     //hash some stuff to validate the save file;
-    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString();
+    QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString()
+            + json["spaceOptimisations"].toString();
 
     //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
     json["hashedStuff"] = "soundsVolume+tableColour";
