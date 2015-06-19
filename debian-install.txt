@@ -26,6 +26,8 @@ firmware-iwlwifi firmware-linux-free firmware-linux-nonfree
 
 dev:
 qtcreator qt5-default cmake kdiff3 g++ gdb ddd ghc make python git mercurial gcj-jdk default-jdk
+android-tools-adb
 
 optional:
 libboost-dev
+
