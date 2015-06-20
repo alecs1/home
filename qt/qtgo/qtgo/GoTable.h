@@ -83,7 +83,6 @@ public:
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
 
-
     //TODO - temporary hack
     SGameSettings* getGameSettingsPointer();
 
@@ -112,6 +111,7 @@ signals:
     void crtPlayerChanged(int player, PlayerType type, PlayerType oponentType);
     void askUserConfirmation(bool ask, int colour=EMPTY); //ask the user for confirmation, dialog belongs to another widget
     void pushGameSettings(SGameSettings newSettings);
+    void highlightChanged(int col, int row);
 
 protected:
     void resizeEvent(QResizeEvent *event);

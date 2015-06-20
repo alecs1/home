@@ -22,6 +22,7 @@ DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
 
 void DrawAreaWidget::setChildTable(GoTable *aTable) {
     table = aTable;
+    QObject::connect(table, SIGNAL(highlightChanged(int,int)), this, SLOT(changeHighlight(int, int)));
     delete gameSettings;
     //TODO - we actually need a signal when this changes
     gameSettings = new SGameSettings(*table->getGameSettingsPointer());
@@ -32,39 +33,73 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
     //background
     QPainter painter(this);
     QColor background(programSettings->tableColour);
+    QColor mainColor(0, 0, 0);
+    QColor highlightLineColour(255, 0, 0, 255);
+
+    QPen mainPen;
+    mainPen.setColor(mainColor);
+    QPen highlightPen;
+    highlightPen.setColor(highlightLineColour);
+
+
     painter.fillRect(QRectF(0, 0, width(), height()), background);
 
     QFont font(defaultFont, textPointSize);
-    QFontMetrics fontMetrics = QFontMetrics(font);
+    QFont highlightFont(defaultFont, textPointSize * 1.3);
+    QFontMetrics fontMetrics(font);
+    QFontMetrics hightlightFontMetrics(highlightFont);
     float textHeight = fontMetrics.height();
     float dist = GoTable::gridDist(tableSize, gameSettings->size);
     float diameter = dist * GoTable::stoneDiameter();
-    painter.setFont(font);
+
+
     //left and right
+    QFontMetrics* actFM = &fontMetrics;
     for (int i = 0 ; i < gameSettings->size; i++) {
+        actFM = &fontMetrics;
+        if (i == highlightRow) {
+            actFM = &hightlightFontMetrics;
+            painter.setPen(highlightPen);
+            painter.setFont(highlightFont);
+        }
+        else {
+            painter.setFont(font);
+            painter.setPen(mainPen);
+        }
+
         QString text = rowNumbering[gameSettings->size-i-1];
-        int textWidth = fontMetrics.width(text);
+        int textWidth = actFM->width(text);
         qreal yPos = vOffset + dist + i * dist - textHeight/2;
-        QRectF leftRect((leftMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
+        QRectF leftRect((leftMargin - textWidth)/2, yPos, textWidth, actFM->height());
         painter.drawText(leftRect, Qt::AlignCenter, text);
         if (showBottomAndRightSymbols) {
-            QRectF rightRect(leftMargin + tablePrivateSize + (rightMargin - textWidth)/2, yPos, textWidth, fontMetrics.height());
+            QRectF rightRect(leftMargin + tablePrivateSize + (rightMargin - textWidth)/2, yPos, textWidth, actFM->height());
             painter.drawText(rightRect, Qt::AlignCenter, text);
         }
     }
 
     //top and bottom
     for (int i = 0; i < gameSettings->size; i++) {
+        actFM = &fontMetrics;
+        if (i == highlightCol) {
+            painter.setPen(highlightPen);
+            painter.setFont(highlightFont);
+            actFM = &hightlightFontMetrics;
+        }
+        else {
+            painter.setFont(font);
+            painter.setPen(mainPen);
+        }
+
         QString text = colNumbering[i];
-        int textWidth = fontMetrics.width(text);
-        QRect fontRect = fontMetrics.boundingRect(text);
+        int textWidth = actFM->width(text);
         //printf("%s - fontRect: %d, %d, %d, %d\n", __func__, fontRect.x(), fontRect.y(),
         //       fontRect.width(), fontRect.height());
         qreal xPos = leftMargin + diameter/2 + i * dist - textWidth / 2;
-        QRectF topRect(xPos, 0, textWidth, fontMetrics.height());
+        QRectF topRect(xPos, 0, textWidth, actFM->height());
         painter.drawText(topRect, Qt::AlignCenter, text);
         if (showBottomAndRightSymbols) {
-            QRectF bottomRect(xPos, topMargin + tablePrivateSize, textWidth, fontMetrics.height());
+            QRectF bottomRect(xPos, topMargin + tablePrivateSize, textWidth, actFM->height());
             painter.drawText(bottomRect, Qt::AlignCenter, text);
         }
     }
@@ -165,5 +200,11 @@ void DrawAreaWidget::changeGameSettings(SGameSettings newSettings) {
     delete gameSettings;
     gameSettings = new SGameSettings(newSettings);
     updateSizes();
+    update();
+}
+
+void DrawAreaWidget::changeHighlight(int row, int col) {
+    highlightRow = row;
+    highlightCol = col;
     update();
 }

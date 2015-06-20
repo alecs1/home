@@ -362,6 +362,7 @@ void GoTable::mouseMoveEvent(QMouseEvent* ev) {
     if (highlightRow != row || highlightCol != col) {
         highlightRow = row;
         highlightCol = col;
+        emit highlightChanged(highlightRow, highlightCol);
         update();
     }
 
@@ -382,6 +383,7 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
     QPoint pos = mouseToGameCoordinates(ev);
     highlightRow = pos.y();
     highlightCol = pos.x();
+    emit highlightChanged(highlightRow, highlightCol);
 
     if (GameCanPlaceStone(&game, pos.y(), pos.x(), crtPlayer)) {
         newStoneRow = pos.y();
@@ -528,33 +530,57 @@ void GoTable::paintEvent(QPaintEvent *) {
         tableSize = height();
     float lineWidth = tableSize / 300.0;
 
+    //TODO - move these to a common place for both table and DrawArea
+    QColor mainColor(0, 0, 0);
+    QColor highlightPosColour(255, 30, 30, 150);
+    QColor highlightLineColour(255, 0, 0, 255);
     QPainter painter(this);
 
     //lines
     QPen pen;
     pen.setWidthF(lineWidth);
-
+    pen.setColor(mainColor);
     painter.setPen(pen);
+
+    QPen lineHighlightPen = pen;
+    lineHighlightPen.setColor(highlightLineColour);
+    //the highlighted line will never be tinner than 2 pixels
+    float aux = lineWidth * 1.5;
+    if (aux < 2)
+        aux = 2;
+    lineHighlightPen.setWidthF(aux);
+
     //printf("%s - width=%d, height=%d, tableSize=%d, dist=%f, lineWidth=%f\n", __func__, width(), height(), tableSize, dist, lineWidth);
 
     //Horizontal lines y is resolved to an int, lines will have exactly same width without AA
     for(int i = 0; i < game.size; i++) {
+        if (i == highlightRow)
+            continue;
         int y = dist + i * dist;
         painter.drawLine(QLineF(dist, y, game.size*dist, y));
     }
     //Vertical x resolved to an int...
     for (int i = 0; i < game.size; i++) {
+        if (i == highlightCol)
+            continue;
         int x = dist + i * dist;
         painter.drawLine(QLineF(x, dist, x, game.size*dist));
     }
 
+
     //highlighted position
     if (highlightRow != - 1) {
+        painter.setPen(lineHighlightPen);
+        painter.drawLine(QLineF(dist, dist + highlightRow*dist,
+                                 game.size*dist, dist + highlightRow*dist));
+        painter.drawLine(QLineF(dist + highlightCol*dist, dist,
+                                dist + highlightCol*dist, game.size*dist));
+
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
         float RADIUS_SCALE = 1.3;
         float highlightRadius = dist / RADIUS_SCALE;
 
-        pen.setColor(QColor(255, 30, 30, 150));
+        pen.setColor(highlightPosColour);
         pen.setWidthF(dist/5);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(pen);

@@ -22,11 +22,11 @@ signals:
 public slots:
     void changeProgramSettings();
     void changeGameSettings(SGameSettings newSettings);
+    void changeHighlight(int row, int col);
 
 private:
     QSize computeMinSize();
     void updateSizes();
-
 
 private:
     GoTable* table = NULL;
@@ -35,6 +35,7 @@ private:
     SProgramSettings* programSettings = NULL;
     bool showBottomAndRightSymbols = false;
     int tableSize;
+    int highlightRow = -1, highlightCol = -1;
     float leftMargin, rightMargin, topMargin, bottomMargin;
     float hOffset, vOffset;
     float tablePrivateSize;
