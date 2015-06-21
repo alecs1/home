@@ -17,7 +17,7 @@ public:
     explicit RoundInfo(QWidget *parent = 0);
     ~RoundInfo();
     void setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType);
-    void changeLayoutDirection(bool horizontal);
+    void setLayoutDirection(bool horizontal);
 
 public slots:
     void animationStep();
@@ -39,8 +39,9 @@ private:
     QPixmap* crtPlayerPixmap;
 
     //NOTE: keep this in sync when changing the ui file.
-    QList<QWidget*> widgets;
+    //QList<QWidget*> widgets;
 
+    bool horizLayout = true;
     int player;
     PlayerType playerType;
 

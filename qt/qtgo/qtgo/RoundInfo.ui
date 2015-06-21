@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>244</width>
-    <height>57</height>
+    <width>195</width>
+    <height>40</height>
    </rect>
   </property>
   <property name="sizePolicy">
    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
     <horstretch>1</horstretch>
-    <verstretch>0</verstretch>
+    <verstretch>1</verstretch>
    </sizepolicy>
   </property>
   <property name="windowTitle">
@@ -43,35 +43,6 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="0" column="2">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::MinimumExpanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>5</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="colourLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>stone picture</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="1">
       <layout class="QVBoxLayout" name="playerTypeLayout">
        <property name="spacing">
@@ -86,7 +57,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Player type picture</string>
+          <string>Player picture</string>
          </property>
         </widget>
        </item>
@@ -105,8 +76,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Player type
-text</string>
+          <string>Player text</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
@@ -130,6 +100,39 @@ text</string>
         </spacer>
        </item>
       </layout>
+     </item>
+     <item row="0" column="2">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::MinimumExpanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="colourLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Stone colour
+picture</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

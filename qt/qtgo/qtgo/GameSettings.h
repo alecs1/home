@@ -20,8 +20,10 @@ class GameSettings : public QWidget {
 Q_OBJECT
 
 public:
-    GameSettings(QWidget* parent);
+    explicit GameSettings(QWidget* parent);
     ~GameSettings();
+    RoundInfo* popRoundInfo();
+    void pushBackRoundInfo();
 
 signals:
     //TODO - having two functions with SGameSettigns seems like duplicating

@@ -136,6 +136,18 @@ GameSettings::~GameSettings() {
     delete confirmMoveDialog;
 }
 
+//remove the roundInfo from the layout but stil own it;
+RoundInfo* GameSettings::popRoundInfo() {
+    ui->topRow->removeWidget(roundInfo);
+    return roundInfo;
+}
+
+void GameSettings::pushBackRoundInfo() {
+    ui->topRow->insertWidget(0, roundInfo);
+    roundInfo->setParent(this);
+}
+
+
 void GameSettings::setGameState(GameState state) {
     gameState = state;
     if (state == GameState::Resumed) {

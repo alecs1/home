@@ -9,6 +9,7 @@
 #include "GameSettings.h"
 #include "SaveFile.h"
 #include "Settings.h"
+#include "RoundInfo.h"
 
 #include "Global.h"
 
@@ -162,14 +163,39 @@ void MainWindow::notifyReloadProgramSettings() {
 }
 
 void MainWindow::setMinimalInterface() {
-    QPropertyAnimation *animation = new QPropertyAnimation(gameSettingsWidget, "geometry");
-    animation->setDuration(1000);
+    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
+    panelAnim->setDuration(1000);
     QRect original = gameSettingsWidget->geometry();
     QRect final = original;
     final.translate(-original.width(), -original.height());
-    animation->setStartValue(original);
-    animation->setEndValue(final);
+    panelAnim->setStartValue(original);
+    panelAnim->setEndValue(final);
     ui->gridLayout->removeWidget(gameSettingsWidget);
     gameSettingsWidget->setAttribute(Qt::WA_TranslucentBackground);
-    animation->start();
+    panelAnim->start();
+
+    if (roundInfo == NULL)
+        roundInfo = gameSettingsWidget->popRoundInfo();
+    roundInfo->setParent(this);
+    roundInfo->show();
+    roundInfo->setLayoutDirection(false);
+    roundInfo->move(width(), height());
+    original = roundInfo->geometry();
+    final = original;
+    final.translate(-original.width(), -height());
+    printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
+           original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
+    QPropertyAnimation *roundInfoAnim = new QPropertyAnimation(roundInfo, "geometry");
+    roundInfoAnim->setDuration(1000);
+    roundInfoAnim->setStartValue(original);
+    roundInfoAnim->setEndValue(final);
+    roundInfoAnim->start();
+
+    QObject::connect(roundInfoAnim, SIGNAL(finished()), this, SLOT(transitionDone()));
+}
+
+void MainWindow::transitionDone() {
+    printf("%s\n", __func__);
+    printf("%s - roundInfo.visible=%d\n", __func__, roundInfo->isVisible());
+    ui->gridLayout->addWidget(roundInfo, 0, 1);
 }

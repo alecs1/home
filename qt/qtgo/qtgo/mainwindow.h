@@ -7,6 +7,7 @@
 class DrawAreaWidget;
 class GoTable;
 class GameSettings;
+class RoundInfo;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -32,6 +33,7 @@ public slots:
     void loadGame();
     void notifyReloadProgramSettings();
     void setMinimalInterface();
+    void transitionDone();
 
 signals:
     void programSettingsChanged();
@@ -42,6 +44,7 @@ private:
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
     GoTable* table;
+    RoundInfo* roundInfo = NULL;
     QFontDatabase fontDatabase;
 };
 

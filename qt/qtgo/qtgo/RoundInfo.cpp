@@ -18,8 +18,6 @@ RoundInfo::RoundInfo(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    widgets.append(ui->playerTypeLayout);
-
     QSvgRenderer svgR;
 
     //this is a fixed size during gameplay, but yet computed at program start-up.
@@ -38,7 +36,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
     const float STONE_SCALE= 5;
     diameter = STONE_SCALE * defaultFontSize;
     ui->colourLabel->resize(diameter, diameter);
-    //ui->colourLabel->setMinimumSize(QSize(diameter, diameter));
+    ui->colourLabel->setMinimumSize(QSize(diameter, diameter));
 
     setMinimumHeight(diameter);
 
@@ -95,6 +93,11 @@ RoundInfo::RoundInfo(QWidget *parent) :
 #endif
 
     setCurrentPlayer(BLACK, PlayerType::LocalHuman, PlayerType::AI);
+    setAttribute(Qt::WA_TranslucentBackground);
+    QList<QWidget*> children = findChildren<QWidget*>();
+    foreach(QWidget* child, children) {
+        child->setAttribute(Qt::WA_TranslucentBackground);
+    }
 
     printf("%s - final sizes: widget:%dx%d, colourLabel:%dx%d, playerTypeLabel:%dx%d\n",
            __func__, width(), height(), ui->colourLabel->width(), ui->colourLabel->height(),
@@ -161,14 +164,20 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
     update();
 }
 
-void RoundInfo::changeLayoutDirection(bool horizontal) {
+void RoundInfo::setLayoutDirection(bool horizontal) {
+    if (horizontal == horizLayout)
+        return;
+    QRect auxSize = ui->playerTypeLayout->geometry();
+    ui->gridLayout->removeItem(ui->playerTypeLayout);
     if (horizontal) {
-
-
+        ui->gridLayout->addLayout(ui->playerTypeLayout, 0, 1);
+        resize(width() + auxSize.width(), height() - auxSize.height());
     }
     else {
-
+        ui->gridLayout->addLayout(ui->playerTypeLayout, 1, 0);
+        resize(width() - auxSize.width(), height() + auxSize.height());
     }
+    //resizeEvent(NULL);
 }
 
 void RoundInfo::animationStep() {
