@@ -30,6 +30,7 @@ LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L
 
 # Input
 HEADERS += GameSettings.h \
+           MiniGameSettings.h \
            GameStruct.h \
            Global.h \
            DrawAreaWidget.h \
@@ -63,6 +64,7 @@ FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          SettingsWidget.ui \
          SettingsDialog.ui
 SOURCES += GameSettings.cpp \
+           MiniGameSettings.cpp \
            GameStruct.cpp \
            DrawAreaWidget.cpp \
            GoTable.cpp \
