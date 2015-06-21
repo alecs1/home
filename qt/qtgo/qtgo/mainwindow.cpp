@@ -1,4 +1,5 @@
 #include <QFileDialog>
+#include <QPropertyAnimation>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -49,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
         Settings::populateDefaultProgramSettings(programSettings);
 
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if settings emits a signal from inside the constructor
-    GameSettings* settings = new GameSettings(this);
+    gameSettingsWidget = new GameSettings(this);
 
     drawArea = new DrawAreaWidget(this);
     table = new GoTable(drawArea);
@@ -67,32 +68,33 @@ MainWindow::MainWindow(QWidget *parent) :
     int minHeight = drawArea->minimumSize().height();
 
 
-    ui->gridLayout->addWidget(settings, 0, 1);
+    ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
 
     QObject::connect(this, SIGNAL(programSettingsChanged()), table, SLOT(changeProgramSettings()));
     QObject::connect(this, SIGNAL(programSettingsChanged()), drawArea, SLOT(changeProgramSettings()));
-    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
-    QObject::connect(settings, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
+    QObject::connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+    QObject::connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
+    QObject::connect(gameSettingsWidget, SIGNAL(setMinimalInterface()), this, SLOT(setMinimalInterface()));
 
-    QObject::connect(table, SIGNAL(gameStateChanged(GameState)), settings, SLOT(setGameState(GameState)));
-    QObject::connect(table, SIGNAL(estimateScoreChanged(float)), settings, SLOT(setScoreEstimate(float)));
-    QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), settings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
-    QObject::connect(table, SIGNAL(askUserConfirmation(bool, int)), settings, SLOT(showConfirmButton(bool, int)));
-    QObject::connect(table, SIGNAL(pushGameSettings(SGameSettings)), settings, SLOT(receiveSettings(SGameSettings)));
-    QObject::connect(settings, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
-    QObject::connect(settings, SIGNAL(finishGamePerform(bool)), table, SLOT(finish(bool)));
-    QObject::connect(settings, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
-    QObject::connect(settings, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
-    QObject::connect(settings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
-    QObject::connect(settings, SIGNAL(undoMove()), table, SLOT(undoMove()));
-    QObject::connect(settings, SIGNAL(showHints()), table, SLOT(showPlayHints()));
-    QObject::connect(settings, SIGNAL(saveGame()), this, SLOT(saveGame()));
-    QObject::connect(settings, SIGNAL(loadGame()), this, SLOT(loadGame()));
+    QObject::connect(table, SIGNAL(gameStateChanged(GameState)), gameSettingsWidget, SLOT(setGameState(GameState)));
+    QObject::connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
+    QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameSettingsWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    QObject::connect(table, SIGNAL(askUserConfirmation(bool, int)), gameSettingsWidget, SLOT(showConfirmButton(bool, int)));
+    QObject::connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameSettingsWidget, SLOT(receiveSettings(SGameSettings)));
+    QObject::connect(gameSettingsWidget, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    QObject::connect(gameSettingsWidget, SIGNAL(finishGamePerform(bool)), table, SLOT(finish(bool)));
+    QObject::connect(gameSettingsWidget, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
+    QObject::connect(gameSettingsWidget, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
+    QObject::connect(gameSettingsWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+    QObject::connect(gameSettingsWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
+    QObject::connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
+    QObject::connect(gameSettingsWidget, SIGNAL(saveGame()), this, SLOT(saveGame()));
+    QObject::connect(gameSettingsWidget, SIGNAL(loadGame()), this, SLOT(loadGame()));
 
 
     table->checkForResumeGame();
 
-    minWidth += settings->sizeHint().width();
+    minWidth += gameSettingsWidget->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;
 
@@ -157,4 +159,17 @@ void MainWindow::loadGame() {
 
 void MainWindow::notifyReloadProgramSettings() {
     emit programSettingsChanged();
+}
+
+void MainWindow::setMinimalInterface() {
+    QPropertyAnimation *animation = new QPropertyAnimation(gameSettingsWidget, "geometry");
+    animation->setDuration(1000);
+    QRect original = gameSettingsWidget->geometry();
+    QRect final = original;
+    final.translate(-original.width(), -original.height());
+    animation->setStartValue(original);
+    animation->setEndValue(final);
+    ui->gridLayout->removeWidget(gameSettingsWidget);
+    gameSettingsWidget->setAttribute(Qt::WA_TranslucentBackground);
+    animation->start();
 }

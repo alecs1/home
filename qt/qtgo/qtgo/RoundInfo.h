@@ -16,8 +16,8 @@ class RoundInfo : public QWidget
 public:
     explicit RoundInfo(QWidget *parent = 0);
     ~RoundInfo();
-    //void paintEvent(QPaintEvent *);
     void setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType);
+    void changeLayoutDirection(bool horizontal);
 
 public slots:
     void animationStep();
@@ -37,6 +37,9 @@ private:
     QPixmap* playerHuman;
     QPixmap* playerNetwork;
     QPixmap* crtPlayerPixmap;
+
+    //NOTE: keep this in sync when changing the ui file.
+    QList<QWidget*> widgets;
 
     int player;
     PlayerType playerType;

@@ -67,6 +67,8 @@ GameSettings::GameSettings(QWidget *parent):
     settingsAction = mainMenu->addAction("Settings");
     helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
+    smallInterfaceAction = mainMenu->addAction("Larger table");
+
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));
@@ -89,6 +91,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
     connect(helpAction, SIGNAL(triggered()), this, SLOT(showHelp()));
+    connect(smallInterfaceAction, SIGNAL(triggered(bool)), this, SIGNAL(setMinimalInterface()));
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     ui->button19x19->setChecked(true);

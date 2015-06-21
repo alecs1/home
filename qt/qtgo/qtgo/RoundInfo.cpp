@@ -18,6 +18,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    widgets.append(ui->playerTypeLayout);
 
     QSvgRenderer svgR;
 
@@ -160,6 +161,16 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
     update();
 }
 
+void RoundInfo::changeLayoutDirection(bool horizontal) {
+    if (horizontal) {
+
+
+    }
+    else {
+
+    }
+}
+
 void RoundInfo::animationStep() {
     printf("%s - angle=%g, animationChains=%d\n", __func__, angle, animationChains);
     if (playerType != PlayerType::AI) {
@@ -177,7 +188,3 @@ void RoundInfo::animationStep() {
     angle += rotationPerPeriod;
     QTimer::singleShot(rotationPeriod, this, SLOT(animationStep()));
 }
-
-//QSize RoundInfo::sizeHint() const {
-//    int width = ui->colourLabel->wi
-//}

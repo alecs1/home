@@ -6,6 +6,7 @@
 
 class DrawAreaWidget;
 class GoTable;
+class GameSettings;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -29,14 +30,15 @@ public:
 public slots:
     void saveGame();
     void loadGame();
-
     void notifyReloadProgramSettings();
+    void setMinimalInterface();
 
 signals:
     void programSettingsChanged();
 
 
 private:
+    GameSettings* gameSettingsWidget = NULL;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
     GoTable* table;

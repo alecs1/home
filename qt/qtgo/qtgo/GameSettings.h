@@ -35,6 +35,7 @@ signals:
     void gameSettingsChanged(SGameSettings settings);
     void saveGame();
     void loadGame();
+    void setMinimalInterface();
 
 
 public slots:
@@ -83,6 +84,7 @@ private:
     QAction* aboutAction;
     QAction* helpAction;
     QAction* settingsAction;
+    QAction* smallInterfaceAction;
 };
 
 
