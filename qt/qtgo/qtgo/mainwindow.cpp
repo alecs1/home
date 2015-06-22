@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->centralWidget->setLayout(ui->gridLayout);
     ui->gridLayout->addWidget(drawArea, 0, 0);
-    ui->gridLayout->setSpacing(1);
+    ui->gridLayout->setSpacing(0);
     ui->gridLayout->setColumnStretch(0, 5);
     ui->gridLayout->setColumnMinimumWidth(0, drawArea->minimumWidth());
     ui->gridLayout->setRowMinimumHeight(0, drawArea->minimumHeight());
@@ -77,10 +77,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
     QObject::connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
     QObject::connect(gameSettingsWidget, SIGNAL(setMinimalInterface()), this, SLOT(setMinimalInterface()));
-
     QObject::connect(table, SIGNAL(gameStateChanged(GameState)), gameSettingsWidget, SLOT(setGameState(GameState)));
     QObject::connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameSettingsWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+
     QObject::connect(table, SIGNAL(askUserConfirmation(bool, int)), gameSettingsWidget, SLOT(showConfirmButton(bool, int)));
     QObject::connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameSettingsWidget, SLOT(receiveSettings(SGameSettings)));
     QObject::connect(gameSettingsWidget, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
@@ -174,17 +174,57 @@ void MainWindow::setMinimalInterface() {
     ui->gridLayout->removeWidget(gameSettingsWidget);
     panelAnim->start();
 
+
+    if (miniGameSettings == NULL)
+        createMiniInterface();
+
+    miniGameSettings->show();
+    miniGameSettings->resize(gameSettingsWidget->width()/2, gameSettingsWidget->height()/2);
+
+
+    miniGameSettings->move(width(), height());
+    original = miniGameSettings->geometry();
+    final = original;
+    final.translate(-original.width(), -height()/2);
+    printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
+           original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
+    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
+    miniSettingsAnim->setDuration(1000);
+    miniSettingsAnim->setStartValue(original);
+    miniSettingsAnim->setEndValue(final);
+    miniSettingsAnim->start();
+    QObject::connect(miniSettingsAnim, SIGNAL(finished()), this, SLOT(transitionToMinDone()));
+
     if (roundInfo == NULL)
         roundInfo = gameSettingsWidget->popRoundInfo();
-    if (miniGameSettings == NULL)
-        miniGameSettings = new MiniGameSettings(this);
     roundInfo->setParent(this);
     roundInfo->show();
     roundInfo->setLayoutDirection(false);
     roundInfo->move(width() - roundInfo->width(), 0);
+}
+
+void MainWindow::transitionToMinDone() {
+    printf("%s\n", __func__);
+    printf("%s - roundInfo.visible=%d\n", __func__, roundInfo->isVisible());
+    ui->gridLayout->addWidget(miniGameSettings, 0, 1);
+    miniGameSettings->addRoundInfo(roundInfo);
+}
+
+void MainWindow::setFullInterface() {
+    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
+    panelAnim->setDuration(1000);
+    QRect original = gameSettingsWidget->geometry();
+    QRect final = original;
+    final.translate(original.width(), original.height());
+    panelAnim->setStartValue(original);
+    panelAnim->setEndValue(final);
+    panelAnim->start();
+    QObject::connect(panelAnim, SIGNAL(finished()), this, SLOT(transitionToFullDone()));
+
+    ui->gridLayout->removeWidget(miniGameSettings);
     original = miniGameSettings->geometry();
     final = original;
-    final.translate(-original.width(), -height());
+    final.translate(width() + original.width(), height() + original.height());
     printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
            original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
     QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
@@ -193,15 +233,22 @@ void MainWindow::setMinimalInterface() {
     miniSettingsAnim->setEndValue(final);
     miniSettingsAnim->start();
 
-    ui->gridLayout->setSpacing(0);
-    //layout()->setContentsMargins(0, 0, 0, 0);
-
-    QObject::connect(miniSettingsAnim, SIGNAL(finished()), this, SLOT(transitionDone()));
+    if (roundInfo == NULL)
+        roundInfo = gameSettingsWidget->popRoundInfo();
+    roundInfo->setParent(this);
+    roundInfo->show();
+    roundInfo->setLayoutDirection(true);
+    roundInfo->move(width() - gameSettingsWidget->width(), 0);
 }
 
-void MainWindow::transitionDone() {
-    printf("%s\n", __func__);
-    printf("%s - roundInfo.visible=%d\n", __func__, roundInfo->isVisible());
-    ui->gridLayout->addWidget(miniGameSettings, 0, 1);
-    miniGameSettings->addRoundInfo(roundInfo);
+void MainWindow::transitionToFullDone() {
+     ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
+     gameSettingsWidget->pushBackRoundInfo();
 }
+
+void MainWindow::createMiniInterface() {
+    miniGameSettings = new MiniGameSettings(this);
+    QObject::connect(miniGameSettings, SIGNAL(setFullInterface()), this, SLOT(setFullInterface()));
+    QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), miniGameSettings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+}
+

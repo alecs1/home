@@ -26,6 +26,10 @@ MiniGameSettings::MiniGameSettings(QWidget* parent) :
     layoutP->setSpacing(10);
     layoutP->setContentsMargins(0, 0, 0, 0);
 
+    QObject::connect(passButton, SIGNAL(clicked(bool)), this, SIGNAL(userPassedMove()));
+    QObject::connect(undoButton, SIGNAL(clicked(bool)), this, SIGNAL(undoMove()));
+    QObject::connect(fullInterfaceButton, SIGNAL(clicked(bool)), this, SIGNAL(setFullInterface()));
+
 
     setAutoFillBackground(true);
     QPalette pal(palette());
@@ -39,11 +43,25 @@ void MiniGameSettings::addRoundInfo(RoundInfo* aRoundInfo) {
     layoutP->insertWidget(0, (QWidget*)roundInfo);
 }
 
+void MiniGameSettings::removeRoundInfo() {
+    layoutP->removeWidget((QWidget*)roundInfo);
+}
+
 void MiniGameSettings::changeProgramSettings() {
     QPalette pal(palette());
     QColor backgCol(Settings::getProgramSettings()->tableColour);
     pal.setColor(QPalette::Background, backgCol);
     setPalette(pal);
     update();
+}
+
+void MiniGameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
+
+    bool enableBlockingGroup = true;
+    if (type == PlayerType::AI)
+        enableBlockingGroup = false;
+
+    passButton->setEnabled(enableBlockingGroup);
+    undoButton->setEnabled(enableBlockingGroup);
 }
 

@@ -34,10 +34,15 @@ public slots:
     void loadGame();
     void notifyReloadProgramSettings();
     void setMinimalInterface();
-    void transitionDone();
+    void transitionToMinDone();
+    void setFullInterface();
+    void transitionToFullDone();
 
 signals:
     void programSettingsChanged();
+
+private:
+    void createMiniInterface();
 
 
 private:

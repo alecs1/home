@@ -51,7 +51,7 @@ git checkout origin/master path/to/file
 
 
 Image processing
-#remove exif data
+#remove exif data, exiv2 in aptitude
 exiv rm file.extension
 
 

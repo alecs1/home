@@ -156,26 +156,23 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
     ui->playerTypeLabel->setPixmap(*crtPlayerPixmap);
     ui->playerTypeText->setText(playerTypeString);
 
-//    int crtWidth = ui->playerTypeText->width();
-//    int preferredHeight = ui->playerTypeText->heightForWidth(crtWidth);
-//    setMinimumHeight(preferredHeight + ui->playerTypeLabel->height());
-    //printf("%s - pixmap=%p, player=%d\n", __func__, crtPixmap, player);
-
     update();
 }
 
 void RoundInfo::setLayoutDirection(bool horizontal) {
-    if (horizontal == horizLayout)
+    if (horizLayout == horizontal)
         return;
-    //QRect auxSize = ui->playerTypeLayout->geometry();
+    horizLayout == horizontal;
+    //Resizing before laying out to make animations look nice
+    QRect auxSize = ui->playerTypeLayout->geometry();
     ui->gridLayout->removeItem(ui->playerTypeLayout);
     if (horizontal) {
         ui->gridLayout->addLayout(ui->playerTypeLayout, 0, 1);
-        //resize(width() + auxSize.width(), height() - auxSize.height());
+        resize(width() + auxSize.width(), height() - auxSize.height());
     }
     else {
         ui->gridLayout->addLayout(ui->playerTypeLayout, 1, 0);
-        //resize(width() - auxSize.width(), height() + auxSize.height());
+        resize(width() - auxSize.width(), height() + auxSize.height());
     }
 }
 
