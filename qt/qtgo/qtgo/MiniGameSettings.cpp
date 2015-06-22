@@ -17,7 +17,7 @@ MiniGameSettings::MiniGameSettings(QWidget* parent) :
     undoButton->setText("Undo");
     undoButton->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     fullInterfaceButton = new QToolButton(this);
-    fullInterfaceButton->setText("Unhide\nbuttons");
+    fullInterfaceButton->setText("Show all\nbuttons");
     fullInterfaceButton->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     layoutP->insertWidget(1, passButton);
     layoutP->addWidget(undoButton);

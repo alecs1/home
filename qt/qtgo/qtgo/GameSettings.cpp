@@ -105,7 +105,7 @@ GameSettings::GameSettings(QWidget *parent):
 
     roundInfo = new RoundInfo(this);
     ui->topRow->insertWidget(0, roundInfo);
-    showingRoundInfo = false;
+    roundInfoVisible = false;
     roundInfo->hide();
     printf("%s - roundInfo:%dx%d\n",
            __func__, roundInfo->width(), roundInfo->height());
@@ -117,7 +117,7 @@ GameSettings::GameSettings(QWidget *parent):
 
     //ui->komiEdit->hide();
 
-    showScore = false;
+    scoreVisible = false;
     setGameState(GameState::Initial);
 
     confirmMoveDialog = NULL;
@@ -145,6 +145,7 @@ RoundInfo* GameSettings::popRoundInfo() {
 void GameSettings::pushBackRoundInfo() {
     ui->topRow->insertWidget(0, roundInfo);
     roundInfo->setParent(this);
+    roundInfo->setVisible(roundInfoVisible);
 }
 
 
@@ -163,7 +164,7 @@ void GameSettings::setGameState(GameState state) {
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         ui->scoreEstimateButton->show();
-        showingRoundInfo = true;
+        roundInfoVisible = true;
     }
     else if (state == GameState::Initial) {
         ui->scoreEstimateButton->hide();
@@ -185,13 +186,13 @@ void GameSettings::setGameState(GameState state) {
         blackPlayer->enableChoosingPlayer(false);
         ui->scoreEstimateButton->show();
         setScoreEstimate(0);
-        showingRoundInfo = true;//TODO - get rid of this variable
+        roundInfoVisible = true;//TODO - get rid of this variable
     }
     else if (state == GameState::Stopped) {
         ui->launchButton->show();
         ui->launchButton->setText("Start");
         ui->finishButton->hide();
-        if (showingRoundInfo == true) {
+        if (roundInfoVisible == true) {
             roundInfo->hide();
             ui->menuLauncher1->hide();
         }
@@ -207,7 +208,7 @@ void GameSettings::setGameState(GameState state) {
         whitePlayer->enableChoosingPlayer(true);
         blackPlayer->enableChoosingPlayer(true);
         //ui->scoreEstimateButton->hide();
-        showingRoundInfo = false;
+        roundInfoVisible = false;
     }
 }
 
@@ -218,7 +219,7 @@ void GameSettings::setScoreEstimate(float score) {
 
 void GameSettings::updateScoreEstimateButton() {
     QString text;
-    if (showScore) {
+    if (scoreVisible) {
         text = "White: ";
         if (scoreEstimate < 0)
             text = "Black: ";
@@ -291,16 +292,16 @@ void GameSettings::showConfirmButton(bool show, int colour) {
 }
 
 void GameSettings::toggleShowEstimateScore() {
-    if (showScore)
+    if (scoreVisible)
         setShowScoreEstimate(false);
     else
         setShowScoreEstimate(true);
 }
 
 void GameSettings::setShowScoreEstimate(bool show) {
-    showScore = show;
+    scoreVisible = show;
     updateScoreEstimateButton();
-    emit doEstimateScore(showScore);
+    emit doEstimateScore(scoreVisible);
 }
 
 void GameSettings::showMenu() {

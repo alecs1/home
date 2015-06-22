@@ -163,6 +163,7 @@ void MainWindow::notifyReloadProgramSettings() {
     emit programSettingsChanged();
 }
 
+//TODO - does QPropertyAnimation cause a memory leak
 void MainWindow::setMinimalInterface() {
     QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
     panelAnim->setDuration(1000);
@@ -186,8 +187,6 @@ void MainWindow::setMinimalInterface() {
     original = miniGameSettings->geometry();
     final = original;
     final.translate(-original.width(), -height()/2);
-    printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
-           original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
     QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
     miniSettingsAnim->setDuration(1000);
     miniSettingsAnim->setStartValue(original);
@@ -199,8 +198,15 @@ void MainWindow::setMinimalInterface() {
         roundInfo = gameSettingsWidget->popRoundInfo();
     roundInfo->setParent(this);
     roundInfo->show();
+    roundInfo->move(width() - gameSettingsWidget->width(), 0);
     roundInfo->setLayoutDirection(false);
-    roundInfo->move(width() - roundInfo->width(), 0);
+    original = roundInfo->geometry();
+    final = original;
+    final.moveTo(width() - roundInfo->width(), 0);
+    QPropertyAnimation *roundInfoAnim = new QPropertyAnimation(roundInfo, "geometry");
+    roundInfoAnim->setStartValue(original);
+    roundInfoAnim->setEndValue(final);
+    roundInfoAnim->start();
 }
 
 void MainWindow::transitionToMinDone() {
@@ -238,7 +244,14 @@ void MainWindow::setFullInterface() {
     roundInfo->setParent(this);
     roundInfo->show();
     roundInfo->setLayoutDirection(true);
-    roundInfo->move(width() - gameSettingsWidget->width(), 0);
+    roundInfo->move(width() - miniGameSettings->width(), 0);
+    original = roundInfo->geometry();
+    final = original;
+    final.moveTo(width() - miniGameSettings->width()*2.5, 0); //maybe the full geometry has never been shown
+    QPropertyAnimation *roundInfoAnim = new QPropertyAnimation(roundInfo, "geometry");
+    roundInfoAnim->setStartValue(original);
+    roundInfoAnim->setEndValue(final);
+    roundInfoAnim->start();
 }
 
 void MainWindow::transitionToFullDone() {

@@ -73,9 +73,9 @@ private:
     SGameSettings settings;
     PlayerWidget* blackPlayer;
     PlayerWidget* whitePlayer;
-    bool showingRoundInfo;
+    bool roundInfoVisible;
     RoundInfo* roundInfo;
-    bool showScore;
+    bool scoreVisible;
     float scoreEstimate;
     GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;

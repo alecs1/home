@@ -162,7 +162,7 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
 void RoundInfo::setLayoutDirection(bool horizontal) {
     if (horizLayout == horizontal)
         return;
-    horizLayout == horizontal;
+    horizLayout = horizontal;
     //Resizing before laying out to make animations look nice
     QRect auxSize = ui->playerTypeLayout->geometry();
     ui->gridLayout->removeItem(ui->playerTypeLayout);
