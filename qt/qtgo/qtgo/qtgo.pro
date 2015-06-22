@@ -52,8 +52,7 @@ HEADERS += GameSettings.h \
            SettingsWidget.h \
            SettingsDialog.h \
            Utils.h \
-           Settings.h \
-    MiniSettingsWidget.h
+           Settings.h
 FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
@@ -85,8 +84,7 @@ SOURCES += GameSettings.cpp \
            SettingsWidget.cpp \
            SettingsDialog.cpp \
            Utils.cpp \
-           Settings.cpp \
-    MiniSettingsWidget.cpp
+           Settings.cpp
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \

@@ -513,7 +513,7 @@ void GoTable::updateSizes() {
 
 float GoTable::gridDist(float tableSize, int gameSize) {
     float ret = tableSize / (gameSize + 1);
-    printf("%s - tableSize=%f, gameSize=%d, ret=%f\n", __func__, tableSize, gameSize, ret);
+    //printf("%s - tableSize=%f, gameSize=%d, ret=%f\n", __func__, tableSize, gameSize, ret);
     return ret;
 }
 

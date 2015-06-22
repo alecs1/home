@@ -50,6 +50,10 @@ git diff --stat origin/master
 git checkout origin/master path/to/file
 
 
+Image processing
+#remove exif data
+exiv rm file.extension
+
 
 Kernel:
 Harddisk

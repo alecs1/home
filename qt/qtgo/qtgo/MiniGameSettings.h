@@ -4,17 +4,22 @@
 #include <QWidget>
 
 class QToolButton;
+class RoundInfo;
 class QVBoxLayout;
 
 class MiniGameSettings : public QWidget {
 Q_OBJECT
 public:
     explicit MiniGameSettings(QWidget* parent);
+    void addRoundInfo(RoundInfo* aRoundInfo);
+public slots:
+    void changeProgramSettings();
 private:
-    QVBoxLayout* layout = NULL;
+    RoundInfo* roundInfo = NULL;
     QToolButton* passButton = NULL;
     QToolButton* undoButton = NULL;
-    QToolButton* fullInterface = NULL;
+    QToolButton* fullInterfaceButton = NULL;
+    QVBoxLayout* layoutP;
 };
 
 #endif // MINISETTINGSWIDGET_H

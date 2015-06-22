@@ -167,17 +167,16 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
 void RoundInfo::setLayoutDirection(bool horizontal) {
     if (horizontal == horizLayout)
         return;
-    QRect auxSize = ui->playerTypeLayout->geometry();
+    //QRect auxSize = ui->playerTypeLayout->geometry();
     ui->gridLayout->removeItem(ui->playerTypeLayout);
     if (horizontal) {
         ui->gridLayout->addLayout(ui->playerTypeLayout, 0, 1);
-        resize(width() + auxSize.width(), height() - auxSize.height());
+        //resize(width() + auxSize.width(), height() - auxSize.height());
     }
     else {
         ui->gridLayout->addLayout(ui->playerTypeLayout, 1, 0);
-        resize(width() - auxSize.width(), height() + auxSize.height());
+        //resize(width() - auxSize.width(), height() + auxSize.height());
     }
-    //resizeEvent(NULL);
 }
 
 void RoundInfo::animationStep() {

@@ -8,6 +8,7 @@ class DrawAreaWidget;
 class GoTable;
 class GameSettings;
 class RoundInfo;
+class MiniGameSettings;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -41,6 +42,7 @@ signals:
 
 private:
     GameSettings* gameSettingsWidget = NULL;
+    MiniGameSettings* miniGameSettings = NULL;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
     GoTable* table;

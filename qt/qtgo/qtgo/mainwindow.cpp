@@ -10,6 +10,7 @@
 #include "SaveFile.h"
 #include "Settings.h"
 #include "RoundInfo.h"
+#include "MiniGameSettings.h"
 
 #include "Global.h"
 
@@ -171,31 +172,36 @@ void MainWindow::setMinimalInterface() {
     panelAnim->setStartValue(original);
     panelAnim->setEndValue(final);
     ui->gridLayout->removeWidget(gameSettingsWidget);
-    gameSettingsWidget->setAttribute(Qt::WA_TranslucentBackground);
     panelAnim->start();
 
     if (roundInfo == NULL)
         roundInfo = gameSettingsWidget->popRoundInfo();
+    if (miniGameSettings == NULL)
+        miniGameSettings = new MiniGameSettings(this);
     roundInfo->setParent(this);
     roundInfo->show();
     roundInfo->setLayoutDirection(false);
-    roundInfo->move(width(), height());
-    original = roundInfo->geometry();
+    roundInfo->move(width() - roundInfo->width(), 0);
+    original = miniGameSettings->geometry();
     final = original;
     final.translate(-original.width(), -height());
     printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
            original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
-    QPropertyAnimation *roundInfoAnim = new QPropertyAnimation(roundInfo, "geometry");
-    roundInfoAnim->setDuration(1000);
-    roundInfoAnim->setStartValue(original);
-    roundInfoAnim->setEndValue(final);
-    roundInfoAnim->start();
+    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
+    miniSettingsAnim->setDuration(1000);
+    miniSettingsAnim->setStartValue(original);
+    miniSettingsAnim->setEndValue(final);
+    miniSettingsAnim->start();
 
-    QObject::connect(roundInfoAnim, SIGNAL(finished()), this, SLOT(transitionDone()));
+    ui->gridLayout->setSpacing(0);
+    //layout()->setContentsMargins(0, 0, 0, 0);
+
+    QObject::connect(miniSettingsAnim, SIGNAL(finished()), this, SLOT(transitionDone()));
 }
 
 void MainWindow::transitionDone() {
     printf("%s\n", __func__);
     printf("%s - roundInfo.visible=%d\n", __func__, roundInfo->isVisible());
-    ui->gridLayout->addWidget(roundInfo, 0, 1);
+    ui->gridLayout->addWidget(miniGameSettings, 0, 1);
+    miniGameSettings->addRoundInfo(roundInfo);
 }
