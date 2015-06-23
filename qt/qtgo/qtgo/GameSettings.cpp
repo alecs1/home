@@ -144,8 +144,8 @@ RoundInfo* GameSettings::popRoundInfo() {
 
 void GameSettings::pushBackRoundInfo() {
     ui->topRow->insertWidget(0, roundInfo);
-    roundInfo->setParent(this);
     roundInfo->setVisible(roundInfoVisible);
+    ui->topRow->update(); //probably Qt bug, need to update explicitly
 }
 
 

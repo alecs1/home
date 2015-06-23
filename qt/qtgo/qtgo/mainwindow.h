@@ -4,11 +4,14 @@
 #include <QMainWindow>
 #include <QFontDatabase>
 
+#include "Global.h"
+
 class DrawAreaWidget;
 class GoTable;
 class GameSettings;
 class RoundInfo;
 class MiniGameSettings;
+class ConfirmMoveDialog;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -36,7 +39,11 @@ public slots:
     void setMinimalInterface();
     void transitionToMinDone();
     void setFullInterface();
+    void restoreFullInterface();
     void transitionToFullDone();
+    void showConfirmDialog(bool show, int colour);
+    void confirmDialogDone(int confirmed);
+    void setGameState(GameState state);
 
 signals:
     void programSettingsChanged();
@@ -46,8 +53,10 @@ private:
 
 
 private:
+    bool minimalInterface = false;
     GameSettings* gameSettingsWidget = NULL;
     MiniGameSettings* miniGameSettings = NULL;
+    ConfirmMoveDialog* confirmMoveDialog = NULL;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
     GoTable* table;

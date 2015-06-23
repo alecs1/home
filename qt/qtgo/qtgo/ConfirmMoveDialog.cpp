@@ -1,5 +1,8 @@
+#include "Settings.h"
+
 #include "ConfirmMoveDialog.h"
 #include "ui_ConfirmMoveDialog.h"
+
 
 ConfirmMoveDialog::ConfirmMoveDialog(QWidget *parent) :
     QDialog(parent),
@@ -36,4 +39,24 @@ void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
             }";
     Q_UNUSED(styleSheet);
     //ui->confirmButton->setStyleSheet(styleSheet);
+}
+
+void ConfirmMoveDialog::setMinimalInterface(bool aMinimal) {
+    minimal = aMinimal;
+    ui->verticalLayout->setSpacing(width() / 5);
+    int space = width()/100;
+    ui->verticalLayout->setContentsMargins(space, width() / 5, space, width() / 5);
+    setAutoFillBackground(true);
+    QPalette pal(palette());
+    QColor backgCol(Settings::getProgramSettings()->tableColour);
+    pal.setColor(QPalette::Background, backgCol);
+    setPalette(pal);
+}
+
+void ConfirmMoveDialog::changeProgramSettings() {
+    QPalette pal(palette());
+    QColor backgCol(Settings::getProgramSettings()->tableColour);
+    pal.setColor(QPalette::Background, backgCol);
+    setPalette(pal);
+    update();
 }

@@ -15,10 +15,15 @@ public:
     explicit ConfirmMoveDialog(QWidget *parent = 0);
     ~ConfirmMoveDialog();
     void setPixmap(QPixmap &pixmap);
+    void setMinimalInterface(bool aMinimal = true);
+
+public slots:
+    void changeProgramSettings();
 
 private:
     Ui::ConfirmMoveDialog *ui;
     QIcon* icon;
+    bool minimal = false;
 };
 
 #endif // CONFIRMMOVEDIALOG_H

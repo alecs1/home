@@ -176,7 +176,7 @@ GoTable::GoTable(QWidget *parent) :
     unconfirmedStoneRow = -1;
     unconfirmedStoneCol = -1;
 
-    askPlayConfirmation = false;
+    askPlayConfirmation = true;
     #if defined(Q_OS_ANDROID)
     askPlayConfirmation = true;
     #endif
@@ -243,6 +243,10 @@ bool GoTable::loadGame(QString fileName) {
         emit gameStateChanged(state);
     }
     return result;
+}
+
+GameState GoTable::getGameState() const {
+    return state;
 }
 
 void GoTable::changeProgramSettings() {

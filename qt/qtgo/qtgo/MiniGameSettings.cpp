@@ -19,11 +19,12 @@ MiniGameSettings::MiniGameSettings(QWidget* parent) :
     fullInterfaceButton = new QToolButton(this);
     fullInterfaceButton->setText("Show all\nbuttons");
     fullInterfaceButton->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-    layoutP->insertWidget(1, passButton);
+    layoutP->addStretch(2);
+    layoutP->addWidget(passButton);
+    layoutP->addStretch(2);
     layoutP->addWidget(undoButton);
-    layoutP->addStretch(5);
+    layoutP->addStretch(4);
     layoutP->addWidget(fullInterfaceButton);
-    layoutP->setSpacing(10);
     layoutP->setContentsMargins(0, 0, 0, 0);
 
     QObject::connect(passButton, SIGNAL(clicked(bool)), this, SIGNAL(userPassedMove()));

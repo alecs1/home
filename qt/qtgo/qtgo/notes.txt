@@ -87,8 +87,8 @@ v 15. With the new numbering arangement, the DrawArea does not go through the si
 
 
 Crt:
-8. At game end transition back to full interface.
 9. Bug 16
+v 8. At game end transition back to full interface.
 ? 6. Increase the size of the main menus. Don't know how.
 ? 7. For the column number choose a fat font. Will not do probably
 v 1. Add handicap and komi, show estimates will default to false after each match.

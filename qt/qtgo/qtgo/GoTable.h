@@ -83,6 +83,9 @@ public:
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
 
+    GameState getGameState() const;
+
+
     //TODO - temporary hack
     SGameSettings* getGameSettingsPointer();
 

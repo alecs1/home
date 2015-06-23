@@ -30,6 +30,7 @@ struct SProgramSettings {
     uint32_t soundsVolume = 100;
     QString tableColour;
     bool spaceOptimisations;
+    bool minimalInterface = false;
 };
 
 //Extra information about a game, don't know if this is the right place

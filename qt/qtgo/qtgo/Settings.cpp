@@ -15,6 +15,7 @@ void Settings::populateDefaultProgramSettings(SProgramSettings* defaults) {
     defaults->tableColour = defaultColour.name();
     defaults->soundsVolume = 100;
     defaults->spaceOptimisations = false;
+    defaults->minimalInterface = false;
 }
 
 /*
