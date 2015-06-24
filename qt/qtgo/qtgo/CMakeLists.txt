@@ -43,7 +43,7 @@ qt5_wrap_cpp(HEADER_MOC mainwindow.h DrawAreaWidget.h GoTable.h GameSettings.h M
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
-add_subdirectory("btchat")
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
@@ -52,10 +52,12 @@ add_executable(FreeGo
     SettingsDialog.cpp Utils.cpp Settings.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia board engine utils sgf patterns)
-#if (NOT DEFINED ANDROID_ABI)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia board engine utils sgf patterns btchat)
+if (NOT DEFINED ANDROID_ABI)
     target_link_libraries(FreeGo Qt5::Quick Qt5::QuickWidgets)
-#endif (NOT DEFINED ANDROID_ABI)
+endif (NOT DEFINED ANDROID_ABI)
+
+add_subdirectory("btchat")
 
 add_custom_target(Doc Notes.txt)
 

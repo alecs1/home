@@ -43,11 +43,11 @@
 #include "chatserver.h"
 #include "chatclient.h"
 
-#include <qbluetoothuuid.h>
-#include <qbluetoothserver.h>
-#include <qbluetoothservicediscoveryagent.h>
-#include <qbluetoothdeviceinfo.h>
-#include <qbluetoothlocaldevice.h>
+#include <QtBluetooth/qbluetoothuuid.h>
+#include <QtBluetooth/qbluetoothserver.h>
+#include <QtBluetooth/qbluetoothservicediscoveryagent.h>
+#include <QtBluetooth/qbluetoothdeviceinfo.h>
+#include <QtBluetooth/qbluetoothlocaldevice.h>
 
 #include <QTimer>
 

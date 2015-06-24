@@ -42,9 +42,9 @@
 
 #include <QDialog>
 
-#include <qbluetoothserviceinfo.h>
-#include <qbluetoothsocket.h>
-#include <qbluetoothhostinfo.h>
+#include <QtBluetooth/qbluetoothserviceinfo.h>
+#include <QtBluetooth/qbluetoothsocket.h>
+#include <QtBluetooth/qbluetoothhostinfo.h>
 
 #include <QDebug>
 

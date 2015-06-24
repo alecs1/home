@@ -41,7 +41,7 @@
 #ifndef CHATCLIENT_H
 #define CHATCLIENT_H
 
-#include <qbluetoothserviceinfo.h>
+#include <QtBluetooth/qbluetoothserviceinfo.h>
 
 #include <QtCore/QObject>
 

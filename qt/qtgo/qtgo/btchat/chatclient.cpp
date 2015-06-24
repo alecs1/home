@@ -40,7 +40,7 @@
 
 #include "chatclient.h"
 
-#include <qbluetoothsocket.h>
+#include <QtBluetooth/qbluetoothsocket.h>
 
 ChatClient::ChatClient(QObject *parent)
 :   QObject(parent), socket(0)
