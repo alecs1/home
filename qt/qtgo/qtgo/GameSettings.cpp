@@ -67,7 +67,8 @@ GameSettings::GameSettings(QWidget *parent):
     settingsAction = mainMenu->addAction("Settings");
     helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
-    smallInterfaceAction = mainMenu->addAction("Larger table");
+    smallInterfaceAction = mainMenu->addAction("Make table larger\n"
+                                               "on small screens");
 
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));

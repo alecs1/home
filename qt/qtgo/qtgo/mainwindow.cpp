@@ -1,6 +1,9 @@
 #include <QFileDialog>
 #include <QPropertyAnimation>
 
+//debug
+#include <QToolButton>
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -110,6 +113,12 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("FreeGo");
     if (programSettings->minimalInterface)
         minimalInterface = true;
+
+    //debug stuff
+    debugButton = new QToolButton(this);
+    debugButton->setText("Boom!");
+    ui->gridLayout->addWidget(debugButton, 0, 2);
+    connect(debugButton, SIGNAL(clicked()), this, SLOT(runDebug()));
 }
 
 MainWindow::~MainWindow()
@@ -171,6 +180,7 @@ void MainWindow::notifyReloadProgramSettings() {
 //TODO - does QPropertyAnimation cause a memory leak
 //TODO - on Linux desktop you may not be allowed to move a window outside of the screen, so the game settings may stay visible.
 void MainWindow::setMinimalInterface() {
+    minimalInterface = true;
     Settings::getProgramSettings()->minimalInterface = true;
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
     if (table->getGameState() != GameState::Started)
@@ -317,5 +327,9 @@ void MainWindow::setGameState(GameState state) {
         else
             restoreFullInterface();
     }
+}
+
+void MainWindow::runDebug() {
+
 }
 

@@ -88,8 +88,9 @@ SOURCES += GameSettings.cpp \
 
 OTHER_FILES += AndroidManifest.xml \
     notes.txt \
+    save-format.json \
     ../AndroidSpecificSetup.cmake \
-    save-format.json
+    btchat/CMakeLists.txt
 
 RESOURCES += \
     res.qrc
@@ -98,4 +99,6 @@ ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
 DISTFILES += \
     settings-format.json
+
+SUBDIRS = btchat
 

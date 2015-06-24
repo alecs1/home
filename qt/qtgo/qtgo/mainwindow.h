@@ -12,6 +12,7 @@ class GameSettings;
 class RoundInfo;
 class MiniGameSettings;
 class ConfirmMoveDialog;
+class QToolButton;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -45,6 +46,8 @@ public slots:
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
 
+    void runDebug();
+
 signals:
     void programSettingsChanged();
 
@@ -62,6 +65,7 @@ private:
     GoTable* table;
     RoundInfo* roundInfo = NULL;
     QFontDatabase fontDatabase;
+    QToolButton* debugButton;
 };
 
 #endif // MAINWINDOW_H
