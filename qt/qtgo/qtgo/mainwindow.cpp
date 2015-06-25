@@ -250,6 +250,9 @@ void MainWindow::setFullInterface() {
 }
 
 void MainWindow::restoreFullInterface() {
+    if (ui->gridLayout->itemAtPosition(0, 1)->widget() == gameSettingsWidget) {
+        return;
+    }
     QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
     QRect original = gameSettingsWidget->geometry();
     QRect final = original;
