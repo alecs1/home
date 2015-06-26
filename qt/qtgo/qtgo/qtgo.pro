@@ -28,6 +28,9 @@ INCLUDEPATH +=  "../gnugo_include/gnugo" \
 LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L../qtcurve/qt5/style -L../qtcurve/lib/utils \
     -lboard -lengine -lutils -lsgf -lpatterns #-lqtcurve -lqtcurve-utils
 
+
+SUBDIRS = btchat
+
 # Input
 HEADERS += GameSettings.h \
            MiniGameSettings.h \
@@ -100,5 +103,4 @@ ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 DISTFILES += \
     settings-format.json
 
-SUBDIRS = btchat
 

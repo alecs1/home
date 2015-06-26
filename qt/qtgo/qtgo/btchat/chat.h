@@ -56,7 +56,7 @@ class ChatClient;
 //! [declaration]
 class Chat : public QDialog
 {
-    Q_OBJECT
+Q_OBJECT
 
 public:
     Chat(QWidget *parent = 0);

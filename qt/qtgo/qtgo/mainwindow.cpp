@@ -16,6 +16,10 @@
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
 
+//TODO - just for tests
+#include "btchat/chat.h"
+
+
 #include "Global.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -333,6 +337,7 @@ void MainWindow::setGameState(GameState state) {
 }
 
 void MainWindow::runDebug() {
-
+    Chat* btChatDialog = new Chat;
+    btChatDialog->show();
 }
 

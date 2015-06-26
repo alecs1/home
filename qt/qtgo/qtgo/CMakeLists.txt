@@ -8,6 +8,7 @@ set (CMAKE_VERBOSE_MAKEFILE true)
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Svg REQUIRED)
+find_package(Qt5Bluetooth REQUIRED)
 if (NOT DEFINED ANDROID_ABI)
     add_definitions(-DWithQt5Quick)
     find_package(Qt5Quick REQUIRED)
@@ -44,7 +45,7 @@ qt5_wrap_cpp(HEADER_MOC mainwindow.h DrawAreaWidget.h GoTable.h GameSettings.h M
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btchat)
 add_executable(FreeGo
     mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
@@ -52,7 +53,7 @@ add_executable(FreeGo
     SettingsDialog.cpp Utils.cpp Settings.cpp
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia board engine utils sgf patterns btchat)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat)
 if (NOT DEFINED ANDROID_ABI)
     target_link_libraries(FreeGo Qt5::Quick Qt5::QuickWidgets)
 endif (NOT DEFINED ANDROID_ABI)
