@@ -38,6 +38,7 @@ signals:
     void saveGame();
     void loadGame();
     void setMinimalInterface();
+    void connectBT();
 
 
 public slots:
@@ -86,6 +87,7 @@ private:
     QAction* aboutAction;
     QAction* helpAction;
     QAction* settingsAction;
+    QAction* connectBTAction;
     QAction* smallInterfaceAction;
 };
 

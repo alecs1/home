@@ -101,6 +101,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
     connect(gameSettingsWidget, SIGNAL(saveGame()), this, SLOT(saveGame()));
     connect(gameSettingsWidget, SIGNAL(loadGame()), this, SLOT(loadGame()));
+    connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(runDebug()));
 
 
     table->checkForResumeGame();
@@ -117,12 +118,6 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("FreeGo");
     if (programSettings->minimalInterface)
         minimalInterface = true;
-
-    //debug stuff
-    debugButton = new QToolButton(this);
-    debugButton->setText("Boom!");
-    ui->gridLayout->addWidget(debugButton, 0, 2);
-    connect(debugButton, SIGNAL(clicked()), this, SLOT(runDebug()));
 }
 
 MainWindow::~MainWindow()

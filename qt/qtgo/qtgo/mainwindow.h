@@ -65,7 +65,6 @@ private:
     GoTable* table;
     RoundInfo* roundInfo = NULL;
     QFontDatabase fontDatabase;
-    QToolButton* debugButton;
 };
 
 #endif // MAINWINDOW_H
