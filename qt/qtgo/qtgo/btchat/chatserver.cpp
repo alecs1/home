@@ -39,6 +39,7 @@
 ****************************************************************************/
 
 #include "chatserver.h"
+#include "../Global.h"
 
 #include <QtBluetooth/qbluetoothserver.h>
 #include <QtBluetooth/qbluetoothsocket.h>
@@ -51,6 +52,7 @@ static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 ChatServer::ChatServer(QObject *parent)
 :   QObject(parent), rfcommServer(0)
 {
+    printf("%s - done\n", __func__);
 }
 
 ChatServer::~ChatServer()
@@ -60,13 +62,22 @@ ChatServer::~ChatServer()
 
 void ChatServer::startServer(const QBluetoothAddress& localAdapter)
 {
+    printf("%s, localAdapters=%s\n", __func__, localAdapter.toString().toUtf8().constData());
+    if (localAdapter.isNull()) {
+        printf("%s - local bluetooth adapter is null, returning\n", __func__);
+        return;
+    }
+
     if (rfcommServer)
         return;
 
     //! [Create the server]
+    printf("%s - create QBluetoothServer\n", __func__);
     rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, this);
     connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+    printf("%s - QBluetoothServer - starting to listen\n", __func__);
     bool result = rfcommServer->listen(localAdapter);
+    printf("%s - listen result=%d\n", __func__, result);
     if (!result) {
         qWarning() << "Cannot bind chat server to" << localAdapter.toString();
         return;
@@ -123,6 +134,8 @@ void ChatServer::startServer(const QBluetoothAddress& localAdapter)
     //! [Register service]
     serviceInfo.registerService(localAdapter);
     //! [Register service]
+
+    printf("%s - done\n", __func__);
 }
 
 //! [stopServer]

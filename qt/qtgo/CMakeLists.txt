@@ -58,9 +58,11 @@ if (ANDROID)
 endif(ANDROID)
 
 add_subdirectory("qtgo")
-if (NOT WIN32)
-    add_subdirectory("qtcurve")
-endif (NOT WIN32)
+
+#qtcurve is not used for now and only slows down Android build
+if ( (NOT WIN32) OR (NOT ANDROID) )
+    #add_subdirectory("qtcurve")
+endif ( (NOT WIN32) OR (NOT ANDROID) )
 
 
 add_subdirectory("gnugo")

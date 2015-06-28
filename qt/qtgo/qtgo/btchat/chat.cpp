@@ -38,16 +38,18 @@
 **
 ****************************************************************************/
 
-#include "chat.h"
-#include "remoteselector.h"
-#include "chatserver.h"
-#include "chatclient.h"
-
 #include <QtBluetooth/qbluetoothuuid.h>
 #include <QtBluetooth/qbluetoothserver.h>
 #include <QtBluetooth/qbluetoothservicediscoveryagent.h>
 #include <QtBluetooth/qbluetoothdeviceinfo.h>
 #include <QtBluetooth/qbluetoothlocaldevice.h>
+
+#include "../Global.h"
+
+#include "chat.h"
+#include "remoteselector.h"
+#include "chatserver.h"
+#include "chatclient.h"
 
 #include <QTimer>
 
@@ -58,6 +60,8 @@ static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 Chat::Chat(QWidget *parent)
     : QDialog(parent),  currentAdapterIndex(0), ui(new Ui_Chat)
 {
+    printf("%s", __func__);
+
     //! [Construct UI]
     ui->setupUi(this);
 
@@ -67,14 +71,15 @@ Chat::Chat(QWidget *parent)
     //! [Construct UI]
 
     localAdapters = QBluetoothLocalDevice::allDevices();
-    if (localAdapters.count() < 2) {
+    printf("%s - localAdapters.count=%d\n", __func__, localAdapters.count());
+    if (localAdapters.count() < 1) {
         ui->localAdapterBox->setVisible(false);
     } else {
         //we ignore more than two adapters
         ui->localAdapterBox->setVisible(true);
         ui->firstAdapter->setText(tr("Default (%1)", "%1 = Bluetooth address").
                                   arg(localAdapters.at(0).address().toString()));
-        ui->secondAdapter->setText(localAdapters.at(1).address().toString());
+        //ui->secondAdapter->setText(localAdapters.at(1).address().toString());
         ui->firstAdapter->setChecked(true);
         connect(ui->firstAdapter, SIGNAL(clicked()), this, SLOT(newAdapterSelected()));
         connect(ui->secondAdapter, SIGNAL(clicked()), this, SLOT(newAdapterSelected()));
@@ -82,6 +87,7 @@ Chat::Chat(QWidget *parent)
         adapter.setHostMode(QBluetoothLocalDevice::HostDiscoverable);
     }
 
+    printf("%s - create chat server\n", __func__);
     //! [Create Chat Server]
     server = new ChatServer(this);
     connect(server, SIGNAL(clientConnected(QString)), this, SLOT(clientConnected(QString)));
@@ -94,7 +100,10 @@ Chat::Chat(QWidget *parent)
 
     //! [Get local device name]
     localName = QBluetoothLocalDevice().name();
+    printf("%s - local device name=%s\n", __func__, localName.toLocal8Bit().constData());
     //! [Get local device name]
+
+    printf("%s - done", __func__);
 }
 
 Chat::~Chat()
@@ -123,6 +132,7 @@ void Chat::connected(const QString &name)
 
 void Chat::newAdapterSelected()
 {
+    printf("%s\n", __func__);
     const int newAdapterIndex = adapterFromUserSelection();
     if (currentAdapterIndex != newAdapterIndex) {
         server->stopServer();
@@ -133,6 +143,7 @@ void Chat::newAdapterSelected()
         server->startServer(info.address());
         localName = info.name();
     }
+    printf("%s-done\n", __func__);
 }
 
 int Chat::adapterFromUserSelection() const
