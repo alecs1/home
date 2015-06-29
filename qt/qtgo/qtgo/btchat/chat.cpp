@@ -72,6 +72,11 @@ Chat::Chat(QWidget *parent)
 
     localAdapters = QBluetoothLocalDevice::allDevices();
     printf("%s - localAdapters.count=%d\n", __func__, localAdapters.count());
+    for(int i = 0; i < localAdapters.size(); i++) {
+        printf("%s- adapter %d: %s, %s\n", __func__, i,
+               localAdapters[i].name().toUtf8().constData(),
+               localAdapters[i].address().toString().toUtf8().constData());
+    }
     if (localAdapters.count() < 1) {
         ui->localAdapterBox->setVisible(false);
     } else {
@@ -95,7 +100,17 @@ Chat::Chat(QWidget *parent)
     connect(server, SIGNAL(messageReceived(QString,QString)),
             this, SLOT(showMessage(QString,QString)));
     connect(this, SIGNAL(sendMessage(QString)), server, SLOT(sendMessage(QString)));
-    server->startServer();
+
+    QBluetoothServer *rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, this);
+    //connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+
+    QBluetoothAddress actualAddress = localAdapters[0].address();
+    printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
+           actualAddress.toString().toUtf8().constData());
+    bool result = rfcommServer->listen(actualAddress);
+    printf("%s - listen result:%d\n", __func__, result);
+
+    //server->startServer(localAdapters[0].address());
     //! [Create Chat Server]
 
     //! [Get local device name]

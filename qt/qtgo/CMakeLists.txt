@@ -34,7 +34,7 @@ endif ($CMAKE_COMPILER_IS_GNUCC})
 
 if (ANDROID)
     message("Setting up for an Android build")
-    file(COPY AndroidSpecificSetup.cmake DESTINATION .)
+    #file(COPY AndroidSpecificSetup.cmake DESTINATION .)
     set(QT_DIR "/home/alex/exec/Qt2/5.4/android_armv7")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Core")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Gui")

@@ -15,6 +15,7 @@
 #include "RoundInfo.h"
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
+#include "DebugStuff.h"
 
 //TODO - just for tests
 #include "btchat/chat.h"
@@ -118,6 +119,8 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("FreeGo");
     if (programSettings->minimalInterface)
         minimalInterface = true;
+
+    runDebug();
 }
 
 MainWindow::~MainWindow()
@@ -332,7 +335,7 @@ void MainWindow::setGameState(GameState state) {
 }
 
 void MainWindow::runDebug() {
-    Chat* btChatDialog = new Chat;
-    btChatDialog->show();
+    int ret = DebugStuff::runBTCode();
+    printf("%s - ran, ret=%d\n", __func__, ret);
 }
 

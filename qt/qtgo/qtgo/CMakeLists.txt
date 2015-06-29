@@ -48,20 +48,16 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btchat)
 
+set (ALL_SOURCES mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
+    GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
+    HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
+    SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp
+    ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+
 if (ANDROID)
-add_library(FreeGo SHARED
-    mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
-    GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
-    HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
-    SettingsDialog.cpp Utils.cpp Settings.cpp
-    ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+add_library(FreeGo SHARED ${ALL_SOURCES})
 else ()
-add_executable(FreeGo
-    mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
-    GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
-    HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
-    SettingsDialog.cpp Utils.cpp Settings.cpp
-    ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+add_executable(FreeGo ${ALL_SOURCES})
 endif()
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat)

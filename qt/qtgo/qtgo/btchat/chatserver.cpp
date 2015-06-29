@@ -62,10 +62,21 @@ ChatServer::~ChatServer()
 
 void ChatServer::startServer(const QBluetoothAddress& localAdapter)
 {
+    QBluetoothAddress actualAddress = localAdapter;
     printf("%s, localAdapters=%s\n", __func__, localAdapter.toString().toUtf8().constData());
-    if (localAdapter.isNull()) {
-        printf("%s - local bluetooth adapter is null, returning\n", __func__);
-        return;
+    if (actualAddress.isNull()) {
+        printf("%s - calling allDevices()\n", __func__);
+        QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
+        printf("%s - choosing from %d devices\n", __func__, devices.size());
+        if (devices.count() > 0) {
+            actualAddress = devices[0].address();
+            printf("%s - local bluetooth adapter is null, will use listing: %s\n", __func__,
+                   actualAddress.toString().toUtf8().constData());
+        }
+        else {
+            printf("%s - you have no bluetooth, I'm going home\n", __func__);
+            return;
+        }
     }
 
     if (rfcommServer)
@@ -75,8 +86,9 @@ void ChatServer::startServer(const QBluetoothAddress& localAdapter)
     printf("%s - create QBluetoothServer\n", __func__);
     rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, this);
     connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
-    printf("%s - QBluetoothServer - starting to listen\n", __func__);
-    bool result = rfcommServer->listen(localAdapter);
+    printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
+           actualAddress.toString().toUtf8().constData());
+    bool result = rfcommServer->listen(actualAddress);
     printf("%s - listen result=%d\n", __func__, result);
     if (!result) {
         qWarning() << "Cannot bind chat server to" << localAdapter.toString();
