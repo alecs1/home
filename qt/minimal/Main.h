@@ -1,16 +1,21 @@
-#include <QWidget>
+#include <QMainWindow>
+#include <QtBluetooth/QBluetoothServiceInfo>
 
 
-class Main : public QWidget {
+class QPushButton;
+
+class Main : public QMainWindow {
     Q_OBJECT
 public:
-    Main(QWidget* parent = 0);
+    explicit Main(QWidget* parent = 0);
+    ~Main();
 
 private:
     QPushButton* button;
 
+    QBluetoothServiceInfo serviceInfo;
+
 public slots:
     int buttonClicked();
-    
-
-}
+    int clientConnected();
+};

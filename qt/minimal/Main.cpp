@@ -1,4 +1,13 @@
+#include <QApplication>
+#include <QPushButton>
+#include <QLayout>
+#include <QtBluetooth/QBluetoothAddress>
+#include <QtBluetooth/QBluetoothLocalDevice>
+#include <QtBluetooth/QBluetoothServer>
+
 #include "Main.h"
+
+static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 
 
 int main(int argc, char* argv[]) {
@@ -10,28 +19,42 @@ int main(int argc, char* argv[]) {
     m.show();
     
     return app.exec();
+    qDebug() << __func__ << "-done";
 }
 
 
-Main::Main(QWidget* parent) : QWidget(parent)
+Main::Main(QWidget* parent) : QMainWindow(parent)
 {
-    button = new QPushButton(this);
+    qDebug() << __func__ << "-started";
+    button = new QPushButton("Click me", this);
+    setCentralWidget(button);
 
-    layout()->addWidget(button);
+    //if (layout() != NULL)
+    //    delete layout();
+    //QGridLayout *l = new QGridLayout(this);
+    //setLayout(l);
+    //l->addWidget(button, 0, 0);
+    
+    
     connect(button, SIGNAL(clicked()), this, SLOT(buttonClicked()));
+    qDebug() << __func__ << "-done";
+}
+
+Main::~Main() {
+    qDebug() << __func__ << "-done";
 }
 
 int Main::buttonClicked() {
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
     printf("%s - localAdapters.count=%d\n", __func__, localAdapters.count());
     for(int i = 0; i < localAdapters.size(); i++) {
-        printf("%s- adapter %d: %s, %s\n", __func__, i,
-               localAdapters[i].name().toUtf8().constData(),
-               localAdapters[i].address().toString().toUtf8().constData());
+        qDebug() <<  __func__ << " - adapter: " <<  i <<
+            " " << localAdapters[i].name().toUtf8().constData() <<
+            " " << localAdapters[i].address().toString();
     }
 
     if (localAdapters.size() < 1) {
-        printf("%s - no bluetooth found\n", __func__);
+        qDebug() << __func__ << " no bluetooth found";
         return -1;
     }
 
@@ -40,20 +63,20 @@ int Main::buttonClicked() {
     adapter.setHostMode(QBluetoothLocalDevice::HostDiscoverable);
 
     QBluetoothServer *rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, NULL);
-    /*QObject::*/connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+    connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
     QBluetoothAddress actualAddress = localAdapters[0].address();
     printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
            actualAddress.toString().toUtf8().constData());
     bool result = rfcommServer->listen(actualAddress);
     if (!result) {
-        printf("%s - listen result:%d\n", __func__, result);
+        qDebug() <<  __func__ << "-" << result;
         return -1;
     }
 
     //! [Get local device name]
     QString localName = QBluetoothLocalDevice().name();
-    printf("%s - local device name=%s\n", __func__, localName.toLocal8Bit().constData());
+    qDebug() << "local device name" << localName;
 
     //result = serviceInfo.registerService(/*actualAddress*/);
 
@@ -125,4 +148,10 @@ int Main::buttonClicked() {
     return 0;
 
 
+}
+
+
+int Main::clientConnected() {
+    qDebug() << __func__;
+    return 0;
 }
