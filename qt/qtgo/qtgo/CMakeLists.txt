@@ -41,7 +41,8 @@ message("UIS_HEADERS:" ${UIS_HEADERS})
 
 #qt moc
 qt5_wrap_cpp(HEADER_MOC mainwindow.h DrawAreaWidget.h GoTable.h GameSettings.h MiniGameSettings.h PlayerWidget.h GameEndDialog.h ConfirmMoveDialog.h
-    RoundInfo.h Handicap.h HandicapDialog.h BusyDialog.h AboutDialog.h HelpDialog.h SettingsWidget.h SettingsDialog.h)
+    RoundInfo.h Handicap.h HandicapDialog.h BusyDialog.h AboutDialog.h HelpDialog.h SettingsWidget.h SettingsDialog.h
+DebugStuff.h)
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 
@@ -55,9 +56,9 @@ set (ALL_SOURCES mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp ma
     ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
 
 if (ANDROID)
-add_library(FreeGo SHARED ${ALL_SOURCES})
+    add_library(FreeGo SHARED ${ALL_SOURCES})
 else ()
-add_executable(FreeGo ${ALL_SOURCES})
+    add_executable(FreeGo ${ALL_SOURCES})
 endif()
 
 target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat)

@@ -1,13 +1,23 @@
 #ifndef DEBUGSTUFF_H
 #define DEBUGSTUFF_H
 
+#include <QtBluetooth/QBluetoothServiceInfo>
 
-class DebugStuff
+
+class DebugStuff : public QObject
 {
+Q_OBJECT
+
 public:
     DebugStuff();
 
-    static int runBTCode();
+    int runBTCode();
+
+public slots:
+    void clientConnected();
+
+private:
+    QBluetoothServiceInfo serviceInfo;
 };
 
 #endif // DEBUGSTUFF_H

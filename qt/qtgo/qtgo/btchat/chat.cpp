@@ -52,15 +52,16 @@
 #include "chatclient.h"
 
 #include <QTimer>
+#include <QThread>
 
 #include <QDebug>
 
 static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 
 Chat::Chat(QWidget *parent)
-    : QDialog(parent),  currentAdapterIndex(0), ui(new Ui_Chat)
+    : QWidget (parent),  currentAdapterIndex(0), ui(new Ui_Chat)
 {
-    printf("%s", __func__);
+        printf("%s - %p\n", __func__, QThread::currentThreadId());
 
     //! [Construct UI]
     ui->setupUi(this);
@@ -77,9 +78,11 @@ Chat::Chat(QWidget *parent)
                localAdapters[i].name().toUtf8().constData(),
                localAdapters[i].address().toString().toUtf8().constData());
     }
+
     if (localAdapters.count() < 1) {
         ui->localAdapterBox->setVisible(false);
-    } else {
+    }
+    else {
         //we ignore more than two adapters
         ui->localAdapterBox->setVisible(true);
         ui->firstAdapter->setText(tr("Default (%1)", "%1 = Bluetooth address").
@@ -102,21 +105,24 @@ Chat::Chat(QWidget *parent)
     connect(this, SIGNAL(sendMessage(QString)), server, SLOT(sendMessage(QString)));
 
     QBluetoothServer *rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, this);
-    //connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+    connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
-    QBluetoothAddress actualAddress = localAdapters[0].address();
-    printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
-           actualAddress.toString().toUtf8().constData());
-    bool result = rfcommServer->listen(actualAddress);
-    printf("%s - listen result:%d\n", __func__, result);
+    if (localAdapters.size() > 0) {
+        QBluetoothAddress actualAddress = localAdapters[0].address();
+        printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
+               actualAddress.toString().toUtf8().constData());
+        bool result = rfcommServer->listen(actualAddress);
+        printf("%s - listen result:%d\n", __func__, result);
 
-    //server->startServer(localAdapters[0].address());
-    //! [Create Chat Server]
+        server->startServer(localAdapters[0].address());
+        //! [Create Chat Server]
 
-    //! [Get local device name]
-    localName = QBluetoothLocalDevice().name();
-    printf("%s - local device name=%s\n", __func__, localName.toLocal8Bit().constData());
-    //! [Get local device name]
+        //! [Get local device name]
+        localName = QBluetoothLocalDevice().name();
+        printf("%s - local device name=%s\n", __func__, localName.toLocal8Bit().constData());
+        //! [Get local device name]
+        //!
+    }
 
     printf("%s - done", __func__);
 }

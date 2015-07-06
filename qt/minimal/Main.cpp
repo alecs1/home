@@ -1,23 +1,27 @@
-#include <QtBluetooth/QBluetoothAddress>
-#include <QtBluetooth/QBluetoothLocalDevice>
-#include <QtBluetooth/QBluetoothServer>
-#include <QObject>
+#include "Main.h"
 
-#include "DebugStuff.h"
-#include "Global.h"
 
-//! [Service UUID]
-static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
-//! [Service UUID]
+int main(int argc, char* argv[]) {
+    printf("%s -started\n", __func__);
 
-DebugStuff::DebugStuff()
-{
+    QApplication app(argc, argv);
 
+    Main m;
+    m.show();
+    
+    return app.exec();
 }
 
 
-int DebugStuff::runBTCode() {
+Main::Main(QWidget* parent) : QWidget(parent)
+{
+    button = new QPushButton(this);
 
+    layout()->addWidget(button);
+    connect(button, SIGNAL(clicked()), this, SLOT(buttonClicked()));
+}
+
+int Main::buttonClicked() {
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
     printf("%s - localAdapters.count=%d\n", __func__, localAdapters.count());
     for(int i = 0; i < localAdapters.size(); i++) {
@@ -119,10 +123,6 @@ int DebugStuff::runBTCode() {
 
     printf("%s - done\n", __func__);
     return 0;
-}
-
-void DebugStuff::clientConnected() {
 
 
 }
-

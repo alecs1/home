@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    printf("%s - %p\n", __func__, QThread::currentThreadId());
+
     ui->setupUi(this);
 
     #if defined(Q_OS_ANDROID)
@@ -120,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if (programSettings->minimalInterface)
         minimalInterface = true;
 
-    runDebug();
+    //runDebug();
 }
 
 MainWindow::~MainWindow()
@@ -335,7 +337,11 @@ void MainWindow::setGameState(GameState state) {
 }
 
 void MainWindow::runDebug() {
-    int ret = DebugStuff::runBTCode();
+    printf("%s - %p\n", __func__, QThread::currentThreadId());
+    DebugStuff* runner = new DebugStuff();
+    int ret = runner->runBTCode();
+    //Chat* btChat = new Chat(this);
+    //ui->gridLayout->addWidget(btChat, 0, 0);
     printf("%s - ran, ret=%d\n", __func__, ret);
 }
 

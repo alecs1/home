@@ -40,8 +40,6 @@
 
 #include "ui_chat.h"
 
-#include <QDialog>
-
 #include <QtBluetooth/qbluetoothserviceinfo.h>
 #include <QtBluetooth/qbluetoothsocket.h>
 #include <QtBluetooth/qbluetoothhostinfo.h>
@@ -54,7 +52,7 @@ class ChatServer;
 class ChatClient;
 
 //! [declaration]
-class Chat : public QDialog
+class Chat : public QWidget
 {
 Q_OBJECT
 

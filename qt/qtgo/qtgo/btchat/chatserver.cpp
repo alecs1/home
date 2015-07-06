@@ -96,7 +96,7 @@ void ChatServer::startServer(const QBluetoothAddress& localAdapter)
     }
     //! [Create the server]
 
-    //serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceRecordHandle, (uint)0x00010010);
+    serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceRecordHandle, (uint)0x00010010);
 
     //! [Class Uuuid must contain at least 1 entry]
     QBluetoothServiceInfo::Sequence classId;
