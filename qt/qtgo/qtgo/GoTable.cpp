@@ -11,7 +11,7 @@
 #include <QLabel>
 #include <QtMultimedia/QSound>
 
-#include <unistd.h>
+//#include <unistd.h>
 
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface

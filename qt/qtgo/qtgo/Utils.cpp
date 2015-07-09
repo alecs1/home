@@ -2,6 +2,7 @@
 #include <QScreen>
 #include <QGuiApplication>
 
+#include "Global.h"
 #include "Utils.h"
 
 #include <limits>

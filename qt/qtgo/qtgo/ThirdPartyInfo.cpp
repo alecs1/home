@@ -2,6 +2,7 @@
 #include <QLayout>
 #include <QLabel>
 
+#include "Global.h"
 #include "ThirdPartyInfo.h"
 
 ThirdPartyInfo::ThirdPartyInfo (QWidget *parent) : QDialog(parent) {

@@ -1,5 +1,7 @@
 #include "HelpDialog.h"
 
+#include "Global.h"
+
 #include <QGridLayout>
 #include <QTextEdit>
 #include <QPushButton>
