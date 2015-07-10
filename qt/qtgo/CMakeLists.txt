@@ -4,7 +4,10 @@ cmake_minimum_required(VERSION 2.8)
 message(${CMAKE_SYSTEM_NAME})
 
 #steps:
+#Android:
 #cmake -DCMAKE_TOOLCHAIN_FILE=~/github/home/qt-android-cmake/toolchain/android.toolchain.cmake ../qtgo
+#Windows:
+#cmake -G "Visual Studio 12 2013 Win64" ../qtgo
 #run cmake
 #run make
 #run copy-pc-executables.sh
@@ -39,9 +42,9 @@ endif ($CMAKE_COMPILER_IS_GNUCC})
 if ( WIN32 OR ANDROID )
     if (ANDROID)
         #set(QT_DIR "/home/alex/exec/Qt3/5.5/android_armv7")
-    	set(QT_DIR "C:/Qt/5.5/msvc2013_64")
-    else (ANDROID)
         set(QT_DIR "C:/Qt/5.5/android_armv7")
+    else (ANDROID)
+	set(QT_DIR "C:/Qt/5.5/msvc2013_64")
     endif (ANDROID)
     #set(QT_DIR "/home/alex/exec/Qt2/5.4/Src/qtbase")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Core")
