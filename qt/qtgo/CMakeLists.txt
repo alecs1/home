@@ -5,15 +5,13 @@ message(${CMAKE_SYSTEM_NAME})
 
 #steps:
 #Android:
-#cmake -DCMAKE_TOOLCHAIN_FILE=~/github/home/qt-android-cmake/toolchain/android.toolchain.cmake ../qtgo
+#cmake -DCMAKE_TOOLCHAIN_FILE=../../qt-android-cmake/toolchain/android.toolchain.cmake ../qtgo
 #Windows:
 #cmake -G "Visual Studio 12 2013 Win64" ../qtgo
 #run cmake
 #run make
 #run copy-pc-executables.sh
 #run make
-
-#add_library(bogus AndroidSpecificSetup.cmake)
 
 #force the newest gcc for now
 #set (CMAKE_CXX_COMPILER "/usr/bin/g++-5")
