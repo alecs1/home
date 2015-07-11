@@ -19,8 +19,8 @@
             <meta-data android:name="android.app.use_local_qt_libs" android:value="1"/>
             <meta-data android:name="android.app.libs_prefix" android:value="/data/local/tmp/qt/"/>
             <meta-data android:name="android.app.load_local_libs" android:value="plugins/platforms/android/libqtforandroid.so"/>
-            <meta-data android:name="android.app.load_local_jars" android:value="jar/QtAndroid.jar:jar/QtAndroidAccessibility.jar:jar/QtAndroid-bundled.jar:jar/QtAndroidAccessibility-bundled.jar"/>
-            <meta-data android:name="android.app.static_init_classes" android:value=""/>
+            <meta-data android:name="android.app.load_local_jars" android:value="jar/QtAndroid.jar:jar/QtAndroidAccessibility.jar:jar/QtAndroid-bundled.jar:jar/QtAndroidAccessibility-bundled.jar:jar/QtAndroidBluetooth.jar:jar/QtAndroidBluetooth-bundled.jar"/>
+            <meta-data android:name="android.app.static_init_classes" android:value="org.qtproject.qt5.android.bluetooth.QtBluetoothBroadcastReceiver:org.qtproject.qt5.android.bluetooth.QtBluetoothBroadcastReceiver"/>
             <!--  Messages maps -->
             <meta-data android:value="@string/ministro_not_found_msg" android:name="android.app.ministro_not_found_msg"/>
             <meta-data android:value="@string/ministro_needed_msg" android:name="android.app.ministro_needed_msg"/>
@@ -39,10 +39,11 @@
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
-        <uses-permission android:name="android.permission.INTERNET"/>
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-        <uses-permission android:name="com.sonymobile.permission.SYSTEM_UI_VISIBILITY_EXTENSIONS" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="com.sonymobile.permission.SYSTEM_UI_VISIBILITY_EXTENSIONS" />
 	<uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
 
 

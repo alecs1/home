@@ -36,11 +36,11 @@ int DebugStuff::runBTCode() {
     adapter.setHostMode(QBluetoothLocalDevice::HostDiscoverable);
 
     QBluetoothServer *rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, NULL);
-    /*QObject::*/connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+    //connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
     QBluetoothAddress actualAddress = localAdapters[0].address();
-    printf("%s - QBluetoothServer - starting to listen at %s\n", __func__,
-           actualAddress.toString().toUtf8().constData());
+    qDebug() << "QBluetoothServer - starting to listen at " <<
+           actualAddress.toString();
     bool result = rfcommServer->listen(actualAddress);
     if (!result) {
         printf("%s - listen result:%d\n", __func__, result);
@@ -63,7 +63,7 @@ int DebugStuff::runBTCode() {
     serviceInfo.setAttribute(QBluetoothServiceInfo::BluetoothProfileDescriptorList,
                              classId);
 
-    printf("%s - done %d\n", __func__, 1);
+    qDebug() << "done 1";
 
     classId.prepend(QVariant::fromValue(QBluetoothUuid(serviceUuid)));
 
@@ -72,7 +72,7 @@ int DebugStuff::runBTCode() {
     //! [Class Uuuid must contain at least 1 entry]
 
 
-    printf("%s - done %d\n", __func__, 2);
+    qDebug() << "done 2";
     //! [Service name, description and provider]
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceName, tr("Bt Chat Server"));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceDescription,
@@ -85,7 +85,7 @@ int DebugStuff::runBTCode() {
     //! [Service UUID set]
 
 
-    printf("%s - done %d\n", __func__, 3);
+    qDebug() << "done 3";
     //! [Service Discoverability]
     QBluetoothServiceInfo::Sequence publicBrowse;
     publicBrowse << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::PublicBrowseGroup));
@@ -93,7 +93,7 @@ int DebugStuff::runBTCode() {
                              publicBrowse);
     //! [Service Discoverability]
 
-    printf("%s - done %d\n", __func__, 4);
+    qDebug() << "done 4";
     //! [Protocol descriptor list]
     QBluetoothServiceInfo::Sequence protocolDescriptorList;
     QBluetoothServiceInfo::Sequence protocol;
@@ -107,7 +107,7 @@ int DebugStuff::runBTCode() {
                              protocolDescriptorList);
     //! [Protocol descriptor list]
 
-    printf("%s - done %d\n", __func__, 5);
+    qDebug() << "done 5";
     //! [Register service]
     result = serviceInfo.registerService(actualAddress);
     if (!result) {
