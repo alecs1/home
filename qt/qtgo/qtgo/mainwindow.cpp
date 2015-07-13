@@ -17,6 +17,8 @@
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
 
+#include "network/BTServer.h"
+
 //TODO - just for tests
 #include "btchat/chat.h"
 
@@ -104,7 +106,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
     connect(gameSettingsWidget, SIGNAL(saveGame()), this, SLOT(saveGame()));
     connect(gameSettingsWidget, SIGNAL(loadGame()), this, SLOT(loadGame()));
-    connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(runDebug()));
+    connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(connectBT()));
+    connect(gameSettingsWidget, SIGNAL(debugBT()), this, SLOT(showBTChat()));
 
 
     table->checkForResumeGame();
@@ -336,12 +339,18 @@ void MainWindow::setGameState(GameState state) {
     }
 }
 
-void MainWindow::runDebug() {
+void MainWindow::connectBT() {
     printf("%s - %p\n", __func__, QThread::currentThreadId());
-    DebugStuff* runner = new DebugStuff();
-    int ret = runner->runBTCode();
-    //Chat* btChat = new Chat(this);
-    //ui->gridLayout->addWidget(btChat, 0, 0);
+    int ret = -1;
+    if (btServer == NULL) {
+        btServer = new BTServer();
+        btServer->initBluetooth();
+    }
     printf("%s - ran, ret=%d\n", __func__, ret);
+}
+
+void MainWindow::showBTChat() {
+    Chat* btChat = new Chat(this);
+    ui->gridLayout->addWidget(btChat, 0, 0);
 }
 

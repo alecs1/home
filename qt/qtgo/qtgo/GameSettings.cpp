@@ -66,6 +66,7 @@ GameSettings::GameSettings(QWidget *parent):
     loadGameAction = mainMenu->addAction("Open saved game");
     settingsAction = mainMenu->addAction("Settings");
     connectBTAction = mainMenu->addAction("Bluetooth");
+    debugBTAction = mainMenu->addAction("Bluetooth chat");
     helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
     smallInterfaceAction = mainMenu->addAction("Make table larger\n"
@@ -95,6 +96,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(helpAction, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(smallInterfaceAction, SIGNAL(triggered(bool)), this, SIGNAL(setMinimalInterface()));
     connect(connectBTAction, SIGNAL(triggered(bool)), this, SIGNAL(connectBT()));
+    connect(debugBTAction, SIGNAL(triggered(bool)), this, SIGNAL(debugBT()));
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     ui->button19x19->setChecked(true);

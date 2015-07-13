@@ -39,6 +39,7 @@ signals:
     void loadGame();
     void setMinimalInterface();
     void connectBT();
+    void debugBT();
 
 
 public slots:
@@ -87,6 +88,7 @@ private:
     QAction* aboutAction;
     QAction* helpAction;
     QAction* settingsAction;
+    QAction* debugBTAction;
     QAction* connectBTAction;
     QAction* smallInterfaceAction;
 };

@@ -1,4 +1,6 @@
 project(FreeGo)
 cmake_minimum_required(VERSION 2.8)
 
-add_library(network Proto.cpp)
+qt5_wrap_cpp(MOC_HEADERS BTServer.h)
+
+add_library(network Proto.cpp BTServer.cpp ${MOC_HEADERS})

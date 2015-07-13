@@ -12,6 +12,7 @@ public:
     DebugStuff();
 
     int runBTCode();
+    int initBluetooth();
 
 public slots:
     void clientConnected();

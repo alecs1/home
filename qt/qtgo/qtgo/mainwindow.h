@@ -13,6 +13,7 @@ class RoundInfo;
 class MiniGameSettings;
 class ConfirmMoveDialog;
 class QToolButton;
+class BTServer;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -46,7 +47,8 @@ public slots:
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
 
-    void runDebug();
+    void connectBT();
+    void showBTChat();
 
 signals:
     void programSettingsChanged();
@@ -64,6 +66,7 @@ private:
     DrawAreaWidget* drawArea;
     GoTable* table;
     RoundInfo* roundInfo = NULL;
+    BTServer* btServer = NULL;
     QFontDatabase fontDatabase;
 };
 
