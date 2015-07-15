@@ -104,6 +104,10 @@ M-x line-number-mode    - display line number in the mode line
 
 Packages to install:
 emacs-goodies-el - for session (Debian)
+session (for cygwin, http://emacs-session.sourceforge.net/)
+autocomplete (http://auto-complete.org/doc/manual.html)
+tramp
+magit
 
 Other features:
 M-x semantic-mode       - emacs will start parsing the files
