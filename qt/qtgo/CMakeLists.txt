@@ -5,7 +5,7 @@ message(${CMAKE_SYSTEM_NAME})
 
 #steps:
 #Android:
-#cmake -DCMAKE_TOOLCHAIN_FILE=../../qt-android-cmake/toolchain/android.toolchain.cmake ../qtgo
+#cmake -DCMAKE_TOOLCHAIN_FILE=../../qt-android-cmake/toolchain/android.toolchain.cmake ../qtgo -DCMAKE_BUILD_TYPE=Debug
 #Windows:
 #cmake -G "Visual Studio 12 2013 Win64" ../qtgo
 #run cmake
@@ -38,8 +38,8 @@ endif ($CMAKE_COMPILER_IS_GNUCC})
 
 if ( WIN32 OR ANDROID )
     if (ANDROID)
-        #set(QT_DIR "/home/alex/exec/Qt3/5.5/android_armv7")
-        set(QT_DIR "C:/Qt/5.5/android_armv7")
+        set(QT_DIR "/home/alex/exec/Qt3/5.5/android_armv7")
+        #set(QT_DIR "C:/Qt/5.5/android_armv7")
     else (ANDROID)
         set(QT_DIR "C:/Qt/5.5/msvc2013_64")
     endif (ANDROID)
@@ -91,6 +91,7 @@ if (ANDROID)
         NAME "FreeGo"
         PACKAGE_NAME "org.alecs1.FreeGo"
         PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qtgo/android"
+        KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/qtgo/android/release.keystore androidrelease
     )
 endif (ANDROID)
 
