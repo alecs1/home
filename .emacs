@@ -1,3 +1,6 @@
+;;in case session is installed locally: copy features like session.el to ~/.emacs.d/lisp 
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+
 (require 'session)
 (add-hook 'after-init-hook 'session-initialize)
 (desktop-save-mode 1)
