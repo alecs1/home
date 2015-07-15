@@ -9,7 +9,7 @@
 
 #include "ProtoStructs.h"
 
-namespace Proto {
+namespace ProtoBinary {
 
 unsigned int SMsgHeader::structSize() {
     return sizeof(SMsgHeader::len) + sizeof(SMsgHeader::type) + sizeof(SMsgHeader::id);
@@ -33,7 +33,7 @@ char* writeStreamBytes(char* dest, char* source, unsigned int size) {
 /*
  * @return - how many bytes have been processed; negative value: some error
  */
-int processMessage(char* buffer, unsigned int len) {
+int readMessage(char* buffer, unsigned int len) {
     char* pos = buffer;
     if (len < sizeof(SMsgHeader::len)) {
         return 0;
@@ -83,7 +83,7 @@ SCommand parseCommand(SMsgHeader header, char* buffer, unsigned int len) {
 
     switch (cmd.type) {
     case CmdType::Connect:
-        pos = readStreamBytes(cmd.partnerId, pos, sizeof(SCommand::partnerId));
+        pos = readStreamBytes(cmd.uuid, pos, sizeof(SCommand::uuid));
         break;
     case CmdType::Disconnect:
         break;
@@ -102,7 +102,7 @@ int serialiseCommand(SCommand cmd, char* buffer, unsigned int bufferLen) {
     pos = writeStreamBytes(pos, (char*)&cmd.type, sizeof(SCommand::type));
     switch (cmd.type) {
     case CmdType::Connect:
-        pos = writeStreamBytes(pos, cmd.partnerId, sizeof(SCommand::partnerId));
+        pos = writeStreamBytes(pos, cmd.uuid, sizeof(SCommand::uuid));
         break;
     default:
         Q_ASSERT(false);

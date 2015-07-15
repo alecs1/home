@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 //the low level, byte protocol
-namespace Proto {
+namespace ProtoBinary {
 
 #define MAX_MSG_LEN 0xFFFF
 #define UUID_LEN 16
@@ -50,7 +50,7 @@ struct SMsgHeader {
 struct SCommand {
     //SCommand();
     CmdType type = CmdType::Invalid;
-    char partnerId[UUID_LEN];
+    char uuid[UUID_LEN];
     char isBlack;
     uint8_t row = 0xFF;
     uint8_t col = 0xFF;
@@ -67,11 +67,11 @@ struct SReply {
 
 struct SMsg {
     SMsgHeader header;
-    SCommand* command;
-    SReply* reply;
+    SCommand* command = NULL;
+    SReply* reply = NULL;
 };
 
-int processMessage(char* buffer, unsigned int len);
+int readMessage(char* buffer, unsigned int len);
 
 SCommand parseCommand(SMsgHeader header, char* buffer, unsigned int len);
 int serialiseCommand(SCommand cmd, char* buffer, unsigned int bufferLen);

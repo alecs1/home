@@ -18,6 +18,7 @@
 #include "DebugStuff.h"
 
 #include "network/BTServer.h"
+#include "network/ConnMan.h"
 
 //TODO - just for tests
 #include "btchat/chat.h"
@@ -343,7 +344,8 @@ void MainWindow::connectBT() {
     printf("%s - %p\n", __func__, QThread::currentThreadId());
     int ret = -1;
     if (btServer == NULL) {
-        btServer = new BTServer();
+        connMan = new ConnMan;
+        btServer = new BTServer(connMan);
         btServer->initBluetooth();
     }
     printf("%s - ran, ret=%d\n", __func__, ret);

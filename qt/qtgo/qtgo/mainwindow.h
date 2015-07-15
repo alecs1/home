@@ -14,6 +14,7 @@ class MiniGameSettings;
 class ConfirmMoveDialog;
 class QToolButton;
 class BTServer;
+class ConnMan;
 
 //enum class ComputingPlatform : uint8_t {
 //    DesktopLinux = 0,
@@ -66,8 +67,10 @@ private:
     DrawAreaWidget* drawArea;
     GoTable* table;
     RoundInfo* roundInfo = NULL;
-    BTServer* btServer = NULL;
     QFontDatabase fontDatabase;
+
+    BTServer* btServer = NULL;
+    ConnMan* connMan = NULL;
 };
 
 #endif // MAINWINDOW_H

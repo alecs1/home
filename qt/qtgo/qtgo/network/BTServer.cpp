@@ -2,13 +2,16 @@
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtBluetooth/QBluetoothServer>
 
-#include "BTServer.h"
+#include "../Global.h"
 
-//TODO - remove this, it comes from the Qt example
+#include "BTServer.h"
+#include "ConnMan.h"
+
+//TODO - replace this, it comes from the Qt example
 static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 
 
-BTServer::BTServer()
+BTServer::BTServer(ConnMan *connMan) : connMan(connMan)
 {
 
 }
@@ -91,6 +94,7 @@ int BTServer::initBluetooth() {
                              protocolDescriptorList);
 
     #pragma endregion
+
     //! [Register service]
     result = serviceInfo.registerService(actualAddress);
     if (!result) {
@@ -101,3 +105,10 @@ int BTServer::initBluetooth() {
     printf("%s - done\n", __func__);
     return 0;
 }
+
+void BTServer::clientConnected() {
+    printf("%s - a client has connected\n", __func__);
+    connMan->processMessage(NULL);
+}
+
+

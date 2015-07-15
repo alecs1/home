@@ -5,12 +5,13 @@
 #include <QtBluetooth/QBluetoothServiceInfo>
 
 class QBluetoothServer;
+class ConnMan;
 
 class BTServer : public QObject
 {
 Q_OBJECT
 public:
-    BTServer();
+    BTServer(ConnMan* connMan);
     int initBluetooth();
 
 private:
@@ -19,6 +20,7 @@ private:
 private:
     QBluetoothServer *rfcommServer;
     QBluetoothServiceInfo serviceInfo;
+    ConnMan* connMan;
 };
 
 #endif // BTSERVER_H
