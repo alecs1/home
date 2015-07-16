@@ -14,8 +14,9 @@ if (NOT ANDROID)
     add_definitions(-DWithQt5Quick)
     find_package(Qt5Quick REQUIRED)
     find_package(Qt5QuickWidgets REQUIRED)
-    find_package(Qt5Qml REQUIRED)
 endif (NOT ANDROID)
+    find_package(Qt5Qml REQUIRED)
+
 
 find_package(Qt5Multimedia REQUIRED)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})

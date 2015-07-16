@@ -72,6 +72,11 @@ GameSettings::GameSettings(QWidget *parent):
     smallInterfaceAction = mainMenu->addAction("Make table larger\n"
                                                "on small screens");
 
+#ifndef DEBUG
+    connectBTAction->setEnabled(false);
+    debugBTAction->setEnabled(false);
+#endif
+
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));

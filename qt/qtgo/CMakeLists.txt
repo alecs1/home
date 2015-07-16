@@ -53,6 +53,7 @@ if ( WIN32 OR ANDROID )
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Multimedia")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Quick")
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5QuickWidgets")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${QT_DIR}/lib/cmake/Qt5Qml")
     message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
 endif (WIN32 OR ANDROID)
 
