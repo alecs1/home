@@ -69,24 +69,24 @@ git update-index --no-assume-unchanged path/to/file.txt
 
 
 Bugs:
+18. Transitioning to small screen optimisations may deadlock a computer vs computer game. Probably due to some slot problems.
+16. When there are no hints to give, there is not indication of the situation
+5. With Sony Xperia the radio buttons don't show what's selected, although they seem to work. Seems like a Qt bug, won't fix now.
+8. If the last move in a game was an undo, restoring the game will be wrong.
+9. Undoing won't correctly show the last move.
+10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
+12. At the end of the game the AI stone animation does not stop.
+17. Opening a game where the computer is the one to finish by passing, the state of the game is incorrect, and the computer is shown as doing computations.
 1. The compilation says: warning, failure to find engine/liberty.h
 v 2. After finishing the game the current player type icon is wrong.
 v 3. LG G3 fonts are too big, everything looks messy. Fixed player info, nothing about font size yet.
 v 4. When finishing the game the current player might reported wrongly: close the program on computer's turn, reload, press finish instead of continuing.
-5. With Sony Xperia the radio buttons don't show what's selected, altough they seem to work. Seems like a Qt bug, won't fix now.
 v 6. At startup table size is not the one selected by buttons.
 v 7. Not showing the last move when loading a saved game.
-8. If the last move in a game was an undo, restoring the game will be wrong.
-9. Undoing won't correctly show the last move.
-10. Crash when pressing finish in an AI vs AI game, because PlaceStone will continue to trigger AI moves.
-v 11. Undo after pass undoes the last valid move, not the pass.
-12. At the end of the game the AI stone animation does not stop.
 v 13. Not differentiating well between two local human players.
 v 14. After loading a game of size 9 and starting to play, GnuGo will actually assume table size of 19.
 v 15. With the new numbering arangement, the DrawArea does not go through the size computation logic when changing table dimension.
-16. When there are no hints to give, there is not indication of the situation
-17. Opening a game where the computer is the one to finish by passing, the state of the game is incorrect, and the computer is shown as doing computations.
-18. Transitioning to small screen optimisations may deadlock a computer vs computer game.
+v 11. Undo after pass undoes the last valid move, not the pass.
 
 
 Crt:

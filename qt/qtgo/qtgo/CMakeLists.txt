@@ -15,9 +15,9 @@ if (NOT ANDROID)
     find_package(Qt5Quick REQUIRED)
     find_package(Qt5QuickWidgets REQUIRED)
 endif (NOT ANDROID)
-    find_package(Qt5Qml REQUIRED)
 
 
+find_package(Qt5Qml REQUIRED) #required for Qt5Multimedia; would freeze at startup on certain phones if missing.
 find_package(Qt5Multimedia REQUIRED)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${Qt5Svg_INCLUDE_DIRS})
