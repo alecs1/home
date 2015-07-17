@@ -6,6 +6,10 @@ C-s     - search, repeat C-s to search again
 C-r     - search backwards
 C-a     - exit search
 M-e     - pause to edit the search string. Resume searching with C-s
+M-%	- start replace
+    M-% string RET newstring RET
+    space, y   - replace on match
+    !	       - replace the remaining
 
 
 Search:
