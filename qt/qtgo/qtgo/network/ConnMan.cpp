@@ -25,6 +25,7 @@ void ConnMan::connect(Peer* peer) {
     if (peer == NULL)
         return;
 
+    /*
     SMsg msg;
     msg.header.id = crtId;
     crtId += 1;
@@ -34,6 +35,7 @@ void ConnMan::connect(Peer* peer) {
     command->type = CmdType::Connect;
     memcpy(command->uuid, uuid.toRfc4122().constData(), UUID_LEN);
     msg.command = command;
+    */
 }
 
 Peer* ConnMan::getPeer() {

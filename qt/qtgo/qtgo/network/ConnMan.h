@@ -4,9 +4,11 @@
 #include <QUuid>
 
 
+/*
 namespace ProtoBinary {
     class SMsg;
 }
+*/
 
 struct Peer {
 
@@ -33,7 +35,8 @@ private:
     Peer* getPeer();
 public:
     ConnMan();
-    void processMessage(ProtoBinary::SMsg* msg);
+    //void processMessage(ProtoBinary::SMsg* msg);
+    void processMessage();
 };
 
 #endif // CONNMAN_H
