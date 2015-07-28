@@ -10,6 +10,10 @@ namespace ProtoBinary {
 }
 */
 
+namespace ProtoBinary {
+    struct SMsg;
+}
+
 struct Peer {
 
 };
@@ -36,7 +40,7 @@ private:
 public:
     ConnMan();
     //void processMessage(ProtoBinary::SMsg* msg);
-    void processMessage();
+    void processMessage(ProtoBinary::SMsg* msg);
 };
 
 #endif // CONNMAN_H
