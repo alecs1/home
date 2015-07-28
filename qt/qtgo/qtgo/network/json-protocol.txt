@@ -1,0 +1,42 @@
+{
+
+    MsgType: Command/Reply,
+    MsgId: 5455,
+    Commands: Connect, ListCommonGames, StartNewGame, ResumeGame, ResignGame, PlayMove, Disconnect,
+    Replies: Connect/ListCommonGames/etc, Fail, Error
+
+    Reply: {
+        replyTo: 5455
+        result: Success/Fail/Error
+    }
+
+
+    #commands:
+    Connect: {
+        uuid: xxxyyyzzz
+    }
+
+    StartNewGame: {
+        isBlack: true,
+        size: 9,
+        komi: 10.5,
+        handicapType: fixed, free,
+        handicap: 5
+    }
+
+    #replies:
+    ListCommonGames: {
+
+    }
+
+
+    Fail: {
+        reason: "bla bla bla"
+    }
+
+    Error: {
+        errMsg: "bla bla bla"
+    }
+
+
+}
