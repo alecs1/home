@@ -13,7 +13,6 @@
 #endif
 
 #define FREEGO_PASS_MOVE (-2)
-#define FREEGO_VERSION "0.96"
 #define PASS_COUNT_TO_FINISH (2)
 
 enum class GameState:uint8_t  {

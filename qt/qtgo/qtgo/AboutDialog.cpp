@@ -9,7 +9,8 @@
 #include <QSpacerItem>
 #include <QMessageBox>
 
-#include "Global.h"
+//#include "Global.h"
+#include "VERSION.h"
 #include "AboutDialog.h"
 #include "ThirdPartyInfo.h"
 
