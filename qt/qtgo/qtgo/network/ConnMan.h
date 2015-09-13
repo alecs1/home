@@ -6,11 +6,11 @@
 
 /*
 namespace ProtoBinary {
-    class SMsg;
+    struct SMsg;
 }
 */
 
-namespace ProtoBinary {
+namespace ProtoJson {
     struct SMsg;
 }
 
@@ -39,8 +39,7 @@ private:
     Peer* getPeer();
 public:
     ConnMan();
-    //void processMessage(ProtoBinary::SMsg* msg);
-    void processMessage(ProtoBinary::SMsg* msg);
+    void processMessage(ProtoJson::SMsg* msg);
 };
 
 #endif // CONNMAN_H

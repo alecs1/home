@@ -6,6 +6,7 @@
 
 class QBluetoothServer;
 class ConnMan;
+class QBluetoothSocket;
 
 class BTServer : public QObject
 {
@@ -20,6 +21,7 @@ private:
 private:
     QBluetoothServer *rfcommServer;
     QBluetoothServiceInfo serviceInfo;
+    QList<QBluetoothSocket *> clientSockets; //only one for starters
     ConnMan* connMan;
 };
 

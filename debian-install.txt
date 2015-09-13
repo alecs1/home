@@ -14,7 +14,7 @@ media:
 vlc amarok audacity pavucontrol 
 
 internet:
-firefox thunderbird ktorrent pidgin ktorrent filezilla opera
+firefox thunderbird ktorrent pidgin pidgin-otr ktorrent filezilla opera
 
 system:
 krusader kuser kate emacs NetworkManager konsole aptitude synaptic ksysguard dolphin qalculate kinfocenter

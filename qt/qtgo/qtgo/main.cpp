@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         a.setStyle(qtCurve);
         printf("%s - done setting up style\n", __func__);
         /**/
-#else
+#elif defined(USE_QTCURVE)
         QPluginLoader loader("qtcurve.so", &a);
         QObject* pluginInstance = loader.instance();
         if (pluginInstance != NULL) {

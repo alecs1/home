@@ -72,6 +72,8 @@ GameSettings::GameSettings(QWidget *parent):
     smallInterfaceAction = mainMenu->addAction("Make table larger\n"
                                                "on small screens");
 
+//TODO - why did the DEBUG define disappear?
+#define DEBUG 1
 #ifndef DEBUG
     connectBTAction->setEnabled(false);
     debugBTAction->setEnabled(false);

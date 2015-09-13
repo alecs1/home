@@ -1,6 +1,8 @@
 #ifndef PROTOJSON_H
 #define PROTOJSON_H
 
+#include <QByteArray>
+
 #include <stdint.h>
 
 namespace ProtoJson {
@@ -56,18 +58,20 @@ struct SCommand {
 
 
 struct SMsg {
+    MsgType mType = MsgType::Invalid;
+    unsigned int msgid = 0x0;
     SCommand* command = NULL;
     SReply* reply = NULL;
 };
 
-struct Msg {
-    MsgType mType = MsgType::Invalid;
-    unsigned int msgid = 0x0;
+QByteArray serialiseReply(SReply* reply) {
+}
 
-};
-
-
+QByteArray serialiseCmd(SCommand* cmd) {
 
 }
+
+
+}  //namespace ProtoJson
 
 #endif // PROTOJSON_H

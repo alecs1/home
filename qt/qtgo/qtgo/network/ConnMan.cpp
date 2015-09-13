@@ -1,7 +1,7 @@
 #include "ConnMan.h"
-#include "ProtoStructs.h"
+#include "ProtoJson.h"
 
-using namespace ProtoBinary;
+using namespace ProtoJson;
 
 ConnMan::ConnMan()
 {
@@ -25,17 +25,15 @@ void ConnMan::connect(Peer* peer) {
     if (peer == NULL)
         return;
 
-    /*
     SMsg msg;
-    msg.header.id = crtId;
-    crtId += 1;
-    msg.header.type = MsgType::Command;
+    msg.mType = MsgType::Command;
+    msg.msgid = crtId++;
+    SCommand* cmd = new SCommand;
+    msg.command = cmd;
 
-    SCommand* command = new SCommand;
-    command->type = CmdType::Connect;
-    memcpy(command->uuid, uuid.toRfc4122().constData(), UUID_LEN);
-    msg.command = command;
-    */
+    cmd->cType = CmdType::Connect;
+    strncpy(cmd->uuid, uuid.toString().toUtf8().constData(), UUID_LEN);
+
 }
 
 Peer* ConnMan::getPeer() {
