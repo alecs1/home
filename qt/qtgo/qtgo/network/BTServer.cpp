@@ -1,6 +1,7 @@
 #include <QtBluetooth/QBluetoothAddress>
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtBluetooth/QBluetoothServer>
+#include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 
 #include "../Global.h"
 
@@ -16,7 +17,12 @@ BTServer::BTServer(ConnMan *connMan) : connMan(connMan)
 
 }
 
+BTServer::~BTServer() {
+    delete rfcommServer;
+    //delete discoveryAgent; //delete through QObject means
+}
 
+//TODO - the code asking the user to activate bluetooth needs to be run each time button is pressed!
 int BTServer::initBluetooth() {
 
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
@@ -65,9 +71,9 @@ int BTServer::initBluetooth() {
     //! [Class Uuuid must contain at least 1 entry]
 
     //! [Service name, description and provider]
-    serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceName, tr("Bt Chat Server"));
+    serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceName, tr("QtGo p2p"));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceDescription,
-                             tr("Example bluetooth chat server"));
+                             tr("QtGo peer server"));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceProvider, tr("qt-project.org"));
 
 
@@ -102,6 +108,19 @@ int BTServer::initBluetooth() {
         return -3;
     }
 
+    startBluetoothDiscovery();
+
+    printf("%s - success\n", __func__);
+    return 0;
+}
+
+//this is actually a client thing
+int BTServer::startBluetoothDiscovery() {
+    if (discoveryAgent == NULL) {
+        discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
+        connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
+    }
+    discoveryAgent->start();
     printf("%s - done\n", __func__);
     return 0;
 }
@@ -110,5 +129,15 @@ void BTServer::clientConnected() {
     printf("%s - a client has connected\n", __func__);
     connMan->processMessage(NULL);
 }
+
+void BTServer::deviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
+    printf("%s - address:%s, name:%s, signal strength:%d\n",
+           __func__,
+           deviceInfo.address().toString().toUtf8().constData(),
+           deviceInfo.name().toUtf8().constData(),
+           deviceInfo.rssi());
+}
+
+
 
 

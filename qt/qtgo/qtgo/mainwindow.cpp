@@ -346,7 +346,7 @@ void MainWindow::connectBT() {
     if (btServer == NULL) {
         connMan = new ConnMan;
         btServer = new BTServer(connMan);
-        btServer->initBluetooth();
+        ret = btServer->initBluetooth();
     }
     printf("%s - ran, ret=%d\n", __func__, ret);
 }
