@@ -1,10 +1,15 @@
 #include "BTClient.h"
 
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
+#include <QtBluetooth/QBluetoothServiceInfo>
+#include <QtBluetooth/QBluetoothSocket>
+
+
+QString qtgoUUID("7a17c611-7857-48d9-95e3-ab56df7e5af2");
 
 BTClient::BTClient(QObject *parent) : QObject(parent)
 {
-
+    socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
 }
 
 void BTClient::startClient() {
@@ -29,5 +34,12 @@ void BTClient::deviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
            deviceInfo.rssi());
 
     //is it running a QtGo server? at this point just connect to it
+    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy") {
+        socket->connectToService(deviceInfo.address(), QBluetoothUuid(qtgoUUID));
+        printf("%s - discovered an expected device\n", __func__);
+    }
+
+    printf("%s - socket->state=%d\n", __func__, socket->state());
+
 }
 
