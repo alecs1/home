@@ -34,6 +34,7 @@ int BTServer::initBluetooth() {
     }
 
     QBluetoothLocalDevice adapter(localAdapters.at(0).address());
+    adapter.powerOn();
     adapter.setHostMode(QBluetoothLocalDevice::HostDiscoverable);
 
     rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, NULL);
@@ -71,9 +72,9 @@ int BTServer::initBluetooth() {
     //! [Class Uuuid must contain at least 1 entry]
 
     //! [Service name, description and provider]
-    serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceName, tr("QtGo p2p"));
+    serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceName, tr("FreeGo p2p"));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceDescription,
-                             tr("QtGo peer server"));
+                             tr("FreeGo peer server"));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceProvider, tr("qt-project.org"));
 
 
@@ -108,14 +109,14 @@ int BTServer::initBluetooth() {
         return -3;
     }
 
-    startBluetoothDiscovery();
+    scanForDevices();
 
     printf("%s - success\n", __func__);
     return 0;
 }
 
 //this is actually a client thing
-int BTServer::startBluetoothDiscovery() {
+int BTServer::scanForDevices() {
     if (discoveryAgent == NULL) {
         discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
         connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));

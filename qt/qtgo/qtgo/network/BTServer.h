@@ -17,7 +17,7 @@ public:
     BTServer(ConnMan* connMan);
     ~BTServer();
     int initBluetooth();
-    int startBluetoothDiscovery();
+    int scanForDevices();
 
 private slots:
     void clientConnected();

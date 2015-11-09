@@ -1,11 +1,10 @@
-#include <QFileDialog>
-#include <QPropertyAnimation>
-
-//debug
-#include <QToolButton>
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+#include <QFileDialog>
+#include <QPropertyAnimation>
+//debug
+#include <QToolButton>
 
 #include "DrawAreaWidget.h"
 #include "GoTable.h"
@@ -16,6 +15,8 @@
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
+#include "network/BTErrorDialog.h"
+
 
 #include "network/BTServer.h"
 #include "network/ConnMan.h"
@@ -344,10 +345,31 @@ void MainWindow::connectBT() {
     printf("%s - %p\n", __func__, QThread::currentThreadId());
     int ret = -1;
     if (btServer == NULL) {
-        connMan = new ConnMan;
-        btServer = new BTServer(connMan);
-        ret = btServer->initBluetooth();
+        while(true) {
+            if (connMan == NULL) {
+                connMan = new ConnMan;
+            }
+            btServer = new BTServer(connMan);
+            ret = btServer->initBluetooth();
+            if (ret == -1) {
+                delete btServer;
+                btServer = NULL;
+
+                BTErrorDialog dialog("Error initialising bluetooth:\n" + QString::number(ret));
+                int result = dialog.exec();
+                if (result == QDialog::Rejected) {
+                    break;
+                }
+            }
+            else {
+                break;
+            }
+        }
     }
+    else {
+        printf("%s - btServer was already initialised\n", __func__);
+    }
+
     printf("%s - ran, ret=%d\n", __func__, ret);
 }
 
