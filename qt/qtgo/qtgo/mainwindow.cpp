@@ -342,6 +342,7 @@ void MainWindow::setGameState(GameState state) {
 }
 
 void MainWindow::connectBT() {
+#ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
     int ret = -1;
     if (btServer == NULL) {
@@ -371,10 +372,17 @@ void MainWindow::connectBT() {
     }
 
     printf("%s - ran, ret=%d\n", __func__, ret);
+#else
+    printf("No QBluetooth support on Windows\n");
+#endif
 }
 
 void MainWindow::showBTChat() {
+#ifndef _WIN32
     Chat* btChat = new Chat(this);
     ui->gridLayout->addWidget(btChat, 0, 0);
+#else
+    printf("No QBluetooth support on Windows\n");
+#endif
 }
 

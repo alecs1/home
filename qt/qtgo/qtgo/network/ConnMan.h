@@ -39,6 +39,7 @@ private:
     Peer* getPeer();
 public:
     ConnMan();
+    void connectTCP();
     void processMessage(ProtoJson::SMsg* msg);
 };
 

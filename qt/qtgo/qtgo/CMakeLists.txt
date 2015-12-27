@@ -32,12 +32,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 
 #qt UI
-qt5_wrap_ui(UIS_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
+qt5_wrap_ui(UI_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
     RoundInfo.ui Handicap.ui HandicapDialog.ui BusyDialog.ui SettingsWidget.ui SettingsDialog.ui)
 
 
 #how to debug a CMake script:
-message("UIS_HEADERS:" ${UIS_HEADERS})
+message("UI_HEADERS:" ${UI_HEADERS})
 
 
 #qt moc
@@ -54,7 +54,7 @@ set (ALL_SOURCES mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp ma
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
     SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp
-    ${HEADER_MOC} ${UIS_HEADERS} ${RESOURCES_RCC})
+    ${HEADER_MOC} ${UI_HEADERS} ${RESOURCES_RCC})
 
 if (ANDROID)
     add_library(FreeGo SHARED ${ALL_SOURCES})

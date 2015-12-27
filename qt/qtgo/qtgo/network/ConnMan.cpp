@@ -1,11 +1,28 @@
 #include "ConnMan.h"
+
+#include <QtNetwork/QAbstractSocket>
+
 #include "ProtoJson.h"
 
 using namespace ProtoJson;
 
+const uint16_t tcpDefaultPort = 1491; //the first unasigned IANA port
+
 ConnMan::ConnMan()
 {
     uuid = QUuid::createUuid();
+}
+
+void ConnMan::connectTCP() {
+    QAbstractSocket socket(QAbstractSocket::TcpSocket, this);
+    bool bound = socket.bind(QHostAddress::Any, tcpDefaultPort);
+
+    if (bound) {
+        //we're the server, listen for others connecting
+    }
+    else {
+        //someone already bound to on this computer, we may connect to them
+    }
 }
 
 /*
