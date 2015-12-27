@@ -109,6 +109,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(gameSettingsWidget, SIGNAL(saveGame()), this, SLOT(saveGame()));
     connect(gameSettingsWidget, SIGNAL(loadGame()), this, SLOT(loadGame()));
     connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(connectBT()));
+    connect(gameSettingsWidget, SIGNAL(connectTCP()), this, SLOT(connectTCP()));
     connect(gameSettingsWidget, SIGNAL(debugBT()), this, SLOT(showBTChat()));
 
 
@@ -375,6 +376,13 @@ void MainWindow::connectBT() {
 #else
     printf("No QBluetooth support on Windows\n");
 #endif
+}
+
+void MainWindow::connectTCP() {
+    if (connMan == NULL) {
+        connMan = new ConnMan;
+    }
+    connMan->connectTCP();
 }
 
 void MainWindow::showBTChat() {

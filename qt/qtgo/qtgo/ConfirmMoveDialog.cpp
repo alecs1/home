@@ -9,8 +9,8 @@ ConfirmMoveDialog::ConfirmMoveDialog(QWidget *parent) :
     ui(new Ui::ConfirmMoveDialog)
 {
     ui->setupUi(this);
-    QObject::connect(ui->confirmButton, SIGNAL(clicked()), this, SLOT(accept()));
-    QObject::connect(ui->cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(ui->confirmButton, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(ui->cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
     icon = new QIcon;
 }
 

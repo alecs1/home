@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE KeyboardMappingScheme>
-<!-- Written by Qt Creator 3.6.0, 2015-12-27T22:50:05. -->
+<!-- Written by Qt Creator 3.6.0, 2015-12-27T23:29:04. -->
 <mapping>
  <shortcut id="CVS.Add">
   <key value="Alt+C, Alt+A"/>
@@ -122,7 +122,7 @@
  <shortcut id="Find.FindInCurrentDocument"/>
  <shortcut id="Wizard.Impl.Wizard.Java"/>
  <shortcut id="Find.FindNext">
-  <key value="Ctrl+G"/>
+  <key value="Ctrl+S"/>
  </shortcut>
  <shortcut id="Wizard.Impl.Z.Js"/>
  <shortcut id="Find.FindPrevious">

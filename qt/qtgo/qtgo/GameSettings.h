@@ -39,6 +39,7 @@ signals:
     void loadGame();
     void setMinimalInterface();
     void connectBT();
+    void connectTCP();
     void debugBT();
 
 
@@ -90,6 +91,7 @@ private:
     QAction* settingsAction;
     QAction* debugBTAction;
     QAction* connectBTAction;
+    QAction* connectTCPAction;
     QAction* smallInterfaceAction;
 };
 

@@ -1,6 +1,7 @@
 #include "ConnMan.h"
 
-#include <QtNetwork/QAbstractSocket>
+#include <QtNetwork/QTcpSocket>
+#include <QtNetwork/QTcpServer>
 
 #include "ProtoJson.h"
 
@@ -14,14 +15,40 @@ ConnMan::ConnMan()
 }
 
 void ConnMan::connectTCP() {
-    QAbstractSocket socket(QAbstractSocket::TcpSocket, this);
-    bool bound = socket.bind(QHostAddress::Any, tcpDefaultPort);
+    //QAbstractSocket socket(QAbstractSocket::TcpSocket, this);
+    //bool bound = socket.QHostAddress::Any, tcpDefaultPort);
+
+    if (tcpServer == NULL) {
+        tcpServer = new QTcpServer(this);
+    }
+    bool bound = tcpServer->listen(QHostAddress::Any, tcpDefaultPort);
 
     if (bound) {
         //we're the server, listen for others connecting
+        connect(tcpServer, SIGNAL(newConnection()), this, SLOT(newTcpConnection()));
     }
     else {
         //someone already bound to on this computer, we may connect to them
+    }
+}
+
+void ConnMan::newTcpConnection() {
+    QTcpSocket* socket = tcpServer->nextPendingConnection();
+    if(connState == ConnState::Disconnected) {
+        printf("%s - accepted new connection\n", __func__);
+    }
+    else {
+        printf("%s - will reject new connection since we're already connected\n", __func__);
+        QString msg =
+                "{\
+                      \"msg_type\":\"command\",\
+                      \"command\":{\
+                          \"type\":\"disconnect\",\
+                          \"reason\":\"already_connected\"\
+                      }\
+                 }";
+        socket->write(msg.toUtf8());
+        socket->disconnectFromHost();
     }
 }
 
@@ -32,13 +59,13 @@ void ConnMan::processMessage(SMsg* msg) {
 
     if (connState == ConnState::Disconnected) {
         if (msg == NULL) {
-            connect(getPeer());
+            connectToPeer(getPeer());
         }
     }
 
 }
 
-void ConnMan::connect(Peer* peer) {
+void ConnMan::connectToPeer(Peer* peer) {
     if (peer == NULL)
         return;
 

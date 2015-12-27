@@ -49,6 +49,7 @@ public slots:
     void setGameState(GameState state);
 
     void connectBT();
+    void connectTCP();
     void showBTChat();
 
 signals:

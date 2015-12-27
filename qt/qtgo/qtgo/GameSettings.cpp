@@ -66,6 +66,7 @@ GameSettings::GameSettings(QWidget *parent):
     loadGameAction = mainMenu->addAction("Open saved game");
     settingsAction = mainMenu->addAction("Settings");
     connectBTAction = mainMenu->addAction("Bluetooth");
+    connectTCPAction = mainMenu->addAction("TCP");
     debugBTAction = mainMenu->addAction("Bluetooth chat");
     helpAction = mainMenu->addAction("Help");
     aboutAction = mainMenu->addAction("About");
@@ -76,6 +77,7 @@ GameSettings::GameSettings(QWidget *parent):
 #define DEBUG 1
 #ifndef DEBUG
     connectBTAction->setEnabled(false);
+    connectTCPAction->setEnabled(false);
     debugBTAction->setEnabled(false);
 #endif
 
@@ -103,6 +105,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(helpAction, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(smallInterfaceAction, SIGNAL(triggered(bool)), this, SIGNAL(setMinimalInterface()));
     connect(connectBTAction, SIGNAL(triggered(bool)), this, SIGNAL(connectBT()));
+    connect(connectTCPAction, SIGNAL(triggered(bool)), this, SIGNAL(connectTCP()));
     connect(debugBTAction, SIGNAL(triggered(bool)), this, SIGNAL(debugBT()));
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 

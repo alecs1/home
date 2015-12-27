@@ -2,13 +2,10 @@
 #define CONNMAN_H
 
 #include <QUuid>
+#include <QObject>
 
 
-/*
-namespace ProtoBinary {
-    struct SMsg;
-}
-*/
+class QTcpServer;
 
 namespace ProtoJson {
     struct SMsg;
@@ -18,12 +15,12 @@ struct Peer {
 
 };
 
-class ConnMan
+class ConnMan : public QObject
 {
+Q_OBJECT
 private:
-    enum class ConnState:uint8_t {
+    enum ConnState:uint8_t {
         Disconnected = 0,
-        PendingConnection,
         Connected,
         InGame,
         Invalid = 0xFF
@@ -33,10 +30,14 @@ private:
     int crtId = 0;
     QUuid uuid;
 
+    QTcpServer* tcpServer = NULL;
+
 private:
 
-    void connect(Peer* peer);
+    void connectToPeer(Peer* peer);
     Peer* getPeer();
+    void newTcpConnection();
+
 public:
     ConnMan();
     void connectTCP();

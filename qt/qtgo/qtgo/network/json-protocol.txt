@@ -37,6 +37,13 @@
     Error: {
         errMsg: "bla bla bla"
     }
+}
 
-
+#Directly deny connection since we're already workng with another peer:
+{
+    "msg_type":"command",
+    "command": {
+        "type":"disconnect",
+        "reason":"already_connected"
+    }
 }
