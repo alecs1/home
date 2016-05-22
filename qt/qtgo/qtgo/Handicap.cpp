@@ -1,5 +1,7 @@
 #include <QMenu>
 
+#include <cmath>
+
 #include "Handicap.h"
 #include "ui_Handicap.h"
 

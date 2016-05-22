@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QMenu>
 #include <QMessageBox>
+#include <cmath>
 
 #include "GameSettings.h"
 #include "ui_GameSettings.h"

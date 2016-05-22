@@ -14,5 +14,5 @@ PeerSelectionDialog::~PeerSelectionDialog()
 }
 
 int PeerSelectionDialog::addPeerInfo(QString& peer) {
-
+    return
 }
