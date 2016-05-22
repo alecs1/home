@@ -1,10 +1,19 @@
 big:
+#load wifi modules
 rmmod iwlwifi iwlmvm
 
+#no idea what this is
 modprobe -r rtsx_pci
 modprobe rtsx_pci
 
 
 
 small:
+#rebuild wifi modules
 m-a a-i broadcom-sta after each upgrade
+
+
+
+medium:
+#set the maximum battery charge 85%, longer lasting battery
+tlp setcharge 80 85
