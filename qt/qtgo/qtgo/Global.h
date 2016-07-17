@@ -5,6 +5,7 @@
 
 #ifdef WIN32
 #define __func__ __FUNCTION__
+#define __PRETTY_FUNCTION__  __FUNCTION__
 #endif
 
 #if defined(Q_OS_ANDROID)

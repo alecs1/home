@@ -48,7 +48,7 @@ public slots:
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
 
-    void connectBT();
+    int connectBT();
     void connectTCP();
     void showBTChat();
 

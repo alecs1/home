@@ -22,24 +22,24 @@ int BTClient::startBluetoothDiscovery() {
         connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
     }
     discoveryAgent->start();
-    printf("%s - done\n", __func__);
+    printf("%s - done\n", __PRETTY_FUNCTION__ );
     return 0;
 }
 
 void BTClient::deviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
     printf("%s - address:%s, name:%s, signal strength:%d\n",
-           __func__,
+           __PRETTY_FUNCTION__,
            deviceInfo.address().toString().toUtf8().constData(),
            deviceInfo.name().toUtf8().constData(),
            deviceInfo.rssi());
 
     //is it running a QtGo server? at this point just connect to it
-    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy") {
+    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy" || deviceInfo.name() == "Xperia Z1 Compact") {
         socket->connectToService(deviceInfo.address(), QBluetoothUuid(qtgoUUID));
-        printf("%s - discovered an expected device\n", __func__);
+        printf("%s - discovered an expected device\n", __PRETTY_FUNCTION__);
     }
 
-    printf("%s - socket->state=%d\n", __func__, socket->state());
+    printf("%s - socket->state=%d\n", __PRETTY_FUNCTION__, socket->state());
 
 }
 

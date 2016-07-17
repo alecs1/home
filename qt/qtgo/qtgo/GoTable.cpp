@@ -217,6 +217,7 @@ GoTable::GoTable(QWidget *parent) :
 
 GoTable::~GoTable() {
     printf("%s - Implement destructor!\n", __func__);
+    delete gnuGoMutex;
 }
 
 //This code is outside the constructor because this is executed after the signals of this object are connected

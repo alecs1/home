@@ -10,6 +10,13 @@ class ConnMan;
 class QBluetoothSocket;
 class QBluetoothDeviceDiscoveryAgent;
 
+struct BTPeerInfo {
+    QBluetoothDeviceInfo deviceInfo;
+    QString address;
+    QString name;
+    int strength;
+};
+
 class BTServer : public QObject
 {
 Q_OBJECT
@@ -18,17 +25,20 @@ public:
     ~BTServer();
     int initBluetooth();
     int scanForDevices();
+    QList<BTPeerInfo> getPeers();
+    int connectAddress(const QString& address);
 
 private slots:
     void clientConnected();
     void deviceDiscovered(QBluetoothDeviceInfo deviceInfo);
 
 private:
-    QBluetoothServer *rfcommServer = NULL;
+    QBluetoothServer *rfcommServer = nullptr;
     QBluetoothServiceInfo serviceInfo;
-    QBluetoothDeviceDiscoveryAgent* discoveryAgent = NULL;
+    QBluetoothDeviceDiscoveryAgent* discoveryAgent = nullptr;
     QList<QBluetoothSocket *> clientSockets; //only one for starters
     ConnMan* connMan;
+    QList<BTPeerInfo> peers;
 };
 
 #endif // BTSERVER_H

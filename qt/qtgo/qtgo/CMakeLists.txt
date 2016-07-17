@@ -41,9 +41,24 @@ message("UI_HEADERS:" ${UI_HEADERS})
 
 
 #qt moc
-qt5_wrap_cpp(HEADER_MOC mainwindow.h DrawAreaWidget.h GoTable.h GameSettings.h MiniGameSettings.h PlayerWidget.h GameEndDialog.h ConfirmMoveDialog.h
-    RoundInfo.h Handicap.h HandicapDialog.h BusyDialog.h AboutDialog.h HelpDialog.h SettingsWidget.h SettingsDialog.h
-DebugStuff.h)
+qt5_wrap_cpp(HEADER_MOC
+    mainwindow.h
+    DrawAreaWidget.h
+    GoTable.h
+    GameSettings.h
+    MiniGameSettings.h
+    PlayerWidget.h
+    GameEndDialog.h
+    ConfirmMoveDialog.h
+    RoundInfo.h
+    Handicap.h
+    HandicapDialog.h
+    BusyDialog.h
+    AboutDialog.h
+    HelpDialog.h
+    SettingsWidget.h
+    SettingsDialog.h
+    DebugStuff.h)
 
 qt5_add_resources(RESOURCES_RCC res.qrc)
 

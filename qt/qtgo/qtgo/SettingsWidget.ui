@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>290</width>
-    <height>290</height>
+    <width>288</width>
+    <height>288</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,6 +43,10 @@
       <widget class="QToolButton" name="revertSoundsButton">
        <property name="text">
         <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="res.qrc">
+         <normaloff>:/resources/cursorBlackWhite.png</normaloff>:/resources/cursorBlackWhite.png</iconset>
        </property>
       </widget>
      </item>
@@ -137,6 +141,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>
