@@ -119,7 +119,9 @@ int BTServer::initBluetooth() {
 
 //this is actually a client thing
 int BTServer::scanForDevices() {
-    if (discoveryAgent == NULL) {
+    printf("%s - enter\n", __PRETTY_FUNCTION__);
+    //peers.clear();
+    if (discoveryAgent == nullptr) {
         discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
         connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
     }

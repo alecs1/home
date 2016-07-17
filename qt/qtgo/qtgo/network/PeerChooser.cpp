@@ -11,15 +11,9 @@ PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->listWidget, SIGNAL(activated(const QModelIndex&)), this, SLOT(activated(const QModelIndex&)));
+    connect(ui->reloadButton, SIGNAL(clicked()), this, SLOT(rescan()));
 
-    QList<BTPeerInfo> peers = bt.getPeers();
-
-    for(int i = 0; i < peers.size(); i++) {
-        PeerWidget* p = new PeerWidget(ConnType::ConnBT, peers[i].name, peers[i].address);
-        p->setStrength(peers[i].strength);
-        QListWidgetItem* aux = new QListWidgetItem(ui->listWidget);
-        ui->listWidget->setItemWidget(aux, p);
-    }
+    rescan();
 }
 
 PeerChooser::~PeerChooser() {
@@ -36,4 +30,17 @@ void PeerChooser::activated(const QModelIndex& index) {
 
     btServer.connectAddress(p->address());
     close();
+}
+
+void PeerChooser::rescan() {
+    btServer.scanForDevices();
+    QList<BTPeerInfo> peers = btServer.getPeers();
+    ui->listWidget->clear();
+
+    for(int i = 0; i < peers.size(); i++) {
+        PeerWidget* p = new PeerWidget(ConnType::ConnBT, peers[i].name, peers[i].address);
+        p->setStrength(peers[i].strength);
+        QListWidgetItem* aux = new QListWidgetItem(ui->listWidget);
+        ui->listWidget->setItemWidget(aux, p);
+    }
 }

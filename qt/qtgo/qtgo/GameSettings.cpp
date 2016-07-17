@@ -75,13 +75,12 @@ GameSettings::GameSettings(QWidget *parent):
                                                "on small screens");
 
 //TODO - why did the DEBUG define disappear?
-#define DEBUG 1
-#ifndef DEBUG
+#define DEBUG 0
+#if DEBUG == 0
     connectBTAction->setEnabled(false);
     connectTCPAction->setEnabled(false);
     debugBTAction->setEnabled(false);
 #endif
-
 
     connect(ui->launchButton, SIGNAL(clicked()), this, SLOT(launchGameClicked()));
     connect(ui->finishButton, SIGNAL(clicked()), this, SLOT(askConfirmFinishGame()));

@@ -35,6 +35,7 @@ private slots:
 private:
     QBluetoothServer *rfcommServer = nullptr;
     QBluetoothServiceInfo serviceInfo;
+    //TODO - discoveryAgent and client logic should go to the BTClient class
     QBluetoothDeviceDiscoveryAgent* discoveryAgent = nullptr;
     QList<QBluetoothSocket *> clientSockets; //only one for starters
     ConnMan* connMan;

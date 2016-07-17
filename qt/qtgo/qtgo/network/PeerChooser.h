@@ -18,6 +18,7 @@ public:
 
 public slots:
     void activated(const QModelIndex &index);
+    void rescan();
 
 
 private:
