@@ -75,7 +75,7 @@ GameSettings::GameSettings(QWidget *parent):
                                                "on small screens");
 
 //TODO - why did the DEBUG define disappear?
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG == 0
     connectBTAction->setEnabled(false);
     connectTCPAction->setEnabled(false);

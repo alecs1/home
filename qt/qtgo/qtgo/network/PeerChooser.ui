@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
-    <height>504</height>
+    <width>701</width>
+    <height>502</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <iconset resource="../res.qrc">
     <normaloff>:/resources/cursorBlackWhite.png</normaloff>:/resources/cursorBlackWhite.png</iconset>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2">
+  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0,0,0,1">
    <item row="0" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -35,19 +35,37 @@
      </item>
      <item>
       <widget class="QToolButton" name="settingsButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string>Options</string>
+       </property>
+       <property name="toolButtonStyle">
+        <enum>Qt::ToolButtonTextUnderIcon</enum>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="reloadButton">
        <property name="text">
-        <string>...</string>
+        <string>Reload</string>
        </property>
        <property name="icon">
         <iconset resource="../res.qrc">
          <normaloff>:/resources/defaultValue--edit-undo.svg</normaloff>:/resources/defaultValue--edit-undo.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="toolButtonStyle">
+        <enum>Qt::ToolButtonTextUnderIcon</enum>
        </property>
       </widget>
      </item>
@@ -67,7 +85,14 @@
     </layout>
    </item>
    <item row="6" column="0">
-    <widget class="QListWidget" name="listWidget"/>
+    <widget class="QListWidget" name="listWidget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0">
     <widget class="QWidget" name="optionsWidget" native="true">
