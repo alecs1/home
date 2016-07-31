@@ -42,14 +42,14 @@ SettingsWidget::SettingsWidget(QWidget *parent) :
 
     //QSvg
 
-    QIcon setDefaultIcon(QString(":/resources/defaultValue--edit-undo.svg"));
+    //QIcon setDefaultIcon(QString(":/resources/defaultValue--edit-undo.svg"));
     QList<QToolButton*> resetDefaultButtons;
     resetDefaultButtons.append(ui->revertColourButton);
     resetDefaultButtons.append(ui->revertSoundsButton);
     resetDefaultButtons.append(ui->revertSpaceOptimisationButton);
 
     for (int i = 0; i < resetDefaultButtons.size(); i++) {
-        resetDefaultButtons[i]->setIcon(setDefaultIcon);
+        //resetDefaultButtons[i]->setIcon(setDefaultIcon);
         resetDefaultButtons[i]->setIconSize(QSize(qToolButtonMinSize * 0.8, qToolButtonMinSize * 0.8));
     }
 

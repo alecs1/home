@@ -12,6 +12,9 @@
 #include "SaveFile.h"
 #include "Settings.h"
 #include "RoundInfo.h"
+#include "AboutDialog.h"
+#include "HelpDialog.h"
+#include "SettingsDialog.h"
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
@@ -92,7 +95,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(programSettingsChanged()), drawArea, SLOT(changeProgramSettings()));
     connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
     connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
-    connect(gameSettingsWidget, SIGNAL(setMinimalInterface()), this, SLOT(setMinimalInterface()));
     connect(table, SIGNAL(gameStateChanged(GameState)), gameSettingsWidget, SLOT(setGameState(GameState)));
     connect(table, SIGNAL(gameStateChanged(GameState)), this, SLOT(setGameState(GameState)));
     connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
@@ -107,11 +109,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(gameSettingsWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
     connect(gameSettingsWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
     connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
-    connect(gameSettingsWidget, SIGNAL(saveGame()), this, SLOT(saveGame()));
-    connect(gameSettingsWidget, SIGNAL(loadGame()), this, SLOT(loadGame()));
     connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(connectBT()));
     connect(gameSettingsWidget, SIGNAL(connectTCP()), this, SLOT(connectTCP()));
     connect(gameSettingsWidget, SIGNAL(debugBT()), this, SLOT(showBTChat()));
+
+    connect(ui->actionSave_Game, SIGNAL(triggered(bool)), this, SLOT(saveGame()));
+    connect(ui->actionOpen_Saved_Game, SIGNAL(triggered(bool)), this, SLOT(loadGame()));
+    connect(ui->actionPlay_on_Bluetooth, SIGNAL(triggered(bool)), this, SLOT(connectBT()));
+    connect(ui->actionPlay_on_Network, SIGNAL(triggered(bool)), this, SLOT(connectTCP()));
+    connect(ui->actionAdjust_for_Small_Display, SIGNAL(triggered(bool)), this, SLOT(setMinimalInterface()));
+    connect(ui->actionSettings, SIGNAL(triggered(bool)), this, SLOT(showSettings()));
+    connect(ui->actionHelp, SIGNAL(triggered(bool)), this, SLOT(showHelp()));
+    connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
+    connect(ui->actionDebug_BT, SIGNAL(triggered(bool)), this, SLOT(showBTChat()));
 
 
     table->checkForResumeGame();
@@ -319,6 +329,7 @@ void MainWindow::setupGameSettings() {
     actions.append(ui->actionHelp);
     actions.append(ui->actionAbout);
     actions.append(ui->actionAdjust_for_Small_Display);
+    actions.append(ui->actionDebug_BT);
     gameSettingsWidget->setActions(actions);
 }
 
@@ -411,5 +422,21 @@ void MainWindow::showBTChat() {
 #else
     printf("No QBluetooth support on Windows\n");
 #endif
+}
+
+void MainWindow::showAbout() {
+    AboutDialog dialog;
+    dialog.exec();
+    printf("%s - done\n", __func__);
+}
+
+void MainWindow::showHelp() {
+    HelpDialog dialog;
+    dialog.exec();
+}
+
+void MainWindow::showSettings() {
+    SettingsDialog dialog;
+    dialog.exec();
 }
 

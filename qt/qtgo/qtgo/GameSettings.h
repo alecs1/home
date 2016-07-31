@@ -9,7 +9,6 @@ class PlayerWidget;
 class RoundInfo;
 class ConfirmMoveDialog;
 class QMenu;
-class QToolButton;
 class QAction;
 
 namespace Ui {
@@ -36,12 +35,6 @@ signals:
     void undoMove();
     void showHints();
     void gameSettingsChanged(SGameSettings settings);
-    void saveGame();
-    void loadGame();
-    void setMinimalInterface();
-    void connectBT();
-    void connectTCP();
-    void debugBT();
 
 
 public slots:
@@ -52,9 +45,6 @@ public slots:
     void toggleShowEstimateScore();
     void setShowScoreEstimate(bool show);
     void showMenu();
-    void showAbout();
-    void showSettings();
-    void showHelp();
     void showHandicapWindow();
     void updateHandicap(SGameSettings::Handicap newHandicap);
     void receiveSettings(SGameSettings settings);
@@ -75,25 +65,15 @@ protected:
 private:
     Ui::GameSettings* ui;
     SGameSettings settings;
-    PlayerWidget* blackPlayer;
-    PlayerWidget* whitePlayer;
+    PlayerWidget* blackPlayer = nullptr;
+    PlayerWidget* whitePlayer = nullptr;
     bool roundInfoVisible;
-    RoundInfo* roundInfo;
+    RoundInfo* roundInfo = nullptr;
     bool scoreVisible;
     float scoreEstimate;
     GameState gameState;
     ConfirmMoveDialog* confirmMoveDialog;
-    QMenu* mainMenu;
-
-    QAction* saveGameAction;
-    QAction* loadGameAction;
-    QAction* aboutAction;
-    QAction* helpAction;
-    QAction* settingsAction;
-    QAction* debugBTAction;
-    QAction* connectBTAction;
-    QAction* connectTCPAction;
-    QAction* smallInterfaceAction;
+    QMenu* mainMenu = nullptr;
 };
 
 

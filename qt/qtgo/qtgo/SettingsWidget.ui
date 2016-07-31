@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>286</width>
-    <height>286</height>
+    <width>284</width>
+    <height>284</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>FreeGo: Settings</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -46,7 +46,7 @@
        </property>
        <property name="icon">
         <iconset resource="res.qrc">
-         <normaloff>:/resources/cursorBlackWhite.png</normaloff>:/resources/cursorBlackWhite.png</iconset>
+         <normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -94,6 +94,10 @@
        <property name="text">
         <string/>
        </property>
+       <property name="icon">
+        <iconset resource="res.qrc">
+         <normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</iconset>
+       </property>
        <property name="iconSize">
         <size>
          <width>32</width>
@@ -133,6 +137,10 @@
       <widget class="QToolButton" name="revertSpaceOptimisationButton">
        <property name="text">
         <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="res.qrc">
+         <normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</normaloff>:/resources/oxygen-icons/defaultValue--edit-undo.svg</iconset>
        </property>
        <property name="iconSize">
         <size>

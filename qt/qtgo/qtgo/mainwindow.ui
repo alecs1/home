@@ -177,6 +177,15 @@
     <string>About</string>
    </property>
   </action>
+  <action name="actionDebug_BT">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/resources/oxygen-icons/kbugbuster.svg</normaloff>:/resources/oxygen-icons/kbugbuster.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Debug BT</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

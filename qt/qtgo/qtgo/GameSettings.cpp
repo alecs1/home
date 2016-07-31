@@ -11,10 +11,7 @@
 #include "GameStruct.h"
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
-#include "AboutDialog.h"
-#include "HelpDialog.h"
 #include "HandicapDialog.h"
-#include "SettingsDialog.h"
 
 GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
@@ -63,16 +60,6 @@ GameSettings::GameSettings(QWidget *parent):
     whitePlayer->setPixmap(whiteStone);
 
     mainMenu = new QMenu(this);
-    saveGameAction = mainMenu->addAction("Save game");
-    loadGameAction = mainMenu->addAction("Open saved game");
-    settingsAction = mainMenu->addAction("Settings");
-    connectBTAction = mainMenu->addAction("Bluetooth");
-    connectTCPAction = mainMenu->addAction("TCP");
-    debugBTAction = mainMenu->addAction("Bluetooth chat");
-    helpAction = mainMenu->addAction("Help");
-    aboutAction = mainMenu->addAction("About");
-    smallInterfaceAction = mainMenu->addAction("Make table larger\n"
-                                               "on small screens");
 
 //TODO - why did the DEBUG define disappear?
 #define DEBUG 1
@@ -99,16 +86,6 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->handicapButton, SIGNAL(clicked()), this, SLOT(showHandicapWindow()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
-
-    connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
-    connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
-    connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
-    connect(helpAction, SIGNAL(triggered()), this, SLOT(showHelp()));
-    connect(smallInterfaceAction, SIGNAL(triggered(bool)), this, SIGNAL(setMinimalInterface()));
-    connect(connectBTAction, SIGNAL(triggered(bool)), this, SIGNAL(connectBT()));
-    connect(connectTCPAction, SIGNAL(triggered(bool)), this, SIGNAL(connectTCP()));
-    connect(debugBTAction, SIGNAL(triggered(bool)), this, SIGNAL(debugBT()));
-    connect(settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     ui->button19x19->setChecked(true);
 
@@ -331,7 +308,7 @@ void GameSettings::setShowScoreEstimate(bool show) {
 void GameSettings::showMenu() {
     printf("%s\n", __func__);
 
-    if (false) {
+    if (true) {
         //typically the menu fonts are too small, so we copy the size of a font know to be decent.
         //this is however ignored by Qt.
         QFont actionFont = mainMenu->actions()[0]->font();
@@ -364,22 +341,6 @@ void GameSettings::showMenu() {
     mainMenu->move(globalPos);
 }
 
-
-void GameSettings::showAbout() {
-    AboutDialog dialog;
-    dialog.exec();
-    printf("%s - done\n", __func__);
-}
-
-void GameSettings::showHelp() {
-    HelpDialog dialog;
-    dialog.exec();
-}
-
-void GameSettings::showSettings() {
-    SettingsDialog dialog;
-    dialog.exec();
-}
 
 void GameSettings::showHandicapWindow() {
     SGameSettings::Handicap newHandicap = settings.handicap;

@@ -28,5 +28,7 @@
         <file>resources/oxygen-icons/system-help.svg</file>
         <file>resources/oxygen-icons/phone.svg</file>
         <file>resources/oxygen-icons/dialog-information.svg</file>
+        <file>resources/oxygen-icons/kbugbuster.svg</file>
+        <file>resources/oxygen-icons/view-refresh.svg</file>
     </qresource>
 </RCC>

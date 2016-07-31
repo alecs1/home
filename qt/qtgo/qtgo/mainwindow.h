@@ -51,6 +51,9 @@ public slots:
     int connectBT();
     void connectTCP();
     void showBTChat();
+    void showAbout();
+    void showHelp();
+    void showSettings();
 
 signals:
     void programSettingsChanged();
