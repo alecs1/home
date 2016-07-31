@@ -60,19 +60,19 @@ RoundInfo::RoundInfo(QWidget *parent) :
     ui->playerTypeLabel->resize(playerTypeSize, playerTypeSize);
     playerAI = new QPixmap(playerTypeSize, playerTypeSize);
     playerAI->fill(Qt::transparent);
-    svgR.load(QString(":/resources/playerAI--picmi.svg"));
+    svgR.load(QString(":/resources/oxygen-icons/layerAI--picmi.svg"));
     QPainter AIPainter(playerAI);
     svgR.render(&AIPainter);
 
     playerHuman = new QPixmap(playerTypeSize, playerTypeSize);
     playerHuman->fill(Qt::transparent);
-    svgR.load(QString(":/resources/playerHuman--user-identity.svg"));
+    svgR.load(QString(":/resources/oxygen-icons/playerHuman--user-identity.svg"));
     QPainter HumanPainter(playerHuman);
     svgR.render(&HumanPainter);
 
     playerNetwork = new QPixmap(playerTypeSize, playerTypeSize);
     playerNetwork->fill(Qt::transparent);
-    svgR.load(QString(":/resources/playerNetwork--network-wired.svg"));
+    svgR.load(QString(":/resources/oxygen-icons/playerNetwork--network-wired.svg"));
     QPainter NetworkPainter(playerNetwork);
     svgR.render(&NetworkPainter);
 

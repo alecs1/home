@@ -14,18 +14,31 @@ static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 QString qtgoUUID("7a17c611-7857-48d9-95e3-ab56df7e5af2");
 
 
-BTServer::BTServer(ConnMan *connMan) : connMan(connMan)
-{
+BTServer::BTServer(ConnMan *connMan) : connMan(connMan) {
 
 }
 
 BTServer::~BTServer() {
     delete rfcommServer;
-    //delete discoveryAgent; //delete through QObject means
+}
+
+/**
+ * @return the list of BT devices installed in computer
+ */
+QList<QBluetoothHostInfo> BTServer::getBTDevices() const {
+    return QBluetoothLocalDevice::allDevices();
 }
 
 //TODO - the code asking the user to activate bluetooth needs to be run each time button is pressed!
-int BTServer::initBluetooth() {
+int BTServer::initBluetooth(const int interfaceNo) {
+    //reinitialise everything
+    delete rfcommServer;
+    if (discoveryAgent != nullptr) {
+        discoveryAgent->stop();
+        delete discoveryAgent;
+        discoveryAgent = nullptr;
+    }
+
 
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
     printf("%s - localAdapters.count=%d\n", __PRETTY_FUNCTION__, localAdapters.count());
@@ -35,14 +48,19 @@ int BTServer::initBluetooth() {
         return -1;
     }
 
-    QBluetoothLocalDevice adapter(localAdapters.at(0).address());
+    int interface = interfaceNo;
+    if (interface >= localAdapters.size()) {
+        interface = 0;
+    }
+
+    QBluetoothLocalDevice adapter(localAdapters.at(interface).address());
     adapter.powerOn();
     adapter.setHostMode(QBluetoothLocalDevice::HostDiscoverable);
 
-    rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, NULL);
+    rfcommServer = new QBluetoothServer(QBluetoothServiceInfo::RfcommProtocol, nullptr);
     connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
-    QBluetoothAddress actualAddress = localAdapters[0].address();
+    QBluetoothAddress actualAddress = localAdapters.at(interface).address();
     printf("%s - QBluetoothServer - starting to listen at %s\n", __PRETTY_FUNCTION__,
            actualAddress.toString().toUtf8().constData());
     bool result = rfcommServer->listen(actualAddress);
@@ -51,11 +69,8 @@ int BTServer::initBluetooth() {
         return -2;
     }
 
-    //! [Get local device name]
-    QString localName = QBluetoothLocalDevice().name();
-    printf("%s - local device name=%s\n", __PRETTY_FUNCTION__, localName.toLocal8Bit().constData());
 
-
+    {
 #pragma region Attributes
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceRecordHandle, (uint)0x00010010);
 
@@ -101,8 +116,8 @@ int BTServer::initBluetooth() {
     protocolDescriptorList.append(QVariant::fromValue(protocol));
     serviceInfo.setAttribute(QBluetoothServiceInfo::ProtocolDescriptorList,
                              protocolDescriptorList);
-
-    #pragma endregion
+#pragma endregion
+    }
 
     //! [Register service]
     result = serviceInfo.registerService(actualAddress);
@@ -111,21 +126,27 @@ int BTServer::initBluetooth() {
         return -3;
     }
 
-    scanForDevices();
+    discoveryAgent = new QBluetoothDeviceDiscoveryAgent(adapter.address());
+    connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
+    connect(discoveryAgent, SIGNAL(finished()), this, SIGNAL(finishedScanning()));
+    scanBTPeers();
 
     printf("%s - success\n", __PRETTY_FUNCTION__);
     return 0;
 }
 
 //this is actually a client thing
-int BTServer::scanForDevices() {
+int BTServer::scanBTPeers() {
     printf("%s - enter\n", __PRETTY_FUNCTION__);
-    //peers.clear();
-    if (discoveryAgent == nullptr) {
-        discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
-        connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
+    if (discoveryAgent) {
+        peers.clear();
+        discoveryAgent->stop();
+        discoveryAgent->start();
     }
-    discoveryAgent->start();
+    else {
+        printf("%s - error, device not initialised!\n", __PRETTY_FUNCTION__);
+        return -1;
+    }
     printf("%s - done\n", __PRETTY_FUNCTION__);
     return 0;
 }
@@ -171,6 +192,7 @@ void BTServer::deviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
     p.strength = deviceInfo.rssi();
     peers.append(p);
 
+    emit newDeviceDiscovered(deviceInfo);
     //printf("%s - socket->state=%d\n", __PRETTY_FUNCTION__, socket->state());
 }
 

@@ -9,6 +9,7 @@ PeerWidget::PeerWidget(ConnType connType, const QString& name, const QString& ad
 
     ui->peerName->setText(name);
     ui->peerAddr->setText(address);
+    ui->connTypeImg->resize(ui->connTypeImg->height(), ui->connTypeImg->height());
 }
 
 void PeerWidget::setStrength(const int strength) {

@@ -2,6 +2,7 @@
 #define BTSERVER_H
 
 #include <QObject>
+#include <QtBluetooth/QBluetoothHostInfo>
 #include <QtBluetooth/QBluetoothServiceInfo>
 #include <QtBluetooth/QBluetoothDeviceInfo>
 
@@ -23,14 +24,19 @@ Q_OBJECT
 public:
     BTServer(ConnMan* connMan);
     ~BTServer();
-    int initBluetooth();
-    int scanForDevices();
+    QList<QBluetoothHostInfo> getBTDevices() const;
+    int initBluetooth(const int interfaceNo);
+    int scanBTPeers();
     QList<BTPeerInfo> getPeers();
     int connectAddress(const QString& address);
 
 private slots:
     void clientConnected();
     void deviceDiscovered(QBluetoothDeviceInfo deviceInfo);
+
+signals:
+    void newDeviceDiscovered(QBluetoothDeviceInfo deviceInfo);
+    void finishedScanning();
 
 private:
     QBluetoothServer *rfcommServer = nullptr;

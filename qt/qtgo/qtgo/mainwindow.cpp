@@ -109,9 +109,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(gameSettingsWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
     connect(gameSettingsWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
     connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
-    connect(gameSettingsWidget, SIGNAL(connectBT()), this, SLOT(connectBT()));
-    connect(gameSettingsWidget, SIGNAL(connectTCP()), this, SLOT(connectTCP()));
-    connect(gameSettingsWidget, SIGNAL(debugBT()), this, SLOT(showBTChat()));
 
     connect(ui->actionSave_Game, SIGNAL(triggered(bool)), this, SLOT(saveGame()));
     connect(ui->actionOpen_Saved_Game, SIGNAL(triggered(bool)), this, SLOT(loadGame()));
@@ -381,7 +378,7 @@ int MainWindow::connectBT() {
             connMan = new ConnMan;
         }
         btServer = new BTServer(connMan);
-        ret = btServer->initBluetooth();
+        ret = btServer->initBluetooth(0);
         if (ret == -1) {
             delete btServer;
             btServer = nullptr;

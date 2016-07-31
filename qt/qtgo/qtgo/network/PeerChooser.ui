@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>701</width>
-    <height>502</height>
+    <width>697</width>
+    <height>498</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,26 @@
    <iconset resource="../res.qrc">
     <normaloff>:/resources/cursorBlackWhite.png</normaloff>:/resources/cursorBlackWhite.png</iconset>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0,0,0,1">
+  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0,0,0">
+   <item row="5" column="0">
+    <widget class="QListWidget" name="listWidget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="verticalScrollMode">
+      <enum>QAbstractItemView::ScrollPerPixel</enum>
+     </property>
+     <property name="horizontalScrollMode">
+      <enum>QAbstractItemView::ScrollPerPixel</enum>
+     </property>
+     <property name="resizeMode">
+      <enum>QListView::Adjust</enum>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -62,7 +81,7 @@
      <item>
       <widget class="QToolButton" name="reloadButton">
        <property name="text">
-        <string>Reload</string>
+        <string>Rescan BT</string>
        </property>
        <property name="icon">
         <iconset resource="../res.qrc">
@@ -94,22 +113,33 @@
      </item>
     </layout>
    </item>
-   <item row="6" column="0">
-    <widget class="QListWidget" name="listWidget">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>1</verstretch>
-      </sizepolicy>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
-    <widget class="QWidget" name="optionsWidget" native="true">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="btChooseLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>BT  interface:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="bt1Button">
+       <property name="text">
+        <string>BT&amp;1</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="bt2Button">
+       <property name="text">
+        <string>BT&amp;2</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
