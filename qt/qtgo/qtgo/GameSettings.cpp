@@ -99,6 +99,7 @@ GameSettings::GameSettings(QWidget *parent):
     connect(ui->handicapButton, SIGNAL(clicked()), this, SLOT(showHandicapWindow()));
     connect(ui->menuLauncher1, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect(ui->menuLauncher2, SIGNAL(clicked()), this, SLOT(showMenu()));
+
     connect(saveGameAction, SIGNAL(triggered()), this, SIGNAL(saveGame()));
     connect(loadGameAction, SIGNAL(triggered()), this, SIGNAL(loadGame()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
@@ -163,6 +164,14 @@ void GameSettings::pushBackRoundInfo() {
     ui->topRow->update(); //probably Qt bug, need to update explicitly
 }
 
+/**
+ * Receive the global actions from MainWindow
+ */
+void GameSettings::setActions(QList<QAction*>& actions) {
+    for(int i = 0; i < actions.size(); i++) {
+        mainMenu->addAction(actions[i]);
+    }
+}
 
 void GameSettings::setGameState(GameState state) {
     gameState = state;

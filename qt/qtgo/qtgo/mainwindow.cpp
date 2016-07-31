@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
         Settings::populateDefaultProgramSettings(programSettings);
 
     //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if settings emits a signal from inside the constructor
-    gameSettingsWidget = new GameSettings(this);
+    setupGameSettings();
 
     drawArea = new DrawAreaWidget(this);
     table = new GoTable(drawArea);
@@ -207,7 +207,7 @@ void MainWindow::setMinimalInterface() {
     panelAnim->start();
 
 
-    if (miniGameSettings == NULL) {
+    if (miniGameSettings == nullptr) {
         createMiniInterface();
         confirmMoveDialog = new ConfirmMoveDialog(this);
         confirmMoveDialog->setMinimalInterface(true);
@@ -302,6 +302,24 @@ void MainWindow::restoreFullInterface() {
 void MainWindow::transitionToFullDone() {
     gameSettingsWidget->pushBackRoundInfo();
     ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
+}
+
+/**
+ * @brief MainWindow::setupGameSettings
+ * Initialise the GameSettings widget
+ */
+void MainWindow::setupGameSettings() {
+    gameSettingsWidget = new GameSettings(this);
+    QList<QAction*> actions;
+    actions.append(ui->actionSave_Game);
+    actions.append(ui->actionOpen_Saved_Game);
+    actions.append(ui->actionSettings);
+    actions.append(ui->actionPlay_on_Bluetooth);
+    actions.append(ui->actionPlay_on_Network);
+    actions.append(ui->actionHelp);
+    actions.append(ui->actionAbout);
+    actions.append(ui->actionAdjust_for_Small_Display);
+    gameSettingsWidget->setActions(actions);
 }
 
 void MainWindow::createMiniInterface() {

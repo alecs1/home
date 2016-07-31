@@ -56,22 +56,23 @@ signals:
     void programSettingsChanged();
 
 private:
+    void setupGameSettings();
     void createMiniInterface();
 
 
 private:
     bool minimalInterface = false;
-    GameSettings* gameSettingsWidget = NULL;
-    MiniGameSettings* miniGameSettings = NULL;
-    ConfirmMoveDialog* confirmMoveDialog = NULL;
+    GameSettings* gameSettingsWidget = nullptr;
+    MiniGameSettings* miniGameSettings = nullptr;
+    ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
     GoTable* table;
-    RoundInfo* roundInfo = NULL;
+    RoundInfo* roundInfo = nullptr;
     QFontDatabase fontDatabase;
 
-    BTServer* btServer = NULL;
-    ConnMan* connMan = NULL;
+    BTServer* btServer = nullptr;
+    ConnMan* connMan = nullptr;
 };
 
 #endif // MAINWINDOW_H

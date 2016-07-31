@@ -24,6 +24,7 @@ public:
     ~GameSettings();
     RoundInfo* popRoundInfo();
     void pushBackRoundInfo();
+    void setActions(QList<QAction *> &actions);
 
 signals:
     //TODO - having two functions with SGameSettigns seems like duplicating
