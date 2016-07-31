@@ -3,6 +3,7 @@
 
 #include "BTServer.h"
 #include "PeerWidget.h"
+#include "BTErrorDialog.h"
 #include <QtBluetooth/QBluetoothHostInfo>
 
 PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
@@ -27,7 +28,16 @@ PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
         ui->bt2Button->setText(devices[1].name() + "(" + devices[1].address().toString() + ")");
     }
 
-    rescan();
+    //if there's only one device we use it, if there are more we expect user input
+    if (devices.size() == 1) {
+        int ret = btServer.initBluetooth(0);
+        if (ret == -1) {
+            BTErrorDialog dialog("Error initialising bluetooth:\n" + QString::number(ret));
+            dialog.exec();
+        }
+        rescan();
+    }
+
 }
 
 PeerChooser::~PeerChooser() {
@@ -87,6 +97,11 @@ void PeerChooser::displayPeers() {
 }
 
 void PeerChooser::rescan() {
+    //if BT interface has not been chosen at scan time, choose the first one.
+    if (chosenBTIf == -1) {
+        chosenBTIf = 1;
+        btServer.initBluetooth(0);
+    }
     btServer.scanBTPeers();
     displayPeers();
 }

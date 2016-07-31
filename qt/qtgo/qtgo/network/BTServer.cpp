@@ -15,7 +15,10 @@ QString qtgoUUID("7a17c611-7857-48d9-95e3-ab56df7e5af2");
 
 
 BTServer::BTServer(ConnMan *connMan) : connMan(connMan) {
-
+    socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+    connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(socket, SIGNAL(error(QBluetoothSocket::SocketError)), this, SLOT(socketError(QBluetoothSocket::SocketError)));
 }
 
 BTServer::~BTServer() {
@@ -38,6 +41,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
         delete discoveryAgent;
         discoveryAgent = nullptr;
     }
+    serviceInfo.unregisterService();
 
 
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
@@ -82,7 +86,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
                              classId);
 
 
-    classId.prepend(QVariant::fromValue(QBluetoothUuid(serviceUuid)));
+    classId.prepend(QVariant::fromValue(QBluetoothUuid(qtgoUUID)));
 
     serviceInfo.setAttribute(QBluetoothServiceInfo::ServiceClassIds, classId);
     serviceInfo.setAttribute(QBluetoothServiceInfo::BluetoothProfileDescriptorList,classId);
@@ -96,7 +100,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
 
 
     //! [Service UUID set]
-    serviceInfo.setServiceUuid(QBluetoothUuid(serviceUuid));
+    serviceInfo.setServiceUuid(QBluetoothUuid(qtgoUUID));
 
 
     //! [Service Discoverability]
@@ -127,7 +131,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
     }
 
     discoveryAgent = new QBluetoothDeviceDiscoveryAgent(adapter.address());
-    connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(deviceDiscovered(QBluetoothDeviceInfo)));
+    connect(discoveryAgent, SIGNAL(deviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(peerDeviceDiscovered(QBluetoothDeviceInfo)));
     connect(discoveryAgent, SIGNAL(finished()), this, SIGNAL(finishedScanning()));
     scanBTPeers();
 
@@ -156,12 +160,12 @@ QList<BTPeerInfo> BTServer::getPeers() {
 }
 
 int BTServer::connectAddress(const QString& address) {
-    printf("%s - connecting to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
+    printf("%s - start connecting to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
     for(int i = 0; i < peers.size(); i++) {
         if (address == peers[i].address) {
-            QBluetoothSocket* socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+
             socket->connectToService(peers[i].deviceInfo.address(), QBluetoothUuid(qtgoUUID));
-            printf("%s - connected to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
+            printf("%s - called connectToService for %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
         }
     }
     return 0;
@@ -172,7 +176,19 @@ void BTServer::clientConnected() {
     connMan->processMessage(nullptr);
 }
 
-void BTServer::deviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
+void BTServer::socketConnected() {
+    printf("%s - enter\n", __PRETTY_FUNCTION__);
+}
+
+void BTServer::socketDisconnected() {
+    printf("%s - enter\n", __PRETTY_FUNCTION__);
+}
+
+void BTServer::socketError(QBluetoothSocket::SocketError error) {
+    printf("%s - error:%d\n", __PRETTY_FUNCTION__, error);
+}
+
+void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
     printf("%s - address:%s, name:%s, signal strength:%d\n",
            __PRETTY_FUNCTION__,
            deviceInfo.address().toString().toUtf8().constData(),

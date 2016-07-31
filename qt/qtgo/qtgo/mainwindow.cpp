@@ -18,7 +18,7 @@
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
-#include "network/BTErrorDialog.h"
+//#include "network/BTErrorDialog.h"
 #include "network/PeerChooser.h"
 
 
@@ -291,8 +291,9 @@ void MainWindow::restoreFullInterface() {
     miniSettingsAnim->setEndValue(final);
     miniSettingsAnim->start();
 
-    if (roundInfo == NULL)
+    if (roundInfo == nullptr) {
         roundInfo = gameSettingsWidget->popRoundInfo();
+    }
     roundInfo->setParent(this);
     roundInfo->show();
     roundInfo->setLayoutDirection(true);
@@ -372,21 +373,12 @@ void MainWindow::setGameState(GameState state) {
 int MainWindow::connectBT() {
 #ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
-    int ret = -1;
+
     if (btServer == nullptr) {
         if (connMan == nullptr) {
             connMan = new ConnMan;
         }
         btServer = new BTServer(connMan);
-        ret = btServer->initBluetooth(0);
-        if (ret == -1) {
-            delete btServer;
-            btServer = nullptr;
-
-            BTErrorDialog dialog("Error initialising bluetooth:\n" + QString::number(ret));
-            int result = dialog.exec();
-            return result;
-        }
     }
     else {
         printf("%s - btServer was already initialised\n", __func__);
@@ -394,11 +386,11 @@ int MainWindow::connectBT() {
 
     printf("Showing peerChooser\n");
 
-    //TODO - memleak, fix this.
-    PeerChooser* p = new PeerChooser(*btServer, nullptr);
-    p->show();
+    if (peerChooser == nullptr) {
+        peerChooser = new PeerChooser(*btServer, this);
+    }
+    peerChooser->show();
 
-    printf("%s - ran, ret=%d\n", __func__, ret);
 #else
     printf("No QBluetooth support on Windows\n");
 #endif
@@ -406,7 +398,7 @@ int MainWindow::connectBT() {
 }
 
 void MainWindow::connectTCP() {
-    if (connMan == NULL) {
+    if (connMan == nullptr) {
         connMan = new ConnMan;
     }
     connMan->connectTCP();

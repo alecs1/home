@@ -8,9 +8,10 @@
 
 class DrawAreaWidget;
 class GoTable;
-class GameSettings;
 class RoundInfo;
+class GameSettings;
 class MiniGameSettings;
+class PeerChooser;
 class ConfirmMoveDialog;
 class QToolButton;
 class BTServer;
@@ -67,6 +68,7 @@ private:
     bool minimalInterface = false;
     GameSettings* gameSettingsWidget = nullptr;
     MiniGameSettings* miniGameSettings = nullptr;
+    PeerChooser* peerChooser = nullptr;
     ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;

@@ -5,6 +5,7 @@
 #include <QtBluetooth/QBluetoothHostInfo>
 #include <QtBluetooth/QBluetoothServiceInfo>
 #include <QtBluetooth/QBluetoothDeviceInfo>
+#include <QtBluetooth/QBluetoothSocket>
 
 class QBluetoothServer;
 class ConnMan;
@@ -18,6 +19,7 @@ struct BTPeerInfo {
     int strength;
 };
 
+//TODO - this should be split into a server part and a client part
 class BTServer : public QObject
 {
 Q_OBJECT
@@ -31,8 +33,14 @@ public:
     int connectAddress(const QString& address);
 
 private slots:
+    //client functions
+    void socketConnected();
+    void socketDisconnected();
+    void socketError(QBluetoothSocket::SocketError error);
+    void peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo);
+
+    //server functions
     void clientConnected();
-    void deviceDiscovered(QBluetoothDeviceInfo deviceInfo);
 
 signals:
     void newDeviceDiscovered(QBluetoothDeviceInfo deviceInfo);
@@ -44,6 +52,9 @@ private:
     //TODO - discoveryAgent and client logic should go to the BTClient class
     QBluetoothDeviceDiscoveryAgent* discoveryAgent = nullptr;
     QList<QBluetoothSocket *> clientSockets; //only one for starters
+
+    //socket used when acting as client
+    QBluetoothSocket* socket = nullptr;
     ConnMan* connMan;
     QList<BTPeerInfo> peers;
 };
