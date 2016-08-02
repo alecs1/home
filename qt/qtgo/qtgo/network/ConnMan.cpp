@@ -3,18 +3,76 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QTcpServer>
 
+#include <QtBluetooth/QBluetoothSocket>
+#include <arpa/inet.h>
+
 #include "ProtoJson.h"
 
 using namespace ProtoJson;
 
 const uint16_t tcpDefaultPort = 1491; //the first unasigned IANA port
 
-ConnMan::ConnMan()
+ConnMan::ConnMan() {
+
+}
+
+ConnMan::~ConnMan() {
+
+}
+
+void ConnMan::setBTClientSocket(QBluetoothSocket* sock) {
+    btSocket = sock;
+    connState = ConnState::AwaitingHandshakeReply;
+}
+
+void ConnMan::setBTServerSocket(QBluetoothSocket* sock) {
+    btSocket = sock;
+    connState = ConnState::AwaitingHandshake;
+}
+
+/**
+ * Read the next message from buffer, if available
+ * @param lenght of the message read
+ * @return
+ */
+ProtoJson::Msg ConnMan::getMessage(int& len) {
+    len = 0;
+    if(buffer.size() >= 4) {
+        uint32_t networkLen = 0;
+        uint32_t msgLen = 0;
+        memcpy(&networkLen, buffer.data(), 4);
+        msgLen = ntohl(networkLen);
+
+        if (buffer.size() >= msgLen) {
+            ProtoJson::Msg ret;
+            ret.parse(buffer.data() + 4);
+        }
+    }
+}
+
+void ConnMan::dataAvailable() {
+    buffer.append(btSocket->readAll());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ConnManOld::ConnManOld()
 {
     uuid = QUuid::createUuid();
 }
 
-void ConnMan::connectTCP() {
+void ConnManOld::connectTCP() {
     //QAbstractSocket socket(QAbstractSocket::TcpSocket, this);
     //bool bound = socket.QHostAddress::Any, tcpDefaultPort);
 
@@ -32,7 +90,7 @@ void ConnMan::connectTCP() {
     }
 }
 
-void ConnMan::newTcpConnection() {
+void ConnManOld::newTcpConnection() {
     QTcpSocket* socket = tcpServer->nextPendingConnection();
     if(connState == ConnState::Disconnected) {
         printf("%s - accepted new connection\n", __func__);
@@ -55,7 +113,7 @@ void ConnMan::newTcpConnection() {
 /*
  * @param msg - a message (Command or Reply), or NULL, in which case this is an update() call
  */
-void ConnMan::processMessage(SMsg* msg) {
+void ConnManOld::processMessage(Msg* msg) {
 
     if (connState == ConnState::Disconnected) {
         if (msg == NULL) {
@@ -65,21 +123,21 @@ void ConnMan::processMessage(SMsg* msg) {
 
 }
 
-void ConnMan::connectToPeer(Peer* peer) {
+void ConnManOld::connectToPeer(Peer* peer) {
     if (peer == NULL)
         return;
 
-    SMsg msg;
-    msg.mType = MsgType::Command;
+    Msg msg;
+    msg.msgType = MsgType::Command;
     msg.msgid = crtId++;
-    SCommand* cmd = new SCommand;
-    msg.command = cmd;
+    //SCommand* cmd = new SCommand;
+    //msg.command = cmd;
 
-    cmd->cType = CmdType::Connect;
-    strncpy(cmd->uuid, uuid.toString().toUtf8().constData(), UUID_LEN);
+    msg.cmdType = CmdType::Connect;
+    //strncpy(cmd->uuid, uuid.toString().toUtf8().constData(), UUID_LEN);
 
 }
 
-Peer* ConnMan::getPeer() {
+Peer* ConnManOld::getPeer() {
 
 }

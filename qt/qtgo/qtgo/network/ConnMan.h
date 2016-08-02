@@ -4,26 +4,82 @@
 #include <QUuid>
 #include <QObject>
 
-
-class QTcpServer;
+class QBluetoothSocket;
+class QAbstractSocket;
 
 namespace ProtoJson {
-    struct SMsg;
+    struct Msg;
 }
 
-struct Peer {
 
+class ConnMan : public QObject {
+Q_OBJECT
+public:
+    enum ConnState:uint8_t {
+        Disconnected = 0,
+        SocketConnectedClient, //this instance initiated connection
+        AwaitingHandshakeReply,
+        SocketConnectedServer, //this instance accepted the connection
+        AwaitingHandshake,
+        Connected,
+    };
+    enum ProtoState:uint8_t {
+        Idle,
+        AwaitingReply,
+        AwaitingMove,
+    };
+    enum ConnType:uint8_t {
+        TCP,
+        BT,
+        None
+    };
+
+    ConnMan();
+    ~ConnMan();
+    void setBTClientSocket(QBluetoothSocket* sock);
+    void setBTServerSocket(QBluetoothSocket* sock);
+    ProtoJson::Msg getMessage(int& len);
+
+public slots:
+    void dataAvailable();
+
+private:
+
+    ConnState connState = ConnState::Disconnected;
+    ProtoState protoState = ProtoState::Idle;
+    ConnType connType = ConnType::None;
+
+    QBluetoothSocket* btSocket = nullptr;
+    QAbstractSocket* socket = nullptr;
+
+    QByteArray buffer;
 };
 
-class ConnMan : public QObject
+
+
+
+
+
+
+
+
+
+
+
+//Old prototypes, most likely there's nothing reusable
+class QTcpServer;
+class Peer;
+class ConnManOld : public QObject
 {
 Q_OBJECT
 private:
     enum ConnState:uint8_t {
         Disconnected = 0,
+        SocketConnectedClient,
+        SocketConnectedServer,
+        AwaitingHandshakeReply,
+        AwaitingHandshake,
         Connected,
-        InGame,
-        Invalid = 0xFF
     };
 
     ConnState connState = ConnState::Disconnected;
@@ -39,9 +95,9 @@ private:
     void newTcpConnection();
 
 public:
-    ConnMan();
+    ConnManOld();
     void connectTCP();
-    void processMessage(ProtoJson::SMsg* msg);
+    void processMessage(ProtoJson::Msg* msg);
 };
 
 #endif // CONNMAN_H

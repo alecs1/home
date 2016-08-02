@@ -2,7 +2,7 @@
 #define PROTOJSON_H
 
 #include <QByteArray>
-
+#include <QJsonObject>
 #include <stdint.h>
 
 namespace ProtoJson {
@@ -12,7 +12,7 @@ namespace ProtoJson {
 enum class MsgType:uint8_t {
     Command,
     Reply,
-    Invalid = 0xFF
+    MsgTypeCount
 };
 
 enum class CmdType:uint8_t {
@@ -23,15 +23,9 @@ enum class CmdType:uint8_t {
     ResignGame,
     PlayMove,
     Disconnect,
-    Invalid = 0xFF
+    CmdTypeCount
 };
 
-enum class CommState:uint8_t {
-    NotConnected,
-    Connected,
-    InGame,
-    Invalid = 0xFF
-};
 
 enum class ReplyType:uint8_t {
     Success = 0,
@@ -45,7 +39,7 @@ struct SReply {
 };
 
 struct SCommand {
-    CmdType cType = CmdType::Invalid;
+    CmdType cType = CmdType::CmdTypeCount;
     char uuid[UUID_LEN];
     char isBlack;
     uint8_t row = 0xFF;
@@ -57,20 +51,15 @@ struct SCommand {
 };
 
 
-struct SMsg {
-    MsgType mType = MsgType::Invalid;
+struct Msg {
+    MsgType msgType = MsgType::MsgTypeCount;
+    CmdType cmdType = CmdType::CmdTypeCount;
     unsigned int msgid = 0x0;
-    SCommand* command = NULL;
-    SReply* reply = NULL;
+    QJsonObject json;
+    void parse(char *data);
+    //SCommand* command = nullptr;
+    //SReply* reply = nullptr;
 };
-
-QByteArray serialiseReply(SReply* reply) {
-}
-
-QByteArray serialiseCmd(SCommand* cmd) {
-
-}
-
 
 }  //namespace ProtoJson
 

@@ -88,6 +88,7 @@ endif (ANDROID)
 
 add_subdirectory("btchat")
 add_subdirectory("network")
+add_subdirectory("android")
 
 add_custom_target(DocNetwork Notes.txt)
 

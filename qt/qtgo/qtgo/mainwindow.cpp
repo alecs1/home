@@ -328,6 +328,13 @@ void MainWindow::setupGameSettings() {
     actions.append(ui->actionAbout);
     actions.append(ui->actionAdjust_for_Small_Display);
     actions.append(ui->actionDebug_BT);
+    //for android we disable network and stuff for now
+#if defined (Q_OS_ANDROID)
+    ui->actionPlay_on_Bluetooth->setEnabled(false);
+    ui->actionPlay_on_Network->setEnabled(false);
+    ui->actionDebug_BT->setEnabled(false);
+#endif
+
     gameSettingsWidget->setActions(actions);
 }
 
@@ -401,7 +408,7 @@ void MainWindow::connectTCP() {
     if (connMan == nullptr) {
         connMan = new ConnMan;
     }
-    connMan->connectTCP();
+    printf("%s - Implement me!", __PRETTY_FUNCTION__);
 }
 
 void MainWindow::showBTChat() {

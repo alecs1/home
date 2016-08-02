@@ -14,7 +14,9 @@ static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
 QString qtgoUUID("7a17c611-7857-48d9-95e3-ab56df7e5af2");
 
 
-BTServer::BTServer(ConnMan *connMan) : connMan(connMan) {
+BTServer::BTServer(ConnMan *connMan) :
+    connMan(connMan)
+{
     socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
     connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
@@ -173,7 +175,9 @@ int BTServer::connectAddress(const QString& address) {
 
 void BTServer::clientConnected() {
     printf("%s - a client has connected\n", __PRETTY_FUNCTION__);
-    connMan->processMessage(nullptr);
+    QBluetoothSocket* newSock = rfcommServer->nextPendingConnection();
+    clientSockets.append(newSock);
+    connMan->setBTServerSocket(newSock);
 }
 
 void BTServer::socketConnected() {
