@@ -7,6 +7,11 @@
 
 namespace ProtoJson {
 
+struct ProtoJsonKW {
+    QString MsgType = "MsgType";
+    QString CmdType = "CmdType";
+};
+
 #define UUID_LEN 16
 
 enum class MsgType:uint8_t {
@@ -16,7 +21,7 @@ enum class MsgType:uint8_t {
 };
 
 enum class CmdType:uint8_t {
-    Connect,
+    Hanshake,
     ListCommonGames,
     StartNewGame,
     ResumeGame,
@@ -51,15 +56,24 @@ struct SCommand {
 };
 
 
+QByteArray composeHandshake() {
+    Msg msg;
+    msg.msgType = MsgType::Command;
+    msg.cmdType = CmdType::Hanshake;
+    QJsonObject jsonObj;
+    jsonObj[ProtoJsonKW::MsgType] = (uint8_t) msg.msgType;
+    jsonObj[ProtoJsonKW::CmdType] = (uint8_t) msg.cmdType;
+}
+
+
 struct Msg {
     MsgType msgType = MsgType::MsgTypeCount;
     CmdType cmdType = CmdType::CmdTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
-    void parse(char *data);
-    //SCommand* command = nullptr;
-    //SReply* reply = nullptr;
 };
+
+Msg parse(char* data);
 
 }  //namespace ProtoJson
 
