@@ -8,6 +8,7 @@
 #include "BTServer.h"
 #include "ConnMan.h"
 #include "ProtoJson.h"
+#include "../Logger.h"
 
 //TODO - replace this, it comes from the Qt example
 static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
@@ -188,7 +189,7 @@ void BTServer::socketConnected() {
 
     QByteArray data = ProtoJson::Msg::serialise(handshake);
     socket->write(data);
-    printf("%s - wrote \"%s\" to socket\n", __PRETTY_FUNCTION__, data.constData());
+    Logger::Log(QString("%1 - wrote \"%2\" to socket\n").arg(__PRETTY_FUNCTION__).arg(data.constData()));
 }
 
 void BTServer::socketDisconnected() {

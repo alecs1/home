@@ -45,6 +45,7 @@ ProtoJson::Msg ConnMan::getMessage(int& parsedBytes) {
             return ret;
        }
     }
+    return ProtoJson::Msg();
 }
 
 void ConnMan::processMessages() {
@@ -63,11 +64,11 @@ void ConnMan::processMessages() {
                     break;
                 }
                 case ConnState::AwaitingHandshakeReply: {
-                    if (msg.msgType = MsgType::Ack) {
+                    if (msg.msgType == MsgType::Ack) {
                         connState = ConnState::Connected;
                     }
                     else {
-                        Logger::Log(QString("Expecting handshake ack, got%1").arg(msg.msgType), LogLevel::LOG_ERROR);
+                        Logger::Log(QString("Expecting handshake ack, got %1").arg(msg.msgType), LogLevel::LOG_ERROR);
                     }
                     break;
                 }

@@ -130,6 +130,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     double mainLoopInterval = 1000.0 / 60;
     mainLoopTimer.setInterval(mainLoopInterval);
+    mainLoopTimer.start();
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
 }
 

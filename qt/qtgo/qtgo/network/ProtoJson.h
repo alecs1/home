@@ -56,6 +56,7 @@ struct Msg {
     MsgType msgType = MsgType::MsgTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
+
     static Msg parse(const QByteArray& data, int &lenParsed);
     static QByteArray serialise(const Msg& msg);
     static bool msgValid(const Msg& msg);

@@ -13,11 +13,13 @@ const QString ProtoKw::MsgType = "MsgType";
  * @param data complete json message
  */
 Msg Msg::parse(const QByteArray& data, int& lenParsed) {
+    Logger::Log(QString("will parse %1").arg(data.constData()));
     Msg msg;
     lenParsed = 0;
 
-    char auxLen[LENGHT_LEN];
+    char auxLen[LENGHT_LEN + 1] = {0};
     memcpy(auxLen, data.constData(), LENGHT_LEN);
+    Logger::Log(auxLen);
     bool validNum;
     int len = QString(auxLen).toInt(&validNum);
 
@@ -40,7 +42,8 @@ QByteArray Msg::serialise(const Msg &msg) {
     jsonObj[ProtoKw::MsgType] = (uint8_t) msg.msgType;
     QByteArray data = QJsonDocument(jsonObj).toJson();
     int len = data.length();
-    QString aux = QString().arg(len, 9).arg('\n');
+    QString aux = QString("%1%2").arg(len, 9, 10, QChar('0')).arg('\n');
+    Logger::Log("aux: " + aux);
     data.prepend(aux.toUtf8());
     return data;
 }
