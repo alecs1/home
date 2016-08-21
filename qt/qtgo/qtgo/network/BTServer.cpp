@@ -188,7 +188,7 @@ void BTServer::socketConnected() {
 
     QByteArray data = ProtoJson::Msg::serialise(handshake);
     socket->write(data);
-    printf("%s - wrote \"%s\" to socket\n", data.constData());
+    printf("%s - wrote \"%s\" to socket\n", __PRETTY_FUNCTION__, data.constData());
 }
 
 void BTServer::socketDisconnected() {

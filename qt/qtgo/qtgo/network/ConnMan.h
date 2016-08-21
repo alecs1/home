@@ -1,5 +1,4 @@
-#ifndef CONNMAN_H
-#define CONNMAN_H
+#pragma once
 
 #include <QUuid>
 #include <QObject>
@@ -38,7 +37,9 @@ public:
     ~ConnMan();
     void setBTClientSocket(QBluetoothSocket* sock);
     void setBTServerSocket(QBluetoothSocket* sock);
-    ProtoJson::Msg getMessage(int& len);
+    ProtoJson::Msg getMessage(int& parsedBytes);
+    void processMessages();
+    bool activeConnection() const;
 
 public slots:
     void dataAvailable();
@@ -54,50 +55,3 @@ private:
 
     QByteArray buffer;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-//Old prototypes, most likely there's nothing reusable
-class QTcpServer;
-class Peer;
-class ConnManOld : public QObject
-{
-Q_OBJECT
-private:
-    enum ConnState:uint8_t {
-        Disconnected = 0,
-        SocketConnectedClient,
-        SocketConnectedServer,
-        AwaitingHandshakeReply,
-        AwaitingHandshake,
-        Connected,
-    };
-
-    ConnState connState = ConnState::Disconnected;
-    int crtId = 0;
-    QUuid uuid;
-
-    QTcpServer* tcpServer = NULL;
-
-private:
-
-    void connectToPeer(Peer* peer);
-    Peer* getPeer();
-    void newTcpConnection();
-
-public:
-    ConnManOld();
-    void connectTCP();
-    void processMessage(ProtoJson::Msg* msg);
-};
-
-#endif // CONNMAN_H

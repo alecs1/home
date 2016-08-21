@@ -68,7 +68,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btch
 set (ALL_SOURCES mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
-    SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp
+    SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp Logger.cpp
     ${HEADER_MOC} ${UI_HEADERS} ${RESOURCES_RCC})
 
 if (ANDROID)

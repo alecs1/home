@@ -1,8 +1,8 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QFontDatabase>
+#include <QTimer>
 
 #include "Global.h"
 
@@ -17,12 +17,6 @@ class QToolButton;
 class BTServer;
 class ConnMan;
 
-//enum class ComputingPlatform : uint8_t {
-//    DesktopLinux = 0,
-//    DesktopWindows,
-//    Android
-//};
-
 
 namespace Ui {
 class MainWindow;
@@ -30,7 +24,7 @@ class MainWindow;
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+Q_OBJECT
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -56,6 +50,8 @@ public slots:
     void showHelp();
     void showSettings();
 
+    void mainLoop();
+
 signals:
     void programSettingsChanged();
 
@@ -74,10 +70,9 @@ private:
     DrawAreaWidget* drawArea;
     GoTable* table;
     RoundInfo* roundInfo = nullptr;
+    QTimer mainLoopTimer;
     QFontDatabase fontDatabase;
 
     BTServer* btServer = nullptr;
     ConnMan* connMan = nullptr;
 };
-
-#endif // MAINWINDOW_H

@@ -46,13 +46,6 @@ MainWindow::MainWindow(QWidget *parent) :
         toolbar->hide();
     }
     statusBar()->hide();
-    #else
-    QList<QToolBar *> toolbars = findChildren<QToolBar *>();
-    for (auto* toolbar : toolbars) {
-        printf("%s - hiding toolbar %p\n", __func__, toolbar);
-        toolbar->hide();
-    }
-    statusBar()->hide();
     #endif
 
     #if defined(Q_OS_ANDROID)
@@ -70,7 +63,6 @@ MainWindow::MainWindow(QWidget *parent) :
     if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
         Settings::populateDefaultProgramSettings(programSettings);
 
-    //TODO - has to exist at the time GoTable is constructed, but it cannot be connected if settings emits a signal from inside the constructor
     setupGameSettings();
 
     drawArea = new DrawAreaWidget(this);
@@ -136,7 +128,9 @@ MainWindow::MainWindow(QWidget *parent) :
     if (programSettings->minimalInterface)
         minimalInterface = true;
 
-    //runDebug();
+    double mainLoopInterval = 1000.0 / 60;
+    mainLoopTimer.setInterval(mainLoopInterval);
+    connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
 }
 
 MainWindow::~MainWindow()
@@ -436,3 +430,9 @@ void MainWindow::showSettings() {
     dialog.exec();
 }
 
+void MainWindow::mainLoop() {
+    if (connMan && connMan->activeConnection()) {
+        //run connection logic here
+        connMan->processMessages();
+    }
+}

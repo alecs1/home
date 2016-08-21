@@ -9,30 +9,26 @@ namespace ProtoJson {
 
 struct ProtoKw {
     static const QString MsgType;
-    static const QString CmdType;
 };
 
 #define UUID_LEN 16
 
-enum class MsgType:uint8_t {
-    Command,
-    Reply,
-    MsgTypeCount
-};
 
-enum class CmdType:uint8_t {
+enum MsgType:uint8_t {
+    Ack,
     Hanshake,
     ListCommonGames,
+    CommonGames,
     StartNewGame,
     ResumeGame,
     ResignGame,
     PlayMove,
     Disconnect,
-    CmdTypeCount
+    MsgTypeCount
 };
 
 
-enum class ReplyType:uint8_t {
+enum ReplyType:uint8_t {
     Success = 0,
     Fail, //command understood but denied
     Error, //error in processing the command
@@ -44,7 +40,7 @@ struct SReply {
 };
 
 struct SCommand {
-    CmdType cType = CmdType::CmdTypeCount;
+    MsgType cType = MsgType::MsgTypeCount;
     char uuid[UUID_LEN];
     char isBlack;
     uint8_t row = 0xFF;
@@ -58,10 +54,9 @@ struct SCommand {
 
 struct Msg {
     MsgType msgType = MsgType::MsgTypeCount;
-    CmdType cmdType = CmdType::CmdTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
-    static Msg parse(const char* data);
+    static Msg parse(const QByteArray& data, int &lenParsed);
     static QByteArray serialise(const Msg& msg);
     static bool msgValid(const Msg& msg);
     static Msg composeHandshake();
