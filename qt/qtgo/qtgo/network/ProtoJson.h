@@ -7,9 +7,9 @@
 
 namespace ProtoJson {
 
-struct ProtoJsonKW {
-    QString MsgType = "MsgType";
-    QString CmdType = "CmdType";
+struct ProtoKw {
+    static const QString MsgType;
+    static const QString CmdType;
 };
 
 #define UUID_LEN 16
@@ -56,24 +56,23 @@ struct SCommand {
 };
 
 
-QByteArray composeHandshake() {
-    Msg msg;
-    msg.msgType = MsgType::Command;
-    msg.cmdType = CmdType::Hanshake;
-    QJsonObject jsonObj;
-    jsonObj[ProtoJsonKW::MsgType] = (uint8_t) msg.msgType;
-    jsonObj[ProtoJsonKW::CmdType] = (uint8_t) msg.cmdType;
-}
-
-
 struct Msg {
     MsgType msgType = MsgType::MsgTypeCount;
     CmdType cmdType = CmdType::CmdTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
+    static Msg parse(const char* data);
+    static QByteArray serialise(const Msg& msg);
+    static bool msgValid(const Msg& msg);
+    static Msg composeHandshake();
+
+private:
+    static const int LENGHT_LEN = 9;
+public:
+    static const int HEADER_LEN = LENGHT_LEN + 1;
+
 };
 
-Msg parse(char* data);
 
 }  //namespace ProtoJson
 

@@ -1,3 +1,4 @@
+000000xxx - length of the message
 {
 
     MsgType: Command/Reply,

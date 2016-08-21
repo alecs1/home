@@ -7,6 +7,7 @@
 
 #include "BTServer.h"
 #include "ConnMan.h"
+#include "ProtoJson.h"
 
 //TODO - replace this, it comes from the Qt example
 static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
@@ -161,6 +162,7 @@ QList<BTPeerInfo> BTServer::getPeers() {
     return peers;
 }
 
+//client thing
 int BTServer::connectAddress(const QString& address) {
     printf("%s - start connecting to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
     for(int i = 0; i < peers.size(); i++) {
@@ -182,6 +184,11 @@ void BTServer::clientConnected() {
 
 void BTServer::socketConnected() {
     printf("%s - enter\n", __PRETTY_FUNCTION__);
+    ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
+
+    QByteArray data = ProtoJson::Msg::serialise(handshake);
+    socket->write(data);
+    printf("%s - wrote \"%s\" to socket\n", data.constData());
 }
 
 void BTServer::socketDisconnected() {
@@ -189,7 +196,7 @@ void BTServer::socketDisconnected() {
 }
 
 void BTServer::socketError(QBluetoothSocket::SocketError error) {
-    printf("%s - error:%d\n", __PRETTY_FUNCTION__, error);
+    printf("%s - error:%d -> %s\n", __PRETTY_FUNCTION__, error, socket->errorString().toUtf8().constData());
 }
 
 void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
