@@ -4,6 +4,7 @@
 #include <QtNetwork/QTcpServer>
 #include <QtBluetooth/QBluetoothSocket>
 
+#include "BTServer.h"
 #include "ProtoJson.h"
 #include "../Logger.h"
 
@@ -12,11 +13,15 @@ using namespace ProtoJson;
 const uint16_t tcpDefaultPort = 1491; //the first unasigned IANA port
 
 ConnMan::ConnMan() {
-
+    btServer = new BTServer(this);
 }
 
 ConnMan::~ConnMan() {
 
+}
+
+BTServer* ConnMan::getBTServer() const {
+    return btServer;
 }
 
 void ConnMan::setBTClientSocket(QBluetoothSocket* sock) {

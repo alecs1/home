@@ -3,6 +3,9 @@
 #include <QUuid>
 #include <QObject>
 
+//#include <QtBluetooth/QBluetoothHostInfo>
+
+class BTServer;
 class QBluetoothSocket;
 class QAbstractSocket;
 
@@ -35,6 +38,8 @@ public:
 
     ConnMan();
     ~ConnMan();
+    BTServer* getBTServer() const;
+    //void initBluetooth(const int interface);
     void setBTClientSocket(QBluetoothSocket* sock);
     void setBTServerSocket(QBluetoothSocket* sock);
     ProtoJson::Msg getMessage(int& parsedBytes);
@@ -50,6 +55,7 @@ private:
     ProtoState protoState = ProtoState::Idle;
     ConnType connType = ConnType::None;
 
+    BTServer* btServer = nullptr;
     QBluetoothSocket* btSocket = nullptr;
     QAbstractSocket* socket = nullptr;
 

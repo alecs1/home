@@ -325,9 +325,11 @@ void MainWindow::setupGameSettings() {
     actions.append(ui->actionDebug_BT);
     //for android we disable network and stuff for now
 #if defined (Q_OS_ANDROID)
-    ui->actionPlay_on_Bluetooth->setEnabled(false);
-    ui->actionPlay_on_Network->setEnabled(false);
-    ui->actionDebug_BT->setEnabled(false);
+    if (false) {
+        ui->actionPlay_on_Bluetooth->setEnabled(false);
+        ui->actionPlay_on_Network->setEnabled(false);
+        ui->actionDebug_BT->setEnabled(false);
+    }
 #endif
 
     gameSettingsWidget->setActions(actions);
@@ -376,20 +378,12 @@ int MainWindow::connectBT() {
 #ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
 
-    if (btServer == nullptr) {
-        if (connMan == nullptr) {
-            connMan = new ConnMan;
-        }
-        btServer = new BTServer(connMan);
+    if (connMan == nullptr) {
+        connMan = new ConnMan;
     }
-    else {
-        printf("%s - btServer was already initialised\n", __func__);
-    }
-
-    printf("Showing peerChooser\n");
 
     if (peerChooser == nullptr) {
-        peerChooser = new PeerChooser(*btServer, this);
+        peerChooser = new PeerChooser(*connMan, this);
     }
     peerChooser->show();
 

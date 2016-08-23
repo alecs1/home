@@ -6,8 +6,8 @@
 #include "BTErrorDialog.h"
 #include <QtBluetooth/QBluetoothHostInfo>
 
-PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
-    btServer(bt),
+PeerChooser::PeerChooser(ConnMan &connectionManager, QWidget *parent) :
+    connMan(connectionManager),
     QDialog(parent),
     ui(new Ui::PeerChooser)
 {
@@ -16,10 +16,11 @@ PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
     connect(ui->reloadButton, SIGNAL(clicked()), this, SLOT(rescan()));
     connect(ui->bt1Button, SIGNAL(toggled(bool)), this, SLOT(chooseBT0(bool)));
     connect(ui->bt2Button, SIGNAL(toggled(bool)), this, SLOT(chooseBT1(bool)));
-    connect(&bt, SIGNAL(newDeviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(peerFound()));
-    connect(&bt, SIGNAL(finishedScanning()), this, SLOT(finishedScanning()));
+    connect(&connectionManager, SIGNAL(newDeviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(peerFound()));
+    connect(&connectionManager, SIGNAL(finishedScanning()), this, SLOT(finishedScanning()));
 
-    QList<QBluetoothHostInfo> devices = bt.getBTDevices();
+    BTServer* btServer = connMan.getBTServer();
+    QList<QBluetoothHostInfo> devices = btServer->getBTDevices();
     if (devices.size() > 0) {
         ui->bt1Button->setText(devices[0].name() + "(" + devices[0].address().toString() + ")");
     }
@@ -30,7 +31,7 @@ PeerChooser::PeerChooser(BTServer &bt, QWidget *parent) :
 
     //if there's only one device we use it, if there are more we expect user input
     if (devices.size() == 1) {
-        int ret = btServer.initBluetooth(0);
+        int ret = btServer->initBluetooth(0);
         if (ret == -1) {
             BTErrorDialog dialog("Error initialising bluetooth:\n" + QString::number(ret));
             dialog.exec();
@@ -52,7 +53,7 @@ void PeerChooser::activated(const QModelIndex& index) {
         return;
     }
 
-    btServer.connectAddress(p->address());
+    connMan.getBTServer()->connectAddress(p->address());
     close();
 }
 
@@ -61,7 +62,7 @@ void PeerChooser::chooseBT0(bool chosen) {
         printf("%s\n", __func__);
         if (chosenBTIf != 0) {
             chosenBTIf = 0;
-            btServer.initBluetooth(chosenBTIf);
+            connMan.getBTServer()->initBluetooth(chosenBTIf);
         }
     }
 }
@@ -71,7 +72,7 @@ void PeerChooser::chooseBT1(bool chosen) {
         printf("%s\n", __func__);
         if (chosenBTIf != 1) {
             chosenBTIf = 1;
-            btServer.initBluetooth(chosenBTIf);
+            connMan.getBTServer()->initBluetooth(chosenBTIf);
         }
     }
 }
@@ -84,7 +85,7 @@ void PeerChooser::finishedScanning() {
 }
 
 void PeerChooser::displayPeers() {
-    QList<BTPeerInfo> peers = btServer.getPeers();
+    QList<BTPeerInfo> peers = connMan.getBTServer()->getPeers();
     ui->listWidget->clear();
 
     for(int i = 0; i < peers.size(); i++) {
@@ -100,8 +101,8 @@ void PeerChooser::rescan() {
     //if BT interface has not been chosen at scan time, choose the first one.
     if (chosenBTIf == -1) {
         chosenBTIf = 1;
-        btServer.initBluetooth(0);
+        connMan.getBTServer()->initBluetooth(0);
     }
-    btServer.scanBTPeers();
+    connMan.getBTServer()->scanBTPeers();
     displayPeers();
 }

@@ -119,13 +119,13 @@ void AboutDialog::showDebugWindow() {
 void AboutDialog::showThirdPartiesWindow() {
     ThirdPartyInfo* info = new ThirdPartyInfo(this);
 
-    QMainWindow* mainWindow = getMainWindow();
-    if (mainWindow != NULL) {
-        resize(mainWindow->size());
-    }
-    else {
-        printf("%s - error, could not find MainWindow\n", __func__);
-    }
+    //QMainWindow* mainWindow = getMainWindow();
+    //if (mainWindow != NULL) {
+    //    resize(mainWindow->size());
+    //}
+    //else {
+    //    printf("%s - error, could not find MainWindow\n", __func__);
+    //}
 
     info->exec();
     delete info;

@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-#include "BTServer.h"
+//#include "BTServer.h"
+#include "ConnMan.h"
 
 namespace Ui {
 class PeerChooser;
@@ -13,7 +14,7 @@ class PeerChooser : public QDialog {
 Q_OBJECT
 
 public:
-    explicit PeerChooser(BTServer& bt, QWidget *parent = 0);
+    explicit PeerChooser(ConnMan& connectionManager, QWidget *parent = 0);
     ~PeerChooser();
 
 public slots:
@@ -28,7 +29,7 @@ private:
     void displayPeers();
 
 private:
-    BTServer& btServer;
+    ConnMan& connMan;
     Ui::PeerChooser *ui;
     int chosenBTIf = -1;
 };

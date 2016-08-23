@@ -73,6 +73,5 @@ private:
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;
 
-    BTServer* btServer = nullptr;
     ConnMan* connMan = nullptr;
 };
