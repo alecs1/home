@@ -28,6 +28,7 @@ Msg Msg::parse(const QByteArray& data, int& lenParsed) {
     }
 
     msg.json = QJsonDocument::fromJson(data.mid(HEADER_LEN, len)).object();
+    msg.msgType = (MsgType) msg.json[ProtoKw::MsgType].toInt();
 
     lenParsed = HEADER_LEN + len;
 
@@ -51,6 +52,12 @@ QByteArray Msg::serialise(const Msg &msg) {
 Msg Msg::composeHandshake() {
     Msg msg;
     msg.msgType = MsgType::Hanshake;
+    return msg;
+}
+
+Msg Msg::composeAck() {
+    Msg msg;
+    msg.msgType = MsgType::Ack;
     return msg;
 }
 

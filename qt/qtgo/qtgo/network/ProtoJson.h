@@ -61,6 +61,7 @@ struct Msg {
     static QByteArray serialise(const Msg& msg);
     static bool msgValid(const Msg& msg);
     static Msg composeHandshake();
+    static Msg composeAck();
 
 private:
     static const int LENGHT_LEN = 9;

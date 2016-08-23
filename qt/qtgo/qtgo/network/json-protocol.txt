@@ -3,9 +3,7 @@
 
     MsgType: Command/Reply,
     MsgId: 5455,
-    Commands: Connect, ListCommonGames, StartNewGame, ResumeGame, ResignGame, PlayMove, Disconnect,
-    Replies: Connect/ListCommonGames/etc, Fail, Error
-
+    Commands: Connect, ListCommonGames, StartNewGame, ResumeGame, ResignGame, PlayMove, Disconnect, ChatMsg,
     Reply: {
         replyTo: 5455
         result: Success/Fail/Error

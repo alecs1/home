@@ -57,6 +57,9 @@ void ConnMan::processMessages() {
                 case ConnState::AwaitingHandshake: {
                     if (msg.msgType == MsgType::Hanshake) {
                         connState = ConnState::Connected;
+                        Logger::Log(QString("Got handshake, connected!"), LogLevel::LOG_DEBUG);
+                        ProtoJson::Msg msg = Msg::composeAck();
+                        btSocket->write(Msg::serialise(msg));
                     }
                     else {
                         Logger::Log(QString("Expecting handshake, got %1").arg(msg.msgType), LogLevel::LOG_ERROR);
@@ -66,6 +69,7 @@ void ConnMan::processMessages() {
                 case ConnState::AwaitingHandshakeReply: {
                     if (msg.msgType == MsgType::Ack) {
                         connState = ConnState::Connected;
+                        Logger::Log(QString("Got hadshake reply, connected!"), LogLevel::LOG_DEBUG);
                     }
                     else {
                         Logger::Log(QString("Expecting handshake ack, got %1").arg(msg.msgType), LogLevel::LOG_ERROR);
