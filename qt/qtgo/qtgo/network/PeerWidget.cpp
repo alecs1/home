@@ -1,5 +1,5 @@
 #include "PeerWidget.h"
-#include "network/ui_PeerWidget.h"
+#include "ui_PeerWidget.h"
 
 PeerWidget::PeerWidget(ConnType connType, const QString& name, const QString& address, QWidget *parent) :
     QWidget(parent),

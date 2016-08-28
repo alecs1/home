@@ -429,5 +429,10 @@ void MainWindow::mainLoop() {
     if (connMan && connMan->activeConnection()) {
         //run connection logic here
         connMan->processMessages();
+        if (connMan->connState ==  ConnMan::ConnState::Connected) {
+            if (connMan->initiator) {
+
+            }
+        }
     }
 }

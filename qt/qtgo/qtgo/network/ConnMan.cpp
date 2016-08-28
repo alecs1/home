@@ -74,6 +74,7 @@ void ConnMan::processMessages() {
                 case ConnState::AwaitingHandshakeReply: {
                     if (msg.msgType == MsgType::Ack) {
                         connState = ConnState::Connected;
+                        initiator = true;
                         Logger::Log(QString("Got hadshake reply, connected!"), LogLevel::LOG_DEBUG);
                     }
                     else {

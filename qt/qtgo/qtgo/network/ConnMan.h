@@ -46,12 +46,16 @@ public:
     void processMessages();
     bool activeConnection() const;
 
+public:
+    //TODO - this is public for now
+    ConnState connState = ConnState::Disconnected;
+    bool initiator = false;
+
 public slots:
     void dataAvailable();
 
 private:
 
-    ConnState connState = ConnState::Disconnected;
     ProtoState protoState = ProtoState::Idle;
     ConnType connType = ConnType::None;
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DockedNotif</class>
+ <widget class="QWidget" name="DockedNotif">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>691</width>
+    <height>134</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Remote player is setting up the game.
+Press &quot;Edit Game&quot; to setup the game them yourself.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="toolButton">
+     <property name="text">
+      <string>Text 1</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="toolButton_2">
+     <property name="text">
+      <string>Text 2</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

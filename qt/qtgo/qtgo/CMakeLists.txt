@@ -37,7 +37,7 @@ qt5_wrap_ui(UI_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDial
 
 
 #how to debug a CMake script:
-message("UI_HEADERS:" ${UI_HEADERS})
+#message("UI_HEADERS:" ${UI_HEADERS})
 
 
 #qt moc
@@ -77,7 +77,7 @@ else ()
     add_executable(FreeGo ${ALL_SOURCES})
 endif()
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications)
 
 if (ANDROID)
     target_link_libraries(FreeGo log)
@@ -89,6 +89,7 @@ endif (ANDROID)
 add_subdirectory("btchat")
 add_subdirectory("network")
 add_subdirectory("android")
+add_subdirectory("notifications")
 
 add_custom_target(DocNetwork Notes.txt)
 

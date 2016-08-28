@@ -1,5 +1,5 @@
 #include "PeerChooser.h"
-#include "network/ui_PeerChooser.h"
+#include "ui_PeerChooser.h"
 
 #include "BTServer.h"
 #include "PeerWidget.h"
