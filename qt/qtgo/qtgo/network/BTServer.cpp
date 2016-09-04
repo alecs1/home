@@ -189,7 +189,7 @@ void BTServer::socketConnected() {
 
     QByteArray data = ProtoJson::Msg::serialise(handshake);
     socket->write(data);
-    Logger::Log(QString("%1 - wrote \"%2\" to socket\n").arg(__PRETTY_FUNCTION__).arg(data.constData()));
+    Logger::log(QString("%1 - wrote \"%2\" to socket\n").arg(__PRETTY_FUNCTION__).arg(data.constData()));
 }
 
 void BTServer::socketDisconnected() {
@@ -201,11 +201,7 @@ void BTServer::socketError(QBluetoothSocket::SocketError error) {
 }
 
 void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
-    printf("%s - address:%s, name:%s, signal strength:%d\n",
-           __PRETTY_FUNCTION__,
-           deviceInfo.address().toString().toUtf8().constData(),
-           deviceInfo.name().toUtf8().constData(),
-           deviceInfo.rssi());
+    Logger::log(QString("%1 - address:%2, name:%3, signal strength:%4\n").arg(__PRETTY_FUNCTION__).arg(deviceInfo.address().toString().toUtf8().constData()).arg(deviceInfo.name().toUtf8().constData()).arg(deviceInfo.rssi()));
 
 //    QBluetoothSocket* socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
 //    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy" || deviceInfo.name() == "Xperia Z1 Compact") {

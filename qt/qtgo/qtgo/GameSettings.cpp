@@ -17,7 +17,6 @@ GameSettings::GameSettings(QWidget *parent):
     QWidget(parent),
     ui(new Ui::GameSettings())
 {
-    printf("gtgo: %s - start\n", __func__);
     ui->setupUi(this);
 
     //initialize the two players:

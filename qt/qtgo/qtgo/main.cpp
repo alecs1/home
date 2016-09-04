@@ -7,8 +7,7 @@
 
 #include "GameStruct.h"
 #include "Global.h"
-
-//#include <unistd.h>
+#include "Logger.h"
 
 //QtCurve causes start-up crashes on Android, and debugging on Android is such a pain
 #define USE_QTCURVE 0
@@ -24,8 +23,19 @@ namespace QtCurve {
 }
 #endif
 
+/**
+ * Destructor will perform cleanup upon exit (flush Logger).
+ */
+class Cleaner {
+public:
+    ~Cleaner() {
+        Logger::finish();
+    }
+};
+
 int main(int argc, char *argv[])
 {
+    Logger::initLogging();
     printf("\n\n\n\n\n\n\n\n%s - STAAAAARRTIIIIIIING\n\n\n\n\n\n\n\n", __func__);
 
     Q_INIT_RESOURCE(res);
@@ -73,6 +83,7 @@ int main(int argc, char *argv[])
             printf("%s - qtcurve.so file not loaded\n", __func__);
 #endif
 
+    Cleaner c;
     MainWindow w;
     w.show();
 
