@@ -25,9 +25,13 @@ void Logger::initLogging() {
     file = new QFile(fileName);
     file->open(QIODevice::WriteOnly);
 
+    fflush(stdout);
+    fflush(stderr);
     memset(stdBuffer, 0, sizeof(stdBuffer));
     setvbuf(stdout, stdBuffer, _IOFBF, sizeof(stdBuffer));
     setvbuf(stderr, stdBuffer, _IOFBF, sizeof(stdBuffer));
+
+    qInstallMessageHandler(logQDebug);
 }
 
 /**
@@ -47,24 +51,31 @@ void Logger::finish() {
  */
 void Logger::log(const QString &msg, const LogLevel lev) {
     file->write(stdBuffer);
-    fflush(stdout);
-    fflush(stderr);
     //printf("%s - %s\n", "level here", msg.toUtf8().constData());
 
     QDateTime now = QDateTime::currentDateTime();
     QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg + "\n";
     file->write(formatted.toUtf8());
+
+    puts(formatted.toUtf8().constData());
+    fflush(stdout);
+    fflush(stderr);
+
+    //stdBuffer[0] = 0;
+    //QString dbg = QString("buffer after flush:%1%2%3%4%5\n").arg(stdBuffer[0]).arg(stdBuffer[1]).arg(stdBuffer[2]).arg(stdBuffer[3]).arg(stdBuffer[4]);
+    //file->write(dbg.toUtf8().constData());
+    //file->write("\n");
+    //TODO: without this memset we're writing stuff from stdBuffer more than once. Part of the problem is related to the way FILE* buffer work.
+    //However, doing "stdBuffer[0] = 0;" does not solve the problem entirely. Why is it not enough?!
+    memset(stdBuffer, 0, sizeof(stdBuffer));
 }
 
-void Logger::qDebugMessage(const QtMsgType type, const QMessageLogContext& context, const QString& message)
+void Logger::logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
     QString levelStr;
     switch (type) {
     case QtDebugMsg:
         levelStr = "Debug";
-        break;
-    case QtInfoMsg:
-        levelStr = "Info";
         break;
     case QtWarningMsg:
         levelStr = "Warning";
@@ -75,10 +86,13 @@ void Logger::qDebugMessage(const QtMsgType type, const QMessageLogContext& conte
     case QtFatalMsg:
         levelStr = "Fatal";
         break;
+    case QtInfoMsg:
+        levelStr = "Info";
+        break;
     }
 
-    QString contextInfo = QString("%1: %2 %3").arg(context.file).arg(context.line).arg(context.function);
+    QString contextStr = QString("%1: %2 %3").arg(context.file).arg(context.line).arg(context.function);
 
-    log(levelStr + " " + contextInfo + ". " + message, LogLevel::DEBUG);
+    log(levelStr + " " + contextStr + ". " + message, LogLevel::DEBUG);
 }
 

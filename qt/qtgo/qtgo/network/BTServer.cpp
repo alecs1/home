@@ -201,7 +201,7 @@ void BTServer::socketError(QBluetoothSocket::SocketError error) {
 }
 
 void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
-    Logger::log(QString("%1 - address:%2, name:%3, signal strength:%4\n").arg(__PRETTY_FUNCTION__).arg(deviceInfo.address().toString().toUtf8().constData()).arg(deviceInfo.name().toUtf8().constData()).arg(deviceInfo.rssi()));
+    Logger::log(QString("%1 - address:%2, name:%3, signal strength:%4").arg(__PRETTY_FUNCTION__).arg(deviceInfo.address().toString().toUtf8().constData()).arg(deviceInfo.name().toUtf8().constData()).arg(deviceInfo.rssi()));
 
 //    QBluetoothSocket* socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
 //    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy" || deviceInfo.name() == "Xperia Z1 Compact") {

@@ -25,4 +25,4 @@ struct Logger {
     static void finish();
 
     static void log(const QString& msg, const LogLevel lev=LogLevel::INFO);
-    static void qDebugMessage(const QtMsgType type, const QMessageLogContext& context, const QString& message);};
+    static void logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message);};
