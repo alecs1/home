@@ -1,5 +1,20 @@
-Approximate steps for a full build:
-cmake -DCMAKE_TOOLCHAIN_FILE=~/github/home/android-cmake/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DANDROID_ABI="armeabi-v7a with NEON" ../qtgo
+Linux
+mkdir qtgo-build
+cd qtgo-build
+cmake ../qtgo
+
+
+Android.
+Building for Android requires having a build for the host computer first.
+
+1. run CMake in the new directory pointing to correct toolchain file
+cmake -DCMAKE_TOOLCHAIN_FILE=../../android-cmake/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DANDROID_ABI="armeabi-v7a with NEON" ../qtgo
+
+2.
 make
+
+3. Copy the generated executables from a PC build, since these need to run on the current PC, on on Arm
 ../qtgo/copy-pc-executables.sh
+
+4.
 make

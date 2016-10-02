@@ -13,7 +13,7 @@ char Logger::stderrBuffer[stdBufferSize];
 
 void Logger::initLogging() {
     levelStrings[LogLevel::INFO] = "I";
-    levelStrings[LogLevel::DEBUG] = "D";
+    levelStrings[LogLevel::DBG] = "D";
     levelStrings[LogLevel::ERROR] = "E";
     levelStrings[LogLevel::COUNT] = "LOGGER_ERROR";
 
@@ -95,6 +95,6 @@ void Logger::logQDebug(const QtMsgType type, const QMessageLogContext& context, 
 
     QString contextStr = QString("%1: %2 %3").arg(context.file).arg(context.line).arg(context.function);
 
-    log(levelStr + " " + contextStr + ". " + message, LogLevel::DEBUG);
+    log(levelStr + " " + contextStr + ". " + message, LogLevel::DBG);
 }
 
