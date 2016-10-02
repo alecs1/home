@@ -96,7 +96,7 @@ GameSettings::GameSettings(QWidget *parent):
         ui->handicapButton->setStyleSheet("");
 
     roundInfo = new RoundInfo(this);
-    ui->topRow->insertWidget(0, roundInfo);
+    ui->roundInfoLayout->insertWidget(0, roundInfo);
     roundInfoVisible = false;
     roundInfo->hide();
     printf("%s - roundInfo:%dx%d\n",
@@ -135,7 +135,7 @@ RoundInfo* GameSettings::popRoundInfo() {
 }
 
 void GameSettings::pushBackRoundInfo() {
-    ui->topRow->insertWidget(0, roundInfo);
+    ui->roundInfoLayout->insertWidget(0, roundInfo);
     roundInfo->setVisible(roundInfoVisible);
     ui->topRow->update(); //probably Qt bug, need to update explicitly
 }

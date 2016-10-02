@@ -7,7 +7,7 @@ class QFile;
 enum LogLevel:uint8_t {
     DBG,
     INFO,
-    ERROR,
+    ERR,
     COUNT
 };
 

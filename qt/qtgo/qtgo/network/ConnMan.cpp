@@ -67,7 +67,7 @@ void ConnMan::processMessages() {
                         btSocket->write(Msg::serialise(msg));
                     }
                     else {
-                        Logger::log(QString("Expecting handshake, got %1").arg(msg.msgType), LogLevel::ERROR);
+                        Logger::log(QString("Expecting handshake, got %1").arg(msg.msgType), LogLevel::ERR);
                     }
                     break;
                 }
@@ -78,7 +78,7 @@ void ConnMan::processMessages() {
                         Logger::log(QString("Got hadshake reply, connected!"), LogLevel::DBG);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.msgType), LogLevel::ERROR);
+                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.msgType), LogLevel::ERR);
                     }
                     break;
                 }

@@ -14,7 +14,7 @@ char Logger::stderrBuffer[stdBufferSize];
 void Logger::initLogging() {
     levelStrings[LogLevel::INFO] = "I";
     levelStrings[LogLevel::DBG] = "D";
-    levelStrings[LogLevel::ERROR] = "E";
+    levelStrings[LogLevel::ERR] = "E";
     levelStrings[LogLevel::COUNT] = "LOGGER_ERROR";
 
     if (!QDir("logs").exists())    {
