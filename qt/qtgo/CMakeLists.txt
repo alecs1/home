@@ -70,7 +70,7 @@ if (ANDROID)
     set(ENV{ANDROID_SDK} ${ANDROID_SDK})
     set(ENV{ANDROID_SDK_ROOT} ${ANDROID_SDK})
     set (ANDROID_NDK_INCLUDES ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android)
-    #for ndk unix is fo qt-curve
+    #for ndk unix is for qt-curve
     set (ANDROID_NDK_UNIX_INCLUDES ${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/sys)
     include_directories(SYSTEM ${ANDROID_NDK_INCLUDES} ${ANDROID_NDK_UNIX_INCLUDES})
 endif(ANDROID)
