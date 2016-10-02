@@ -8,7 +8,8 @@ QString levelStrings[LogLevel::COUNT];
 
 QString Logger::fileName;
 QFile* Logger::file = nullptr;
-char Logger::stdBuffer[stdBufferSize];
+char Logger::stdoutBuffer[stdBufferSize];
+char Logger::stderrBuffer[stdBufferSize];
 
 void Logger::initLogging() {
     levelStrings[LogLevel::INFO] = "I";
@@ -27,9 +28,9 @@ void Logger::initLogging() {
 
     fflush(stdout);
     fflush(stderr);
-    memset(stdBuffer, 0, sizeof(stdBuffer));
-    setvbuf(stdout, stdBuffer, _IOFBF, sizeof(stdBuffer));
-    setvbuf(stderr, stdBuffer, _IOFBF, sizeof(stdBuffer));
+    memset(stdoutBuffer, 0, sizeof(stdoutBuffer));
+    setvbuf(stdout, stdoutBuffer, _IOFBF, sizeof(stdoutBuffer));
+    setvbuf(stderr, stderrBuffer, _IOFBF, sizeof(stderrBuffer));
 
     qInstallMessageHandler(logQDebug);
 }
@@ -39,7 +40,7 @@ void Logger::initLogging() {
  */
 void Logger::finish() {
     if (file != nullptr) {
-        file->write(stdBuffer);
+        file->write(stdoutBuffer);
         file->close();
     }
     fflush(stdout);
@@ -50,7 +51,8 @@ void Logger::finish() {
  * Write the message to file, but flush everything from standard buffers first.
  */
 void Logger::log(const QString &msg, const LogLevel lev) {
-    file->write(stdBuffer);
+    file->write(stdoutBuffer);
+    file->write(stderrBuffer);
     //printf("%s - %s\n", "level here", msg.toUtf8().constData());
 
     QDateTime now = QDateTime::currentDateTime();
@@ -67,7 +69,7 @@ void Logger::log(const QString &msg, const LogLevel lev) {
     //file->write("\n");
     //TODO: without this memset we're writing stuff from stdBuffer more than once. Part of the problem is related to the way FILE* buffer work.
     //However, doing "stdBuffer[0] = 0;" does not solve the problem entirely. Why is it not enough?!
-    memset(stdBuffer, 0, sizeof(stdBuffer));
+    //memset(stdoutBuffer, 0, sizeof(stdoutBuffer));
 }
 
 void Logger::logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message)

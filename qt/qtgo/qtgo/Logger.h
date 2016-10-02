@@ -17,7 +17,8 @@ enum LogLevel:uint8_t {
  */
 struct Logger {
     static const int stdBufferSize = 1000000;
-    static char stdBuffer[stdBufferSize];
+    static char stdoutBuffer[stdBufferSize];
+    static char stderrBuffer[stdBufferSize];
     static QFile* file;
     static QString fileName;
 
