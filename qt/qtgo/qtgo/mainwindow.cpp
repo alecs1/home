@@ -18,12 +18,14 @@
 #include "MiniGameSettings.h"
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
+#include "Logger.h"
 //#include "network/BTErrorDialog.h"
-#include "network/PeerChooser.h"
-
 
 #include "network/BTServer.h"
 #include "network/ConnMan.h"
+#include "network/PeerChooser.h"
+
+#include "notifications/DockedNotif.h"
 
 //TODO - just for tests
 #include "btchat/chat.h"
@@ -111,6 +113,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionHelp, SIGNAL(triggered(bool)), this, SLOT(showHelp()));
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
     connect(ui->actionDebug_BT, SIGNAL(triggered(bool)), this, SLOT(showBTChat()));
+
+    connMan = new ConnMan;
+    connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
 
 
     table->checkForResumeGame();
@@ -378,25 +383,18 @@ int MainWindow::connectBT() {
 #ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
 
-    if (connMan == nullptr) {
-        connMan = new ConnMan;
-    }
-
     if (peerChooser == nullptr) {
         peerChooser = new PeerChooser(*connMan, this);
     }
     peerChooser->show();
 
 #else
-    printf("No QBluetooth support on Windows\n");
+    Logger::log("No QBluetooth support on Windows", LogLevel::ERR);
 #endif
     return 0;
 }
 
 void MainWindow::connectTCP() {
-    if (connMan == nullptr) {
-        connMan = new ConnMan;
-    }
     printf("%s - Implement me!", __PRETTY_FUNCTION__);
 }
 
@@ -435,4 +433,25 @@ void MainWindow::mainLoop() {
             }
         }
     }
+}
+
+void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType) {
+    Logger::log(QString("%1 - %2 %3 %4").arg(__PRETTY_FUNCTION__).arg(state).arg(initiator).arg(connType));
+    switch (state) {
+    case ConnMan::ConnState::Connected: {
+        if (initiator) {
+            if (makeSettingsDock == nullptr) {
+                QList<notifications::Option> options;
+                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
+                makeSettingsDock = new notifications::DockedNotif("Setup the game to play with the remove player and press \"Done\"", options);
+            }
+            addDockWidget(Qt::TopDockWidgetArea, makeSettingsDock);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+
 }

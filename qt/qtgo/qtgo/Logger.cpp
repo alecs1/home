@@ -56,8 +56,9 @@ void Logger::log(const QString &msg, const LogLevel lev) {
     //printf("%s - %s\n", "level here", msg.toUtf8().constData());
 
     QDateTime now = QDateTime::currentDateTime();
-    QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg + "\n";
+    QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg;
     file->write(formatted.toUtf8());
+    file->write("\n");
 
     puts(formatted.toUtf8().constData());
     fflush(stdout);

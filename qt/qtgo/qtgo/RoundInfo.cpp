@@ -9,6 +9,8 @@
 #include "RoundInfo.h"
 #include "ui_RoundInfo.h"
 
+#include "Logger.h"
+
 #include "GameStruct.h"
 
 
@@ -60,7 +62,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
     ui->playerTypeLabel->resize(playerTypeSize, playerTypeSize);
     playerAI = new QPixmap(playerTypeSize, playerTypeSize);
     playerAI->fill(Qt::transparent);
-    svgR.load(QString(":/resources/oxygen-icons/layerAI--picmi.svg"));
+    svgR.load(QString(":/resources/oxygen-icons/playerAI--picmi.svg"));
     QPainter AIPainter(playerAI);
     svgR.render(&AIPainter);
 
@@ -112,7 +114,7 @@ RoundInfo::~RoundInfo()
 
 
 void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType) {
-    printf("%s - playerType=%u\n", __func__, aType);
+    Logger::log(QString("%1 - playerType=%2").arg(__func__).arg((uint8_t)aType), LogLevel::DBG);
     player = aPlayer;
     playerType = aType;
     if (player == BLACK) {

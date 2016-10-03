@@ -25,11 +25,11 @@ public:
         AwaitingHandshake,
         Connected,
     };
-    enum ProtoState:uint8_t {
-        Idle,
-        AwaitingReply,
-        AwaitingMove,
-    };
+//    enum ProtoState:uint8_t {
+//        Idle,
+//        AwaitingReply,
+//        AwaitingMove,
+//    };
     enum ConnType:uint8_t {
         TCP,
         BT,
@@ -54,9 +54,12 @@ public:
 public slots:
     void dataAvailable();
 
+signals:
+    void connStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);
+
 private:
 
-    ProtoState protoState = ProtoState::Idle;
+    //ProtoState protoState = ProtoState::Idle;
     ConnType connType = ConnType::None;
 
     BTServer* btServer = nullptr;
