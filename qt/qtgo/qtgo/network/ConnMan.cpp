@@ -64,16 +64,13 @@ void ConnMan::processMessages() {
                         connState = ConnState::Connected;
                         Logger::log(QString("Got handshake, connected!"), LogLevel::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
-<<<<<<< HEAD
                         int wrote = btSocket->write(Msg::serialise(msg));
                         Logger::log(QString("Sent Ack. Bytes=%1, contents=%2").arg(wrote).arg(Msg::serialise(msg).data()));
                         if (wrote == -1) {
-                            Logger::log("Failed to write ack!!!", LogLevel::ERROR);
+                            Logger::log("Failed to write ack!!!", LogLevel::ERR);
                         }
-=======
                         btSocket->write(Msg::serialise(msg));
                         emit connStateChanged(connState, initiator, connType);
->>>>>>> 60200a2ce9de5054b56d7f90f269bbea2608e96c
                     }
                     else {
                         Logger::log(QString("Expecting handshake, got %1").arg(msg.msgType), LogLevel::ERR);
