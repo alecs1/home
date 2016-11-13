@@ -38,6 +38,8 @@ QList<QBluetoothHostInfo> BTServer::getBTDevices() const {
 
 //TODO - the code asking the user to activate bluetooth needs to be run each time button is pressed!
 int BTServer::initBluetooth(const int interfaceNo) {
+    Logger::log(QString("%1 - interfaceNo=%2").arg(__PRETTY_FUNCTION__).arg(interfaceNo));
+
     //reinitialise everything
     delete rfcommServer;
     if (discoveryAgent != nullptr) {
@@ -49,7 +51,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
 
 
     QList<QBluetoothHostInfo> localAdapters = QBluetoothLocalDevice::allDevices();
-    printf("%s - localAdapters.count=%d\n", __PRETTY_FUNCTION__, localAdapters.count());
+    Logger::log(QString("%1 - localAdapters.count=%2").arg(__PRETTY_FUNCTION__).arg(localAdapters.count()));
 
     if (localAdapters.size() < 1) {
         printf("%s - no bluetooth found\n", __PRETTY_FUNCTION__);
@@ -69,11 +71,10 @@ int BTServer::initBluetooth(const int interfaceNo) {
     connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
     QBluetoothAddress actualAddress = localAdapters.at(interface).address();
-    printf("%s - QBluetoothServer - starting to listen at %s\n", __PRETTY_FUNCTION__,
-           actualAddress.toString().toUtf8().constData());
+    Logger::log(QString("%1 - QBluetoothServer - starting to listen at %2").arg(__PRETTY_FUNCTION__).arg(actualAddress.toString().toUtf8().constData()));
     bool result = rfcommServer->listen(actualAddress);
     if (!result) {
-        printf("%s - listen failed; result=%d\n", __PRETTY_FUNCTION__, result);
+        Logger::log(QString("%1 - listen failed; result=%2").arg(__PRETTY_FUNCTION__).arg(result));
         return -2;
     }
 
