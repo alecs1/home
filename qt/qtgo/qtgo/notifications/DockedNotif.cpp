@@ -4,7 +4,7 @@
 namespace notifications {
 
 DockedNotif::DockedNotif(const QString& text, const QList<Option> buttons, QWidget *parent) :
-    QWidget(parent),
+    QDockWidget(parent),
     ui(new Ui::DockedNotif)
 {
     ui->setupUi(this);

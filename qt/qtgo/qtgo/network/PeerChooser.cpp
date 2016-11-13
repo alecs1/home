@@ -18,8 +18,8 @@ PeerChooser::PeerChooser(ConnMan &connectionManager, QWidget *parent) :
     connect(ui->reloadButton, SIGNAL(clicked()), this, SLOT(rescan()));
     connect(ui->bt1Button, SIGNAL(toggled(bool)), this, SLOT(chooseBT0(bool)));
     connect(ui->bt2Button, SIGNAL(toggled(bool)), this, SLOT(chooseBT1(bool)));
-    connect(&connectionManager, SIGNAL(newDeviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(peerFound()));
-    connect(&connectionManager, SIGNAL(finishedScanning()), this, SLOT(finishedScanning()));
+    connect(connectionManager.getBTServer(), SIGNAL(newDeviceDiscovered(QBluetoothDeviceInfo)), this, SLOT(peerFound()));
+    connect(connectionManager.getBTServer(), SIGNAL(finishedScanning()), this, SLOT(finishedScanning()));
 
     BTServer* btServer = connMan.getBTServer();
     QList<QBluetoothHostInfo> devices = btServer->getBTDevices();

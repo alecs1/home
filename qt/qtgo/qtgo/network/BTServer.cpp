@@ -153,7 +153,7 @@ int BTServer::scanBTPeers() {
         discoveryAgent->start();
     }
     else {
-        printf("%s - error, device not initialised!\n", __PRETTY_FUNCTION__);
+        Logger::log(QString("%1 - device not initialised!").arg(__PRETTY_FUNCTION__), LogLevel::ERR);
         return -1;
     }
     printf("%s - done\n", __PRETTY_FUNCTION__);
@@ -169,16 +169,15 @@ int BTServer::connectAddress(const QString& address) {
     printf("%s - start connecting to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
     for(int i = 0; i < peers.size(); i++) {
         if (address == peers[i].address) {
-
             socket->connectToService(peers[i].deviceInfo.address(), QBluetoothUuid(qtgoUUID));
-            printf("%s - called connectToService for %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
+            Logger::log(QString("%1 - called connectToService for %2").arg(__PRETTY_FUNCTION__).arg(address));
         }
     }
     return 0;
 }
 
 void BTServer::clientConnected() {
-    printf("%s - a client has connected\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - a client has connected").arg(__PRETTY_FUNCTION__), LogLevel::INFO);
     QBluetoothSocket* newSock = rfcommServer->nextPendingConnection();
     clientSockets.append(newSock);
     connMan->setBTServerSocket(newSock);
@@ -190,7 +189,7 @@ void BTServer::socketConnected() {
 
     QByteArray data = ProtoJson::Msg::serialise(handshake);
     socket->write(data);
-    Logger::log(QString("%1 - wrote \"%2\" to socket\n").arg(__PRETTY_FUNCTION__).arg(data.constData()));
+    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), LogLevel::DBG);
 }
 
 void BTServer::socketDisconnected() {
@@ -198,7 +197,7 @@ void BTServer::socketDisconnected() {
 }
 
 void BTServer::socketError(QBluetoothSocket::SocketError error) {
-    printf("%s - error:%d -> %s\n", __PRETTY_FUNCTION__, error, socket->errorString().toUtf8().constData());
+    Logger::log(QString("%1 : %2 -> %3").arg(__PRETTY_FUNCTION__).arg(error).arg(socket->errorString()), LogLevel::ERR);
 }
 
 void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {

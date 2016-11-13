@@ -6,6 +6,8 @@
 
 #include "Global.h"
 
+#include "network/ConnMan.h"
+
 class DrawAreaWidget;
 class GoTable;
 class RoundInfo;
@@ -15,8 +17,10 @@ class PeerChooser;
 class ConfirmMoveDialog;
 class QToolButton;
 class BTServer;
-class ConnMan;
 
+namespace notifications {
+class DockedNotif;
+}
 
 namespace Ui {
 class MainWindow;
@@ -52,6 +56,8 @@ public slots:
 
     void mainLoop();
 
+    void onConnStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);
+
 signals:
     void programSettingsChanged();
 
@@ -72,6 +78,9 @@ private:
     RoundInfo* roundInfo = nullptr;
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;
+
+    //transiet dialog children
+    notifications::DockedNotif* makeSettingsDock = nullptr;
 
     ConnMan* connMan = nullptr;
 };
