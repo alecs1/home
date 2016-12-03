@@ -1,5 +1,4 @@
-#ifndef BTCLIENT_H
-#define BTCLIENT_H
+#pragma once
 
 #include <QObject>
 #include <QtBluetooth/QBluetoothDeviceInfo>
@@ -25,5 +24,3 @@ private:
     QBluetoothSocket* socket;
     QBluetoothDeviceDiscoveryAgent* discoveryAgent = NULL;
 };
-
-#endif // BTCLIENT_H

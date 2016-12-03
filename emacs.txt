@@ -39,8 +39,10 @@ C-a	- start of line
 C-e	- end of line
 M-b     - backward one word
 M-f     - forward one word
-M-a	- start of paragraph
-M-e     - end of paragraph
+M-a	- start of sentence
+M-e     - end of sentence
+M-{     - start of paragraph
+M-}     - end of paragraph
 M-<	- beginning of entire text
 M->	- end of entire text
 C-v	- view next screen (scrolls one page)
