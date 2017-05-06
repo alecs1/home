@@ -169,6 +169,7 @@ int BTServer::connectAddress(const QString& address) {
     for(int i = 0; i < peers.size(); i++) {
         if (address == peers[i].address) {
             socket->connectToService(peers[i].deviceInfo.address(), QBluetoothUuid(qtgoUUID));
+            //connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
             Logger::log(QString("%1 - called connectToService for %2").arg(__PRETTY_FUNCTION__).arg(address));
         }
     }
@@ -184,11 +185,7 @@ void BTServer::clientConnected() {
 
 void BTServer::socketConnected() {
     printf("%s - enter\n", __PRETTY_FUNCTION__);
-    ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
-
-    QByteArray data = ProtoJson::Msg::serialise(handshake);
-    socket->write(data);
-    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), LogLevel::DBG);
+    connMan->setBTClientSocket(socket);
 }
 
 void BTServer::socketDisconnected() {

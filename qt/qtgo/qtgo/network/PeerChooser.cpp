@@ -53,7 +53,7 @@ void PeerChooser::activated(const QModelIndex& index) {
         return;
     }
 
-    connMan.getBTServer()->connectAddress(p->address());
+    connMan.connectBT(p->address());
     close();
 }
 

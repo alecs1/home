@@ -30,6 +30,8 @@
 //TODO - just for tests
 #include "btchat/chat.h"
 
+#include "network/ProtoJson.h"
+
 
 #include "Global.h"
 
@@ -137,6 +139,8 @@ MainWindow::MainWindow(QWidget *parent) :
     mainLoopTimer.setInterval(mainLoopInterval);
     mainLoopTimer.start();
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
+
+    Logger::setViewer(ui->logView);
 }
 
 MainWindow::~MainWindow()
@@ -429,7 +433,12 @@ void MainWindow::mainLoop() {
         connMan->processMessages();
         if (connMan->connState ==  ConnMan::ConnState::Connected) {
             if (connMan->initiator) {
-
+                //hack to get this running: propose a game with the current state of our board
+                QString gameString = table->getFullGame();
+                ProtoJson::Msg msg;
+                msg.msgType = ProtoJson::ResumeGame;
+                msg.json["SGFSaveString"] = gameString;
+                connMan->sendMessage(msg);
             }
         }
     }

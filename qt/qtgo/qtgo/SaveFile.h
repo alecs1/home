@@ -1,5 +1,4 @@
-#ifndef SAVEFILE_H
-#define SAVEFILE_H
+#pragma once
 
 #include <QString>
 #include "Global.h"
@@ -16,10 +15,9 @@ public:
     static QString qetDefSaveFName();
     static bool loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
     static bool writeSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static QString getSaveString(SGFNode* sgfNode);
 
     static QString getDefSettingsFName();
     static bool loadSettings(QString settingsFName, SProgramSettings* programSettings);
     static bool writeSettings(QString settingsFName, SProgramSettings* programSettings);
 };
-
-#endif // SAVEFILE_H

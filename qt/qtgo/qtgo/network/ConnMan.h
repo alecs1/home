@@ -25,11 +25,6 @@ public:
         AwaitingHandshake,
         Connected,
     };
-//    enum ProtoState:uint8_t {
-//        Idle,
-//        AwaitingReply,
-//        AwaitingMove,
-//    };
     enum ConnType:uint8_t {
         TCP,
         BT,
@@ -38,6 +33,7 @@ public:
 
     ConnMan();
     ~ConnMan();
+    void connectBT(const QString address);
     BTServer* getBTServer() const;
     //void initBluetooth(const int interface);
     void setBTClientSocket(QBluetoothSocket* sock);
@@ -45,6 +41,7 @@ public:
     ProtoJson::Msg getMessage(int& parsedBytes);
     void processMessages();
     bool activeConnection() const;
+    void sendMessage(ProtoJson::Msg& msg);
 
 public:
     //TODO - this is public for now

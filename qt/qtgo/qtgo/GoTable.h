@@ -82,6 +82,7 @@ public:
     //direction: 0 - width, 1 - height
     bool saveGame(QString fileName);
     bool loadGame(QString fileName);
+    QString getFullGame() const;
 
     GameState getGameState() const;
 

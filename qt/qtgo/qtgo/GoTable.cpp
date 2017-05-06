@@ -246,6 +246,13 @@ bool GoTable::loadGame(QString fileName) {
     return result;
 }
 
+/**
+ * @brief GoTable::getFullGame get the entire game as GnuGo serialises it
+ */
+QString GoTable::getFullGame() const {
+    return SaveFile::getSaveString(sgfTree->root);
+}
+
 GameState GoTable::getGameState() const {
     return state;
 }

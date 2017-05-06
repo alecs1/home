@@ -1,5 +1,4 @@
-#ifndef PROTOJSON_H
-#define PROTOJSON_H
+#pragma once
 
 #include <QByteArray>
 #include <QJsonObject>
@@ -15,15 +14,19 @@ struct ProtoKw {
 
 
 enum MsgType:uint8_t {
+    //Generic:
     Ack,
+    //Connection:
+    Disconnect,
     Hanshake,
-    ListCommonGames,
+    //Game
     CommonGames,
+    ListCommonGames,
     StartNewGame,
     ResumeGame,
     ResignGame,
     PlayMove,
-    Disconnect,
+    //Guard
     MsgTypeCount
 };
 
@@ -67,10 +70,7 @@ private:
     static const int LENGHT_LEN = 9;
 public:
     static const int HEADER_LEN = LENGHT_LEN + 1;
-
 };
 
 
-}  //namespace ProtoJson
-
-#endif // PROTOJSON_H
+} //namespace ProtoJson

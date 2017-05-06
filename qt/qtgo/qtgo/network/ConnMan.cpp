@@ -20,16 +20,31 @@ ConnMan::~ConnMan() {
 
 }
 
+void ConnMan::connectBT(const QString address) {
+    btServer->connectAddress(address);
+    connState = ConnState::AwaitingHandshakeReply;
+}
+
 BTServer* ConnMan::getBTServer() const {
     return btServer;
 }
 
+/**
+ * @brief ConnMan::setBTClientSocket set the socket to a client connection, we're behaving as server
+ */
 void ConnMan::setBTClientSocket(QBluetoothSocket* sock) {
     btSocket = sock;
     connState = ConnState::AwaitingHandshakeReply;
     connect(btSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+
+    ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
+    QByteArray data = ProtoJson::Msg::serialise(handshake);
+    btSocket->write(data);
+    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), LogLevel::DBG);
 }
 
+/**
+ * @brief ConnMan::setBTServerSocket set the socket to a server connection, we're behaving as a client */
 void ConnMan::setBTServerSocket(QBluetoothSocket* sock) {
     btSocket = sock;
     connState = ConnState::AwaitingHandshake;
@@ -54,6 +69,7 @@ ProtoJson::Msg ConnMan::getMessage(int& parsedBytes) {
 }
 
 void ConnMan::processMessages() {
+    //Logger::log(QString("processMessages\n"));
     if (buffer.size() > 0) {
         int len = 0;
         ProtoJson::Msg msg = getMessage(len);
@@ -65,6 +81,7 @@ void ConnMan::processMessages() {
                         Logger::log(QString("Got handshake, connected!"), LogLevel::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
                         btSocket->write(Msg::serialise(msg));
+                        Logger::log(QString("Sent ack: %1").arg(Msg::serialise(msg).constData()));
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
@@ -84,7 +101,13 @@ void ConnMan::processMessages() {
                     }
                     break;
                 }
+                case ConnState::Connected: {
+                    if (msg.msgType >= MsgType::CommonGames && msg.MsgType <= PlayMove) {
+                        //forward the message
+                    }
+                }
                 default: {
+                    Logger::log(QString("What is this state? Msg: %1").arg(msg.msgType), LogLevel::ERR);
                     break;
                 }
             }
@@ -94,6 +117,13 @@ void ConnMan::processMessages() {
 
 bool ConnMan::activeConnection() const {
     return connState != ConnState::Disconnected;
+}
+
+/**
+ * @brief ConnMan::sendMessage serialise a message to the peer
+ */
+void ConnMan::sendMessage(ProtoJson::Msg& msg) {
+    btSocket->write(Msg::serialise(msg));
 }
 
 void ConnMan::dataAvailable() {
