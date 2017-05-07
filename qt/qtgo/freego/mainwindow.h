@@ -58,6 +58,8 @@ public slots:
 
     void onConnStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);
 
+    void onRemoteMessage(const ProtoJson::Msg& msg);
+
 signals:
     void programSettingsChanged();
 

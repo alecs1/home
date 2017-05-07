@@ -106,7 +106,7 @@ void ConnMan::processMessages() {
                     break;
                 }
                 case ConnState::Connected: {
-                    if (msg.msgType >= MsgType::CommonGames && msg.MsgType <= PlayMove) {
+                    if (msg.msgType >= MsgType::CommonGames && msg.msgType <= MsgType::PlayMove) {
                         //forward the message
                     }
                 }

@@ -250,7 +250,7 @@ bool GoTable::loadGame(QString fileName) {
  * @brief GoTable::getFullGame get the entire game as GnuGo serialises it
  */
 QString GoTable::getFullGame() const {
-    return SaveFile::getSaveString(sgfTree->root);
+    return SaveFile::getGnuGoSaveString(sgfTree->root);
 }
 
 GameState GoTable::getGameState() const {

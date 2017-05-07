@@ -1,5 +1,4 @@
-#ifndef GOTABLE_H
-#define GOTABLE_H
+#pragma once
 
 #include <QWidget>
 #include <QThread>
@@ -11,7 +10,6 @@
 #include <sgf/sgftree.h>
 
 class QMutex;
-//class SaveFile;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
@@ -205,8 +203,4 @@ private:
 
     ElapsedTimerWrapper timer;
     QString timerDelta;
-
 };
-
-
-#endif // GOTABLE_H

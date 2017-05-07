@@ -3,7 +3,7 @@
 
 #include <QFileDialog>
 #include <QPropertyAnimation>
-//debug
+#include <QMessageBox>
 #include <QToolButton>
 
 #include "DrawAreaWidget.h"
@@ -19,7 +19,6 @@
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
 #include "Logger.h"
-//#include "network/BTErrorDialog.h"
 
 #include "network/BTServer.h"
 #include "network/ConnMan.h"
@@ -438,6 +437,7 @@ void MainWindow::mainLoop() {
                 ProtoJson::Msg msg;
                 msg.msgType = ProtoJson::ResumeGame;
                 msg.json["SGFSaveString"] = gameString;
+                //msg.json[]
                 connMan->sendMessage(msg);
             }
         }
@@ -461,6 +461,24 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
     default:
         break;
     }
+}
 
-
+void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
+    switch (msg.msgType) {
+    case ProtoJson::MsgType::ResumeGame: {
+        //show confirmation window and continue
+        int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
+        if (ret == QMessageBox::Yes) {
+            //accepted new game
+            QJsonObject json = msg.json;
+        }
+        else {
+            //nothing, should refuse
+        }
+        break;
+    }
+    default: {
+        break;
+    }
+    }
 }

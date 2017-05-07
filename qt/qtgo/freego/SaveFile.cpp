@@ -79,6 +79,27 @@ bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gam
 bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
     QFile outFile(saveFName);
 
+    QJsonObject json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
+
+    //hash some stuff to validate the save file;
+    QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
+            auxGameInfo->gameDate + json["SGFSaveString"].toString();
+    //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
+    json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
+    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
+    json["hashMD5"] = hashBytes.toHex().constData();
+
+    QJsonDocument doc;
+    doc.setObject(json);
+    QByteArray contents = doc.toJson(QJsonDocument::Indented);
+    outFile.open(QIODevice::WriteOnly);
+    outFile.write(contents);
+    outFile.close();
+
+    return true;
+}
+
+QJsonObject SaveFile::serialiseGameState(SGFNode *sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     QJsonObject json;
     json["comment"] = auxGameInfo->comment;
     json["freeGoVersion"] = auxGameInfo->freeGoVersion;
@@ -97,28 +118,12 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     black["AILevel"] = gameSettings->blackAIStrength;
     json["black"] = black;
 
-    QString SGFSaveString = getSaveString(sgfNode);
+    QString SGFSaveString = getGnuGoSaveString(sgfNode);
     json["SGFSaveString"] = SGFSaveString;
-
-    //hash some stuff to validate the save file;
-    QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
-            auxGameInfo->gameDate + SGFSaveString;
-    //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
-    json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
-    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
-    json["hashMD5"] = hashBytes.toHex().constData();
-
-    QJsonDocument doc;
-    doc.setObject(json);
-    QByteArray contents = doc.toJson(QJsonDocument::Indented);
-    outFile.open(QIODevice::WriteOnly);
-    outFile.write(contents);
-    outFile.close();
-
-    return true;
+    return json;
 }
 
-QString SaveFile::getSaveString(SGFNode* sgfNode) {
+QString SaveFile::getGnuGoSaveString(SGFNode* sgfNode) {
     //TODO - this can be achieved directly in memory buffers, no need for real files
     QString SGFSaveString;
     QString auxSaveFName = "gnugo-serialise.tmp";
