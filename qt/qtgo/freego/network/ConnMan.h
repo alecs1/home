@@ -32,6 +32,7 @@ public:
 
     ConnMan();
     ~ConnMan();
+    void connectBT(const QString address);
 
     //BlueTooth related stuff
     BTServer* getBTServer() const;
@@ -42,6 +43,7 @@ public:
     ProtoJson::Msg getMessage(int& parsedBytes);
     void processMessages();
     bool activeConnection() const;
+    void sendMessage(ProtoJson::Msg& msg);
 
 public:
     //TODO - this is public for now

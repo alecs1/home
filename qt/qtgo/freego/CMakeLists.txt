@@ -90,6 +90,7 @@ add_subdirectory("btchat")
 add_subdirectory("network")
 add_subdirectory("android")
 add_subdirectory("notifications")
+add_subdirectory("dialogs")
 
 add_custom_target(DocNetwork Notes.txt)
 

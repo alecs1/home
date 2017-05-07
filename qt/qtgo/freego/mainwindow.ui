@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>744</width>
-    <height>402</height>
+    <width>827</width>
+    <height>509</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -69,8 +69,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>744</width>
-     <height>25</height>
+     <width>827</width>
+     <height>19</height>
     </rect>
    </property>
   </widget>
@@ -99,6 +99,36 @@
    <addaction name="actionHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="windowTitle">
+    <string>Log viewer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPlainTextEdit" name="logView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionSettings">
    <property name="icon">
     <iconset resource="res.qrc">

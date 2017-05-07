@@ -3,11 +3,13 @@
 #include <QFile>
 #include <QDateTime>
 #include <QDir>
+#include <QPlainTextEdit>
 
-QString levelStrings[LogLevel::COUNT];
+QString levelStrings[LogLevel::COUNT+1];
 
 QString Logger::fileName;
 QFile* Logger::file = nullptr;
+QPlainTextEdit* Logger::viewer = nullptr;
 char Logger::stdoutBuffer[stdBufferSize];
 char Logger::stderrBuffer[stdBufferSize];
 
@@ -47,6 +49,10 @@ void Logger::finish() {
     fflush(stderr);
 }
 
+void Logger::setViewer(QPlainTextEdit* edit) {
+    viewer = edit;
+}
+
 /**
  * Write the message to file, but flush everything from standard buffers first.
  */
@@ -59,6 +65,10 @@ void Logger::log(const QString &msg, const LogLevel lev) {
     QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg;
     file->write(formatted.toUtf8());
     file->write("\n");
+
+    if (viewer) {
+        viewer->appendPlainText(formatted);
+    }
 
     puts(formatted.toUtf8().constData());
     fflush(stdout);

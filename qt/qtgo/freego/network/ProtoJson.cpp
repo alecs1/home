@@ -13,7 +13,7 @@ const QString ProtoKw::MsgType = "MsgType";
  * @param data complete json message
  */
 Msg Msg::parse(const QByteArray& data, int& lenParsed) {
-    Logger::log(QString("will parse %1").arg(data.constData()));
+    Logger::log(QString("will parse message: %1").arg(data.constData()));
     Msg msg;
     lenParsed = 0;
 

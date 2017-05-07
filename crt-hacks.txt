@@ -17,3 +17,4 @@ m-a a-i broadcom-sta after each upgrade
 medium:
 #set the maximum battery charge 85%, longer lasting battery
 tlp setcharge 80 85
+i915.enable_psr=0

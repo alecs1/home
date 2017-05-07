@@ -23,7 +23,8 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
     set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -fno-omit-frame-pointer -Wall -std=c++11")
     set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -D_GLIBCXX_DEBUG -fstack-protector-all -fstack-check")
     if (NOT DEFINED ANDROID)
-        set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,bounds")
+        #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,bounds")
+        #set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     endif (NOT DEFINED ANDROID)
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
@@ -31,7 +32,8 @@ if ($CMAKE_COMPILER_IS_GNUCC})
     set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -fno-omit-frame-pointer -Wall")
     set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fstack-protector-all -fstack-check")
     if (NOT DEFINED ANDROID)
-        set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address,bounds -static-libasan")
+        #set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address,bounds -static-libasan")
+        #set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     endif (NOT DEFINED ANDROID)
     set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -Wall")
 endif ($CMAKE_COMPILER_IS_GNUCC})
@@ -76,7 +78,7 @@ if (ANDROID)
     include_directories(SYSTEM ${ANDROID_NDK_INCLUDES} ${ANDROID_NDK_UNIX_INCLUDES})
 endif(ANDROID)
 
-add_subdirectory("qtgo")
+add_subdirectory("freego")
 
 #qtcurve is not used for now and only slows down Android build
 if ( (NOT WIN32) AND (NOT ANDROID) )
@@ -87,14 +89,14 @@ endif ( (NOT WIN32) AND (NOT ANDROID) )
 add_subdirectory("gnugo")
 
 if (ANDROID)
-    set(PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qtgo/android")
+    set(PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/freego/android")
     set(QT_ANDROID_ANT "/usr/bin/ant")
     include("../../qt-android-cmake/AddQtAndroidApk.cmake")
     add_qt_android_apk(FreeGo_apk FreeGo
         NAME "FreeGo"
         PACKAGE_NAME "org.alecs1.FreeGo"
-        PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qtgo/android"
-        KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/qtgo/android/release.keystore androidrelease
+        PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/freego/android"
+        KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/freego/android/release.keystore androidrelease
     )
 endif (ANDROID)
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QPlainTextEdit>
 
 class QFile;
 
@@ -22,8 +23,12 @@ struct Logger {
     static QFile* file;
     static QString fileName;
 
+    static QPlainTextEdit* viewer;
+
     static void initLogging();
     static void finish();
+    static void setViewer(QPlainTextEdit* edit);
 
     static void log(const QString& msg, const LogLevel lev=LogLevel::INFO);
-    static void logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message);};
+    static void logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message);
+};

@@ -97,15 +97,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     black["AILevel"] = gameSettings->blackAIStrength;
     json["black"] = black;
 
-    QString SGFSaveString;
-    QString auxSaveFName = saveFName + "tmp";
-    FILE* auxFile = fopen(auxSaveFName.toUtf8().constData(), "w+"); //fclose by QTextStream destructor
-    writesgfToStream(sgfNode, auxFile);
-
-    QTextStream fileStream(auxFile);
-    fileStream.seek(0);
-    SGFSaveString = fileStream.readAll();
-    SGFSaveString.remove(QRegularExpression("\r|\n"));
+    QString SGFSaveString = getSaveString(sgfNode);
     json["SGFSaveString"] = SGFSaveString;
 
     //hash some stuff to validate the save file;
@@ -124,6 +116,20 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     outFile.close();
 
     return true;
+}
+
+QString SaveFile::getSaveString(SGFNode* sgfNode) {
+    //TODO - this can be achieved directly in memory buffers, no need for real files
+    QString SGFSaveString;
+    QString auxSaveFName = "gnugo-serialise.tmp";
+    FILE* auxFile = fopen(auxSaveFName.toUtf8().constData(), "w+"); //fclose by QTextStream destructor
+    writesgfToStream(sgfNode, auxFile);
+
+    QTextStream fileStream(auxFile);
+    fileStream.seek(0);
+    SGFSaveString = fileStream.readAll();
+    SGFSaveString.remove(QRegularExpression("\r|\n"));
+    return SGFSaveString;
 }
 
 QString SaveFile::getDefSettingsFName() {
