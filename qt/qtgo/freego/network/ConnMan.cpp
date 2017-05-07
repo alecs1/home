@@ -69,7 +69,6 @@ ProtoJson::Msg ConnMan::getMessage(int& parsedBytes) {
 }
 
 void ConnMan::processMessages() {
-    //Logger::log(QString("processMessages\n"));
     if (buffer.size() > 0) {
         int len = 0;
         ProtoJson::Msg msg = getMessage(len);
@@ -80,6 +79,11 @@ void ConnMan::processMessages() {
                         connState = ConnState::Connected;
                         Logger::log(QString("Got handshake, connected!"), LogLevel::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
+                        int wrote = btSocket->write(Msg::serialise(msg));
+                        Logger::log(QString("Sent Ack. Bytes=%1, contents=%2").arg(wrote).arg(Msg::serialise(msg).data()));
+                        if (wrote == -1) {
+                            Logger::log("Failed to write ack!!!", LogLevel::ERR);
+                        }
                         btSocket->write(Msg::serialise(msg));
                         Logger::log(QString("Sent ack: %1").arg(Msg::serialise(msg).constData()));
                         emit connStateChanged(connState, initiator, connType);
@@ -108,6 +112,7 @@ void ConnMan::processMessages() {
                 }
                 default: {
                     Logger::log(QString("What is this state? Msg: %1").arg(msg.msgType), LogLevel::ERR);
+                    Logger::log(QString("Unhandled message, type: %1, id: %2").arg(msg.msgType).arg(msg.msgid));
                     break;
                 }
             }

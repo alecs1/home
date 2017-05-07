@@ -1,10 +1,12 @@
 #include "PeerChooser.h"
 #include "ui_PeerChooser.h"
 
+#include <QtBluetooth/QBluetoothHostInfo>
+
 #include "BTServer.h"
 #include "PeerWidget.h"
 #include "BTErrorDialog.h"
-#include <QtBluetooth/QBluetoothHostInfo>
+#include "../Logger.h"
 
 PeerChooser::PeerChooser(ConnMan &connectionManager, QWidget *parent) :
     connMan(connectionManager),
@@ -98,9 +100,10 @@ void PeerChooser::displayPeers() {
 }
 
 void PeerChooser::rescan() {
+    Logger::log(QString("%1").arg(__PRETTY_FUNCTION__));
     //if BT interface has not been chosen at scan time, choose the first one.
     if (chosenBTIf == -1) {
-        chosenBTIf = 1;
+        chosenBTIf = 0;
         connMan.getBTServer()->initBluetooth(0);
     }
     connMan.getBTServer()->scanBTPeers();
