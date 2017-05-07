@@ -78,7 +78,7 @@ if (ANDROID)
     include_directories(SYSTEM ${ANDROID_NDK_INCLUDES} ${ANDROID_NDK_UNIX_INCLUDES})
 endif(ANDROID)
 
-add_subdirectory("qtgo")
+add_subdirectory("freego")
 
 #qtcurve is not used for now and only slows down Android build
 if ( (NOT WIN32) AND (NOT ANDROID) )
@@ -89,14 +89,14 @@ endif ( (NOT WIN32) AND (NOT ANDROID) )
 add_subdirectory("gnugo")
 
 if (ANDROID)
-    set(PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qtgo/android")
+    set(PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/freego/android")
     set(QT_ANDROID_ANT "/usr/bin/ant")
     include("../../qt-android-cmake/AddQtAndroidApk.cmake")
     add_qt_android_apk(FreeGo_apk FreeGo
         NAME "FreeGo"
         PACKAGE_NAME "org.alecs1.FreeGo"
-        PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qtgo/android"
-        KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/qtgo/android/release.keystore androidrelease
+        PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/freego/android"
+        KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/freego/android/release.keystore androidrelease
     )
 endif (ANDROID)
 

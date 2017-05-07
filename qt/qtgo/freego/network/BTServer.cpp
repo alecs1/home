@@ -170,7 +170,6 @@ int BTServer::connectAddress(const QString& address) {
     for(int i = 0; i < peers.size(); i++) {
         if (address == peers[i].address) {
             socket->connectToService(peers[i].deviceInfo.address(), QBluetoothUuid(qtgoUUID));
-            //connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
             Logger::log(QString("%1 - called connectToService for %2").arg(__PRETTY_FUNCTION__).arg(address));
         }
     }
