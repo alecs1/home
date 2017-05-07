@@ -13,4 +13,20 @@ duminica seara - 11.19
 1491 - unauthorized
 1528
 
-aptitude aptitude-common 
+aptitude aptitude-common
+
+
+From the start you should know that Bucharest is less scenic than Belgrade. It is good for having lots of events, all sorts of people, pubs and businesses, but not for being beautiful.
+1. Museum of the Romanian Peasant, very funny and honest about the nature of of the eastern european culture: https://en.wikipedia.org/wiki/Museum_of_the_Romanian_Peasant
+2. Depending on the date, you could go to the Athenaeum, maybe for a concert: https://en.wikipedia.org/wiki/Romanian_Athenaeum Contact page: http://fge.org.ro/en/romanian-atheneum/visiting-the-romanian-atheneum.html
+3. There are also a couple of acceptable museums:
+   Aviation Museum: http://360trip.ro/muzeulaviatiei/ and https://www.google.ro/maps/@44.4780833,26.1117851,253m/data=!3m1!1e3?hl=en
+   History Museum: http://www.mnir.ro/
+   Army Museum: https://www.openstreetmap.org/#map=19/44.44139/26.07650
+   Contemporary Art Museum: http://www.mnac.ro/en/contact which is hosted in the ugly and famous Palace of the Parliament: https://en.wikipedia.org/wiki/Palatul_Parlamentului
+   Natural History Museum: https://en.wikipedia.org/wiki/Grigore_Antipa_National_Museum_of_Natural_History
+4. A couple of parks:
+   Carol, which also hosts the Technical Museum: https://www.openstreetmap.org/#map=19/44.41686/26.09647
+   Cișmigiu, in the centre of the city: https://www.openstreetmap.org/#map=17/44.43707/26.08917
+5. Old city centre, with lots of pubs, restaurants, discos: https://www.openstreetmap.org/#map=17/44.43177/26.09959
+6. Victoriei Square: https://www.openstreetmap.org/#map=18/44.45251/26.08465 Fancy places to eat and the start point of the only nice cycling path
