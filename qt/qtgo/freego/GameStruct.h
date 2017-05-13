@@ -1,5 +1,4 @@
-#ifndef GAMESTRUCT_H
-#define GAMESTRUCT_H
+#pragma once
 
 #include <QString>
 
@@ -36,6 +35,3 @@ unsigned int countStones(GameStruct* game);
 
 int otherColour(int crtColour);
 QString colourName(int colour);
-
-
-#endif // GAMESTRUCT_H

@@ -13,6 +13,7 @@
 
 #include <cmath>
 
+
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
 #include "engine/gnugo.h"
@@ -30,11 +31,13 @@ int get_sgfmove(SGFProperty *property);
 
 
 #include "GoTable.h"
+
 #include "GameStruct.h"
 #include "GameEndDialog.h"
 #include "SaveFile.h"
 #include "BusyDialog.h"
 #include "Utils.h"
+#include "Logger.h"
 //likely temporary
 #include "SettingsWidget.h"
 
@@ -266,13 +269,19 @@ SGameSettings* GoTable::getGameSettingsPointer() {
 }
 
 bool GoTable::saveGame(QString fileName) {
-    //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
 
+bool GoTable::saveGame(QByteArray& data) {
+    Logger::log(QString("%1").arg(__func__));
+    bool result = SaveFile::writeSave(data, sgfTree->root, &this->gameSettings, &auxInfo);
+    return result;
+}
+
 bool GoTable::loadSaveGameFile(QString fileName) {
-    printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     QFile f(fileName);
 
     if (!f.exists())
@@ -282,7 +291,6 @@ bool GoTable::loadSaveGameFile(QString fileName) {
     SGameSettings auxSettings;
     SAuxGameInfo auxGameInfo;
     bool success = SaveFile::loadSave(fileName, &aux, &auxSettings, &auxGameInfo);
-    //bool success = SaveFile::loadSave()
     if (!success)
         return false;
 
@@ -329,7 +337,7 @@ bool GoTable::loadSaveGameFile(QString fileName) {
 void GoTable::launchGamePressed(SGameSettings newSettings) {
     printf("%s\n", __func__);
 
-    if (state == GameState::Resumed){
+    if (state == GameState::Resumed) {
         state = GameState::Started;
         if(players[crtPlayer] == PlayerType::AI) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
@@ -337,7 +345,6 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
     }
     else if (state == GameState::Initial || state == GameState::Stopped) {
         changeGameSettings(newSettings);
-
         launchGame();
         state = GameState::Started;
     }

@@ -5,6 +5,7 @@
 #include <QPropertyAnimation>
 #include <QMessageBox>
 #include <QToolButton>
+#include <QJsonDocument>
 
 #include "DrawAreaWidget.h"
 #include "GoTable.h"
@@ -430,14 +431,14 @@ void MainWindow::mainLoop() {
     if (connMan && connMan->activeConnection()) {
         //run connection logic here
         connMan->processMessages();
-        if (connMan->connState ==  ConnMan::ConnState::Connected) {
+        if (connMan->connState == ConnMan::ConnState::Connected) {
             if (connMan->initiator) {
                 //hack to get this running: propose a game with the current state of our board
-                QString gameString = table->getFullGame();
                 ProtoJson::Msg msg;
                 msg.msgType = ProtoJson::ResumeGame;
-                msg.json["SGFSaveString"] = gameString;
-                //msg.json[]
+                QByteArray data;
+                table->saveGame(data);
+                msg.json["SGFSaveString"] = QJsonDocument::fromJson(data).object();
                 connMan->sendMessage(msg);
             }
         }

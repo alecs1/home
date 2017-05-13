@@ -1,21 +1,21 @@
-#include <stdint.h>
+#include "SaveFile.h"
 
+#include <stdint.h>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QFile>
 #include <QCryptographicHash>
 #include <QTextStream>
 #include <QRegularExpression>
+#include <QTemporaryFile>
 
-//#include <stdio.h> //for
+#include "Logger.h"
 
 extern "C" {
 #include "sgftree.h"
 }
 
-#include "SaveFile.h"
 
-//************* SaveFile
 /*!
     \class SaveFile
     \brief The SaveFile class does stuff.
@@ -25,19 +25,9 @@ QString SaveFile::qetDefSaveFName() {
     return "FreeGoCrt.autosave";
 }
 
-/*!
-    loadSave does stuff.
-*/
-bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
-    QFile inFile(saveFName);
-    if (!inFile.exists())
-        return false;
 
-    inFile.open(QIODevice::ReadOnly);
-
-    QByteArray saveData = inFile.readAll();
-
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(saveData);
+bool SaveFile::loadSave(QByteArray data, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
     QJsonObject json = jsonDoc.object();
 
     auxGameInfo->comment = json["comment"].toString();
@@ -46,16 +36,13 @@ bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gam
 
     gameSettings->size = json["tableSize"].toInt();
     gameSettings->estimateScore = json["estimateScore"].toBool();
-
     gameSettings->white = (PlayerType)json["white"].toObject()["type"].toInt();
     gameSettings->whiteAIStrength = json["white"].toObject()["AILevel"].toInt();
     gameSettings->black = (PlayerType)json["black"].toObject()["type"].toInt();
     gameSettings->blackAIStrength = json["black"].toObject()["AILevel"].toInt();
 
     QString wantedHashVal = json["hashMD5"].toString();
-
     QString SGFSaveString = json["SGFSaveString"].toString();
-
     QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion + auxGameInfo->gameDate + SGFSaveString;
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     QString hashVal(hashBytes.toHex().constData());
@@ -66,32 +53,58 @@ bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gam
         return false;
     }
 
-    QString auxSaveFName = saveFName + "tmp";
-    FILE* auxFile = fopen(auxSaveFName.toUtf8().constData(), "w+"); //fclose is called by readsgfStream
+    QTemporaryFile auxFile("temp-stream-for-gnugo.XXXXXX.txt");
+    if (!auxFile.open()) {
+        Logger::log("Failed to open temporary file.", LogLevel::ERR);
+        return false;
+    }
     QByteArray bytes = SGFSaveString.toUtf8();
-    fwrite(bytes.constData(), bytes.size(), 1, auxFile);
-    fseek(auxFile, 0, SEEK_SET);
-    *sgfNode = readsgfStream(auxFile);
+    auxFile.write(bytes);
+    auxFile.flush();
+    FILE* auxFStream = fopen(auxFile.fileName().toUtf8().constData(), "rb");
+    *sgfNode = readsgfStream(auxFStream); //fclose is called by readsgfStream
+    auxFile.remove();
 
     return true;
 }
 
-bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
-    QFile outFile(saveFName);
+/*!
+    @brief loadSave - wrapp
+*/
+bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
+    QFile inFile(saveFName);
+    if (!inFile.exists())
+        return false;
 
+    inFile.open(QIODevice::ReadOnly);
+    QByteArray saveData = inFile.readAll();
+    bool success = loadSave(saveData, sgfNode, gameSettings, auxGameInfo);
+
+    return success;
+}
+
+bool SaveFile::writeSave(QByteArray& data, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     QJsonObject json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
 
     //hash some stuff to validate the save file;
     QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
             auxGameInfo->gameDate + json["SGFSaveString"].toString();
-    //printf("%s - contentsToHash:->%s<-\n", __func__, contentsToHash.toUtf8().constData());
+
     json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     json["hashMD5"] = hashBytes.toHex().constData();
 
     QJsonDocument doc;
     doc.setObject(json);
-    QByteArray contents = doc.toJson(QJsonDocument::Indented);
+    data = doc.toJson(QJsonDocument::Indented);
+
+    return true;
+}
+
+bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
+    QFile outFile(saveFName);
+    QByteArray contents;
+    writeSave(contents, sgfNode, gameSettings, auxGameInfo);
     outFile.open(QIODevice::WriteOnly);
     outFile.write(contents);
     outFile.close();
@@ -104,7 +117,6 @@ QJsonObject SaveFile::serialiseGameState(SGFNode *sgfNode, SGameSettings* gameSe
     json["comment"] = auxGameInfo->comment;
     json["freeGoVersion"] = auxGameInfo->freeGoVersion;
     json["gameDate"] = auxGameInfo->gameDate;
-
     json["tableSize"] = gameSettings->size;
     json["estimateScore"] = gameSettings->estimateScore;
 
@@ -147,15 +159,10 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
         return false;
 
     inFile.open(QIODevice::ReadOnly);
-
     QByteArray saveData = inFile.readAll();
 
     QJsonDocument jsonDoc = QJsonDocument::fromJson(saveData);
     QJsonObject json = jsonDoc.object();
-
-    //auxGameInfo->comment = json["comment"].toString();
-    //auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
-
     programSettings->soundsVolume = json["soundsVolume"].toInt();
     programSettings->tableColour = json["tableColour"].toString();
     programSettings->spaceOptimisations = json["spaceOptimisations"].toBool();
@@ -163,16 +170,13 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
 
 
     QString wantedHashVal = json["hashMD5"].toString();
-
-
     QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString()
             + json["spaceOptimisations"].toString();
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     QString hashVal(hashBytes.toHex().constData());
 
     if (! (hashVal == wantedHashVal)) {
-        printf("%s - hash %s does not match %s\n",
-               __func__, wantedHashVal.toUtf8().constData(), hashVal.toUtf8().constData());
+        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), LogLevel::ERR);
         return false;
     }
 
@@ -183,9 +187,6 @@ bool SaveFile::writeSettings(QString settingsFName, SProgramSettings* gameSettin
     QFile outFile(settingsFName);
 
     QJsonObject json;
-//    json["comment"] = auxGameInfo->comment;
-//    json["freeGoVersion"] = auxGameInfo->freeGoVersion;
-
     json["soundsVolume"] = (int)gameSettings->soundsVolume;
     json["tableColour"] = gameSettings->tableColour;
     json["spaceOptimisations"] = gameSettings->spaceOptimisations;

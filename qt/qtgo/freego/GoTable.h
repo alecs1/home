@@ -79,6 +79,7 @@ public:
 
     //direction: 0 - width, 1 - height
     bool saveGame(QString fileName);
+    bool saveGame(QByteArray& data);
     bool loadGame(QString fileName);
     QString getFullGame() const;
 
