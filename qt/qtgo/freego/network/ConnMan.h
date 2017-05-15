@@ -7,6 +7,8 @@ class BTServer;
 class QBluetoothSocket;
 class QAbstractSocket;
 
+class MainWindow; //temporary to forward the game related message. TODO: replace with a real class that only deals with this.
+
 namespace ProtoJson {
     struct Msg;
 }
@@ -30,7 +32,7 @@ public:
         None
     };
 
-    ConnMan();
+    ConnMan(MainWindow* gameManager);
     ~ConnMan();
     void connectBT(const QString address);
 
@@ -64,6 +66,8 @@ private:
     BTServer* btServer = nullptr;
     QBluetoothSocket* btSocket = nullptr;
     QAbstractSocket* socket = nullptr;
+
+    MainWindow* gameManager = nullptr;
 
     QByteArray buffer;
 };

@@ -16,11 +16,18 @@ class SaveFile
 {
 public:
     static QString qetDefSaveFName();
-    static bool loadSave(QByteArray data, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
-    static bool loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    //TODO - some of these loadSave/writeSave are duplicated, should disappear
+    static bool loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static bool loadSave(const QByteArray data, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static bool loadSave(const QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static bool writeSave(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
     static bool writeSave(QByteArray& data, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
     static bool writeSave(QString saveFName, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static bool writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+
     static QJsonObject serialiseGameState(SGFNode *sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+    static void addValidationData(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo);
+
     static QString getGnuGoSaveString(SGFNode* sgfNode);
 
     static QString getDefSettingsFName();

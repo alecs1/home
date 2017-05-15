@@ -78,9 +78,12 @@ public:
     void checkForResumeGame();
 
     //direction: 0 - width, 1 - height
-    bool saveGame(QString fileName);
+    bool saveGame(QJsonObject& json);
     bool saveGame(QByteArray& data);
-    bool loadGame(QString fileName);
+    bool saveGame(QString fileName);
+    bool loadGame(const QByteArray& data);
+    bool loadGame(const QString fileName);
+    bool loadGameAndStart(const QString fileName);
     QString getFullGame() const;
 
     GameState getGameState() const;

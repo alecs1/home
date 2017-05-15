@@ -25,11 +25,7 @@ QString SaveFile::qetDefSaveFName() {
     return "FreeGoCrt.autosave";
 }
 
-
-bool SaveFile::loadSave(QByteArray data, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
-    QJsonObject json = jsonDoc.object();
-
+bool SaveFile::loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     auxGameInfo->comment = json["comment"].toString();
     auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
     auxGameInfo->gameDate = json["gameDate"].toString();
@@ -68,10 +64,16 @@ bool SaveFile::loadSave(QByteArray data, SGFNode **sgfNode, SGameSettings* gameS
     return true;
 }
 
+bool SaveFile::loadSave(const QByteArray data, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+    QJsonObject json = jsonDoc.object();
+    return loadSave(json, sgfNode, gameSettings, auxGameInfo);
+}
+
 /*!
-    @brief loadSave - wrapp
-*/
-bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
+ * \brief loadSave - wrapper of the other loadSaves.
+ */
+bool SaveFile::loadSave(const QString saveFName, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo *auxGameInfo) {
     QFile inFile(saveFName);
     if (!inFile.exists())
         return false;
@@ -83,21 +85,18 @@ bool SaveFile::loadSave(QString saveFName, SGFNode **sgfNode, SGameSettings* gam
     return success;
 }
 
+bool SaveFile::writeSave(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
+    addValidationData(json, sgfNode, gameSettings, auxGameInfo);
+    return true;
+}
+
 bool SaveFile::writeSave(QByteArray& data, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
-    QJsonObject json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
-
-    //hash some stuff to validate the save file;
-    QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
-            auxGameInfo->gameDate + json["SGFSaveString"].toString();
-
-    json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
-    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
-    json["hashMD5"] = hashBytes.toHex().constData();
-
+    QJsonObject json;
+    writeSave(json, sgfNode, gameSettings, auxGameInfo);
     QJsonDocument doc;
     doc.setObject(json);
     data = doc.toJson(QJsonDocument::Indented);
-
     return true;
 }
 
@@ -108,6 +107,29 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     outFile.open(QIODevice::WriteOnly);
     outFile.write(contents);
     outFile.close();
+    return true;
+}
+
+/*!
+ * \brief serialise to be read by a remote player
+ */
+bool SaveFile::writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
+
+    if (gameSettings->white == PlayerType::LocalHuman) {
+        QJsonObject remote = json["black"];
+        remote["type"] = PlayerType::Network;
+        json["black"] = remote; //is this necessary?
+    }
+    else if (gameSettings->black == PlayerType::LocalHuman) {
+        QJsonObject remote = json["white"];
+        remote["type"] = PlayerType::Network;
+        json["white"] = remote;
+    }
+    else {
+        Logger::log("Cannot decide which player should be the remote one! Need at least a human player!");
+        return false;
+    }
 
     return true;
 }
@@ -133,6 +155,16 @@ QJsonObject SaveFile::serialiseGameState(SGFNode *sgfNode, SGameSettings* gameSe
     QString SGFSaveString = getGnuGoSaveString(sgfNode);
     json["SGFSaveString"] = SGFSaveString;
     return json;
+}
+
+void SaveFile::addValidationData(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    //hash some stuff to validate the save file;
+    QString contentsToHash = auxGameInfo->comment + auxGameInfo->freeGoVersion +
+            auxGameInfo->gameDate + json["SGFSaveString"].toString();
+
+    json["hashedStuff"] = "comment+freeGoVersion+gameDate+SGFSaveString";
+    QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
+    json["hashMD5"] = hashBytes.toHex().constData();
 }
 
 QString SaveFile::getGnuGoSaveString(SGFNode* sgfNode) {

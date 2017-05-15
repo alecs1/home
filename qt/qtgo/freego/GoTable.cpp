@@ -225,7 +225,7 @@ GoTable::~GoTable() {
 
 //This code is outside the constructor because this is executed after the signals of this object are connected
 void GoTable::checkForResumeGame() {
-    if (loadSaveGameFile(crtGameSfgFName)) {
+    if (loadGame(crtGameSfgFName)) {
         state = GameState::Resumed;
     }
     else {
@@ -237,16 +237,6 @@ void GoTable::checkForResumeGame() {
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     emit gameStateChanged(state);
-}
-
-bool GoTable::loadGame(QString fileName) {
-    bool result = loadSaveGameFile(fileName);
-    if (result) {
-        state = GameState::Resumed;
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-        emit gameStateChanged(state);
-    }
-    return result;
 }
 
 /**
@@ -268,9 +258,8 @@ SGameSettings* GoTable::getGameSettingsPointer() {
     return &gameSettings;
 }
 
-bool GoTable::saveGame(QString fileName) {
-    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
-    bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
+bool saveGame(QJsonObject& json) {
+    bool result = SaveFile::writeSave(json, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
 
@@ -280,17 +269,18 @@ bool GoTable::saveGame(QByteArray& data) {
     return result;
 }
 
-bool GoTable::loadSaveGameFile(QString fileName) {
+bool GoTable::saveGame(QString fileName) {
     Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
-    QFile f(fileName);
+    bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
+    return result;
+}
 
-    if (!f.exists())
-        return false;
-
+bool GoTable::loadGame(const QByteArray& data) {
     SGFNode* aux = NULL;
     SGameSettings auxSettings;
     SAuxGameInfo auxGameInfo;
-    bool success = SaveFile::loadSave(fileName, &aux, &auxSettings, &auxGameInfo);
+
+    bool success = SaveFile::loadSave(data, &aux, &auxSettings, &auxGameInfo);
     if (!success)
         return false;
 
@@ -332,6 +322,28 @@ bool GoTable::loadSaveGameFile(QString fileName) {
     updateSizes();
     update();
     return retVal;
+}
+
+bool GoTable::loadGame(const QString fileName) {
+    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
+    QFile f(fileName);
+    if (!f.exists())
+        return false;
+
+    QByteArray data = f.readAll();
+
+    bool success = loadGame(data);
+    return success;
+}
+
+bool GoTable::loadGameAndStart(const QString fileName) {
+    bool success = loadGame(fileName);
+    if (success) {
+        state = GameState::Resumed;
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+        emit gameStateChanged(state);
+    }
+    return success;
 }
 
 void GoTable::launchGamePressed(SGameSettings newSettings) {

@@ -59,7 +59,6 @@ void Logger::setViewer(QPlainTextEdit* edit) {
 void Logger::log(const QString &msg, const LogLevel lev) {
     file->write(stdoutBuffer);
     file->write(stderrBuffer);
-    //printf("%s - %s\n", "level here", msg.toUtf8().constData());
 
     QDateTime now = QDateTime::currentDateTime();
     QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg;

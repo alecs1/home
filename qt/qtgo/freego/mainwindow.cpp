@@ -116,7 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
     connect(ui->actionDebug_BT, SIGNAL(triggered(bool)), this, SLOT(showBTChat()));
 
-    connMan = new ConnMan;
+    connMan = new ConnMan(this);
     connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
 
 
@@ -135,12 +135,14 @@ MainWindow::MainWindow(QWidget *parent) :
     if (programSettings->minimalInterface)
         minimalInterface = true;
 
+    Logger::setViewer(ui->logView);
+
     double mainLoopInterval = 1000.0 / 60;
+    Logger::log(QString("mainLoopInterval: %1").arg(mainLoopInterval));
+    printf("mainLoopInterval: %g\n", mainLoopInterval);
     mainLoopTimer.setInterval(mainLoopInterval);
     mainLoopTimer.start();
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
-
-    Logger::setViewer(ui->logView);
 }
 
 MainWindow::~MainWindow()
@@ -188,7 +190,7 @@ void MainWindow::loadGame() {
 
     bool result = false;
     if (fileName != "") {
-        result = table->loadGame(fileName);
+        result = table->loadGameAndStart(fileName);
     }
     //TODO - note an error somewhere
     printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
@@ -429,17 +431,21 @@ void MainWindow::showSettings() {
 
 void MainWindow::mainLoop() {
     if (connMan && connMan->activeConnection()) {
-        //run connection logic here
+
         connMan->processMessages();
         if (connMan->connState == ConnMan::ConnState::Connected) {
             if (connMan->initiator) {
-                //hack to get this running: propose a game with the current state of our board
-                ProtoJson::Msg msg;
-                msg.msgType = ProtoJson::ResumeGame;
-                QByteArray data;
-                table->saveGame(data);
-                msg.json["SGFSaveString"] = QJsonDocument::fromJson(data).object();
-                connMan->sendMessage(msg);
+//                //hack to get this running: propose a game with the current state of our board
+//                ProtoJson::Msg msg;
+//                msg.msgType = ProtoJson::ResumeGame;
+//                QByteArray data;
+//                table->saveGame(data);
+//                msg.json["SGFSaveString"] = QJsonDocument::fromJson(data).object();
+//                connMan->sendMessage(msg);
+//                Logger::log(QString("Will initiate a new game with: %1.").arg(data.constData()));
+            }
+            else {
+//                Logger::log(QString("Will wait for the initiator to send a game config."));
             }
         }
     }
@@ -450,12 +456,23 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
     switch (state) {
     case ConnMan::ConnState::Connected: {
         if (initiator) {
-            if (makeSettingsDock == nullptr) {
-                QList<notifications::Option> options;
-                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
-                makeSettingsDock = new notifications::DockedNotif("Setup the game to play with the remove player and press \"Done\"", options);
-            }
-            addDockWidget(Qt::TopDockWidgetArea, makeSettingsDock);
+            //hack to get this running: propose a game with the current state of our board
+            ProtoJson::Msg msg;
+            msg.msgType = ProtoJson::ResumeGame;
+            QJsonObject json;
+            table->saveGame(json);
+            msg.json["gameSetup"] = json;
+            connMan->sendMessage(msg);
+            Logger::log(QString("Will initiate a new game with: %1.").arg(data.constData()));
+//            if (!makeSettingsDock) {
+//                QList<notifications::Option> options;
+//                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
+//                makeSettingsDock = new notifications::DockedNotif("Setup the game to play with the remove player and press \"Done\"", options);
+//            }
+//            addDockWidget(Qt::TopDockWidgetArea, makeSettingsDock);
+        }
+        else {
+
         }
         break;
     }
@@ -468,13 +485,20 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
     switch (msg.msgType) {
     case ProtoJson::MsgType::ResumeGame: {
         //show confirmation window and continue
+        //TODO - confirmation must show how the set-up game will look like
         int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
         if (ret == QMessageBox::Yes) {
             //accepted new game
             QJsonObject json = msg.json;
+            QJsonDocument doc(json);
+            Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
+            //Analyse the settings a bit and accept the game
         }
         else {
             //nothing, should refuse
+            QJsonObject json = msg.json;
+            QJsonDocument doc(json);
+            Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
         }
         break;
     }
@@ -483,3 +507,4 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
     }
     }
 }
+

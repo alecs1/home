@@ -7,12 +7,13 @@
 #include "BTServer.h"
 #include "ProtoJson.h"
 #include "../Logger.h"
+#include "../mainwindow.h" //TODO - this is only temporary
 
 using namespace ProtoJson;
 
 const uint16_t tcpDefaultPort = 1491; //the first unasigned IANA port
 
-ConnMan::ConnMan() {
+ConnMan::ConnMan(MainWindow *gameManager) : gameManager(gameManager) {
     btServer = new BTServer(this);
 }
 
@@ -108,6 +109,7 @@ void ConnMan::processMessages() {
                 case ConnState::Connected: {
                     if (msg.msgType >= MsgType::CommonGames && msg.msgType <= MsgType::PlayMove) {
                         //forward the message
+                        gameManager->onRemoteMessage(msg);
                     }
                 }
                 default: {

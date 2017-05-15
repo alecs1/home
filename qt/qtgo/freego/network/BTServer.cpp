@@ -54,7 +54,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
     Logger::log(QString("%1 - localAdapters.count=%2").arg(__PRETTY_FUNCTION__).arg(localAdapters.count()));
 
     if (localAdapters.size() < 1) {
-        printf("%s - no bluetooth found\n", __PRETTY_FUNCTION__);
+        Logger::log(QString("%1 - no bluetooth found").arg(__PRETTY_FUNCTION__));
         return -1;
     }
 
@@ -71,10 +71,10 @@ int BTServer::initBluetooth(const int interfaceNo) {
     connect(rfcommServer, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
     QBluetoothAddress actualAddress = localAdapters.at(interface).address();
-    Logger::log(QString("%1 - QBluetoothServer - starting to listen at %2").arg(__PRETTY_FUNCTION__).arg(actualAddress.toString().toUtf8().constData()));
+    Logger::log(QString("%1 - QBluetoothServer - starting to listen at %2").arg(__PRETTY_FUNCTION__).arg(actualAddress.toString()), LogLevel::DBG);
     bool result = rfcommServer->listen(actualAddress);
     if (!result) {
-        Logger::log(QString("%1 - listen failed; result=%2").arg(__PRETTY_FUNCTION__).arg(result));
+        Logger::log(QString("%1 - listen failed; result=%2").arg(__PRETTY_FUNCTION__).arg(result), LogLevel::ERR);
         return -2;
     }
 
@@ -131,7 +131,7 @@ int BTServer::initBluetooth(const int interfaceNo) {
     //! [Register service]
     result = serviceInfo.registerService(actualAddress);
     if (!result) {
-        printf("%s - registering with SDP failed\n", __PRETTY_FUNCTION__);
+        Logger::log(QString("%1 - registering with SDP failed").arg(__PRETTY_FUNCTION__), LogLevel::ERR);
         return -3;
     }
 
@@ -140,13 +140,13 @@ int BTServer::initBluetooth(const int interfaceNo) {
     connect(discoveryAgent, SIGNAL(finished()), this, SIGNAL(finishedScanning()));
     scanBTPeers();
 
-    printf("%s - success\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - success").arg(__PRETTY_FUNCTION__), LogLevel::DBG);
     return 0;
 }
 
 //this is actually a client thing
 int BTServer::scanBTPeers() {
-    printf("%s - enter\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - enter").arg(__PRETTY_FUNCTION__), LogLevel::DBG);
     if (discoveryAgent) {
         peers.clear();
         discoveryAgent->stop();
@@ -156,7 +156,7 @@ int BTServer::scanBTPeers() {
         Logger::log(QString("%1 - device not initialised!").arg(__PRETTY_FUNCTION__), LogLevel::ERR);
         return -1;
     }
-    printf("%s - done\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - done").arg(__PRETTY_FUNCTION__), LogLevel::DBG);
     return 0;
 }
 
@@ -166,7 +166,7 @@ QList<BTPeerInfo> BTServer::getPeers() {
 
 //client thing
 int BTServer::connectAddress(const QString& address) {
-    printf("%s - start connecting to %s\n", __PRETTY_FUNCTION__, address.toUtf8().constData());
+    Logger::log(QString("%1 - start connecting to %2").arg(__PRETTY_FUNCTION__).arg(address), LogLevel::DBG);
     for(int i = 0; i < peers.size(); i++) {
         if (address == peers[i].address) {
             socket->connectToService(peers[i].deviceInfo.address(), QBluetoothUuid(qtgoUUID));
@@ -184,12 +184,12 @@ void BTServer::clientConnected() {
 }
 
 void BTServer::socketConnected() {
-    printf("%s - enter\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - enter").arg(__PRETTY_FUNCTION__), LogLevel::DBG);
     connMan->setBTClientSocket(socket);
 }
 
 void BTServer::socketDisconnected() {
-    printf("%s - enter\n", __PRETTY_FUNCTION__);
+    Logger::log(QString("%1 - enter").arg(__PRETTY_FUNCTION__), LogLevel::DBG);
 }
 
 void BTServer::socketError(QBluetoothSocket::SocketError error) {
@@ -197,7 +197,7 @@ void BTServer::socketError(QBluetoothSocket::SocketError error) {
 }
 
 void BTServer::peerDeviceDiscovered(QBluetoothDeviceInfo deviceInfo) {
-    Logger::log(QString("%1 - address:%2, name:%3, signal strength:%4").arg(__PRETTY_FUNCTION__).arg(deviceInfo.address().toString().toUtf8().constData()).arg(deviceInfo.name().toUtf8().constData()).arg(deviceInfo.rssi()));
+    Logger::log(QString("%1 - address:%2, name:%3, signal strength:%4").arg(__PRETTY_FUNCTION__).arg(deviceInfo.address().toString()).arg(deviceInfo.name()).arg(deviceInfo.rssi()), LogLevel::DBG);
 
 //    QBluetoothSocket* socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
 //    if (deviceInfo.name() == "debian" || deviceInfo.name() == "Motorola Defy" || deviceInfo.name() == "Xperia Z1 Compact") {
