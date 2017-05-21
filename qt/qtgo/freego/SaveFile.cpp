@@ -44,9 +44,9 @@ bool SaveFile::loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings
     QString hashVal(hashBytes.toHex().constData());
 
     if (! (hashVal == wantedHashVal)) {
-        printf("%s - hash %s does not match %s\n",
-               __func__, wantedHashVal.toUtf8().constData(), hashVal.toUtf8().constData());
-        return false;
+        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), LogLevel::ERR);
+        Logger::log("Ignored hash error!");
+        //return false;
     }
 
     QTemporaryFile auxFile("temp-stream-for-gnugo.XXXXXX.txt");
@@ -81,6 +81,22 @@ bool SaveFile::loadSave(const QString saveFName, SGFNode **sgfNode, SGameSetting
     inFile.open(QIODevice::ReadOnly);
     QByteArray saveData = inFile.readAll();
     bool success = loadSave(saveData, sgfNode, gameSettings, auxGameInfo);
+
+    return success;
+}
+
+bool SaveFile::loadSaveFromRemote(const QJsonObject json, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
+    bool success = loadSave(json, sgfNode, gameSettings, auxGameInfo);
+
+    //We're taking the settings sent for Network
+    if (gameSettings->white == PlayerType::Network) {
+        gameSettings->white = PlayerType::LocalHuman;
+        gameSettings->black = PlayerType::Network;
+    }
+    else {
+        gameSettings->white = PlayerType::Network;
+        gameSettings->white = PlayerType::LocalHuman;
+    }
 
     return success;
 }

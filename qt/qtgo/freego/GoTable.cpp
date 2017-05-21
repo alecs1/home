@@ -11,6 +11,9 @@
 #include <QLabel>
 #include <QtMultimedia/QSound>
 
+//temporary for debug.
+#include <QJsonDocument>
+
 #include <cmath>
 
 
@@ -263,12 +266,6 @@ bool GoTable::saveGame(QJsonObject& json) {
     return result;
 }
 
-bool GoTable::saveGame(QByteArray& data) {
-    Logger::log(QString("%1").arg(__func__));
-    bool result = SaveFile::writeSave(data, sgfTree->root, &this->gameSettings, &auxInfo);
-    return result;
-}
-
 bool GoTable::saveGame(QString fileName) {
     Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
@@ -285,15 +282,7 @@ bool GoTable::saveGameForRemote(QJsonObject& json) {
     return result;
 }
 
-bool GoTable::loadGame(const QByteArray& data) {
-    SGFNode* aux = NULL;
-    SGameSettings auxSettings;
-    SAuxGameInfo auxGameInfo;
-
-    bool success = SaveFile::loadSave(data, &aux, &auxSettings, &auxGameInfo);
-    if (!success)
-        return false;
-
+bool GoTable::loadGame(SGFNode* aux, SGameSettings auxSettings, SAuxGameInfo auxGameInfo) {
     sgfFreeNode(sgfTree->root);
     sgfTree->lastnode = NULL;
     sgfTree->root = sgfNewNode();
@@ -304,8 +293,10 @@ bool GoTable::loadGame(const QByteArray& data) {
     auxInfo = auxGameInfo;
 
 
-    if (aux == NULL)
+    if (aux == NULL) {
+        Logger::log("aux == NULL", LogLevel::ERR);
         return false;
+    }
 
     bool retVal = false;
     float replayScore = 0.0;
@@ -317,7 +308,7 @@ bool GoTable::loadGame(const QByteArray& data) {
       node = node->child;
     }
 
-    printf("%s - done replaying, replayScore=%f, totalScore=%f\n", __func__, replayScore, totalScore);
+    Logger::log(QString("%1 - done replaying, replayScore=%2, totalScore=%3").arg(__func__).arg(replayScore).arg(totalScore));
     if (playedMoves > 0) {
         populateStructFromGnuGo();
         if (crtPlayer == BLACK)
@@ -337,12 +328,37 @@ bool GoTable::loadGame(const QByteArray& data) {
 bool GoTable::loadGame(const QString fileName) {
     Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     QFile f(fileName);
-    if (!f.exists())
+    if (!f.exists() || !f.open(QIODevice::ReadOnly))
         return false;
 
     QByteArray data = f.readAll();
 
-    bool success = loadGame(data);
+    SGFNode* aux = NULL;
+    SGameSettings auxSettings;
+    SAuxGameInfo auxGameInfo;
+
+    bool success = SaveFile::loadSave(data, &aux, &auxSettings, &auxGameInfo);
+    if (!success)
+        return false;
+    loadGame(aux, auxSettings, auxGameInfo);
+
+    return success;
+}
+
+bool GoTable::loadGameFromRemote(const QJsonObject &json) {
+    SGFNode* aux = NULL;
+    SGameSettings auxSettings;
+    SAuxGameInfo auxGameInfo;
+    bool success = SaveFile::loadSaveFromRemote(json, &aux, &auxSettings, &auxGameInfo);
+    if (!success) {
+        Logger::log(QString("%1 - could not load remote save: %2").arg(__func__).arg(QJsonDocument(json).toJson().constData()), LogLevel::ERR);
+        return false;
+    }
+
+    success = loadGame(aux, auxSettings, auxGameInfo);
+    if (!success) {
+        Logger::log(QString("%1 - loading failed. Investigate").arg(__func__));
+    }
     return success;
 }
 

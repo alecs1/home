@@ -79,11 +79,12 @@ public:
 
     //direction: 0 - width, 1 - height
     bool saveGame(QJsonObject& json);
-    bool saveGame(QByteArray& data);
     bool saveGame(QString fileName);
     bool saveGameForRemote(QJsonObject& json);
-    bool loadGame(const QByteArray& data);
+    bool loadGame(SGFNode *aux, SGameSettings auxSettings, SAuxGameInfo auxGameInfo);
     bool loadGame(const QString fileName);
+    bool loadGameFromRemote(const QJsonObject& json);
+
     bool loadGameAndStart(const QString fileName);
     QString getFullGame() const;
 

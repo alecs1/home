@@ -488,9 +488,10 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         //TODO - confirmation must show how the set-up game will look like
         int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
         if (ret == QMessageBox::Yes) {
-            QJsonObject json = msg.json;
+            QJsonObject json = msg.json[ProtoJson::ProtoKw::Content].toObject();
             QJsonDocument doc(json);
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
+            bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
             //Analyse the settings a bit and accept the game
         }
         else {
