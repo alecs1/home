@@ -8,6 +8,7 @@ namespace ProtoJson {
 
 struct ProtoKw {
     static const QString MsgType;
+    static const QString Content;
 };
 
 #define UUID_LEN 16

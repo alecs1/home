@@ -459,11 +459,11 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
             //hack to get this running: propose a game with the current state of our board
             ProtoJson::Msg msg;
             msg.msgType = ProtoJson::ResumeGame;
-            QJsonObject json;
-            table->saveGame(json);
-            msg.json["gameSetup"] = json;
+            QJsonObject tableSetupJson;
+            table->saveGameForRemote(tableSetupJson);
+            msg.json["gameSetup"] = tableSetupJson;
             connMan->sendMessage(msg);
-            Logger::log(QString("Will initiate a new game with: %1.").arg(data.constData()));
+            Logger::log(QString("Will initiate a new game with: %1.").arg(QJsonDocument(msg.json).toJson().constData()));
 //            if (!makeSettingsDock) {
 //                QList<notifications::Option> options;
 //                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
@@ -488,7 +488,6 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         //TODO - confirmation must show how the set-up game will look like
         int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
         if (ret == QMessageBox::Yes) {
-            //accepted new game
             QJsonObject json = msg.json;
             QJsonDocument doc(json);
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);

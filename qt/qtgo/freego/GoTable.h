@@ -81,6 +81,7 @@ public:
     bool saveGame(QJsonObject& json);
     bool saveGame(QByteArray& data);
     bool saveGame(QString fileName);
+    bool saveGameForRemote(QJsonObject& json);
     bool loadGame(const QByteArray& data);
     bool loadGame(const QString fileName);
     bool loadGameAndStart(const QString fileName);

@@ -7,6 +7,7 @@
 namespace ProtoJson {
 
 const QString ProtoKw::MsgType = "MsgType";
+const QString ProtoKw::Content = "Content";
 
 /**
  * Parse the message enough to fill in the types. Expects a complete message!
@@ -41,6 +42,7 @@ Msg Msg::parse(const QByteArray& data, int& lenParsed) {
 QByteArray Msg::serialise(const Msg &msg) {
     QJsonObject jsonObj;
     jsonObj[ProtoKw::MsgType] = (uint8_t) msg.msgType;
+    jsonObj[ProtoKw::Content] = msg.json;
     QByteArray data = QJsonDocument(jsonObj).toJson();
     int len = data.length();
     QString aux = QString("%1%2").arg(len, 9, 10, QChar('0')).arg('\n');

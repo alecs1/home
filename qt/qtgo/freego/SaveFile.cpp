@@ -117,13 +117,13 @@ bool SaveFile::writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSett
     json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
 
     if (gameSettings->white == PlayerType::LocalHuman) {
-        QJsonObject remote = json["black"];
-        remote["type"] = PlayerType::Network;
+        QJsonObject remote = json["black"].toObject();
+        remote["type"] = (int)PlayerType::Network;
         json["black"] = remote; //is this necessary?
     }
     else if (gameSettings->black == PlayerType::LocalHuman) {
-        QJsonObject remote = json["white"];
-        remote["type"] = PlayerType::Network;
+        QJsonObject remote = json["white"].toObject();
+        remote["type"] = (int)PlayerType::Network;
         json["white"] = remote;
     }
     else {

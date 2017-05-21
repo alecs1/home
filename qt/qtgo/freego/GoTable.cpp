@@ -258,7 +258,7 @@ SGameSettings* GoTable::getGameSettingsPointer() {
     return &gameSettings;
 }
 
-bool saveGame(QJsonObject& json) {
+bool GoTable::saveGame(QJsonObject& json) {
     bool result = SaveFile::writeSave(json, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
@@ -272,6 +272,16 @@ bool GoTable::saveGame(QByteArray& data) {
 bool GoTable::saveGame(QString fileName) {
     Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
+    return result;
+}
+
+/**
+ * @brief GoTable::saveGameForRemote serialise the game for playing with a remote (Network) player.
+ * @param json
+ * @return
+ */
+bool GoTable::saveGameForRemote(QJsonObject& json) {
+    bool result = SaveFile::writeSaveForRemote(json, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
 
