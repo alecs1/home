@@ -64,18 +64,6 @@ int readMessage(char* buffer, unsigned int len) {
     return ret;
 }
 
-/*
-struct SCommand {
-    CmdType type;
-    char partnerId[UUID_LEN];
-    char isBlack;
-    int row, col;
-    int size;
-    int komi;
-    int handicap, handicapType;
-};
-*/
-
 SCommand parseCommand(SMsgHeader header, char* buffer, unsigned int len) {
     SCommand cmd;
     char* pos = buffer;

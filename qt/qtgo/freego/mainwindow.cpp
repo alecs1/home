@@ -50,9 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
         toolbar->hide();
     }
     statusBar()->hide();
-    #endif
 
-    #if defined(Q_OS_ANDROID)
     printf("%s - setting fullscreen for Android - TODO: does not work!!!\n", __func__);
     showFullScreen();
     printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
@@ -64,8 +62,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Settings::setMessageSender(this);
     SProgramSettings* programSettings = Settings::getProgramSettings();
-    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
+    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false) {
         Settings::populateDefaultProgramSettings(programSettings);
+    }
 
     setupGameSettings();
 
@@ -463,6 +462,7 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
             table->saveGameForRemote(tableSetupJson);
             msg.json["gameSetup"] = tableSetupJson;
             connMan->sendMessage(msg);
+            activeMessage = msg;
             Logger::log(QString("Will initiate a new game with: %1.").arg(QJsonDocument(msg.json).toJson().constData()));
 //            if (!makeSettingsDock) {
 //                QList<notifications::Option> options;
@@ -481,30 +481,43 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
     }
 }
 
-void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
-    switch (msg.msgType) {
-    case ProtoJson::MsgType::ResumeGame: {
-        //show confirmation window and continue
-        //TODO - confirmation must show how the set-up game will look like
+void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
+{
+    if (msg.msgType >= ProtoJson::MsgType::Success && msg.msgType <= ProtoJson::MsgType::Error) {
+        if (msg.msgid != activeMessage.msgid) {
+            Logger::log(QString("Received unexpected reply to msg %1, expected %2").arg(msg.msgid).arg(activeMessage.msgid));
+            return;
+        }
+
+        if (msg.msgType == ProtoJson::MsgType::Success) {
+            if (activeMessage.msgType == ProtoJson::MsgType::ResumeGame) {
+                //Yay, our peer accepted our game!
+                table->setSecondPlayerToNetwork();
+            }
+        }
+    }
+
+    else if (msg.msgType == ProtoJson::MsgType::ResumeGame) {
+        ProtoJson::Msg reply;
+        reply.msgid = msg.msgid;
+       //TODO - confirmation must show how the set-up game will look like
         int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
         if (ret == QMessageBox::Yes) {
-            QJsonObject json = msg.json[ProtoJson::ProtoKw::Content].toObject();
+            QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
             QJsonDocument doc(json);
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
             bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
-            //Analyse the settings a bit and accept the game
+
+            reply.msgType = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
         }
         else {
             //nothing, should refuse
             QJsonObject json = msg.json;
             QJsonDocument doc(json);
             Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
+            reply.msgType = ProtoJson::MsgType::Fail;
         }
-        break;
-    }
-    default: {
-        break;
-    }
+        connMan->sendMessage(msg);
     }
 }
 

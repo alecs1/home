@@ -8,6 +8,8 @@
 
 #include "network/ConnMan.h"
 
+#include "network/ProtoJson.h" //TODO - temporary.
+
 class DrawAreaWidget;
 class GoTable;
 class RoundInfo;
@@ -80,10 +82,12 @@ private:
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;
 
-    //transiet dialog children
+    //transient dialog children
     notifications::DockedNotif* makeSettingsDock = nullptr;
 
     ConnMan* connMan = nullptr;
+
+    ProtoJson::Msg activeMessage; //last message sent for which we expect a reply
 };
 
 

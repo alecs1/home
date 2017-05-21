@@ -18,7 +18,7 @@
 
 enum class GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game
-    Resumed,
+    Resumed, //TODO - how is Resumed diferent from Started?
     Stopped,
     Started
 };

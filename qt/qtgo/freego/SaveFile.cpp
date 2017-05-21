@@ -132,6 +132,7 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
 bool SaveFile::writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
 
+    //TODO - this belongs to GoTable
     if (gameSettings->white == PlayerType::LocalHuman) {
         QJsonObject remote = json["black"].toObject();
         remote["type"] = (int)PlayerType::Network;

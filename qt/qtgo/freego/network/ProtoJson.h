@@ -8,15 +8,19 @@ namespace ProtoJson {
 
 struct ProtoKw {
     static const QString MsgType;
-    static const QString Content;
+    static const QString Request;
+    static const QString Reply;
 };
 
 #define UUID_LEN 16
 
 
 enum MsgType:uint8_t {
-    //Generic:
+    //Replies:
     Ack,
+    Success,
+    Fail, //command understood but denied
+    Error, //error in processing the command
     //Connection:
     Disconnect,
     Hanshake,
@@ -30,31 +34,6 @@ enum MsgType:uint8_t {
     //Guard
     MsgTypeCount
 };
-
-
-enum ReplyType:uint8_t {
-    Success = 0,
-    Fail, //command understood but denied
-    Error, //error in processing the command
-    Invalid = 0xFF
-};
-
-struct SReply {
-    ReplyType result = ReplyType::Invalid;
-};
-
-struct SCommand {
-    MsgType cType = MsgType::MsgTypeCount;
-    char uuid[UUID_LEN];
-    char isBlack;
-    uint8_t row = 0xFF;
-    uint8_t col = 0xFF;
-    uint8_t size = 0xFF;
-    float komi = -1000;
-    uint8_t handicap = 0xFF;
-    uint8_t handicapType = 0xFF;
-};
-
 
 struct Msg {
     MsgType msgType = MsgType::MsgTypeCount;

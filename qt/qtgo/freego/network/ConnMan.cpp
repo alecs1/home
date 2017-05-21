@@ -129,7 +129,7 @@ bool ConnMan::activeConnection() const {
 /**
  * @brief ConnMan::sendMessage serialise a message to the peer
  */
-void ConnMan::sendMessage(ProtoJson::Msg& msg) {
+void ConnMan::sendMessage(const ProtoJson::Msg& msg) {
     btSocket->write(Msg::serialise(msg));
 }
 

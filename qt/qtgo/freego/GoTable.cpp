@@ -242,15 +242,21 @@ void GoTable::checkForResumeGame() {
     emit gameStateChanged(state);
 }
 
-/**
- * @brief GoTable::getFullGame get the entire game as GnuGo serialises it
- */
-QString GoTable::getFullGame() const {
-    return SaveFile::getGnuGoSaveString(sgfTree->root);
-}
-
 GameState GoTable::getGameState() const {
     return state;
+}
+
+/**
+ * @brief GoTable::setSecondPlayerToNetwork hack function to instruct that the second player is now of type network.
+ */
+void GoTable::setSecondPlayerToNetwork() {
+    if (gameSettings.white == PlayerType::LocalHuman) {
+        gameSettings.black = PlayerType::Network;
+    }
+    else if (gameSettings.black == PlayerType::LocalHuman) {
+        gameSettings.white = PlayerType::Network;
+    }
+    update();
 }
 
 void GoTable::changeProgramSettings() {
@@ -359,6 +365,13 @@ bool GoTable::loadGameFromRemote(const QJsonObject &json) {
     if (!success) {
         Logger::log(QString("%1 - loading failed. Investigate").arg(__func__));
     }
+
+    if (success) {
+        state = GameState::Resumed;
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+        emit gameStateChanged(state);
+    }
+
     return success;
 }
 

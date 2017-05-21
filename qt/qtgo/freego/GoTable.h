@@ -86,9 +86,10 @@ public:
     bool loadGameFromRemote(const QJsonObject& json);
 
     bool loadGameAndStart(const QString fileName);
-    QString getFullGame() const;
 
     GameState getGameState() const;
+
+    void setSecondPlayerToNetwork();
 
 
     //TODO - temporary hack
