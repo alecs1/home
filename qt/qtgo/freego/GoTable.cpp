@@ -250,12 +250,14 @@ GameState GoTable::getGameState() const {
  * @brief GoTable::setSecondPlayerToNetwork hack function to instruct that the second player is now of type network.
  */
 void GoTable::setSecondPlayerToNetwork() {
+    Logger::log(QString("%1").arg(__func__));
     if (gameSettings.white == PlayerType::LocalHuman) {
         gameSettings.black = PlayerType::Network;
     }
     else if (gameSettings.black == PlayerType::LocalHuman) {
         gameSettings.white = PlayerType::Network;
     }
+    emit pushGameSettings(gameSettings);
     update();
 }
 
@@ -1211,9 +1213,6 @@ void GoTable::finish(bool finishByResign) {
 
     file.setFileName(crtGameSfgFName);
     file.rename(oldSgfFName);
-
-
-
 
     GameEndDialog endDialog(this);
     endDialog.setText(finalText);

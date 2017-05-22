@@ -1,5 +1,8 @@
-#ifndef GAMESETTINGS_H
-#define GAMESETTINGS_H
+#pragma once
+
+/**
+ * The right hand widget which shows the game settings.
+ */
 
 #include <QWidget>
 #include "Global.h"
@@ -75,6 +78,3 @@ private:
     ConfirmMoveDialog* confirmMoveDialog;
     QMenu* mainMenu = nullptr;
 };
-
-
-#endif // GAMESETTINGS_H

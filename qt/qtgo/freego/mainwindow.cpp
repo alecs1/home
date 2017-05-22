@@ -500,14 +500,15 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
     else if (msg.msgType == ProtoJson::MsgType::ResumeGame) {
         ProtoJson::Msg reply;
         reply.msgid = msg.msgid;
+
+        QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
+        QJsonDocument doc(json);
+
        //TODO - confirmation must show how the set-up game will look like
-        int ret = QMessageBox::question(this, "Remote game", "Remote player wants to start a new game. Accepting will delete your current game. Accept?");
+        int ret = QMessageBox::question(this, "Remote game", QString("Remote player wants to start a new game. Accepting will delete your current game. Accept? \n%1").arg(doc.toJson().constData()));
         if (ret == QMessageBox::Yes) {
-            QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
-            QJsonDocument doc(json);
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
             bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
-
             reply.msgType = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
         }
         else {
@@ -517,7 +518,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
             Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
             reply.msgType = ProtoJson::MsgType::Fail;
         }
-        connMan->sendMessage(msg);
+        connMan->sendMessage(reply);
     }
 }
 

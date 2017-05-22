@@ -913,7 +913,9 @@ parse_error(const char *msg, int arg)
 {
   fprintf(stderr, msg, arg);
   fprintf(stderr, "\n");
-  exit(EXIT_FAILURE);
+  //exit(EXIT_FAILURE);
+  //Really, we want a crash here!
+  *((unsigned int*)0) = 0xDEAD;
 }
 
 
