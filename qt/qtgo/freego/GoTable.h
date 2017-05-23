@@ -88,6 +88,7 @@ public:
     bool loadGameAndStart(const QString fileName);
 
     GameState getGameState() const;
+    void getPlayersState(int& crt, PlayerType& crtType, PlayerType& opponentType) const;
 
     void setSecondPlayerToNetwork();
 

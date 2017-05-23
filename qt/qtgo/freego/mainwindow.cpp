@@ -492,6 +492,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
         if (msg.msgType == ProtoJson::MsgType::Success) {
             if (activeMessage.msgType == ProtoJson::MsgType::ResumeGame) {
                 //Yay, our peer accepted our game!
+                Logger::log("Peer accepted our game!");
                 table->setSecondPlayerToNetwork();
             }
         }
@@ -519,6 +520,16 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
             reply.msgType = ProtoJson::MsgType::Fail;
         }
         connMan->sendMessage(reply);
+    }
+
+    else if (msg.msgType == ProtoJson::MsgType::PlayMove) {
+        int crtPlayer;
+        PlayerType crtType, oppType;
+        table->getPlayersState(crtPlayer, crtType, oppType);
+
+        if (crtType == PlayerType::Network) {
+            //good to accept the move!
+        }
     }
 }
 

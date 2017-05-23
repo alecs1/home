@@ -246,6 +246,10 @@ GameState GoTable::getGameState() const {
     return state;
 }
 
+void GoTable::getPlayersState(int& crtPlayer, PlayerType& crtType, PlayerType& opponentType) const {
+    crtPlayer = this->crtPlayer;
+}
+
 /**
  * @brief GoTable::setSecondPlayerToNetwork hack function to instruct that the second player is now of type network.
  */
@@ -853,6 +857,9 @@ bool GoTable::playMove(int row, int col) {
     if (programSettings->soundsVolume > 0) {
         QSound::play(QString(":/resources/sounds/click.wav"));
     }
+
+    //Aici - with a remote player we need to spin and wait for confirmation later in the process
+
 
     //Here we're sure a move has been played
     if (state == GameState::Initial) {
