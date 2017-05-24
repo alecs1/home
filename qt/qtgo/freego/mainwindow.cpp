@@ -481,8 +481,10 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
     }
 }
 
-void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
-{
+void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
+    ProtoJson::Msg reply;
+    reply.msgid = msg.msgid;
+
     if (msg.msgType >= ProtoJson::MsgType::Success && msg.msgType <= ProtoJson::MsgType::Error) {
         if (msg.msgid != activeMessage.msgid) {
             Logger::log(QString("Received unexpected reply to msg %1, expected %2").arg(msg.msgid).arg(activeMessage.msgid));
@@ -497,10 +499,8 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
             }
         }
     }
-
     else if (msg.msgType == ProtoJson::MsgType::ResumeGame) {
-        ProtoJson::Msg reply;
-        reply.msgid = msg.msgid;
+
 
         QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
         QJsonDocument doc(json);
@@ -528,8 +528,16 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg)
         table->getPlayersState(crtPlayer, crtType, oppType);
 
         if (crtType == PlayerType::Network) {
-            //good to accept the move!
+            QJsonObject json = msg.json;
+            int row = json["row"].toInt();
+            int col = json["col"].toInt();
+            bool success = table->playMove(row, col);
+            reply.msgType = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Fail;
         }
+        else {
+            reply.msgType = ProtoJson::MsgType::Error;
+        }
+        connMan->sendMessage(reply);
     }
 }
 

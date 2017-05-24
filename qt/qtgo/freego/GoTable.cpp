@@ -246,8 +246,10 @@ GameState GoTable::getGameState() const {
     return state;
 }
 
-void GoTable::getPlayersState(int& crtPlayer, PlayerType& crtType, PlayerType& opponentType) const {
-    crtPlayer = this->crtPlayer;
+void GoTable::getPlayersState(int& crt, PlayerType& crtType, PlayerType& opponentType) const {
+    crt = this->crtPlayer;
+    crtType = players[crtPlayer];
+    opponentType = players[otherColour(crtPlayer)];
 }
 
 /**
@@ -497,9 +499,7 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
     //       __func__, pos.x(), pos.y(), newStoneCol, newStoneRow, unconfirmedStoneCol, unconfirmedStoneRow);
     if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
         if (askPlayConfirmation) {
-            //printf("%s - will ask for user confirmation for %d %d\n", __func__, newStoneRow, newStoneCol);
             if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
-                //user confirmed by double clicking this
                 playMove(pos.y(), pos.x());
                 //printf("%s - %d %d confirmed with double click, hiding confirmation window\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
@@ -511,7 +511,6 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
             else {
                 unconfirmedStoneRow = newStoneRow;
                 unconfirmedStoneCol = newStoneCol;
-                //printf("%s - show confirmation window for %d %d\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
                 emit askUserConfirmation(true, crtPlayer);
