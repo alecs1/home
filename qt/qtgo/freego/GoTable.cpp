@@ -798,7 +798,10 @@ bool GoTable::buildPixmaps(int diameter) {
     return true;
 }
 
-
+/**
+ * @brief GoTable::playMove - try to play a move, all GUI conditions have been fullfilled, now check the logic ones.
+ * Special case for the networked game: we play, and perform and undo in case the move is not accepted
+ */
 bool GoTable::playMove(int row, int col) {
     printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
     showHints = false;
@@ -913,6 +916,8 @@ bool GoTable::playMove(int row, int col) {
     }
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    Logger::log(QString("movePlayed: %1 %2").arg(row).arg(col));
+    emit movePlayed(row, col);
     return retVal;
 }
 

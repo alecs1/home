@@ -76,7 +76,7 @@ void ConnMan::processMessages() {
         if (len > 0) {
             switch (connState) {
                 case ConnState::AwaitingHandshake: {
-                    if (msg.msgType == MsgType::Hanshake) {
+                    if (msg.type == MsgType::Hanshake) {
                         connState = ConnState::Connected;
                         Logger::log(QString("Got handshake, connected!"), LogLevel::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
@@ -90,31 +90,32 @@ void ConnMan::processMessages() {
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake, got %1").arg(msg.msgType), LogLevel::ERR);
+                        Logger::log(QString("Expecting handshake, got %1").arg(msg.type), LogLevel::ERR);
                     }
                     break;
                 }
                 case ConnState::AwaitingHandshakeReply: {
-                    if (msg.msgType == MsgType::Ack) {
+                    if (msg.type == MsgType::Ack) {
                         connState = ConnState::Connected;
                         initiator = true;
                         Logger::log(QString("Got hadshake reply, connected!"), LogLevel::DBG);
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.msgType), LogLevel::ERR);
+                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.type), LogLevel::ERR);
                     }
                     break;
                 }
                 case ConnState::Connected: {
-                    if (msg.msgType >= MsgType::Ack && msg.msgType <= MsgType::PlayMove) {
+                    if (msg.type >= MsgType::Ack && msg.type <= MsgType::PlayMove) {
                         //forward the message
                         gameManager->onRemoteMessage(msg);
                     }
+                    break;
                 }
                 default: {
-                    Logger::log(QString("What is this state? Msg: %1").arg(msg.msgType), LogLevel::ERR);
-                    Logger::log(QString("Unhandled message, type: %1, id: %2").arg(msg.msgType).arg(msg.msgid));
+                    Logger::log(QString("What is this state? Msg: %1").arg(msg.type), LogLevel::ERR);
+                    Logger::log(QString("Unhandled message, type: %1, id: %2").arg(msg.type).arg(msg.msgid));
                     break;
                 }
             }

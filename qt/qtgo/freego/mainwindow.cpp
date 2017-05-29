@@ -90,13 +90,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(programSettingsChanged()), drawArea, SLOT(changeProgramSettings()));
     connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
     connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
+
     connect(table, SIGNAL(gameStateChanged(GameState)), gameSettingsWidget, SLOT(setGameState(GameState)));
     connect(table, SIGNAL(gameStateChanged(GameState)), this, SLOT(setGameState(GameState)));
+    connect(table, SIGNAL(movePlayed(int, int)), this, SLOT(onMovePlayed(int,int)));
     connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
     connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameSettingsWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
-
     connect(table, SIGNAL(askUserConfirmation(bool, int)), gameSettingsWidget, SLOT(showConfirmButton(bool, int)));
     connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameSettingsWidget, SLOT(receiveSettings(SGameSettings)));
+
+
     connect(gameSettingsWidget, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
     connect(gameSettingsWidget, SIGNAL(finishGamePerform(bool)), table, SLOT(finish(bool)));
     connect(gameSettingsWidget, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
@@ -384,6 +387,23 @@ void MainWindow::setGameState(GameState state) {
     }
 }
 
+void MainWindow::onMovePlayed(int row, int col) {
+    Logger::log(QString("%1: %2 %3").arg(__func__).arg(row).arg(col));
+    int crtPlayer;
+    PlayerType crtType, oppType;
+    table->getPlayersState(crtPlayer, crtType, oppType);
+    Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg((int)crtType).arg((int)oppType));
+    if (oppType == PlayerType::Network) {
+        //compose a move played message
+        ProtoJson::Msg msg;
+        msg.type = ProtoJson::MsgType::PlayMove;
+        msg.json["row"] = row;
+        msg.json["col"] = col;
+        connMan->sendMessage(msg);
+        activeMessage = msg;
+    }
+}
+
 int MainWindow::connectBT() {
 #ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
@@ -457,7 +477,7 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
         if (initiator) {
             //hack to get this running: propose a game with the current state of our board
             ProtoJson::Msg msg;
-            msg.msgType = ProtoJson::ResumeGame;
+            msg.type = ProtoJson::ResumeGame;
             QJsonObject tableSetupJson;
             table->saveGameForRemote(tableSetupJson);
             msg.json["gameSetup"] = tableSetupJson;
@@ -485,21 +505,24 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
     ProtoJson::Msg reply;
     reply.msgid = msg.msgid;
 
-    if (msg.msgType >= ProtoJson::MsgType::Success && msg.msgType <= ProtoJson::MsgType::Error) {
+    if (msg.type >= ProtoJson::MsgType::Success && msg.type <= ProtoJson::MsgType::Error) {
         if (msg.msgid != activeMessage.msgid) {
             Logger::log(QString("Received unexpected reply to msg %1, expected %2").arg(msg.msgid).arg(activeMessage.msgid));
             return;
         }
 
-        if (msg.msgType == ProtoJson::MsgType::Success) {
-            if (activeMessage.msgType == ProtoJson::MsgType::ResumeGame) {
+        if (msg.type == ProtoJson::MsgType::Success) {
+            if (activeMessage.type == ProtoJson::MsgType::ResumeGame) {
                 //Yay, our peer accepted our game!
                 Logger::log("Peer accepted our game!");
                 table->setSecondPlayerToNetwork();
             }
+            else if (activeMessage.type == ProtoJson::MsgType::PlayMove) {
+                Logger::log("Peer accepted our move");
+            }
         }
     }
-    else if (msg.msgType == ProtoJson::MsgType::ResumeGame) {
+    else if (msg.type == ProtoJson::MsgType::ResumeGame) {
 
 
         QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
@@ -510,19 +533,19 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         if (ret == QMessageBox::Yes) {
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
             bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
-            reply.msgType = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
+            reply.type = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
         }
         else {
             //nothing, should refuse
             QJsonObject json = msg.json;
             QJsonDocument doc(json);
             Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
-            reply.msgType = ProtoJson::MsgType::Fail;
+            reply.type = ProtoJson::MsgType::Fail;
         }
         connMan->sendMessage(reply);
     }
 
-    else if (msg.msgType == ProtoJson::MsgType::PlayMove) {
+    else if (msg.type == ProtoJson::MsgType::PlayMove) {
         int crtPlayer;
         PlayerType crtType, oppType;
         table->getPlayersState(crtPlayer, crtType, oppType);
@@ -532,10 +555,10 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
             int row = json["row"].toInt();
             int col = json["col"].toInt();
             bool success = table->playMove(row, col);
-            reply.msgType = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Fail;
+            reply.type = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Fail;
         }
         else {
-            reply.msgType = ProtoJson::MsgType::Error;
+            reply.type = ProtoJson::MsgType::Error;
         }
         connMan->sendMessage(reply);
     }

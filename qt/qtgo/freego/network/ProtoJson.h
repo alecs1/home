@@ -36,7 +36,7 @@ enum MsgType:uint8_t {
 };
 
 struct Msg {
-    MsgType msgType = MsgType::MsgTypeCount;
+    MsgType type = MsgType::MsgTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
 

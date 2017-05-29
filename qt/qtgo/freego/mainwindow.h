@@ -47,6 +47,7 @@ public slots:
     void showConfirmDialog(bool show, int colour);
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
+    void onMovePlayed(int row, int col);
 
     int connectBT();
     void connectTCP();
