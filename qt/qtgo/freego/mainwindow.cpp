@@ -393,7 +393,7 @@ void MainWindow::onMovePlayed(int row, int col) {
     PlayerType crtType, oppType;
     table->getPlayersState(crtPlayer, crtType, oppType);
     Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
-    if (oppType == PlayerType::Network) {
+    if (crtType == PlayerType::Network) {
         //compose a move played message
         ProtoJson::Msg msg;
         msg.type = ProtoJson::MsgType::PlayMove;
@@ -523,8 +523,6 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         }
     }
     else if (msg.type == ProtoJson::MsgType::ResumeGame) {
-
-
         QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
         QJsonDocument doc(json);
 
@@ -551,7 +549,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         table->getPlayersState(crtPlayer, crtType, oppType);
 
         if (crtType == PlayerType::Network) {
-            QJsonObject json = msg.json;
+            QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
             int row = json["row"].toInt();
             int col = json["col"].toInt();
             bool success = table->playMove(row, col);

@@ -48,7 +48,7 @@ bool SaveFile::loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings
     QByteArray hashBytes = QCryptographicHash::hash(contentsToHash.toUtf8(), QCryptographicHash::Md5);
     QString hashVal(hashBytes.toHex().constData());
 
-    if (! (hashVal == wantedHashVal)) {
+    if (hashVal != wantedHashVal) {
         Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), LogLevel::ERR);
         Logger::log("Ignored hash error!");
         //return false;
@@ -100,7 +100,7 @@ bool SaveFile::loadSaveFromRemote(const QJsonObject json, SGFNode **sgfNode, SGa
     }
     else {
         gameSettings->white = PlayerType::Network;
-        gameSettings->white = PlayerType::LocalHuman;
+        gameSettings->black = PlayerType::LocalHuman;
     }
 
     return success;

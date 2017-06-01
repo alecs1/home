@@ -803,7 +803,7 @@ bool GoTable::buildPixmaps(int diameter) {
  * Special case for the networked game: we play, and perform and undo in case the move is not accepted
  */
 bool GoTable::playMove(int row, int col) {
-    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    Logger::log(QString("%1: %2, %3. Plyer %4 of type %5").arg(__func__).arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
     showHints = false;
 
     inputBlockingDuration = 0;
@@ -842,6 +842,9 @@ bool GoTable::playMove(int row, int col) {
             //TODO - maybe add wrapper for this call do centralise placing stones
             play_move(pos, crtPlayer);
             retVal = true;
+        }
+        else {
+            Logger::log(QString("Move not legal: %1 %2. Plyer %3 of type %4").arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
         }
         //printfGnuGoStruct();
         populateStructFromGnuGo();
@@ -917,6 +920,7 @@ bool GoTable::playMove(int row, int col) {
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
     Logger::log(QString("movePlayed: %1 %2").arg(row).arg(col));
+    Logger::log(QString("Turn changed to: crtPlayer: %1, crtType: %2, otherType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])).arg(players[otherColour(crtPlayer)]));
     emit movePlayed(row, col);
     return retVal;
 }
