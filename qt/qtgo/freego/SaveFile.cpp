@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 #include <QTemporaryFile>
 
+#include "Constants.h"
 #include "Logger.h"
 
 extern "C" {
@@ -30,12 +31,16 @@ bool SaveFile::loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings
     auxGameInfo->freeGoVersion = json["freeGoVersion"].toString();
     auxGameInfo->gameDate = json["gameDate"].toString();
 
+    QJsonObject jsonBlack = json["black"].toObject();
+    QJsonObject jsonWhite = json["white"].toObject();
+
     gameSettings->size = json["tableSize"].toInt();
     gameSettings->estimateScore = json["estimateScore"].toBool();
-    gameSettings->white = (PlayerType)json["white"].toObject()["type"].toInt();
-    gameSettings->whiteAIStrength = json["white"].toObject()["AILevel"].toInt();
-    gameSettings->black = (PlayerType)json["black"].toObject()["type"].toInt();
-    gameSettings->blackAIStrength = json["black"].toObject()["AILevel"].toInt();
+
+    gameSettings->white = playerTypeMap.right.at(jsonWhite["type"].toString());
+    gameSettings->whiteAIStrength = jsonWhite["AILevel"].toInt();
+    gameSettings->black = playerTypeMap.right.at(jsonBlack["type"].toString());
+    gameSettings->blackAIStrength = jsonBlack["AILevel"].toInt();
 
     QString wantedHashVal = json["hashMD5"].toString();
     QString SGFSaveString = json["SGFSaveString"].toString();
@@ -135,12 +140,12 @@ bool SaveFile::writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSett
     //TODO - this belongs to GoTable
     if (gameSettings->white == PlayerType::LocalHuman) {
         QJsonObject remote = json["black"].toObject();
-        remote["type"] = (int)PlayerType::Network;
+        remote["type"] = playerTypeMap.left.at(PlayerType::Network);
         json["black"] = remote; //is this necessary?
     }
     else if (gameSettings->black == PlayerType::LocalHuman) {
         QJsonObject remote = json["white"].toObject();
-        remote["type"] = (int)PlayerType::Network;
+        remote["type"] = playerTypeMap.left.at(PlayerType::Network);
         json["white"] = remote;
     }
     else {
@@ -160,12 +165,12 @@ QJsonObject SaveFile::serialiseGameState(SGFNode *sgfNode, SGameSettings* gameSe
     json["estimateScore"] = gameSettings->estimateScore;
 
     QJsonObject white;
-    white["type"] = (int)gameSettings->white;
+    white["type"] = playerTypeMap.left.at(gameSettings->white);
     white["AILevel"] = gameSettings->whiteAIStrength;
     json["white"] = white;
 
     QJsonObject black;
-    black["type"] = (int)gameSettings->black;
+    black["type"] = playerTypeMap.left.at(gameSettings->black);
     black["AILevel"] = gameSettings->blackAIStrength;
     json["black"] = black;
 

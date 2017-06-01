@@ -6,9 +6,9 @@
 
 namespace ProtoJson {
 
-const QString ProtoKw::MsgType = "MsgType";
-const QString ProtoKw::Request = "Request";
-const QString ProtoKw::Reply = "Reply";
+//const QString ProtoKw::MsgType = "MsgType";
+//const QString ProtoKw::Request = "Request";
+//const QString ProtoKw::Reply = "Reply";
 
 /**
  * Parse the message enough to fill in the types. Expects a complete message!
@@ -30,7 +30,7 @@ Msg Msg::parse(const QByteArray& data, int& lenParsed) {
     }
 
     msg.json = QJsonDocument::fromJson(data.mid(HEADER_LEN, len)).object();
-    msg.type = (MsgType) msg.json[ProtoKw::MsgType].toInt();
+    msg.type = msgTypeMap.right.at(msg.json[ProtoKw::MsgType].toString());
 
     lenParsed = HEADER_LEN + len;
 
@@ -40,11 +40,12 @@ Msg Msg::parse(const QByteArray& data, int& lenParsed) {
 
 QByteArray Msg::serialise(const Msg &msg) {
     QJsonObject jsonObj;
-    jsonObj[ProtoKw::MsgType] = (uint8_t) msg.type;
+    jsonObj[ProtoKw::MsgType] = msgTypeMap.left.at(msg.type);
     jsonObj[ProtoKw::Request] = msg.json;
     QByteArray data = QJsonDocument(jsonObj).toJson();
     int len = data.length();
-    Logger::log(QString("%1").arg(len, 9, 10, QChar('0')));
+    QString aux = QString("%1%2").arg(len, 9, 10, QChar('0')).arg('\n');
+    //Logger::log("aux: " + aux);
     data.prepend(aux.toUtf8());
     return data;
 }

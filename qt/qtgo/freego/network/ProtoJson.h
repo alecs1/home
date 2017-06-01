@@ -4,16 +4,31 @@
 #include <QJsonObject>
 #include <stdint.h>
 
-namespace ProtoJson {
+#include <boost/bimap.hpp>
+#include <boost/assign.hpp>
 
-struct ProtoKw {
-    static const QString MsgType;
-    static const QString Request;
-    static const QString Reply;
-};
+namespace ProtoJson {
 
 #define UUID_LEN 16
 
+namespace ProtoKw {
+    const QString MsgType = "MsgType";
+    const QString Request = "Request";
+    const QString Reply = "Reply";
+
+    //MsgType
+    const QString Ack = "Ack";
+    const QString Success = "Success";
+    const QString Fail = "Fail";
+    const QString Error = "Error";
+    const QString Disconnect = "Disconnect";
+    const QString Hanshake= "Handshake";
+    const QString ListCommonGames = "ListCommonGames";
+    const QString StartNewGame = "StartNewGame";
+    const QString ResumeGame = "ResumeGame";
+    const QString ResignGame = "ResignGame";
+    const QString PlayMove = "PlayMove";
+}
 
 enum MsgType:uint8_t {
     //Replies:
@@ -25,7 +40,6 @@ enum MsgType:uint8_t {
     Disconnect,
     Hanshake,
     //Game
-    CommonGames,
     ListCommonGames,
     StartNewGame,
     ResumeGame,
@@ -34,6 +48,19 @@ enum MsgType:uint8_t {
     //Guard
     MsgTypeCount
 };
+
+const boost::bimap<MsgType, QString> msgTypeMap = boost::assign::list_of<boost::bimap<MsgType, QString>::relation>
+        (MsgType::Ack, ProtoKw::Ack)
+        (MsgType::Success, ProtoKw::Success)
+        (MsgType::Fail, ProtoKw::Fail)
+        (MsgType::Error, ProtoKw::Error)
+        (MsgType::Disconnect, ProtoKw::Disconnect)
+        (MsgType::Hanshake, ProtoKw::Hanshake)
+        (MsgType::ListCommonGames, ProtoKw::ListCommonGames)
+        (MsgType::StartNewGame, ProtoKw::StartNewGame)
+        (MsgType::ResumeGame, ProtoKw::ResumeGame)
+        (MsgType::ResignGame, ProtoKw::ResignGame)
+        (MsgType::PlayMove, ProtoKw::PlayMove);
 
 struct Msg {
     MsgType type = MsgType::MsgTypeCount;

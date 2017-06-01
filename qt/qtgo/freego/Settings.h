@@ -3,7 +3,8 @@
 
 #include <QString>
 
-#include "Global.h"
+//#include "Global.h"
+#include "Constants.h"
 
 struct SGameSettings {
     int size = 19;

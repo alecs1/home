@@ -23,12 +23,6 @@ enum class GameState:uint8_t  {
     Started
 };
 
-enum class PlayerType:uint8_t {
-    AI = 0,
-    LocalHuman,
-    Network,
-    None
-};
 
 
 enum class PlatformType:uint8_t {

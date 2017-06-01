@@ -114,7 +114,7 @@ RoundInfo::~RoundInfo()
 
 
 void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType opponentType) {
-    Logger::log(QString("%1 - playerType=%2").arg(__func__).arg((uint8_t)aType), LogLevel::DBG);
+    Logger::log(QString("%1 - playerType=%2").arg(__func__).arg(playerTypeMap.left.at(aType)), LogLevel::DBG);
     player = aPlayer;
     playerType = aType;
     if (player == BLACK) {

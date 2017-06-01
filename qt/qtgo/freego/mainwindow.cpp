@@ -392,7 +392,7 @@ void MainWindow::onMovePlayed(int row, int col) {
     int crtPlayer;
     PlayerType crtType, oppType;
     table->getPlayersState(crtPlayer, crtType, oppType);
-    Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg((int)crtType).arg((int)oppType));
+    Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
     if (oppType == PlayerType::Network) {
         //compose a move played message
         ProtoJson::Msg msg;

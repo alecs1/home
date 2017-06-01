@@ -1,9 +1,8 @@
-#ifndef MINISETTINGSWIDGET_H
-#define MINISETTINGSWIDGET_H
+#pragma once
 
 #include <QWidget>
 
-#include "Global.h"
+#include "Constants.h"
 
 class QToolButton;
 class RoundInfo;
@@ -30,5 +29,3 @@ private:
     QToolButton* fullInterfaceButton = NULL;
     QVBoxLayout* layoutP;
 };
-
-#endif // MINISETTINGSWIDGET_H

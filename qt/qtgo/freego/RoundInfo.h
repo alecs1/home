@@ -1,9 +1,8 @@
-#ifndef ROUNDINFO_H
-#define ROUNDINFO_H
+#pragma once
 
 #include <QWidget>
 
-#include "Global.h"
+#include "Constants.h"
 
 namespace Ui {
 class RoundInfo;
@@ -51,5 +50,3 @@ private:
     double angle = 0;
     int animationChains = 0;
 };
-
-#endif // ROUNDINFO_H
