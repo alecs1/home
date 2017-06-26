@@ -420,7 +420,7 @@ int MainWindow::connectBT() {
 }
 
 void MainWindow::connectTCP() {
-    printf("%s - Implement me!", __PRETTY_FUNCTION__);
+    Logger::log((QString("%1 - Implement me!").arg(__PRETTY_FUNCTION__));
 }
 
 void MainWindow::showBTChat() {

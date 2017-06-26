@@ -5,18 +5,18 @@
 
 class QFile;
 
-enum LogLevel:uint8_t {
-    DBG,
-    INFO,
-    ERR,
-    COUNT
-};
-
-
 /**
  * @brief Simple non-threadsafe logger with all stuff static
  */
 struct Logger {
+    enum LogLevel:uint8_t {
+        DBG,
+        INFO,
+        ERR,
+        COUNT
+    };
+
+
     static const int stdBufferSize = 1000000;
     static char stdoutBuffer[stdBufferSize];
     static char stderrBuffer[stdBufferSize];

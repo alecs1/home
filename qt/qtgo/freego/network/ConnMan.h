@@ -4,8 +4,9 @@
 #include <QObject>
 
 class BTServer;
+class QTcpServer;
 class QBluetoothSocket;
-class QAbstractSocket;
+class QTcpSocket;
 
 class MainWindow; //temporary to forward the game related message. TODO: replace with a real class that only deals with this.
 
@@ -35,6 +36,9 @@ public:
     ConnMan(MainWindow* gameManager);
     ~ConnMan();
     void connectBT(const QString address);
+    uint16_t listenTCP();
+    bool listenTCP(const QString address, const int port);
+    void connectTCP(const QString address = "", const uint16_t port = 0);
 
     //BlueTooth related stuff
     BTServer* getBTServer() const;
@@ -65,7 +69,9 @@ private:
 
     BTServer* btServer = nullptr;
     QBluetoothSocket* btSocket = nullptr;
-    QAbstractSocket* socket = nullptr;
+
+    QTcpSocket* tcpSocket = nullptr;
+    QTcpServer* tcpServer = nullptr;
 
     MainWindow* gameManager = nullptr;
 
