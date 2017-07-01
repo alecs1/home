@@ -39,11 +39,8 @@ int main(int argc, char *argv[])
     printf("\n\n\n\n\n\n\n\n%s - STAAAAARRTIIIIIIING\n\n\n\n\n\n\n\n", __func__);
 
     Q_INIT_RESOURCE(res);
-    //game.size = 19;
 
-    printf("%s - init QApplication\n", __func__);
     QApplication a(argc, argv);
-    printf("%s - init QApplication-done\n", __func__);
 
     //can't use "platformType()
 #if defined(Q_OS_ANDROID) && defined(USE_QTCURVE)

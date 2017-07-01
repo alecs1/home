@@ -29,6 +29,6 @@ struct Logger {
     static void finish();
     static void setViewer(QPlainTextEdit* edit);
 
-    static void log(const QString& msg, const LogLevel lev=LogLevel::INFO);
+    static void log(const QString& msg, const LogLevel lev=Logger::INFO);
     static void logQDebug(const QtMsgType type, const QMessageLogContext& context, const QString& message);
 };

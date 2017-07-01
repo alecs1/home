@@ -308,7 +308,7 @@ bool GoTable::loadGame(SGFNode* aux, SGameSettings auxSettings, SAuxGameInfo aux
 
 
     if (aux == NULL) {
-        Logger::log("aux == NULL", LogLevel::ERR);
+        Logger::log("aux == NULL", Logger::ERR);
         return false;
     }
 
@@ -365,7 +365,7 @@ bool GoTable::loadGameFromRemote(const QJsonObject &json) {
     SAuxGameInfo auxGameInfo;
     bool success = SaveFile::loadSaveFromRemote(json, &aux, &auxSettings, &auxGameInfo);
     if (!success) {
-        Logger::log(QString("%1 - could not load remote save: %2").arg(__func__).arg(QJsonDocument(json).toJson().constData()), LogLevel::ERR);
+        Logger::log(QString("%1 - could not load remote save: %2").arg(__func__).arg(QJsonDocument(json).toJson().constData()), Logger::ERR);
         return false;
     }
 

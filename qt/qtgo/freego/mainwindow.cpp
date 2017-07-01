@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connMan = new ConnMan(this);
     connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
-
+    connMan->listenTCP();
 
     table->checkForResumeGame();
 
@@ -414,13 +414,14 @@ int MainWindow::connectBT() {
     peerChooser->show();
 
 #else
-    Logger::log("No QBluetooth support on Windows", LogLevel::ERR);
+    Logger::log("No QBluetooth support on Windows", Logger::ERR);
 #endif
     return 0;
 }
 
 void MainWindow::connectTCP() {
-    Logger::log((QString("%1 - Implement me!").arg(__PRETTY_FUNCTION__));
+    Logger::log(QString("%1 - Implement me!").arg(__PRETTY_FUNCTION__));
+    connMan->connectTCP();
 }
 
 void MainWindow::showBTChat() {
@@ -529,7 +530,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
        //TODO - confirmation must show how the set-up game will look like
         int ret = QMessageBox::question(this, "Remote game", QString("Remote player wants to start a new game. Accepting will delete your current game. Accept? \n%1").arg(doc.toJson().constData()));
         if (ret == QMessageBox::Yes) {
-            Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
+            Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), Logger::DBG);
             bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
             reply.type = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
         }
@@ -537,7 +538,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
             //nothing, should refuse
             QJsonObject json = msg.json;
             QJsonDocument doc(json);
-            Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), LogLevel::DBG);
+            Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), Logger::DBG);
             reply.type = ProtoJson::MsgType::Fail;
         }
         connMan->sendMessage(reply);

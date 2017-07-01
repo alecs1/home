@@ -49,14 +49,14 @@ bool SaveFile::loadSave(const QJsonObject json, SGFNode **sgfNode, SGameSettings
     QString hashVal(hashBytes.toHex().constData());
 
     if (hashVal != wantedHashVal) {
-        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), LogLevel::ERR);
+        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), Logger::ERR);
         Logger::log("Ignored hash error!");
         //return false;
     }
 
     QTemporaryFile auxFile("temp-stream-for-gnugo.XXXXXX.txt");
     if (!auxFile.open()) {
-        Logger::log("Failed to open temporary file.", LogLevel::ERR);
+        Logger::log("Failed to open temporary file.", Logger::ERR);
         return false;
     }
     QByteArray bytes = SGFSaveString.toUtf8();
@@ -230,7 +230,7 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
     QString hashVal(hashBytes.toHex().constData());
 
     if (! (hashVal == wantedHashVal)) {
-        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), LogLevel::ERR);
+        Logger::log(QString("%1 - hash %2 does not match %3").arg(__func__).arg(wantedHashVal).arg(hashVal), Logger::ERR);
         return false;
     }
 

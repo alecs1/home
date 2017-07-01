@@ -11,7 +11,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget)
 {
-    Logger::log(__func__, LogLevel::DBG);
+    Logger::log(__func__, Logger::DBG);
     ui->setupUi(this);
     ui->playerComboBox->insertItem((int)PlayerType::AI, "Computer (weak)");
     ui->playerComboBox->insertItem((int)PlayerType::LocalHuman, "Human");

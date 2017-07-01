@@ -18,7 +18,8 @@ const uint16_t tcpDefaultLastPort = 1050;
 ConnMan::ConnMan(MainWindow *gameManager) : gameManager(gameManager) {
     btServer = new BTServer(this);
     tcpServer = new QTcpServer(this);
-    tcpSocket = new QTcpSocket(this);
+
+    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(newConnectionTCP()));
 }
 
 ConnMan::~ConnMan() {
@@ -75,11 +76,13 @@ bool ConnMan::listenTCP(const QString address, const int port) {
 }
 
 /**
- * Try to connect on TCP
+ * Try to connect on TCP, currently blocks trying on a port range
  * @param address - if missing it will default to localhost
  * @param port - if missing default to the entire default range
  */
 void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* = 0*/) {
+    const int timeout = 5000;
+
     QHostAddress addr(QHostAddress::Any);
     if (address.length() > 0) {
         addr = QHostAddress(address);
@@ -94,8 +97,22 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
 
     bool success = false;
     uint16_t crtPort = firstPort;
+    QTcpSocket* sock = new QTcpSocket();
     while (!success && crtPort <= lastPort) {
+        sock->connectToHost(address, crtPort);
+        if (sock->waitForConnected(timeout)) {
+            success = true;
+        }
+        else {
+            crtPort += 1;
+        }
+    }
 
+    if (success) {
+        tcpSocket = sock;
+    }
+    else {
+        delete sock;
     }
 }
 
@@ -114,7 +131,7 @@ void ConnMan::setBTClientSocket(QBluetoothSocket* sock) {
     ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
     QByteArray data = ProtoJson::Msg::serialise(handshake);
     btSocket->write(data);
-    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), LogLevel::DBG);
+    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), Logger::DBG);
 }
 
 /**
@@ -151,19 +168,19 @@ void ConnMan::processMessages() {
                 case ConnState::AwaitingHandshake: {
                     if (msg.type == MsgType::Hanshake) {
                         connState = ConnState::Connected;
-                        Logger::log(QString("Got handshake, connected!"), LogLevel::DBG);
+                        Logger::log(QString("Got handshake, connected!"), Logger::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
                         int wrote = btSocket->write(Msg::serialise(msg));
                         Logger::log(QString("Sent Ack. Bytes=%1, contents=%2").arg(wrote).arg(Msg::serialise(msg).data()));
                         if (wrote == -1) {
-                            Logger::log("Failed to write ack!!!", LogLevel::ERR);
+                            Logger::log("Failed to write ack!!!", Logger::ERR);
                         }
                         btSocket->write(Msg::serialise(msg));
                         Logger::log(QString("Sent ack: %1").arg(Msg::serialise(msg).constData()));
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake, got %1").arg(msg.type), LogLevel::ERR);
+                        Logger::log(QString("Expecting handshake, got %1").arg(msg.type), Logger::ERR);
                     }
                     break;
                 }
@@ -171,11 +188,11 @@ void ConnMan::processMessages() {
                     if (msg.type == MsgType::Ack) {
                         connState = ConnState::Connected;
                         initiator = true;
-                        Logger::log(QString("Got hadshake reply, connected!"), LogLevel::DBG);
+                        Logger::log(QString("Got hadshake reply, connected!"), Logger::DBG);
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.type), LogLevel::ERR);
+                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.type), Logger::ERR);
                     }
                     break;
                 }
@@ -187,7 +204,7 @@ void ConnMan::processMessages() {
                     break;
                 }
                 default: {
-                    Logger::log(QString("What is this state? Msg: %1").arg(msg.type), LogLevel::ERR);
+                    Logger::log(QString("What is this state? Msg: %1").arg(msg.type), Logger::ERR);
                     Logger::log(QString("Unhandled message, type: %1, id: %2").arg(msg.type).arg(msg.msgid));
                     break;
                 }
@@ -207,7 +224,40 @@ void ConnMan::sendMessage(const ProtoJson::Msg& msg) {
     btSocket->write(Msg::serialise(msg));
 }
 
+//TODO: should we maintain multiple buffers, one for each socket?
 void ConnMan::dataAvailable() {
-    buffer.append(btSocket->readAll());
+    QAbstractSocket* sock = qobject_cast<QAbstractSocket*>(sender());
+    if ((void*)sock == (void*)btSocket) {
+        buffer.append(btSocket->readAll());
+    }
+    else if (sock == tcpSocket) {
+        buffer.append(tcpSocket->readAll());
+    }
+}
+
+void ConnMan::newConnectionTCP() {
+    QTcpSocket* newSock = tcpServer->nextPendingConnection();
+
+    if (newSock) {
+        if (!tcpSocket) {
+            tcpSocket = newSock;
+            connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+        }
+        else {
+            QString message("A client is already connected. Refused connection becase we only support one client at a time!");
+            newSock->write(message.toUtf8());
+            newSock->flush();
+            const int timeout = 1000;
+            newSock->disconnectFromHost();
+            bool disconnected = newSock->waitForDisconnected(timeout);
+            newSock->close();
+            if (!disconnected) {
+                Logger::log(QString("Could not disconnect socket in the allocated time. The ky may fall because I didn't implement proper cleanup."), Logger::ERR);
+            }
+            else {
+                delete newSock;
+            }
+        }
+    }
 }
 

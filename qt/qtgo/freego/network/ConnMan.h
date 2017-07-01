@@ -35,12 +35,14 @@ public:
 
     ConnMan(MainWindow* gameManager);
     ~ConnMan();
-    void connectBT(const QString address);
+
+    //TCP
     uint16_t listenTCP();
     bool listenTCP(const QString address, const int port);
     void connectTCP(const QString address = "", const uint16_t port = 0);
 
-    //BlueTooth related stuff
+    //BlueTooth related stuff, needs heavy rework
+    void connectBT(const QString address);
     BTServer* getBTServer() const;
     //void initBluetooth(const int interface);
     void setBTClientSocket(QBluetoothSocket* sock);
@@ -61,6 +63,9 @@ public slots:
 
 signals:
     void connStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);
+
+private slots:
+    void newConnectionTCP();
 
 private:
 
