@@ -3,6 +3,10 @@
 #include <QString>
 #include <QPlainTextEdit>
 
+#define S1(x) #x
+#define S2(x) S1(x)
+#define LOG_POS QString(__FILE__ ":" S2(__LINE__) " - ") + QString(__PRETTY_FUNCTION__)
+
 class QFile;
 
 /**

@@ -95,11 +95,13 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
         lastPort = port;
     }
 
+    Logger::log(QString("%1 - %2:%3-%4").arg(LOG_POS).arg(addr.toString()).arg(firstPort).arg(lastPort));
+
     bool success = false;
     uint16_t crtPort = firstPort;
     QTcpSocket* sock = new QTcpSocket();
     while (!success && crtPort <= lastPort) {
-        sock->connectToHost(address, crtPort);
+        sock->connectToHost(addr, crtPort);
         if (sock->waitForConnected(timeout)) {
             success = true;
         }
@@ -109,9 +111,12 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
     }
 
     if (success) {
+        Logger::log(QString("%1 - connected to socket %2:%3").arg(LOG_POS).arg(sock->localAddress().toString()).arg(sock->localPort()));
         tcpSocket = sock;
+
     }
     else {
+        Logger::log(QString("%1 - failed to connect, last error: %2").arg(LOG_POS).arg(sock->errorString()));
         delete sock;
     }
 }
@@ -125,20 +130,15 @@ BTServer* ConnMan::getBTServer() const {
  */
 void ConnMan::setBTClientSocket(QBluetoothSocket* sock) {
     btSocket = sock;
-    connState = ConnState::AwaitingHandshakeReply;
     connect(btSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
-
-    ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
-    QByteArray data = ProtoJson::Msg::serialise(handshake);
-    btSocket->write(data);
-    Logger::log(QString("%1 - wrote \"%2\" to socket.").arg(__PRETTY_FUNCTION__).arg(data.constData()), Logger::DBG);
+    initServerState();
 }
 
 /**
- * @brief ConnMan::setBTServerSocket set the socket to a server connection, we're behaving as a client */
+ * @brief ConnMan::setBTServerSocket set the socket to a server connection, we're behaving as a client
+ */
 void ConnMan::setBTServerSocket(QBluetoothSocket* sock) {
     btSocket = sock;
-    connState = ConnState::AwaitingHandshake;
     connect(btSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
 }
 
@@ -160,6 +160,7 @@ ProtoJson::Msg ConnMan::getMessage(int& parsedBytes) {
 }
 
 void ConnMan::processMessages() {
+    assert(socket());
     if (buffer.size() > 0) {
         int len = 0;
         ProtoJson::Msg msg = getMessage(len);
@@ -170,12 +171,12 @@ void ConnMan::processMessages() {
                         connState = ConnState::Connected;
                         Logger::log(QString("Got handshake, connected!"), Logger::DBG);
                         ProtoJson::Msg msg = Msg::composeAck();
-                        int wrote = btSocket->write(Msg::serialise(msg));
+                        int wrote = socket()->write(Msg::serialise(msg));
                         Logger::log(QString("Sent Ack. Bytes=%1, contents=%2").arg(wrote).arg(Msg::serialise(msg).data()));
                         if (wrote == -1) {
                             Logger::log("Failed to write ack!!!", Logger::ERR);
                         }
-                        btSocket->write(Msg::serialise(msg));
+                        socket()->write(Msg::serialise(msg));
                         Logger::log(QString("Sent ack: %1").arg(Msg::serialise(msg).constData()));
                         emit connStateChanged(connState, initiator, connType);
                     }
@@ -221,7 +222,8 @@ bool ConnMan::activeConnection() const {
  * @brief ConnMan::sendMessage serialise a message to the peer
  */
 void ConnMan::sendMessage(const ProtoJson::Msg& msg) {
-    btSocket->write(Msg::serialise(msg));
+    assert(socket());
+    socket()->write(Msg::serialise(msg));
 }
 
 //TODO: should we maintain multiple buffers, one for each socket?
@@ -236,20 +238,24 @@ void ConnMan::dataAvailable() {
 }
 
 void ConnMan::newConnectionTCP() {
+    Logger::log(QString(LOG_POS));
     QTcpSocket* newSock = tcpServer->nextPendingConnection();
 
     if (newSock) {
         if (!tcpSocket) {
             tcpSocket = newSock;
             connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+            Logger::log(QString("%1 - accepted new connection").arg(LOG_POS));
+            initServerState();
         }
         else {
             QString message("A client is already connected. Refused connection becase we only support one client at a time!");
+            Logger::log(QString("%1 - %2").arg(LOG_POS).arg(message));
             newSock->write(message.toUtf8());
             newSock->flush();
             const int timeout = 1000;
             newSock->disconnectFromHost();
-            bool disconnected = newSock->waitForDisconnected(timeout);
+            bool disconnected = ( (newSock->state() == QAbstractSocket::UnconnectedState) || newSock->waitForDisconnected(timeout));
             newSock->close();
             if (!disconnected) {
                 Logger::log(QString("Could not disconnect socket in the allocated time. The ky may fall because I didn't implement proper cleanup."), Logger::ERR);
@@ -261,3 +267,25 @@ void ConnMan::newConnectionTCP() {
     }
 }
 
+/**
+ * @brief quick hack to avoid confusion between sockets.
+ */
+QIODevice *ConnMan::socket() {
+    if (btSocket) {
+        return btSocket;
+    }
+    else if (tcpSocket) {
+        return tcpSocket;
+    }
+    return nullptr;
+}
+
+void ConnMan::initServerState() {
+    connState = ConnState::AwaitingHandshakeReply;
+    ProtoJson::Msg handshake = ProtoJson::Msg::composeHandshake();
+    sendMessage(handshake);
+}
+
+void ConnMan::initClientState() {
+    connState = ConnState::AwaitingHandshake;
+}

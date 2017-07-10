@@ -147,8 +147,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
+    Logger::setViewer(nullptr); //TODO - this is such a crappy solution to avoid crashes, use smart pointers
     printf("%s - TODO - fully implement this!\n", __func__);
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
     delete ui;

@@ -7,6 +7,7 @@ class BTServer;
 class QTcpServer;
 class QBluetoothSocket;
 class QTcpSocket;
+class QIODevice;
 
 class MainWindow; //temporary to forward the game related message. TODO: replace with a real class that only deals with this.
 
@@ -68,6 +69,10 @@ private slots:
     void newConnectionTCP();
 
 private:
+
+    QIODevice* socket();
+    void initServerState();
+    void initClientState();
 
     //ProtoState protoState = ProtoState::Idle;
     ConnType connType = ConnType::None;
