@@ -101,6 +101,12 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
     uint16_t crtPort = firstPort;
     QTcpSocket* sock = new QTcpSocket();
     while (!success && crtPort <= lastPort) {
+        if (addr.isEqual(tcpServer->serverAddress())) {
+            if (crtPort == tcpServer->serverPort()) {
+                //skip ourselves
+                crtPort += 1;
+            }
+        }
         sock->connectToHost(addr, crtPort);
         if (sock->waitForConnected(timeout)) {
             success = true;
