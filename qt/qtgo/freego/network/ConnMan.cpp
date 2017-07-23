@@ -101,7 +101,21 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
     uint16_t crtPort = firstPort;
     QTcpSocket* sock = new QTcpSocket();
     while (!success && crtPort <= lastPort) {
-        if (addr.isEqual(tcpServer->serverAddress())) {
+#if QT_VERSION >= 0x050800
+        if (addr.isEqual(tcpServer->serverAddress()))
+#else
+        auto compareBytes = [](Q_IPV6ADDR addr1, Q_IPV6ADDR addr2) {
+            for (int i = 0; i < 16; i++) {
+                if (addr1.c[i] != addr2.c[i]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        if ((addr.protocol() == QAbstractSocket::IPv4Protocol && addr.toIPv4Address() == tcpServer->serverAddress().toIPv4Address()) ||
+            compareBytes(addr.toIPv6Address(), tcpServer->serverAddress().toIPv6Address()) )
+#endif
+        {
             if (crtPort == tcpServer->serverPort()) {
                 //skip ourselves
                 crtPort += 1;
