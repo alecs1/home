@@ -7,7 +7,7 @@
 #include "BTServer.h"
 #include "ProtoJson.h"
 #include "../Logger.h"
-#include "../mainwindow.h" //TODO - this is only temporary
+#include "../MainWindow.h" //TODO - this is only temporary
 
 using namespace ProtoJson;
 
@@ -131,9 +131,10 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
     }
 
     if (success) {
-        Logger::log(QString("%1 - connected to socket %2:%3").arg(LOG_POS).arg(sock->localAddress().toString()).arg(sock->localPort()));
+        Logger::log(QString("Connected to socket %1:%2").arg(sock->localAddress().toString()).arg(sock->localPort()));
         tcpSocket = sock;
-
+        connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+        initClientState();
     }
     else {
         Logger::log(QString("%1 - failed to connect, last error: %2").arg(LOG_POS).arg(sock->errorString()));
@@ -179,8 +180,11 @@ ProtoJson::Msg ConnMan::getMessage(int& parsedBytes) {
     return ProtoJson::Msg();
 }
 
-void ConnMan::processMessages() {
-    assert(socket());
+void ConnMan::update() {
+    if (!socket()) {
+        return;
+    }
+
     if (buffer.size() > 0) {
         int len = 0;
         ProtoJson::Msg msg = getMessage(len);
@@ -201,7 +205,7 @@ void ConnMan::processMessages() {
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake, got %1").arg(msg.type), Logger::ERR);
+                        Logger::log(QString("Expected handshake, got %1").arg(msg.type), Logger::ERR);
                     }
                     break;
                 }
@@ -213,7 +217,7 @@ void ConnMan::processMessages() {
                         emit connStateChanged(connState, initiator, connType);
                     }
                     else {
-                        Logger::log(QString("Expecting handshake ack, got %1").arg(msg.type), Logger::ERR);
+                        Logger::log(QString("Expected handshake ack, got %1").arg(msg.type), Logger::ERR);
                     }
                     break;
                 }
@@ -265,7 +269,7 @@ void ConnMan::newConnectionTCP() {
         if (!tcpSocket) {
             tcpSocket = newSock;
             connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
-            Logger::log(QString("%1 - accepted new connection").arg(LOG_POS));
+            Logger::log(QString("accepted new connection, local: %1, remote: %2").arg(tcpSocket->localPort()).arg(tcpSocket->peerPort()));
             initServerState();
         }
         else {

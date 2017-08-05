@@ -50,7 +50,7 @@ public:
     void setBTServerSocket(QBluetoothSocket* sock);
 
     ProtoJson::Msg getMessage(int& parsedBytes);
-    void processMessages();
+    void update();
     bool activeConnection() const;
     void sendMessage(const ProtoJson::Msg &msg);
 

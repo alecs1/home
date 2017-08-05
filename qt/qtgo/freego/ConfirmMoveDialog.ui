@@ -39,7 +39,7 @@
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
          <horstretch>1</horstretch>
-         <verstretch>2</verstretch>
+         <verstretch>1</verstretch>
         </sizepolicy>
        </property>
        <property name="text">

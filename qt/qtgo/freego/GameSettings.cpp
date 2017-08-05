@@ -250,6 +250,7 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType oppo
 }
 
 void GameSettings::showConfirmButton(bool show, int colour) {
+    return;
     if (show == false) {
         if (confirmMoveDialog != NULL) {
             confirmMoveDialog->hide();

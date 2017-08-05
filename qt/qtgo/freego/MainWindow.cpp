@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
 
 #include <QFileDialog>
 #include <QPropertyAnimation>
@@ -96,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(table, SIGNAL(movePlayed(int, int)), this, SLOT(onMovePlayed(int,int)));
     connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
     connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameSettingsWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
-    connect(table, SIGNAL(askUserConfirmation(bool, int)), gameSettingsWidget, SLOT(showConfirmButton(bool, int)));
+    connect(table, SIGNAL(askUserConfirmation(bool, int)), this, SLOT(showConfirmDialog(bool, int)));
     connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameSettingsWidget, SLOT(receiveSettings(SGameSettings)));
 
 
@@ -224,12 +224,6 @@ void MainWindow::setMinimalInterface() {
 
     if (miniGameSettings == nullptr) {
         createMiniInterface();
-        confirmMoveDialog = new ConfirmMoveDialog(this);
-        confirmMoveDialog->setMinimalInterface(true);
-        confirmMoveDialog->setVisible(false);
-        connect(table, SIGNAL(askUserConfirmation(bool, int)), this, SLOT(showConfirmDialog(bool, int)));
-        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SLOT(confirmDialogDone(int)));
-        connect(confirmMoveDialog, SIGNAL(finished(int)), table, SLOT(userConfirmedMove(int)));
         connect(miniGameSettings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
         connect(miniGameSettings, SIGNAL(undoMove()), table, SLOT(undoMove()));
     }
@@ -356,19 +350,37 @@ void MainWindow::createMiniInterface() {
 
 
 void MainWindow::showConfirmDialog(bool show, int colour) {
-    if (!minimalInterface)
-        return;
+    if (!confirmMoveDialog) {
+        confirmMoveDialog = new ConfirmMoveDialog(this);
+        confirmMoveDialog->setVisible(false);
+        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SLOT(confirmDialogDone(int)));
+        connect(confirmMoveDialog, SIGNAL(finished(int)), table, SLOT(userConfirmedMove(int)));
+    }
+    confirmMoveDialog->setMinimalInterface(minimalInterface);
+
     if (show) {
-        ui->gridLayout->removeWidget(miniGameSettings);
-        miniGameSettings->hide();
+        if (minimalInterface) {
+            ui->gridLayout->removeWidget(miniGameSettings);
+            miniGameSettings->hide();
+        }
+        else {
+            ui->gridLayout->removeWidget(this->gameSettingsWidget);
+            gameSettingsWidget->hide();
+        }
         ui->gridLayout->addWidget(confirmMoveDialog, 0, 1);
         confirmMoveDialog->show();
     }
     else {
         ui->gridLayout->removeWidget(confirmMoveDialog);
         confirmMoveDialog->hide();
-        ui->gridLayout->addWidget(miniGameSettings, 0, 1);
-        miniGameSettings->show();
+        if (minimalInterface) {
+            ui->gridLayout->addWidget(miniGameSettings, 0, 1);
+            miniGameSettings->show();
+        }
+        else {
+            ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
+            gameSettingsWidget->show();
+        }
     }
     Q_UNUSED(colour);
 }
@@ -450,24 +462,8 @@ void MainWindow::showSettings() {
 }
 
 void MainWindow::mainLoop() {
-    if (connMan && connMan->activeConnection()) {
-
-        connMan->processMessages();
-        if (connMan->connState == ConnMan::ConnState::Connected) {
-            if (connMan->initiator) {
-//                //hack to get this running: propose a game with the current state of our board
-//                ProtoJson::Msg msg;
-//                msg.msgType = ProtoJson::ResumeGame;
-//                QByteArray data;
-//                table->saveGame(data);
-//                msg.json["SGFSaveString"] = QJsonDocument::fromJson(data).object();
-//                connMan->sendMessage(msg);
-//                Logger::log(QString("Will initiate a new game with: %1.").arg(data.constData()));
-            }
-            else {
-//                Logger::log(QString("Will wait for the initiator to send a game config."));
-            }
-        }
+    if (connMan) {
+        connMan->update();
     }
 }
 

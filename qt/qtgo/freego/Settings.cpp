@@ -2,7 +2,7 @@
 
 #include "Settings.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 SProgramSettings Settings::settings;
 MainWindow* Settings::messageSender = NULL;
