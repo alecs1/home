@@ -80,7 +80,7 @@ bool ConnMan::listenTCP(const QString address, const int port) {
  * @param address - if missing it will default to localhost
  * @param port - if missing default to the entire default range
  */
-void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* = 0*/) {
+bool ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* = 0*/) {
     const int timeout = 5000;
 
     QHostAddress addr(QHostAddress::Any);

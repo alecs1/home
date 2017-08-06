@@ -453,7 +453,11 @@ void MainWindow::connectTCP() {
     }
 
     //In case of parsing problems address and port get the default values.
-    connMan->connectTCP(address, port);
+    bool success = connMan->connectTCP(address, port);
+    if (success && address.length() > 0) {
+        QStringList previousAddr = Settings::getProgramSettings()->previousTCPAddresses;
+        if (!previousAddr.contains(address))
+    }
 }
 
 void MainWindow::showBTChat() {
