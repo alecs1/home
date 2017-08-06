@@ -32,6 +32,7 @@ struct SProgramSettings {
     QString tableColour;
     bool spaceOptimisations;
     bool minimalInterface = false;
+    QStringList previousTCPAddresses;
 };
 
 //Extra information about a game, don't know if this is the right place
@@ -51,6 +52,7 @@ public:
     static void setMessageSender(MainWindow* newSender);
 private:
     static SProgramSettings settings;
+    static SSavedData savedData;
     static MainWindow* messageSender;
 };
 

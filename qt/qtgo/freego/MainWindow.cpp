@@ -32,6 +32,7 @@
 
 #include "network/ProtoJson.h"
 
+#include "dialogs/AddressDialog.h"
 
 #include "Global.h"
 
@@ -433,8 +434,26 @@ int MainWindow::connectBT() {
 }
 
 void MainWindow::connectTCP() {
-    Logger::log(QString("%1 - Implement me!").arg(__PRETTY_FUNCTION__));
-    connMan->connectTCP();
+    AddressDialog addressDialog(Settings::getProgramSettings()->previousTCPAddresses, this);
+    int result = addressDialog->exec();
+    QString address;
+    int port = 0;
+    if (result == QDialog::Accepted) {
+        address = addressDialog.address();
+        if (address.contains(":")) {
+            QStringList auxAddr = address.split(":");
+            if (auxAddr.length() > 0)
+                address = auxAddr[0];
+            if (auxAddr.length() > 1)
+                port = auxAddr[1].toInt();
+            if (auxAddr.length() > 2) {
+                Log(QString("Address may be invalid: %1").arg(addressDialog.address()), Logger::ERR);
+            }
+        }
+    }
+
+    //In case of parsing problems address and port get the default values.
+    connMan->connectTCP(address, port);
 }
 
 void MainWindow::showBTChat() {

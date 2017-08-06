@@ -10,12 +10,14 @@ SProgramSettings* Settings::getProgramSettings() {
     return &(Settings::settings);
 }
 
+
 void Settings::populateDefaultProgramSettings(SProgramSettings* defaults) {
     QColor defaultColour(206, 170, 57, 255);
     defaults->tableColour = defaultColour.name();
     defaults->soundsVolume = 100;
     defaults->spaceOptimisations = false;
     defaults->minimalInterface = false;
+    defaults->previousTCPAddresses = QStringList("127.0.0.1");
 }
 
 /*

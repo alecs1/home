@@ -221,6 +221,12 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
     programSettings->tableColour = json["tableColour"].toString();
     programSettings->spaceOptimisations = json["spaceOptimisations"].toBool();
     programSettings->minimalInterface = json["minimalInterface"].toBool();
+    if (json.contains("previousTCPAddresses")) {
+        QJsonArray arr = json["previousTCPAddresses"].toArray();
+        for (int i = 0; i < arr.size(); i++) {
+            programSettings->previousTCPAddresses.append(arr.at(i).toString());
+        }
+    }
 
 
     QString wantedHashVal = json["hashMD5"].toString();
@@ -237,14 +243,20 @@ bool SaveFile::loadSettings(QString settingsFName, SProgramSettings *programSett
     return true;
 }
 
-bool SaveFile::writeSettings(QString settingsFName, SProgramSettings* gameSettings) {
+bool SaveFile::writeSettings(QString settingsFName, SProgramSettings* programSettings) {
     QFile outFile(settingsFName);
 
     QJsonObject json;
-    json["soundsVolume"] = (int)gameSettings->soundsVolume;
-    json["tableColour"] = gameSettings->tableColour;
-    json["spaceOptimisations"] = gameSettings->spaceOptimisations;
-    json["minimalInterface"] = gameSettings->minimalInterface;
+    json["soundsVolume"] = (int)programSettings->soundsVolume;
+    json["tableColour"] = programSettings->tableColour;
+    json["spaceOptimisations"] = programSettings->spaceOptimisations;
+    json["minimalInterface"] = programSettings->minimalInterface;
+
+    QJsonArray previousAddr;
+    for(int i = 0; i < programSettings->previousTCPAddresses.size(); i++) {
+        previousAddr.append(QJsonValue(programSettings->previousTCPAddresses.at(i)));
+    }
+    json["previousTCPAddresses"] = previousAddr;
 
     //hash some stuff to validate the save file;
     QString contentsToHash = json["soundsVolume"].toString() + json["tableColour"].toString()
