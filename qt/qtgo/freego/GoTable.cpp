@@ -688,7 +688,7 @@ void GoTable::paintEvent(QPaintEvent *) {
                             drawDiameter, drawDiameter);
 
             //more transparent as the move is considered weaker
-            QColor backColour (0, 0, 64, 220 - 20 * i);
+            QColor backColour (32, 32, 64, 220 - 20 * i);
             pen.setWidthF(0);
             pen.setColor(backColour);
             painter.setPen(pen);

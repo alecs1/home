@@ -134,6 +134,7 @@ void ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
         Logger::log(QString("Connected to socket %1:%2").arg(sock->localAddress().toString()).arg(sock->localPort()));
         tcpSocket = sock;
         connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+        connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
         initClientState();
     }
     else {
@@ -261,6 +262,18 @@ void ConnMan::dataAvailable() {
     }
 }
 
+void ConnMan::socketDisconnected() {
+    Logger::log("Peer disconnected", Logger::ERR);
+    delete tcpSocket;
+    tcpSocket = nullptr;
+}
+
+void ConnMan::onSocketError() {
+    if (tcpSocket) {
+        Logger::log(QString("Socket error: %1").arg(tcpSocket->errorString()));
+    }
+}
+
 void ConnMan::newConnectionTCP() {
     Logger::log(QString(LOG_POS));
     QTcpSocket* newSock = tcpServer->nextPendingConnection();
@@ -269,6 +282,7 @@ void ConnMan::newConnectionTCP() {
         if (!tcpSocket) {
             tcpSocket = newSock;
             connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataAvailable()));
+            connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
             Logger::log(QString("accepted new connection, local: %1, remote: %2").arg(tcpSocket->localPort()).arg(tcpSocket->peerPort()));
             initServerState();
         }

@@ -134,8 +134,9 @@ MainWindow::MainWindow(QWidget *parent) :
     setMinimumSize(minWidth, minHeight);
 
     setWindowTitle("FreeGo");
-    if (programSettings->minimalInterface)
-        minimalInterface = true;
+    if (programSettings->minimalInterface) {
+        setMinimalInterface();
+    }
 
     Logger::setViewer(ui->logView);
 
@@ -209,6 +210,13 @@ void MainWindow::setMinimalInterface() {
     minimalInterface = true;
     Settings::getProgramSettings()->minimalInterface = true;
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
+
+    if (miniGameSettings == nullptr) {
+        createMiniInterface();
+        connect(miniGameSettings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+        connect(miniGameSettings, SIGNAL(undoMove()), table, SLOT(undoMove()));
+    }
+
     if (table->getGameState() != GameState::Started)
         return;
 
@@ -222,16 +230,8 @@ void MainWindow::setMinimalInterface() {
     panelAnim->start();
 
 
-    if (miniGameSettings == nullptr) {
-        createMiniInterface();
-        connect(miniGameSettings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
-        connect(miniGameSettings, SIGNAL(undoMove()), table, SLOT(undoMove()));
-    }
-
     miniGameSettings->show();
     miniGameSettings->resize(gameSettingsWidget->width()/2, gameSettingsWidget->height()/2);
-
-
     miniGameSettings->move(width(), height());
     original = miniGameSettings->geometry();
     final = original;
@@ -346,6 +346,7 @@ void MainWindow::createMiniInterface() {
     miniGameSettings = new MiniGameSettings(this);
     QObject::connect(miniGameSettings, SIGNAL(setFullInterface()), this, SLOT(setFullInterface()));
     QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), miniGameSettings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    miniGameSettings->hide();
 }
 
 
@@ -399,6 +400,7 @@ void MainWindow::setGameState(GameState state) {
     }
 }
 
+//TODO - disable playing when the network peer has disconnected
 void MainWindow::onMovePlayed(int row, int col) {
     Logger::log(QString("%1: %2 %3").arg(__func__).arg(row).arg(col));
     int crtPlayer;
@@ -406,7 +408,6 @@ void MainWindow::onMovePlayed(int row, int col) {
     table->getPlayersState(crtPlayer, crtType, oppType);
     Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
     if (crtType == PlayerType::Network) {
-        //compose a move played message
         ProtoJson::Msg msg;
         msg.type = ProtoJson::MsgType::PlayMove;
         msg.json["row"] = row;

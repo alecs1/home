@@ -49,6 +49,7 @@ public:
     void setBTClientSocket(QBluetoothSocket* sock);
     void setBTServerSocket(QBluetoothSocket* sock);
 
+    //Protocol and state
     ProtoJson::Msg getMessage(int& parsedBytes);
     void update();
     bool activeConnection() const;
@@ -61,6 +62,8 @@ public:
 
 public slots:
     void dataAvailable();
+    void socketDisconnected();
+    void onSocketError();
 
 signals:
     void connStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);

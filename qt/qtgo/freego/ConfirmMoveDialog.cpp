@@ -41,13 +41,17 @@ void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
     //ui->confirmButton->setStyleSheet(styleSheet);
 }
 
+/**
+ * @brief Make the interface float over the table, like the menus do on mobile games. Currently disabled because it looks bad.
+ */
 void ConfirmMoveDialog::setMinimalInterface(bool aMinimal) {
-    /*
     if (minimal == aMinimal) {
         return;
     }
-
     minimal = aMinimal;
+
+    //TODO - his is currently inactive because it looks bad.
+    /*
     if (minimal) {
         ui->verticalLayout->setSpacing(width() / 5);
         int space = width()/100;
