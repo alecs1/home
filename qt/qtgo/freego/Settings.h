@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 #include <QString>
-
+#include <QStringList>
 //#include "Global.h"
 #include "Constants.h"
 
@@ -52,7 +52,7 @@ public:
     static void setMessageSender(MainWindow* newSender);
 private:
     static SProgramSettings settings;
-    static SSavedData savedData;
+    //static SSavedData savedData;
     static MainWindow* messageSender;
 };
 

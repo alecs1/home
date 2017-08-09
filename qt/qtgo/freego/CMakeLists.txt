@@ -77,7 +77,7 @@ else ()
     add_executable(FreeGo ${ALL_SOURCES})
 endif()
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications dialogs)
 
 if (ANDROID)
     target_link_libraries(FreeGo log)

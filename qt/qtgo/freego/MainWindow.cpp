@@ -435,7 +435,7 @@ int MainWindow::connectBT() {
 
 void MainWindow::connectTCP() {
     AddressDialog addressDialog(Settings::getProgramSettings()->previousTCPAddresses, this);
-    int result = addressDialog->exec();
+    int result = addressDialog.exec();
     QString address;
     int port = 0;
     if (result == QDialog::Accepted) {
@@ -447,7 +447,7 @@ void MainWindow::connectTCP() {
             if (auxAddr.length() > 1)
                 port = auxAddr[1].toInt();
             if (auxAddr.length() > 2) {
-                Log(QString("Address may be invalid: %1").arg(addressDialog.address()), Logger::ERR);
+                Logger::log(QString("Address may be invalid: %1").arg(addressDialog.address()), Logger::ERR);
             }
         }
     }
@@ -456,7 +456,9 @@ void MainWindow::connectTCP() {
     bool success = connMan->connectTCP(address, port);
     if (success && address.length() > 0) {
         QStringList previousAddr = Settings::getProgramSettings()->previousTCPAddresses;
-        if (!previousAddr.contains(address))
+        if (!previousAddr.contains(address)) {
+            Settings::getProgramSettings()->previousTCPAddresses.insert(0, address);
+        }
     }
 }
 

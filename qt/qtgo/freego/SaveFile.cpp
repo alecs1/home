@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QFile>
 #include <QCryptographicHash>
 #include <QTextStream>

@@ -7,7 +7,7 @@ qt5_wrap_ui(UI_HEADERS_DIALOGS
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 qt5_wrap_cpp(MOC_HEADERS
-    AdressDialog.h
+    AddressDialog.h
     GameChooser.h)
 
 

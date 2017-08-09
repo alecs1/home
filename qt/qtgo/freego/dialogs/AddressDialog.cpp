@@ -3,7 +3,7 @@
 
 #include <QCompleter>
 
-AddressDialog::AddressDialog(const QStringList completionList, QWidget *parent) :
+AddressDialog::AddressDialog(const QStringList completionList, QWidget* parent) :
     QDialog(parent),
     ui(new Ui::AddressDialog)
 {
