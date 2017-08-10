@@ -101,21 +101,25 @@ bool ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
     uint16_t crtPort = firstPort;
     QTcpSocket* sock = new QTcpSocket();
     while (!success && crtPort <= lastPort) {
+        Logger::log(QString("Compare %1 %2").arg(addr.toString()).arg(tcpServer->serverAddress().toString()));
 #if QT_VERSION >= 0x050800
+        //TODO - is this wrong?
         if (addr.isEqual(tcpServer->serverAddress()))
 #else
         auto compareBytes = [](Q_IPV6ADDR addr1, Q_IPV6ADDR addr2) {
             for (int i = 0; i < 16; i++) {
+                Logger::log(QString("%1 %2").arg(addr1.c[i]).arg(addr2.c[i]));
                 if (addr1.c[i] != addr2.c[i]) {
                     return false;
                 }
             }
             return true;
         };
-        if ((addr.protocol() == QAbstractSocket::IPv4Protocol && addr.toIPv4Address() == tcpServer->serverAddress().toIPv4Address()) ||
-            compareBytes(addr.toIPv6Address(), tcpServer->serverAddress().toIPv6Address()) )
+        if ( (addr.protocol() == QAbstractSocket::IPv4Protocol && (addr.toIPv4Address() == QHostAddress(QHostAddress::LocalHost).toIPv4Address() || (addr.toIPv4Address() == tcpServer->serverAddress().toIPv4Address()))) ||
+            (addr.protocol() == QAbstractSocket::IPv6Protocol && (compareBytes(addr.toIPv6Address(), QHostAddress(QHostAddress::LocalHostIPv6).toIPv6Address()) || compareBytes(addr.toIPv6Address(), tcpServer->serverAddress().toIPv6Address())) ) )
 #endif
         {
+            Logger::log(QString("Addresses: %1 %2").arg(addr.toIPv4Address()).arg(tcpServer->serverAddress().toIPv4Address()));
             if (crtPort == tcpServer->serverPort()) {
                 //skip ourselves
                 crtPort += 1;
@@ -141,6 +145,7 @@ bool ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
         Logger::log(QString("%1 - failed to connect, last error: %2").arg(LOG_POS).arg(sock->errorString()));
         delete sock;
     }
+    return success;
 }
 
 BTServer* ConnMan::getBTServer() const {

@@ -1,7 +1,7 @@
 Linux
 mkdir qtgo-build
 cd qtgo-build
-cmake ../qtgo
+cmake -DCMAKE_BUILD_TYPE=Debug ../qtgo
 
 
 Android.
