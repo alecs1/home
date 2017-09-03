@@ -13,8 +13,8 @@
 class DrawAreaWidget;
 class GoTable;
 class RoundInfo;
-class GameSettings;
-class MiniGameSettings;
+class GameControlWidget;
+class MiniGameControlWidget;
 class PeerChooser;
 class ConfirmMoveDialog;
 class QToolButton;
@@ -48,6 +48,7 @@ public slots:
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
     void onMovePlayed(int row, int col);
+    void onResign();
 
     int connectBT();
     void connectTCP();
@@ -72,8 +73,8 @@ private:
 
 private:
     bool minimalInterface = false;
-    GameSettings* gameSettingsWidget = nullptr;
-    MiniGameSettings* miniGameSettings = nullptr;
+    GameControlWidget* gameControlWidget = nullptr;
+    MiniGameControlWidget* miniGameControlWidget = nullptr;
     PeerChooser* peerChooser = nullptr;
     ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;

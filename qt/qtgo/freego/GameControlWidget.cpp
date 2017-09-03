@@ -4,8 +4,8 @@
 #include <QMessageBox>
 #include <cmath>
 
-#include "GameSettings.h"
-#include "ui_GameSettings.h"
+#include "GameControlWidget.h"
+#include "ui_GameControlWidget.h"
 
 #include "PlayerWidget.h"
 #include "GameStruct.h"
@@ -13,9 +13,9 @@
 #include "RoundInfo.h"
 #include "HandicapDialog.h"
 
-GameSettings::GameSettings(QWidget *parent):
+GameControlWidget::GameControlWidget(QWidget *parent):
     QWidget(parent),
-    ui(new Ui::GameSettings())
+    ui(new Ui::GameControlWidget())
 {
     ui->setupUi(this);
 
@@ -124,17 +124,17 @@ GameSettings::GameSettings(QWidget *parent):
     printf("%s - end\n", __func__);
 }
 
-GameSettings::~GameSettings() {
+GameControlWidget::~GameControlWidget() {
     delete confirmMoveDialog;
 }
 
 //remove the roundInfo from the layout but stil own it;
-RoundInfo* GameSettings::popRoundInfo() {
+RoundInfo* GameControlWidget::popRoundInfo() {
     ui->topRow->removeWidget(roundInfo);
     return roundInfo;
 }
 
-void GameSettings::pushBackRoundInfo() {
+void GameControlWidget::pushBackRoundInfo() {
     ui->roundInfoLayout->insertWidget(0, roundInfo);
     roundInfo->setVisible(roundInfoVisible);
     ui->topRow->update(); //probably Qt bug, need to update explicitly
@@ -143,13 +143,13 @@ void GameSettings::pushBackRoundInfo() {
 /**
  * Receive the global actions from MainWindow
  */
-void GameSettings::setActions(QList<QAction*>& actions) {
+void GameControlWidget::setActions(QList<QAction*>& actions) {
     for(int i = 0; i < actions.size(); i++) {
         mainMenu->addAction(actions[i]);
     }
 }
 
-void GameSettings::setGameState(GameState state) {
+void GameControlWidget::setGameState(GameState state) {
     gameState = state;
     if (state == GameState::Resumed) {
         roundInfo->show();
@@ -212,12 +212,12 @@ void GameSettings::setGameState(GameState state) {
     }
 }
 
-void GameSettings::setScoreEstimate(float score) {
+void GameControlWidget::setScoreEstimate(float score) {
     scoreEstimate = score;
     updateScoreEstimateButton();
 }
 
-void GameSettings::updateScoreEstimateButton() {
+void GameControlWidget::updateScoreEstimateButton() {
     QString text;
     if (scoreVisible) {
         text = "White: ";
@@ -235,7 +235,7 @@ void GameSettings::updateScoreEstimateButton() {
     ui->scoreEstimateButton->setText(text);
 }
 
-void GameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
+void GameControlWidget::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
     roundInfo->setCurrentPlayer(player, type, opponentType);
     roundInfo->update();
 
@@ -249,7 +249,7 @@ void GameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType oppo
     ui->undoButton->setEnabled(enableBlockingGroup);
 }
 
-void GameSettings::showConfirmButton(bool show, int colour) {
+void GameControlWidget::showConfirmButton(bool show, int colour) {
     if (show == false) {
         if (confirmMoveDialog != NULL) {
             confirmMoveDialog->hide();
@@ -290,20 +290,20 @@ void GameSettings::showConfirmButton(bool show, int colour) {
     confirmMoveDialog->activateWindow();
 }
 
-void GameSettings::toggleShowEstimateScore() {
+void GameControlWidget::toggleShowEstimateScore() {
     if (scoreVisible)
         setShowScoreEstimate(false);
     else
         setShowScoreEstimate(true);
 }
 
-void GameSettings::setShowScoreEstimate(bool show) {
+void GameControlWidget::setShowScoreEstimate(bool show) {
     scoreVisible = show;
     updateScoreEstimateButton();
     emit doEstimateScore(scoreVisible);
 }
 
-void GameSettings::showMenu() {
+void GameControlWidget::showMenu() {
     printf("%s\n", __func__);
 
     if (true) {
@@ -340,7 +340,7 @@ void GameSettings::showMenu() {
 }
 
 
-void GameSettings::showHandicapWindow() {
+void GameControlWidget::showHandicapWindow() {
     SGameSettings::Handicap newHandicap = settings.handicap;
     HandicapDialog handicapWindow(newHandicap);
     handicapWindow.setWindowTitle("Handicap");
@@ -351,7 +351,7 @@ void GameSettings::showHandicapWindow() {
     }
 }
 
-void GameSettings::updateHandicap(SGameSettings::Handicap newHandicap) {
+void GameControlWidget::updateHandicap(SGameSettings::Handicap newHandicap) {
     settings.handicap = newHandicap;
     printf("%s - new handicap: komi:%f, stones:%d, placement:%d\n",
            __func__, newHandicap.komi, newHandicap.handicap, newHandicap.handicapPlacementFree);
@@ -393,7 +393,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
     return true;
 }
 
-void GameSettings::populateSettings() {
+void GameControlWidget::populateSettings() {
     printf("%s\n", __func__);
     SGameSettings newSettings;
     newSettings.size = 19;
@@ -419,7 +419,7 @@ void GameSettings::populateSettings() {
     }
 }
 
-void GameSettings::receiveSettings(SGameSettings newSettings) {
+void GameControlWidget::receiveSettings(SGameSettings newSettings) {
     printf("%s\n", __func__);
     switch (newSettings.size) {
         case 9:
@@ -440,14 +440,14 @@ void GameSettings::receiveSettings(SGameSettings newSettings) {
     updateHandicap(newSettings.handicap);
 }
 
-void GameSettings::askConfirmFinishGame() {
+void GameControlWidget::askConfirmFinishGame() {
     int ret = QMessageBox::question(this, "FreeGo", "Do you want to resign the game?",
                                     QMessageBox::Cancel | QMessageBox::Ok);
     if (ret == QMessageBox::Ok)
-        emit finishGamePerform(true);
+        emit resign();
 }
 
-void GameSettings::launchGameClicked() {
+void GameControlWidget::launchGameClicked() {
     populateSettings();
     emit launchGamePerform(settings);
 }

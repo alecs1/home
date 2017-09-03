@@ -1118,7 +1118,7 @@ void GoTable::finish(bool finishByResign) {
     int stoneCount = countStones(&game);
 
     if (gnuGoMutex->tryLock() == false) {
-        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        Logger::log(QString("%1 - avoided crash with mutex, but there's a logical error").arg(__func__), Logger::ERR);
         gnuGoMutex->lock();
     }
 
@@ -1127,7 +1127,7 @@ void GoTable::finish(bool finishByResign) {
     //if the game was played quite a bit before quitting, we show the winner but also a score estimate
     if (stoneCount  > game.size * game.size / 2) {
         showEstimateScore = true;
-        printf("%s - stoneCount=%d, will force estimating a score\n", __func__, stoneCount);
+        Logger::log(QString("%1 - stoneCount=%2, will force estimating a score").arg(__func__).arg(stoneCount), Logger::DBG);
     }
 
     BusyDialog busyDialog(this);

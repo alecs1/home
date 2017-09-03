@@ -13,8 +13,10 @@
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "FreeGo", __VA_ARGS__);
 #endif
 
-#define FREEGO_PASS_MOVE (-2)
-#define PASS_COUNT_TO_FINISH (2)
+
+#define FREEGO_PASS_MOVE (-2) //A move with row=-2 will cause a pass
+#define PASS_COUNT_TO_FINISH (2) //Two consecutive passes will end the game
+#define FREEGO_RESIGN_MOVE (-3) //A move with row=-3 will be a resign
 
 enum class GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game

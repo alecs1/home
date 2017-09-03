@@ -32,7 +32,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 
 #qt UI
-qt5_wrap_ui(UI_HEADERS MainWindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
+qt5_wrap_ui(UI_HEADERS MainWindow.ui GameControlWidget.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
     RoundInfo.ui Handicap.ui HandicapDialog.ui BusyDialog.ui SettingsWidget.ui SettingsDialog.ui)
 
 
@@ -45,8 +45,8 @@ qt5_wrap_cpp(HEADER_MOC
     MainWindow.h
     DrawAreaWidget.h
     GoTable.h
-    GameSettings.h
-    MiniGameSettings.h
+    GameControlWidget.h
+    MiniGameControlWidget.h
     PlayerWidget.h
     GameEndDialog.h
     ConfirmMoveDialog.h
@@ -65,7 +65,7 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btchat)
 
-set (ALL_SOURCES MainWindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
+set (ALL_SOURCES MainWindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameControlWidget.cpp MiniGameControlWidget.cpp PlayerWidget.cpp
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
     SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp Logger.cpp

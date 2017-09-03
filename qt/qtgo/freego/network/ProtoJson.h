@@ -30,6 +30,7 @@ namespace ProtoKw {
     const QString PlayMove = "PlayMove";
 }
 
+//TODO - split connectivity from game messages that are reserved for the game.
 enum MsgType:uint8_t {
     //Replies:
     Ack,

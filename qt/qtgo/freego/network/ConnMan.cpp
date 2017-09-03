@@ -228,6 +228,7 @@ void ConnMan::update() {
                     break;
                 }
                 case ConnState::Connected: {
+                    //TODO - this check does not belong here
                     if (msg.type >= MsgType::Ack && msg.type <= MsgType::PlayMove) {
                         //forward the message
                         gameManager->onRemoteMessage(msg);
