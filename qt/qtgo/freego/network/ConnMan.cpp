@@ -58,24 +58,6 @@ uint16_t ConnMan::listenTCP() {
 }
 
 /**
- * Listen on a specific address and port
- */
-bool ConnMan::listenTCP(const QString address, const int port) {
-    if (tcpServer->isListening()) {
-        Logger::log(QString("Will stop listening on port %1 and start listening on port %2").arg(tcpServer->serverPort()).arg(port));
-    }
-    QHostAddress addr(address);
-    bool success = tcpServer->listen(addr, port);
-    if (success) {
-        Logger::log(QString("Listening on TCP port %1").arg(port));
-    }
-    else {
-        Logger::log(QString("Failed to listen on TCP port %1").arg(port), Logger::ERR);
-    }
-    return success;
-}
-
-/**
  * Try to connect on TCP, currently blocks trying on a port range
  * @param address - if missing it will default to localhost
  * @param port - if missing default to the entire default range
@@ -120,8 +102,6 @@ bool ConnMan::connectTCP(const QString address/* = ""*/, const uint16_t port/* =
             crtPort += 1;
         }
     }
-
-
 
     if (success) {
         Logger::log(QString("Connected as client. Socket %1:%2 <-> %3:%4").arg(sock->localAddress().toString()).arg(sock->localPort()).arg(sock->peerAddress().toString()).arg(sock->peerPort()));

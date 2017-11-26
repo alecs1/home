@@ -39,7 +39,6 @@ public:
 
     //TCP
     uint16_t listenTCP();
-    bool listenTCP(const QString address, const int port);
     bool connectTCP(const QString address = "", const uint16_t port = 0);
 
     //BlueTooth related stuff, needs heavy rework
