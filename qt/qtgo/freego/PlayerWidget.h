@@ -1,9 +1,9 @@
-#ifndef PLAYERWIDGET_H
-#define PLAYERWIDGET_H
+#pragma once
 
 #include <QWidget>
 
-#include "Global.h"
+#include "Constants.h"
+//#include "Global.h"
 
 
 class QMenu;
@@ -26,7 +26,7 @@ public:
 
 //not all of these need to be slots, just keeping them together
 public slots:
-    int playerType() const;
+    PlayerType playerType() const;
     void setPlayerType(PlayerType type);
     void setPlayerTypeInt(int type);
 
@@ -34,7 +34,7 @@ public slots:
     void setAIStrength(int strength);
 
     void showMenuExplicit();
-    void showMenu(int playerTypeInt=0);
+    void showMenu(const PlayerType playerType = PlayerType::AI);
     void AIActionActivated(QAction* action);
 
 signals:
@@ -47,5 +47,3 @@ private:
     QMenu* AIMenu;
     int AIStrength = 0;
 };
-
-#endif // PLAYERWIDGET_H

@@ -1,9 +1,11 @@
-#ifndef PROTOSTRUCTS_H
-#define PROTOSTRUCTS_H
+#pragma once
+
+/**
+ * A low level protocol which most likely will never be implemented
+ */
 
 #include <stdint.h>
 
-//the low level, byte protocol
 namespace ProtoBinary {
 
 #define MAX_MSG_LEN 0xFFFF
@@ -76,7 +78,4 @@ int readMessage(char* buffer, unsigned int len);
 SCommand parseCommand(SMsgHeader header, char* buffer, unsigned int len);
 int serialiseCommand(SCommand cmd, char* buffer, unsigned int bufferLen);
 
-} //namespace Proto
-
-#endif // PROTOSTRUCTS_H
-
+} //namespace ProtoBinary

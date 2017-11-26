@@ -32,7 +32,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 
 #qt UI
-qt5_wrap_ui(UI_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
+qt5_wrap_ui(UI_HEADERS MainWindow.ui GameControlWidget.ui PlayerWidget.ui GameEndDialog.ui ConfirmMoveDialog.ui
     RoundInfo.ui Handicap.ui HandicapDialog.ui BusyDialog.ui SettingsWidget.ui SettingsDialog.ui)
 
 
@@ -42,11 +42,11 @@ qt5_wrap_ui(UI_HEADERS mainwindow.ui GameSettings.ui PlayerWidget.ui GameEndDial
 
 #qt moc
 qt5_wrap_cpp(HEADER_MOC
-    mainwindow.h
+    MainWindow.h
     DrawAreaWidget.h
     GoTable.h
-    GameSettings.h
-    MiniGameSettings.h
+    GameControlWidget.h
+    MiniGameControlWidget.h
     PlayerWidget.h
     GameEndDialog.h
     ConfirmMoveDialog.h
@@ -65,7 +65,7 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btchat)
 
-set (ALL_SOURCES mainwindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameSettings.cpp MiniGameSettings.cpp PlayerWidget.cpp
+set (ALL_SOURCES MainWindow.cpp GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp main.cpp GameControlWidget.cpp MiniGameControlWidget.cpp PlayerWidget.cpp
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
     SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp Logger.cpp
@@ -77,7 +77,7 @@ else ()
     add_executable(FreeGo ${ALL_SOURCES})
 endif()
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications dialogs)
 
 if (ANDROID)
     target_link_libraries(FreeGo log)

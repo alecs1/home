@@ -11,7 +11,11 @@
 #include <QLabel>
 #include <QtMultimedia/QSound>
 
+//temporary for debug.
+#include <QJsonDocument>
+
 #include <cmath>
+
 
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
@@ -30,11 +34,13 @@ int get_sgfmove(SGFProperty *property);
 
 
 #include "GoTable.h"
+
 #include "GameStruct.h"
 #include "GameEndDialog.h"
 #include "SaveFile.h"
 #include "BusyDialog.h"
 #include "Utils.h"
+#include "Logger.h"
 //likely temporary
 #include "SettingsWidget.h"
 
@@ -222,7 +228,7 @@ GoTable::~GoTable() {
 
 //This code is outside the constructor because this is executed after the signals of this object are connected
 void GoTable::checkForResumeGame() {
-    if (loadSaveGameFile(crtGameSfgFName)) {
+    if (loadGame(crtGameSfgFName)) {
         state = GameState::Resumed;
     }
     else {
@@ -236,25 +242,29 @@ void GoTable::checkForResumeGame() {
     emit gameStateChanged(state);
 }
 
-bool GoTable::loadGame(QString fileName) {
-    bool result = loadSaveGameFile(fileName);
-    if (result) {
-        state = GameState::Resumed;
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-        emit gameStateChanged(state);
-    }
-    return result;
+GameState GoTable::getGameState() const {
+    return state;
+}
+
+void GoTable::getPlayersState(int& crt, PlayerType& crtType, PlayerType& opponentType) const {
+    crt = this->crtPlayer;
+    crtType = players[crtPlayer];
+    opponentType = players[otherColour(crtPlayer)];
 }
 
 /**
- * @brief GoTable::getFullGame get the entire game as GnuGo serialises it
+ * @brief GoTable::setSecondPlayerToNetwork hack function to instruct that the second player is now of type network.
  */
-QString GoTable::getFullGame() const {
-    return SaveFile::getSaveString(sgfTree->root);
-}
-
-GameState GoTable::getGameState() const {
-    return state;
+void GoTable::setSecondPlayerToNetwork() {
+    Logger::log(QString("%1").arg(__func__));
+    if (gameSettings.white == PlayerType::LocalHuman) {
+        gameSettings.black = PlayerType::Network;
+    }
+    else if (gameSettings.black == PlayerType::LocalHuman) {
+        gameSettings.white = PlayerType::Network;
+    }
+    emit pushGameSettings(gameSettings);
+    update();
 }
 
 void GoTable::changeProgramSettings() {
@@ -265,27 +275,28 @@ SGameSettings* GoTable::getGameSettingsPointer() {
     return &gameSettings;
 }
 
+bool GoTable::saveGame(QJsonObject& json) {
+    bool result = SaveFile::writeSave(json, sgfTree->root, &this->gameSettings, &auxInfo);
+    return result;
+}
+
 bool GoTable::saveGame(QString fileName) {
-    //printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
+    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
     bool result = SaveFile::writeSave(fileName, sgfTree->root, &this->gameSettings, &auxInfo);
     return result;
 }
 
-bool GoTable::loadSaveGameFile(QString fileName) {
-    printf("%s, fileName=%s\n", __func__, fileName.toUtf8().constData());
-    QFile f(fileName);
+/**
+ * @brief GoTable::saveGameForRemote serialise the game for playing with a remote (Network) player.
+ * @param json
+ * @return
+ */
+bool GoTable::saveGameForRemote(QJsonObject& json) {
+    bool result = SaveFile::writeSaveForRemote(json, sgfTree->root, &this->gameSettings, &auxInfo);
+    return result;
+}
 
-    if (!f.exists())
-        return false;
-
-    SGFNode* aux = NULL;
-    SGameSettings auxSettings;
-    SAuxGameInfo auxGameInfo;
-    bool success = SaveFile::loadSave(fileName, &aux, &auxSettings, &auxGameInfo);
-    //bool success = SaveFile::loadSave()
-    if (!success)
-        return false;
-
+bool GoTable::loadGame(SGFNode* aux, SGameSettings auxSettings, SAuxGameInfo auxGameInfo) {
     sgfFreeNode(sgfTree->root);
     sgfTree->lastnode = NULL;
     sgfTree->root = sgfNewNode();
@@ -296,8 +307,10 @@ bool GoTable::loadSaveGameFile(QString fileName) {
     auxInfo = auxGameInfo;
 
 
-    if (aux == NULL)
+    if (aux == NULL) {
+        Logger::log("aux == NULL", Logger::ERR);
         return false;
+    }
 
     bool retVal = false;
     float replayScore = 0.0;
@@ -309,7 +322,7 @@ bool GoTable::loadSaveGameFile(QString fileName) {
       node = node->child;
     }
 
-    printf("%s - done replaying, replayScore=%f, totalScore=%f\n", __func__, replayScore, totalScore);
+    Logger::log(QString("%1 - done replaying, replayScore=%2, totalScore=%3").arg(__func__).arg(replayScore).arg(totalScore));
     if (playedMoves > 0) {
         populateStructFromGnuGo();
         if (crtPlayer == BLACK)
@@ -326,10 +339,64 @@ bool GoTable::loadSaveGameFile(QString fileName) {
     return retVal;
 }
 
+bool GoTable::loadGame(const QString fileName) {
+    Logger::log(QString("%1, fileName=%2").arg(__func__).arg(fileName));
+    QFile f(fileName);
+    if (!f.exists() || !f.open(QIODevice::ReadOnly))
+        return false;
+
+    QByteArray data = f.readAll();
+
+    SGFNode* aux = NULL;
+    SGameSettings auxSettings;
+    SAuxGameInfo auxGameInfo;
+
+    bool success = SaveFile::loadSave(data, &aux, &auxSettings, &auxGameInfo);
+    if (!success)
+        return false;
+    loadGame(aux, auxSettings, auxGameInfo);
+
+    return success;
+}
+
+bool GoTable::loadGameFromRemote(const QJsonObject &json) {
+    SGFNode* aux = NULL;
+    SGameSettings auxSettings;
+    SAuxGameInfo auxGameInfo;
+    bool success = SaveFile::loadSaveFromRemote(json, &aux, &auxSettings, &auxGameInfo);
+    if (!success) {
+        Logger::log(QString("%1 - could not load remote save: %2").arg(__func__).arg(QJsonDocument(json).toJson().constData()), Logger::ERR);
+        return false;
+    }
+
+    success = loadGame(aux, auxSettings, auxGameInfo);
+    if (!success) {
+        Logger::log(QString("%1 - loading failed. Investigate").arg(__func__));
+    }
+
+    if (success) {
+        state = GameState::Resumed;
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+        emit gameStateChanged(state);
+    }
+
+    return success;
+}
+
+bool GoTable::loadGameAndStart(const QString fileName) {
+    bool success = loadGame(fileName);
+    if (success) {
+        state = GameState::Resumed;
+        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+        emit gameStateChanged(state);
+    }
+    return success;
+}
+
 void GoTable::launchGamePressed(SGameSettings newSettings) {
     printf("%s\n", __func__);
 
-    if (state == GameState::Resumed){
+    if (state == GameState::Resumed) {
         state = GameState::Started;
         if(players[crtPlayer] == PlayerType::AI) {
             QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
@@ -337,7 +404,6 @@ void GoTable::launchGamePressed(SGameSettings newSettings) {
     }
     else if (state == GameState::Initial || state == GameState::Stopped) {
         changeGameSettings(newSettings);
-
         launchGame();
         state = GameState::Started;
     }
@@ -433,9 +499,7 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
     //       __func__, pos.x(), pos.y(), newStoneCol, newStoneRow, unconfirmedStoneCol, unconfirmedStoneRow);
     if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
         if (askPlayConfirmation) {
-            //printf("%s - will ask for user confirmation for %d %d\n", __func__, newStoneRow, newStoneCol);
             if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
-                //user confirmed by double clicking this
                 playMove(pos.y(), pos.x());
                 //printf("%s - %d %d confirmed with double click, hiding confirmation window\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
@@ -447,7 +511,6 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
             else {
                 unconfirmedStoneRow = newStoneRow;
                 unconfirmedStoneCol = newStoneCol;
-                //printf("%s - show confirmation window for %d %d\n", __func__, newStoneRow, newStoneCol);
                 newStoneRow = -1;
                 newStoneCol = -1;
                 emit askUserConfirmation(true, crtPlayer);
@@ -625,7 +688,7 @@ void GoTable::paintEvent(QPaintEvent *) {
                             drawDiameter, drawDiameter);
 
             //more transparent as the move is considered weaker
-            QColor backColour (0, 0, 64, 220 - 20 * i);
+            QColor backColour (32, 32, 64, 220 - 20 * i);
             pen.setWidthF(0);
             pen.setColor(backColour);
             painter.setPen(pen);
@@ -735,9 +798,12 @@ bool GoTable::buildPixmaps(int diameter) {
     return true;
 }
 
-
+/**
+ * @brief GoTable::playMove - try to play a move, all GUI conditions have been fullfilled, now check the logic ones.
+ * Special case for the networked game: we play, and perform and undo in case the move is not accepted
+ */
 bool GoTable::playMove(int row, int col) {
-    printf("placeStone: %d, %d, %d\n", row, col, crtPlayer);
+    Logger::log(QString("%1: %2, %3. Plyer %4 of type %5").arg(__func__).arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
     showHints = false;
 
     inputBlockingDuration = 0;
@@ -777,6 +843,9 @@ bool GoTable::playMove(int row, int col) {
             play_move(pos, crtPlayer);
             retVal = true;
         }
+        else {
+            Logger::log(QString("Move not legal: %1 %2. Plyer %3 of type %4").arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
+        }
         //printfGnuGoStruct();
         populateStructFromGnuGo();
     }
@@ -793,6 +862,9 @@ bool GoTable::playMove(int row, int col) {
     if (programSettings->soundsVolume > 0) {
         QSound::play(QString(":/resources/sounds/click.wav"));
     }
+
+    //Aici - with a remote player we need to spin and wait for confirmation later in the process
+
 
     //Here we're sure a move has been played
     if (state == GameState::Initial) {
@@ -847,6 +919,9 @@ bool GoTable::playMove(int row, int col) {
     }
 
     emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    Logger::log(QString("movePlayed: %1 %2").arg(row).arg(col));
+    Logger::log(QString("Turn changed to: crtPlayer: %1, crtType: %2, otherType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])).arg(players[otherColour(crtPlayer)]));
+    emit movePlayed(row, col);
     return retVal;
 }
 
@@ -1043,7 +1118,7 @@ void GoTable::finish(bool finishByResign) {
     int stoneCount = countStones(&game);
 
     if (gnuGoMutex->tryLock() == false) {
-        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+        Logger::log(QString("%1 - avoided crash with mutex, but there's a logical error").arg(__func__), Logger::ERR);
         gnuGoMutex->lock();
     }
 
@@ -1052,7 +1127,7 @@ void GoTable::finish(bool finishByResign) {
     //if the game was played quite a bit before quitting, we show the winner but also a score estimate
     if (stoneCount  > game.size * game.size / 2) {
         showEstimateScore = true;
-        printf("%s - stoneCount=%d, will force estimating a score\n", __func__, stoneCount);
+        Logger::log(QString("%1 - stoneCount=%2, will force estimating a score").arg(__func__).arg(stoneCount), Logger::DBG);
     }
 
     BusyDialog busyDialog(this);
@@ -1153,9 +1228,6 @@ void GoTable::finish(bool finishByResign) {
 
     file.setFileName(crtGameSfgFName);
     file.rename(oldSgfFName);
-
-
-
 
     GameEndDialog endDialog(this);
     endDialog.setText(finalText);

@@ -41,16 +41,28 @@ void ConfirmMoveDialog::setPixmap(QPixmap& pixmap) {
     //ui->confirmButton->setStyleSheet(styleSheet);
 }
 
+/**
+ * @brief Make the interface float over the table, like the menus do on mobile games. Currently disabled because it looks bad.
+ */
 void ConfirmMoveDialog::setMinimalInterface(bool aMinimal) {
+    if (minimal == aMinimal) {
+        return;
+    }
     minimal = aMinimal;
-    ui->verticalLayout->setSpacing(width() / 5);
-    int space = width()/100;
-    ui->verticalLayout->setContentsMargins(space, width() / 5, space, width() / 5);
-    setAutoFillBackground(true);
-    QPalette pal(palette());
-    QColor backgCol(Settings::getProgramSettings()->tableColour);
-    pal.setColor(QPalette::Background, backgCol);
-    setPalette(pal);
+
+    //TODO - his is currently inactive because it looks bad.
+    /*
+    if (minimal) {
+        ui->verticalLayout->setSpacing(width() / 5);
+        int space = width()/100;
+        ui->verticalLayout->setContentsMargins(space, width() / 5, space, width() / 5);
+        setAutoFillBackground(true);
+        QPalette pal(palette());
+        QColor backgCol(Settings::getProgramSettings()->tableColour);
+        pal.setColor(QPalette::Background, backgCol);
+        setPalette(pal);
+    }
+    */
 }
 
 void ConfirmMoveDialog::changeProgramSettings() {

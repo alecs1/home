@@ -1,5 +1,4 @@
-#ifndef GOTABLE_H
-#define GOTABLE_H
+#pragma once
 
 #include <QWidget>
 #include <QThread>
@@ -11,7 +10,6 @@
 #include <sgf/sgftree.h>
 
 class QMutex;
-//class SaveFile;
 
 //Very basic wrapper until (if) I decide for a nice way to get timestamps
 class QElapsedTimer;
@@ -80,11 +78,19 @@ public:
     void checkForResumeGame();
 
     //direction: 0 - width, 1 - height
+    bool saveGame(QJsonObject& json);
     bool saveGame(QString fileName);
-    bool loadGame(QString fileName);
-    QString getFullGame() const;
+    bool saveGameForRemote(QJsonObject& json);
+    bool loadGame(SGFNode *aux, SGameSettings auxSettings, SAuxGameInfo auxGameInfo);
+    bool loadGame(const QString fileName);
+    bool loadGameFromRemote(const QJsonObject& json);
+
+    bool loadGameAndStart(const QString fileName);
 
     GameState getGameState() const;
+    void getPlayersState(int& crt, PlayerType& crtType, PlayerType& opponentType) const;
+
+    void setSecondPlayerToNetwork();
 
 
     //TODO - temporary hack
@@ -111,6 +117,7 @@ private slots:
 
 signals:
     void gameStateChanged(GameState state);
+    void movePlayed(int row, int col);
     void estimateScoreChanged(float score);
     void crtPlayerChanged(int player, PlayerType type, PlayerType oponentType);
     void askUserConfirmation(bool ask, int colour=EMPTY); //ask the user for confirmation, dialog belongs to another widget
@@ -205,8 +212,4 @@ private:
 
     ElapsedTimerWrapper timer;
     QString timerDelta;
-
 };
-
-
-#endif // GOTABLE_H

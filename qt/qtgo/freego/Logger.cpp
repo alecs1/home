@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QPlainTextEdit>
 
-QString levelStrings[LogLevel::COUNT+1];
+QString levelStrings[Logger::COUNT+1];
 
 QString Logger::fileName;
 QFile* Logger::file = nullptr;
@@ -14,10 +14,10 @@ char Logger::stdoutBuffer[stdBufferSize];
 char Logger::stderrBuffer[stdBufferSize];
 
 void Logger::initLogging() {
-    levelStrings[LogLevel::INFO] = "I";
-    levelStrings[LogLevel::DBG] = "D";
-    levelStrings[LogLevel::ERR] = "E";
-    levelStrings[LogLevel::COUNT] = "LOGGER_ERROR";
+    levelStrings[Logger::INFO] = "I";
+    levelStrings[Logger::DBG] = "D";
+    levelStrings[Logger::ERR] = "E";
+    levelStrings[Logger::COUNT] = "LOGGER_ERROR";
 
     if (!QDir("logs").exists())    {
         QDir().mkdir("logs");
@@ -41,6 +41,7 @@ void Logger::initLogging() {
  * Destructor, of sorts
  */
 void Logger::finish() {
+    log("Logger closing down.");
     if (file != nullptr) {
         file->write(stdoutBuffer);
         file->close();
@@ -59,7 +60,6 @@ void Logger::setViewer(QPlainTextEdit* edit) {
 void Logger::log(const QString &msg, const LogLevel lev) {
     file->write(stdoutBuffer);
     file->write(stderrBuffer);
-    //printf("%s - %s\n", "level here", msg.toUtf8().constData());
 
     QDateTime now = QDateTime::currentDateTime();
     QString formatted = now.toString("yyyy-MM-dd hh:mm:ss.zzz") + " " + levelStrings[lev] + " " + msg;
@@ -106,6 +106,6 @@ void Logger::logQDebug(const QtMsgType type, const QMessageLogContext& context, 
 
     QString contextStr = QString("%1: %2 %3").arg(context.file).arg(context.line).arg(context.function);
 
-    log(levelStr + " " + contextStr + ". " + message, LogLevel::DBG);
+    log(levelStr + " " + contextStr + ". " + message, Logger::DBG);
 }
 

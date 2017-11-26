@@ -3,7 +3,6 @@
 
 #include <QDialog>
 
-//#include "BTServer.h"
 #include "ConnMan.h"
 
 namespace Ui {

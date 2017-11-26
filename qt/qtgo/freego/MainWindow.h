@@ -8,11 +8,13 @@
 
 #include "network/ConnMan.h"
 
+#include "network/ProtoJson.h" //TODO - temporary.
+
 class DrawAreaWidget;
 class GoTable;
 class RoundInfo;
-class GameSettings;
-class MiniGameSettings;
+class GameControlWidget;
+class MiniGameControlWidget;
 class PeerChooser;
 class ConfirmMoveDialog;
 class QToolButton;
@@ -29,7 +31,6 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
 Q_OBJECT
-
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -46,6 +47,8 @@ public slots:
     void showConfirmDialog(bool show, int colour);
     void confirmDialogDone(int confirmed);
     void setGameState(GameState state);
+    void onMovePlayed(int row, int col);
+    void onResign();
 
     int connectBT();
     void connectTCP();
@@ -58,6 +61,8 @@ public slots:
 
     void onConnStateChanged(ConnMan::ConnState state, bool initiator, ConnMan::ConnType connType);
 
+    void onRemoteMessage(const ProtoJson::Msg& msg);
+
 signals:
     void programSettingsChanged();
 
@@ -68,8 +73,8 @@ private:
 
 private:
     bool minimalInterface = false;
-    GameSettings* gameSettingsWidget = nullptr;
-    MiniGameSettings* miniGameSettings = nullptr;
+    GameControlWidget* gameControlWidget = nullptr;
+    MiniGameControlWidget* miniGameControlWidget = nullptr;
     PeerChooser* peerChooser = nullptr;
     ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;
@@ -79,8 +84,12 @@ private:
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;
 
-    //transiet dialog children
+    //transient dialog children
     notifications::DockedNotif* makeSettingsDock = nullptr;
 
     ConnMan* connMan = nullptr;
+
+    ProtoJson::Msg activeMessage; //last message sent for which we expect a reply
 };
+
+

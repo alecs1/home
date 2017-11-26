@@ -4,23 +4,43 @@
 #include <QJsonObject>
 #include <stdint.h>
 
-namespace ProtoJson {
+#include <boost/bimap.hpp>
+#include <boost/assign.hpp>
 
-struct ProtoKw {
-    static const QString MsgType;
-};
+namespace ProtoJson {
 
 #define UUID_LEN 16
 
+namespace ProtoKw {
+    const QString MsgType = "MsgType";
+    const QString Request = "Request";
+    const QString Reply = "Reply";
 
+    //MsgType
+    const QString Ack = "Ack";
+    const QString Success = "Success";
+    const QString Fail = "Fail";
+    const QString Error = "Error";
+    const QString Disconnect = "Disconnect";
+    const QString Hanshake= "Handshake";
+    const QString ListCommonGames = "ListCommonGames";
+    const QString StartNewGame = "StartNewGame";
+    const QString ResumeGame = "ResumeGame";
+    const QString ResignGame = "ResignGame";
+    const QString PlayMove = "PlayMove";
+}
+
+//TODO - split connectivity from game messages that are reserved for the game.
 enum MsgType:uint8_t {
-    //Generic:
+    //Replies:
     Ack,
+    Success,
+    Fail, //command understood but denied
+    Error, //error in processing the command
     //Connection:
     Disconnect,
     Hanshake,
     //Game
-    CommonGames,
     ListCommonGames,
     StartNewGame,
     ResumeGame,
@@ -30,33 +50,21 @@ enum MsgType:uint8_t {
     MsgTypeCount
 };
 
-
-enum ReplyType:uint8_t {
-    Success = 0,
-    Fail, //command understood but denied
-    Error, //error in processing the command
-    Invalid = 0xFF
-};
-
-struct SReply {
-    ReplyType result = ReplyType::Invalid;
-};
-
-struct SCommand {
-    MsgType cType = MsgType::MsgTypeCount;
-    char uuid[UUID_LEN];
-    char isBlack;
-    uint8_t row = 0xFF;
-    uint8_t col = 0xFF;
-    uint8_t size = 0xFF;
-    float komi = -1000;
-    uint8_t handicap = 0xFF;
-    uint8_t handicapType = 0xFF;
-};
-
+const boost::bimap<MsgType, QString> msgTypeMap = boost::assign::list_of<boost::bimap<MsgType, QString>::relation>
+        (MsgType::Ack, ProtoKw::Ack)
+        (MsgType::Success, ProtoKw::Success)
+        (MsgType::Fail, ProtoKw::Fail)
+        (MsgType::Error, ProtoKw::Error)
+        (MsgType::Disconnect, ProtoKw::Disconnect)
+        (MsgType::Hanshake, ProtoKw::Hanshake)
+        (MsgType::ListCommonGames, ProtoKw::ListCommonGames)
+        (MsgType::StartNewGame, ProtoKw::StartNewGame)
+        (MsgType::ResumeGame, ProtoKw::ResumeGame)
+        (MsgType::ResignGame, ProtoKw::ResignGame)
+        (MsgType::PlayMove, ProtoKw::PlayMove);
 
 struct Msg {
-    MsgType msgType = MsgType::MsgTypeCount;
+    MsgType type = MsgType::MsgTypeCount;
     unsigned int msgid = 0x0;
     QJsonObject json;
 

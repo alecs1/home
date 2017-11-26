@@ -1,19 +1,18 @@
-#ifndef MINISETTINGSWIDGET_H
-#define MINISETTINGSWIDGET_H
+#pragma once
 
 #include <QWidget>
 
-#include "Global.h"
+#include "Constants.h"
 
 class QToolButton;
 class RoundInfo;
 class QVBoxLayout;
 
 //TODO - should this inherit functionality from the larger brother?
-class MiniGameSettings : public QWidget {
+class MiniGameControlWidget : public QWidget {
 Q_OBJECT
 public:
-    explicit MiniGameSettings(QWidget* parent);
+    explicit MiniGameControlWidget(QWidget* parent);
     void addRoundInfo(RoundInfo* aRoundInfo);
     void removeRoundInfo();
 public slots:
@@ -30,5 +29,3 @@ private:
     QToolButton* fullInterfaceButton = NULL;
     QVBoxLayout* layoutP;
 };
-
-#endif // MINISETTINGSWIDGET_H

@@ -2,9 +2,9 @@
 #include <QToolButton>
 
 #include "Settings.h"
-#include "MiniGameSettings.h"
+#include "MiniGameControlWidget.h"
 
-MiniGameSettings::MiniGameSettings(QWidget* parent) :
+MiniGameControlWidget::MiniGameControlWidget(QWidget* parent) :
     QWidget(parent)
 {
     delete layout();
@@ -39,16 +39,16 @@ MiniGameSettings::MiniGameSettings(QWidget* parent) :
     setPalette(pal);
 }
 
-void MiniGameSettings::addRoundInfo(RoundInfo* aRoundInfo) {
+void MiniGameControlWidget::addRoundInfo(RoundInfo* aRoundInfo) {
     roundInfo = aRoundInfo;
     layoutP->insertWidget(0, (QWidget*)roundInfo);
 }
 
-void MiniGameSettings::removeRoundInfo() {
+void MiniGameControlWidget::removeRoundInfo() {
     layoutP->removeWidget((QWidget*)roundInfo);
 }
 
-void MiniGameSettings::changeProgramSettings() {
+void MiniGameControlWidget::changeProgramSettings() {
     QPalette pal(palette());
     QColor backgCol(Settings::getProgramSettings()->tableColour);
     pal.setColor(QPalette::Background, backgCol);
@@ -56,7 +56,7 @@ void MiniGameSettings::changeProgramSettings() {
     update();
 }
 
-void MiniGameSettings::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
+void MiniGameControlWidget::setCurrentPlayer(int player, PlayerType type, PlayerType opponentType) {
 
     bool enableBlockingGroup = true;
     if (type == PlayerType::AI)

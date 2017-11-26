@@ -1,25 +1,25 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
 
 #include <QFileDialog>
 #include <QPropertyAnimation>
-//debug
+#include <QMessageBox>
 #include <QToolButton>
+#include <QJsonDocument>
 
 #include "DrawAreaWidget.h"
 #include "GoTable.h"
-#include "GameSettings.h"
+#include "GameControlWidget.h"
 #include "SaveFile.h"
 #include "Settings.h"
 #include "RoundInfo.h"
 #include "AboutDialog.h"
 #include "HelpDialog.h"
 #include "SettingsDialog.h"
-#include "MiniGameSettings.h"
+#include "MiniGameControlWidget.h"
 #include "ConfirmMoveDialog.h"
 #include "DebugStuff.h"
 #include "Logger.h"
-//#include "network/BTErrorDialog.h"
 
 #include "network/BTServer.h"
 #include "network/ConnMan.h"
@@ -32,6 +32,7 @@
 
 #include "network/ProtoJson.h"
 
+#include "dialogs/AddressDialog.h"
 
 #include "Global.h"
 
@@ -50,9 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
         toolbar->hide();
     }
     statusBar()->hide();
-    #endif
 
-    #if defined(Q_OS_ANDROID)
     printf("%s - setting fullscreen for Android - TODO: does not work!!!\n", __func__);
     showFullScreen();
     printf("%s - is fullscreen=%d\n", __func__, isFullScreen());
@@ -64,8 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Settings::setMessageSender(this);
     SProgramSettings* programSettings = Settings::getProgramSettings();
-    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false)
+    if (SaveFile::loadSettings(SaveFile::getDefSettingsFName(), programSettings) == false) {
         Settings::populateDefaultProgramSettings(programSettings);
+    }
 
     setupGameSettings();
 
@@ -85,26 +85,29 @@ MainWindow::MainWindow(QWidget *parent) :
     int minHeight = drawArea->minimumSize().height();
 
 
-    ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
+    ui->gridLayout->addWidget(gameControlWidget, 0, 1);
 
     connect(this, SIGNAL(programSettingsChanged()), table, SLOT(changeProgramSettings()));
     connect(this, SIGNAL(programSettingsChanged()), drawArea, SLOT(changeProgramSettings()));
-    connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
-    connect(gameSettingsWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
-    connect(table, SIGNAL(gameStateChanged(GameState)), gameSettingsWidget, SLOT(setGameState(GameState)));
-    connect(table, SIGNAL(gameStateChanged(GameState)), this, SLOT(setGameState(GameState)));
-    connect(table, SIGNAL(estimateScoreChanged(float)), gameSettingsWidget, SLOT(setScoreEstimate(float)));
-    connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameSettingsWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    connect(gameControlWidget, SIGNAL(gameSettingsChanged(SGameSettings)), table, SLOT(changeGameSettings(SGameSettings)));
+    connect(gameControlWidget, SIGNAL(gameSettingsChanged(SGameSettings)), drawArea, SLOT(changeGameSettings(SGameSettings)));
 
-    connect(table, SIGNAL(askUserConfirmation(bool, int)), gameSettingsWidget, SLOT(showConfirmButton(bool, int)));
-    connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameSettingsWidget, SLOT(receiveSettings(SGameSettings)));
-    connect(gameSettingsWidget, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
-    connect(gameSettingsWidget, SIGNAL(finishGamePerform(bool)), table, SLOT(finish(bool)));
-    connect(gameSettingsWidget, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
-    connect(gameSettingsWidget, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
-    connect(gameSettingsWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
-    connect(gameSettingsWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
-    connect(gameSettingsWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
+    connect(table, SIGNAL(gameStateChanged(GameState)), gameControlWidget, SLOT(setGameState(GameState)));
+    connect(table, SIGNAL(gameStateChanged(GameState)), this, SLOT(setGameState(GameState)));
+    connect(table, SIGNAL(movePlayed(int, int)), this, SLOT(onMovePlayed(int,int)));
+    connect(table, SIGNAL(estimateScoreChanged(float)), gameControlWidget, SLOT(setScoreEstimate(float)));
+    connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), gameControlWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    connect(table, SIGNAL(askUserConfirmation(bool, int)), this, SLOT(showConfirmDialog(bool, int)));
+    connect(table, SIGNAL(pushGameSettings(SGameSettings)), gameControlWidget, SLOT(receiveSettings(SGameSettings)));
+
+
+    connect(gameControlWidget, SIGNAL(launchGamePerform(SGameSettings)), table, SLOT(launchGamePressed(SGameSettings)));
+    connect(gameControlWidget, SIGNAL(resign()), this, SLOT(onResign()));
+    connect(gameControlWidget, SIGNAL(doEstimateScore(bool)), table, SLOT(activateEstimatingScore(bool)));
+    connect(gameControlWidget, SIGNAL(userConfirmedMove(int)), table, SLOT(userConfirmedMove(int)));
+    connect(gameControlWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+    connect(gameControlWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
+    connect(gameControlWidget, SIGNAL(showHints()), table, SLOT(showPlayHints()));
 
     connect(ui->actionSave_Game, SIGNAL(triggered(bool)), this, SLOT(saveGame()));
     connect(ui->actionOpen_Saved_Game, SIGNAL(triggered(bool)), this, SLOT(loadGame()));
@@ -116,13 +119,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
     connect(ui->actionDebug_BT, SIGNAL(triggered(bool)), this, SLOT(showBTChat()));
 
-    connMan = new ConnMan;
+    connMan = new ConnMan(this);
     connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
-
+    connMan->listenTCP();
 
     table->checkForResumeGame();
 
-    minWidth += gameSettingsWidget->sizeHint().width();
+    minWidth += gameControlWidget->sizeHint().width();
     minWidth *= 1.1;
     minHeight *= 1.27;
 
@@ -132,19 +135,22 @@ MainWindow::MainWindow(QWidget *parent) :
     setMinimumSize(minWidth, minHeight);
 
     setWindowTitle("FreeGo");
-    if (programSettings->minimalInterface)
-        minimalInterface = true;
+    if (programSettings->minimalInterface) {
+        setMinimalInterface();
+    }
+
+    Logger::setViewer(ui->logView);
 
     double mainLoopInterval = 1000.0 / 60;
+    Logger::log(QString("mainLoopInterval: %1").arg(mainLoopInterval));
+    printf("mainLoopInterval: %g\n", mainLoopInterval);
     mainLoopTimer.setInterval(mainLoopInterval);
     mainLoopTimer.start();
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
-
-    Logger::setViewer(ui->logView);
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
+    Logger::setViewer(nullptr); //TODO - this is such a crappy solution to avoid crashes, use smart pointers
     printf("%s - TODO - fully implement this!\n", __func__);
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
     delete ui;
@@ -188,7 +194,7 @@ void MainWindow::loadGame() {
 
     bool result = false;
     if (fileName != "") {
-        result = table->loadGame(fileName);
+        result = table->loadGameAndStart(fileName);
     }
     //TODO - note an error somewhere
     printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
@@ -205,50 +211,43 @@ void MainWindow::setMinimalInterface() {
     minimalInterface = true;
     Settings::getProgramSettings()->minimalInterface = true;
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
+
+    if (miniGameControlWidget == nullptr) {
+        createMiniInterface();
+        connect(miniGameControlWidget, SIGNAL(userPassedMove()), table, SLOT(passMove()));
+        connect(miniGameControlWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
+    }
+
     if (table->getGameState() != GameState::Started)
         return;
 
-    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
-    QRect original = gameSettingsWidget->geometry();
+    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameControlWidget, "geometry");
+    QRect original = gameControlWidget->geometry();
     QRect final = original;
     final.translate(-original.width(), -original.height());
     panelAnim->setStartValue(original);
     panelAnim->setEndValue(final);
-    ui->gridLayout->removeWidget(gameSettingsWidget);
+    ui->gridLayout->removeWidget(gameControlWidget);
     panelAnim->start();
 
 
-    if (miniGameSettings == nullptr) {
-        createMiniInterface();
-        confirmMoveDialog = new ConfirmMoveDialog(this);
-        confirmMoveDialog->setMinimalInterface(true);
-        confirmMoveDialog->setVisible(false);
-        connect(table, SIGNAL(askUserConfirmation(bool, int)), this, SLOT(showConfirmDialog(bool, int)));
-        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SLOT(confirmDialogDone(int)));
-        connect(confirmMoveDialog, SIGNAL(finished(int)), table, SLOT(userConfirmedMove(int)));
-        connect(miniGameSettings, SIGNAL(userPassedMove()), table, SLOT(passMove()));
-        connect(miniGameSettings, SIGNAL(undoMove()), table, SLOT(undoMove()));
-    }
-
-    miniGameSettings->show();
-    miniGameSettings->resize(gameSettingsWidget->width()/2, gameSettingsWidget->height()/2);
-
-
-    miniGameSettings->move(width(), height());
-    original = miniGameSettings->geometry();
+    miniGameControlWidget->show();
+    miniGameControlWidget->resize(gameControlWidget->width()/2, gameControlWidget->height()/2);
+    miniGameControlWidget->move(width(), height());
+    original = miniGameControlWidget->geometry();
     final = original;
     final.translate(-original.width(), -height()/2);
-    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
+    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameControlWidget, "geometry");
     miniSettingsAnim->setStartValue(original);
     miniSettingsAnim->setEndValue(final);
     miniSettingsAnim->start();
     QObject::connect(miniSettingsAnim, SIGNAL(finished()), this, SLOT(transitionToMinDone()));
 
     if (roundInfo == NULL)
-        roundInfo = gameSettingsWidget->popRoundInfo();
+        roundInfo = gameControlWidget->popRoundInfo();
     roundInfo->setParent(this);
     roundInfo->show();
-    roundInfo->move(width() - gameSettingsWidget->width(), 0);
+    roundInfo->move(width() - gameControlWidget->width(), 0);
     roundInfo->setLayoutDirection(false);
     original = roundInfo->geometry();
     final = original;
@@ -262,8 +261,8 @@ void MainWindow::setMinimalInterface() {
 void MainWindow::transitionToMinDone() {
     printf("%s\n", __func__);
     printf("%s - roundInfo.visible=%d\n", __func__, roundInfo->isVisible());
-    ui->gridLayout->addWidget(miniGameSettings, 0, 1);
-    miniGameSettings->addRoundInfo(roundInfo);
+    ui->gridLayout->addWidget(miniGameControlWidget, 0, 1);
+    miniGameControlWidget->addRoundInfo(roundInfo);
 }
 
 void MainWindow::setFullInterface() {
@@ -272,11 +271,11 @@ void MainWindow::setFullInterface() {
 }
 
 void MainWindow::restoreFullInterface() {
-    if (ui->gridLayout->itemAtPosition(0, 1)->widget() == gameSettingsWidget) {
+    if (ui->gridLayout->itemAtPosition(0, 1)->widget() == gameControlWidget) {
         return;
     }
-    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameSettingsWidget, "geometry");
-    QRect original = gameSettingsWidget->geometry();
+    QPropertyAnimation *panelAnim = new QPropertyAnimation(gameControlWidget, "geometry");
+    QRect original = gameControlWidget->geometry();
     QRect final = original;
     final.translate(original.width(), original.height());
     panelAnim->setStartValue(original);
@@ -284,27 +283,27 @@ void MainWindow::restoreFullInterface() {
     panelAnim->start();
     QObject::connect(panelAnim, SIGNAL(finished()), this, SLOT(transitionToFullDone()));
 
-    ui->gridLayout->removeWidget(miniGameSettings);
-    original = miniGameSettings->geometry();
+    ui->gridLayout->removeWidget(miniGameControlWidget);
+    original = miniGameControlWidget->geometry();
     final = original;
     final.translate(width() + original.width(), height() + original.height());
     printf("%s - original: (%d,%d), final: (%d, %d), size: (%d, %d)\n", __func__,
            original.x(), original.y(), final.x(), final.y(), final.width(), final.height());
-    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameSettings, "geometry");
+    QPropertyAnimation *miniSettingsAnim = new QPropertyAnimation(miniGameControlWidget, "geometry");
     miniSettingsAnim->setStartValue(original);
     miniSettingsAnim->setEndValue(final);
     miniSettingsAnim->start();
 
     if (roundInfo == nullptr) {
-        roundInfo = gameSettingsWidget->popRoundInfo();
+        roundInfo = gameControlWidget->popRoundInfo();
     }
     roundInfo->setParent(this);
     roundInfo->show();
     roundInfo->setLayoutDirection(true);
-    roundInfo->move(width() - miniGameSettings->width(), 0);
+    roundInfo->move(width() - miniGameControlWidget->width(), 0);
     original = roundInfo->geometry();
     final = original;
-    final.moveTo(width() - miniGameSettings->width()*2.5, 0); //maybe the full geometry has never been shown
+    final.moveTo(width() - miniGameControlWidget->width()*2.5, 0); //maybe the full geometry has never been shown
     QPropertyAnimation *roundInfoAnim = new QPropertyAnimation(roundInfo, "geometry");
     roundInfoAnim->setStartValue(original);
     roundInfoAnim->setEndValue(final);
@@ -312,8 +311,8 @@ void MainWindow::restoreFullInterface() {
 }
 
 void MainWindow::transitionToFullDone() {
-    gameSettingsWidget->pushBackRoundInfo();
-    ui->gridLayout->addWidget(gameSettingsWidget, 0, 1);
+    gameControlWidget->pushBackRoundInfo();
+    ui->gridLayout->addWidget(gameControlWidget, 0, 1);
 }
 
 /**
@@ -321,7 +320,7 @@ void MainWindow::transitionToFullDone() {
  * Initialise the GameSettings widget
  */
 void MainWindow::setupGameSettings() {
-    gameSettingsWidget = new GameSettings(this);
+    gameControlWidget = new GameControlWidget(this);
     QList<QAction*> actions;
     actions.append(ui->actionSave_Game);
     actions.append(ui->actionOpen_Saved_Game);
@@ -341,30 +340,49 @@ void MainWindow::setupGameSettings() {
     }
 #endif
 
-    gameSettingsWidget->setActions(actions);
+    gameControlWidget->setActions(actions);
 }
 
 void MainWindow::createMiniInterface() {
-    miniGameSettings = new MiniGameSettings(this);
-    QObject::connect(miniGameSettings, SIGNAL(setFullInterface()), this, SLOT(setFullInterface()));
-    QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), miniGameSettings, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    miniGameControlWidget = new MiniGameControlWidget(this);
+    QObject::connect(miniGameControlWidget, SIGNAL(setFullInterface()), this, SLOT(setFullInterface()));
+    QObject::connect(table, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), miniGameControlWidget, SLOT(setCurrentPlayer(int, PlayerType, PlayerType)));
+    miniGameControlWidget->hide();
 }
 
 
 void MainWindow::showConfirmDialog(bool show, int colour) {
-    if (!minimalInterface)
-        return;
+    if (!confirmMoveDialog) {
+        confirmMoveDialog = new ConfirmMoveDialog(this);
+        confirmMoveDialog->setVisible(false);
+        connect(confirmMoveDialog, SIGNAL(finished(int)), this, SLOT(confirmDialogDone(int)));
+        connect(confirmMoveDialog, SIGNAL(finished(int)), table, SLOT(userConfirmedMove(int)));
+    }
+    confirmMoveDialog->setMinimalInterface(minimalInterface);
+
     if (show) {
-        ui->gridLayout->removeWidget(miniGameSettings);
-        miniGameSettings->hide();
+        if (minimalInterface) {
+            ui->gridLayout->removeWidget(miniGameControlWidget);
+            miniGameControlWidget->hide();
+        }
+        else {
+            ui->gridLayout->removeWidget(this->gameControlWidget);
+            gameControlWidget->hide();
+        }
         ui->gridLayout->addWidget(confirmMoveDialog, 0, 1);
         confirmMoveDialog->show();
     }
     else {
         ui->gridLayout->removeWidget(confirmMoveDialog);
         confirmMoveDialog->hide();
-        ui->gridLayout->addWidget(miniGameSettings, 0, 1);
-        miniGameSettings->show();
+        if (minimalInterface) {
+            ui->gridLayout->addWidget(miniGameControlWidget, 0, 1);
+            miniGameControlWidget->show();
+        }
+        else {
+            ui->gridLayout->addWidget(gameControlWidget, 0, 1);
+            gameControlWidget->show();
+        }
     }
     Q_UNUSED(colour);
 }
@@ -383,6 +401,27 @@ void MainWindow::setGameState(GameState state) {
     }
 }
 
+//TODO - disable playing when the network peer has disconnected
+void MainWindow::onMovePlayed(int row, int col) {
+    Logger::log(QString("%1: %2 %3").arg(__func__).arg(row).arg(col));
+    int crtPlayer;
+    PlayerType crtType, oppType;
+    table->getPlayersState(crtPlayer, crtType, oppType);
+    Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
+    if (crtType == PlayerType::Network) {
+        ProtoJson::Msg msg;
+        msg.type = ProtoJson::MsgType::PlayMove;
+        msg.json["row"] = row;
+        msg.json["col"] = col;
+        connMan->sendMessage(msg);
+        activeMessage = msg;
+    }
+}
+
+void MainWindow::onResign() {
+    bool success = table->playMove(FREEGO_RESIGN_MOVE, FREEGO_RESIGN_MOVE);
+}
+
 int MainWindow::connectBT() {
 #ifndef _WIN32
     printf("%s - %p\n", __func__, QThread::currentThreadId());
@@ -393,13 +432,41 @@ int MainWindow::connectBT() {
     peerChooser->show();
 
 #else
-    Logger::log("No QBluetooth support on Windows", LogLevel::ERR);
+    Logger::log("No QBluetooth support on Windows", Logger::ERR);
 #endif
     return 0;
 }
 
 void MainWindow::connectTCP() {
-    printf("%s - Implement me!", __PRETTY_FUNCTION__);
+    AddressDialog addressDialog(Settings::getProgramSettings()->previousTCPAddresses, this);
+    int result = addressDialog.exec();
+    QString address;
+    int port = 0;
+    if (result == QDialog::Accepted) {
+        address = addressDialog.address();
+        if (address.contains(":")) {
+            QStringList auxAddr = address.split(":");
+            if (auxAddr.length() > 0)
+                address = auxAddr[0];
+            if (auxAddr.length() > 1)
+                port = auxAddr[1].toInt();
+            if (auxAddr.length() > 2) {
+                Logger::log(QString("Address may be invalid: %1").arg(addressDialog.address()), Logger::ERR);
+            }
+        }
+    }
+    else {
+        return;
+    }
+
+    //In case of parsing problems address and port get the default values.
+    bool success = connMan->connectTCP(address, port);
+    if (success && address.length() > 0) {
+        QStringList previousAddr = Settings::getProgramSettings()->previousTCPAddresses;
+        if (!previousAddr.contains(address)) {
+            Settings::getProgramSettings()->previousTCPAddresses.insert(0, address);
+        }
+    }
 }
 
 void MainWindow::showBTChat() {
@@ -428,19 +495,8 @@ void MainWindow::showSettings() {
 }
 
 void MainWindow::mainLoop() {
-    if (connMan && connMan->activeConnection()) {
-        //run connection logic here
-        connMan->processMessages();
-        if (connMan->connState ==  ConnMan::ConnState::Connected) {
-            if (connMan->initiator) {
-                //hack to get this running: propose a game with the current state of our board
-                QString gameString = table->getFullGame();
-                ProtoJson::Msg msg;
-                msg.msgType = ProtoJson::ResumeGame;
-                msg.json["SGFSaveString"] = gameString;
-                connMan->sendMessage(msg);
-            }
-        }
+    if (connMan) {
+        connMan->update();
     }
 }
 
@@ -449,18 +505,90 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
     switch (state) {
     case ConnMan::ConnState::Connected: {
         if (initiator) {
-            if (makeSettingsDock == nullptr) {
-                QList<notifications::Option> options;
-                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
-                makeSettingsDock = new notifications::DockedNotif("Setup the game to play with the remove player and press \"Done\"", options);
-            }
-            addDockWidget(Qt::TopDockWidgetArea, makeSettingsDock);
+            //hack to get this running: propose a game with the current state of our board
+            ProtoJson::Msg msg;
+            msg.type = ProtoJson::ResumeGame;
+            QJsonObject tableSetupJson;
+            table->saveGameForRemote(tableSetupJson);
+            msg.json["gameSetup"] = tableSetupJson;
+            connMan->sendMessage(msg);
+            activeMessage = msg;
+            Logger::log(QString("Will initiate a new game with: %1.").arg(QJsonDocument(msg.json).toJson().constData()));
+//            if (!makeSettingsDock) {
+//                QList<notifications::Option> options;
+//                options << notifications::OPTION_DONE << notifications::OPTION_CANCEL;
+//                makeSettingsDock = new notifications::DockedNotif("Setup the game to play with the remove player and press \"Done\"", options);
+//            }
+//            addDockWidget(Qt::TopDockWidgetArea, makeSettingsDock);
+        }
+        else {
+
         }
         break;
     }
     default:
         break;
     }
-
-
 }
+
+void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
+    ProtoJson::Msg reply;
+    reply.msgid = msg.msgid;
+
+    if (msg.type >= ProtoJson::MsgType::Success && msg.type <= ProtoJson::MsgType::Error) {
+        if (msg.msgid != activeMessage.msgid) {
+            Logger::log(QString("Received unexpected reply to msg %1, expected %2").arg(msg.msgid).arg(activeMessage.msgid));
+            return;
+        }
+
+        if (msg.type == ProtoJson::MsgType::Success) {
+            if (activeMessage.type == ProtoJson::MsgType::ResumeGame) {
+                //Yay, our peer accepted our game!
+                Logger::log("Peer accepted our game!");
+                table->setSecondPlayerToNetwork();
+            }
+            else if (activeMessage.type == ProtoJson::MsgType::PlayMove) {
+                Logger::log("Peer accepted our move");
+            }
+        }
+    }
+    else if (msg.type == ProtoJson::MsgType::ResumeGame) {
+        QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
+        QJsonDocument doc(json);
+
+       //TODO - confirmation must show how the set-up game will look like
+        int ret = QMessageBox::question(this, "Remote game", QString("Remote player wants to start a new game. Accepting will delete your current game. Accept? \n%1").arg(doc.toJson().constData()));
+        if (ret == QMessageBox::Yes) {
+            Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), Logger::DBG);
+            bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
+            reply.type = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Error;
+        }
+        else {
+            //nothing, should refuse
+            QJsonObject json = msg.json;
+            QJsonDocument doc(json);
+            Logger::log(QString("refused game: %1").arg(doc.toJson().constData()), Logger::DBG);
+            reply.type = ProtoJson::MsgType::Fail;
+        }
+        connMan->sendMessage(reply);
+    }
+
+    else if (msg.type == ProtoJson::MsgType::PlayMove) {
+        int crtPlayer;
+        PlayerType crtType, oppType;
+        table->getPlayersState(crtPlayer, crtType, oppType);
+
+        if (crtType == PlayerType::Network) {
+            QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
+            int row = json["row"].toInt();
+            int col = json["col"].toInt();
+            bool success = table->playMove(row, col);
+            reply.type = success ? ProtoJson::MsgType::Success : ProtoJson::MsgType::Fail;
+        }
+        else {
+            reply.type = ProtoJson::MsgType::Error;
+        }
+        connMan->sendMessage(reply);
+    }
+}
+

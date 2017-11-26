@@ -4,13 +4,14 @@
 #include <QPainter>
 #include <QMenu>
 
-#include "Global.h"
+#include "Logger.h"
+//#include "Global.h"
 
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget)
 {
-    printf("%s\n", __func__);
+    Logger::log(__func__, Logger::DBG);
     ui->setupUi(this);
     ui->playerComboBox->insertItem((int)PlayerType::AI, "Computer (weak)");
     ui->playerComboBox->insertItem((int)PlayerType::LocalHuman, "Human");
@@ -19,7 +20,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     connect(ui->playerComboBox, SIGNAL(currentIndexChanged(int)), this, SIGNAL(playerTypeChanged(int)));
     connect(ui->playerComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setPlayerTypeInt(int)));
     connect(ui->playerSettingsButton, SIGNAL(clicked()), this, SLOT(showMenuExplicit()));
-    connect(ui->playerComboBox, SIGNAL(activated(int)), this, SLOT(showMenu(int)));
+    connect(ui->playerComboBox, SIGNAL(activated(PlayerType)), this, SLOT(showMenu(PlayerType)));
 
 
     AIMenu = new QMenu(this);
@@ -41,8 +42,8 @@ PlayerWidget::~PlayerWidget()
     delete ui;
 }
 
-int PlayerWidget::playerType() const {
-    return ui->playerComboBox->currentIndex();
+PlayerType PlayerWidget::playerType() const {
+    return (PlayerType)ui->playerComboBox->currentIndex();
 }
 
 int PlayerWidget::getAIStrength() const {
@@ -83,11 +84,10 @@ void PlayerWidget::showMenuExplicit() {
     showMenu(playerType());
 }
 
-void PlayerWidget::showMenu(int playerTypeInt) {
-    printf("%s - playerType=%d\n", __func__, playerTypeInt);
-    PlayerType type = (PlayerType)playerTypeInt;
+void PlayerWidget::showMenu(const PlayerType playerType) {
+    Logger::log(QString("%1 - playerType=%2").arg(__func__).arg(playerTypeMap.left.at(playerType)));
 
-    if (type == PlayerType::AI) {
+    if (playerType == PlayerType::AI) {
         //AIMenu->setWindowFlags(Qt::FramelessWindowHint | AIMenu->windowFlags());
         AIMenu->show();
         QPoint globalPos = mapToGlobal(QPoint(0, 0));

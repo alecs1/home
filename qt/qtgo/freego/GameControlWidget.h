@@ -1,5 +1,8 @@
-#ifndef GAMESETTINGS_H
-#define GAMESETTINGS_H
+#pragma once
+
+/**
+ * The right hand widget which shows the game settings.
+ */
 
 #include <QWidget>
 #include "Global.h"
@@ -12,15 +15,15 @@ class QMenu;
 class QAction;
 
 namespace Ui {
-class GameSettings;
+class GameControlWidget;
 }
 
-class GameSettings : public QWidget {
+class GameControlWidget : public QWidget {
 Q_OBJECT
 
 public:
-    explicit GameSettings(QWidget* parent);
-    ~GameSettings();
+    explicit GameControlWidget(QWidget* parent);
+    ~GameControlWidget();
     RoundInfo* popRoundInfo();
     void pushBackRoundInfo();
     void setActions(QList<QAction *> &actions);
@@ -28,7 +31,7 @@ public:
 signals:
     //TODO - having two functions with SGameSettigns seems like duplicating
     void launchGamePerform(SGameSettings settings);
-    void finishGamePerform(bool accurate);
+    void resign();
     void doEstimateScore(bool estimate);
     void userConfirmedMove(int confirmed);
     void userPassedMove();
@@ -63,7 +66,7 @@ protected:
     //void mouseReleaseEvent(QMouseEvent * event);
 
 private:
-    Ui::GameSettings* ui;
+    Ui::GameControlWidget* ui;
     SGameSettings settings;
     PlayerWidget* blackPlayer = nullptr;
     PlayerWidget* whitePlayer = nullptr;
@@ -75,6 +78,3 @@ private:
     ConfirmMoveDialog* confirmMoveDialog;
     QMenu* mainMenu = nullptr;
 };
-
-
-#endif // GAMESETTINGS_H
