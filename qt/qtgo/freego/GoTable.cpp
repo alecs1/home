@@ -16,7 +16,6 @@
 
 #include <cmath>
 
-
 extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
 #include "engine/gnugo.h"
