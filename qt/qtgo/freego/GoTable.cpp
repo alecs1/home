@@ -454,10 +454,6 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
         return;
     }
 
-    if (shouldRejectInput(ev)) {
-        return;
-    }
-
     QPoint pos = mouseToGameCoordinates(ev);
     highlightRow = pos.y();
     highlightCol = pos.x();
@@ -474,19 +470,10 @@ void GoTable::mousePressEvent(QMouseEvent* ev) {
 
     //TODO - this one can also be optimised
     update();
-
-    //QPointF localPos = ev->localPos();
-    //printf("%s - %f, %f -> %d, %d\n", __func__, localPos.ry(), localPos.rx(), pos.y(), pos.x());
 }
 
 void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
-
-    if (shouldRejectInput(ev)) {
-        return;
-    }
-    else {
-        lastInputTimestamp = ev->timestamp();
-    }
+    lastInputTimestamp = ev->timestamp();
 
     if (players[crtPlayer] != PlayerType::LocalHuman) {
         printf("%s - return because crtPlayer is not localHuman\n", __func__);
@@ -495,8 +482,6 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
 
     QPoint pos = mouseToGameCoordinates(ev);
 
-    //printf("%s - x=%d, y=%d, newX=%d, newY=%d, unconfirmedX=%d, unconfirmedY=%d\n",
-    //       __func__, pos.x(), pos.y(), newStoneCol, newStoneRow, unconfirmedStoneCol, unconfirmedStoneRow);
     if (pos.x() == newStoneCol && pos.y() == newStoneRow && newStoneCol != -1) {
         if (askPlayConfirmation) {
             if (unconfirmedStoneRow == newStoneRow && unconfirmedStoneCol == newStoneCol && acceptDoubleClickConfirmation) {
@@ -532,26 +517,6 @@ void GoTable::mouseReleaseEvent(QMouseEvent* ev) {
 
     //TODO - this can be optimised
     update();
-}
-
-bool GoTable::shouldRejectInput(QMouseEvent* ev) {
-    return false; //since we started threading this should rather make things worse
-
-    if ((ev->timestamp() < lastInputTimestamp) || (inputBlockingDuration == 0)){
-        //maybe the wm counter has been reset (every ~48 days :D)
-        return false;
-    }
-    else {
-        if ( (ev->timestamp() - lastInputTimestamp < inputBlockingDuration) &&
-             (players[crtPlayer] == PlayerType::LocalHuman) ){
-            printf("%s - rejected input as it's detected to be an old event from WM queue, "
-                   "timestamp: %lu, lastInputTimestamp: %lu, dif: %lu, %lu\n",
-                   __func__, ev->timestamp(), lastInputTimestamp, ev->timestamp() - lastInputTimestamp, inputBlockingDuration);
-            return true;
-        }
-        return false;
-    }
-    return false;
 }
 
 QPoint GoTable::mouseToGameCoordinates(QMouseEvent* ev) {
@@ -597,7 +562,9 @@ float GoTable::stoneDiameter() {
 }
 
 void GoTable::paintEvent(QPaintEvent *) {
-
+    const QColor colourMoveAllowed(0, 255, 0);
+    const QColor colourMoveDenied(255, 0, 0);
+    
     setAttribute(Qt::WA_TranslucentBackground); //only needed on Android
     //TODO - all of this has to go to off-screen buffers and be called only on resize
     int tableSize = width(); //compute and enforce correctly
@@ -607,8 +574,14 @@ void GoTable::paintEvent(QPaintEvent *) {
 
     //TODO - move these to a common place for both table and DrawArea
     QColor mainColor(0, 0, 0);
-    QColor highlightPosColour(255, 30, 30, 150);
-    QColor highlightLineColour(255, 0, 0, 255);
+    QColor highlightPosColour = colourMoveAllowed;
+    if (players[crtPlayer] != PlayerType::LocalHuman) {
+        highlightPosColour = colourMoveDenied;
+    }
+    highlightPosColour.setAlpha(150);
+    QColor highlightLineColour = highlightPosColour;
+    highlightLineColour.setAlpha(255);
+    
     QPainter painter(this);
 
     //lines
@@ -803,7 +776,7 @@ bool GoTable::buildPixmaps(int diameter) {
  * Special case for the networked game: we play, and perform and undo in case the move is not accepted
  */
 bool GoTable::playMove(int row, int col) {
-    Logger::log(QString("%1: %2, %3. Plyer %4 of type %5").arg(__func__).arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
+    Logger::log(QString("%1: %2, %3. Player %4 of type %5").arg(__func__).arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
     showHints = false;
 
     inputBlockingDuration = 0;
@@ -821,9 +794,9 @@ bool GoTable::playMove(int row, int col) {
     if (row == FREEGO_PASS_MOVE) {
         passCount += 1;
         if (passCount >= PASS_COUNT_TO_FINISH) {
-            printf("%s - both players have passed consecutively, will end game\n", __func__);
+            Logger::log(QString("%1 - both players have passed consecutively, will end game.").arg(__func__));
             finish(false);
-			return false;
+            return false;
         }
     }
     else {
@@ -1346,7 +1319,7 @@ void AIThread::run() {
 
     int move = p.result;
     if (p.resign) {
-        printf("%s - AI has decided to resign, will compute finals scores.\n", __func__);
+        Logger::log(QString("%1 - AI has decided to resign, will compute finals scores.").arg(__func__));
         float score = gnugo_estimate_score(NULL, NULL);
         if (score > 0) {
             printf("%s - estimates: white winning by %f\n", __func__, score);

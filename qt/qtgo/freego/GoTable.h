@@ -20,8 +20,8 @@ public:
     ElapsedTimerWrapper();
     ~ElapsedTimerWrapper();
 
-    uint64_t getTimestamp(uint64_t* delta = NULL);
-    QString getTimestampStr(QString* delta = NULL);
+    uint64_t getTimestamp(uint64_t* delta = nullptr);
+    QString getTimestampStr(QString* delta = nullptr);
     uint64_t getElapsed();
     QString getElapsedStr();
 };
@@ -60,7 +60,7 @@ private:
         int result;
     };
     Parameters p;
-    QMutex* mutex = NULL;
+    QMutex* mutex = nullptr;
 };
 
 
@@ -139,11 +139,10 @@ private:
     void updateCursor();
     bool moveIsLegal(int row, int col, int colour); //need extra checks, because is_valid() from GnuGo actually uses fucking asserts
     void updateSizes();
-    bool shouldRejectInput(QMouseEvent *ev);
     void launchGame(bool resetTable = true);
     bool loadSaveGameFile(QString fileName);
 
-    float wrapper_gnugo_estimate_score(float* upper, float* lower, bool waitForLock = true, bool *success = NULL);
+    float wrapper_gnugo_estimate_score(float* upper, float* lower, bool waitForLock = true, bool *success = nullptr);
     void resetGnuGo(int newSize);
     void printfGnuGoStruct();
     int populateStructFromGnuGo(); //populate our own structure from GnuGo; this will keep to a minimum places where the useGNUGO is used
@@ -195,14 +194,14 @@ private:
     */
     ulong lastInputTimestamp = 0;
     ulong inputBlockingDuration = 0;
-    QTime* blockTime = NULL;
+    QTime* blockTime = nullptr;
     bool cursorBlocked = false;
 
     //GNUGo related:
     bool useGNUGO = true;
     bool estimateScore = false;
-    QMutex* gnuGoMutex = NULL;
-    AIThread* aiThread = NULL;
+    QMutex* gnuGoMutex = nullptr;
+    AIThread* aiThread = nullptr;
     bool computing = false;
     SGFTree* sgfTree;
     QString crtGameSfgFName = "FreeGoSave.autosave";

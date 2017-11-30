@@ -75,7 +75,8 @@ backspace        - delete previous character
 M-backspace      - delete previous word
 M-\	- delete spaces and tabs around point
 M-<SPC> - delete spaces and tabs around point, leaving one space
-M-;	- 
+M-;	-
+M-x comment-region      - comment selected region
 
 
 Selection:

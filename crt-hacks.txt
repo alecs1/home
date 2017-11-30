@@ -18,3 +18,9 @@ medium:
 #set the maximum battery charge 85%, longer lasting battery
 tlp setcharge 80 85
 i915.enable_psr=0
+
+#to run nouveau
+ensure Nouveau is loaded (e.g. optirun --status)
+xrandr --listproviders
+xrandr --setprovideroffloadsink nouveau modesetting
+DRI_PRIME=1 AndYetItMoves

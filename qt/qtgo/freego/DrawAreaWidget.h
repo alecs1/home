@@ -1,5 +1,4 @@
-#ifndef DRAWAREAWIDGET_H
-#define DRAWAREAWIDGET_H
+#pragma once
 
 #include <QWidget>
 
@@ -41,5 +40,3 @@ private:
     float tablePrivateSize;
     int textPointSize;
 };
-
-#endif // DRAWAREAWIDGET_H
