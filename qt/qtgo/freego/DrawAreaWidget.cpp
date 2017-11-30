@@ -103,8 +103,6 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
             painter.drawText(bottomRect, Qt::AlignCenter, text);
         }
     }
-
-
 }
 
 /*

@@ -71,6 +71,7 @@ public:
     ~GoTable();
 
     void paintEvent(QPaintEvent *);
+    void paint(QPaintDevice*) const;
     static QPoint fromGnuGoPos(int pos);
     static float gridDist(float tableSize, int gameSize);
     static float stoneDiameter();

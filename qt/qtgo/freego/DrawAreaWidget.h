@@ -7,6 +7,9 @@
 
 class GoTable;
 
+/**
+ * The area around the grid, containing the row and column numbering.
+ */
 class DrawAreaWidget : public QWidget
 {
     Q_OBJECT
