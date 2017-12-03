@@ -27,9 +27,6 @@
 
 #include "notifications/DockedNotif.h"
 
-//TODO - just for tests
-#include "btchat/chat.h"
-
 #include "network/ProtoJson.h"
 
 #include "dialogs/AddressDialog.h"
@@ -117,7 +114,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSettings, SIGNAL(triggered(bool)), this, SLOT(showSettings()));
     connect(ui->actionHelp, SIGNAL(triggered(bool)), this, SLOT(showHelp()));
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
-    connect(ui->actionDebug_BT, SIGNAL(triggered(bool)), this, SLOT(showBTChat()));
 
     connMan = new ConnMan(this);
     connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
@@ -467,15 +463,6 @@ void MainWindow::connectTCP() {
             Settings::getProgramSettings()->previousTCPAddresses.insert(0, address);
         }
     }
-}
-
-void MainWindow::showBTChat() {
-#ifndef _WIN32
-    Chat* btChat = new Chat(this);
-    ui->gridLayout->addWidget(btChat, 0, 0);
-#else
-    printf("No QBluetooth support on Windows\n");
-#endif
 }
 
 void MainWindow::showAbout() {

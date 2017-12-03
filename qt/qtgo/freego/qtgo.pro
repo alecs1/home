@@ -32,13 +32,11 @@ LIBS += -L../gnugo/engine -L../gnugo/utils -L../gnugo/sgf -L../gnugo/patterns -L
 SUBDIRS = btchat
 
 # Input
-HEADERS += GameSettings.h \
-           MiniGameSettings.h \
-           GameStruct.h \
+HEADERS += GameStruct.h \
            Global.h \
            DrawAreaWidget.h \
            GoTable.h \
-           mainwindow.h \
+           MainWindow.h \
            PlayerWidget.h \
            GameEndDialog.h \
            ConfirmMoveDialog.h \
@@ -57,7 +55,7 @@ HEADERS += GameSettings.h \
            Utils.h \
            Settings.h \
     DebugStuff.h
-FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
+FORMS += MainWindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \
          RoundInfo.ui \
@@ -66,13 +64,11 @@ FORMS += GameSettings.ui mainwindow.ui PlayerWidget.ui \
          BusyDialog.ui \
          SettingsWidget.ui \
          SettingsDialog.ui
-SOURCES += GameSettings.cpp \
-           MiniGameSettings.cpp \
-           GameStruct.cpp \
+SOURCES += GameStruct.cpp \
            DrawAreaWidget.cpp \
            GoTable.cpp \
            main.cpp \
-           mainwindow.cpp \
+           MainWindow.cpp \
            PlayerWidget.cpp \
            GameEndDialog.cpp \
            ConfirmMoveDialog.cpp \

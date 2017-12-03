@@ -1,7 +1,7 @@
 #nice documentation: https://qt-project.org/quarterly/view/using_cmake_to_build_qt_projects
 
 project(FreeGo)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 set (CMAKE_VERBOSE_MAKEFILE true)
 
@@ -73,13 +73,13 @@ set (ALL_SOURCES MainWindow.cpp
     SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp Logger.cpp
     ${HEADER_MOC} ${UI_HEADERS} ${RESOURCES_RCC})
 
-if (ANDROID)
-    add_library(FreeGo SHARED ${ALL_SOURCES})
-else ()
+#if (ANDROID)
+#    add_library(FreeGo SHARED ${ALL_SOURCES})
+#else ()
     add_executable(FreeGo ${ALL_SOURCES})
-endif()
+#endif()
 
-target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns btchat network notifications dialogs)
+target_link_libraries(FreeGo Qt5::Widgets Qt5::Svg Qt5::Multimedia Qt5::Bluetooth board engine utils sgf patterns network notifications dialogs)
 
 if (ANDROID)
     target_link_libraries(FreeGo log)
@@ -88,7 +88,7 @@ else ()
 endif (ANDROID)
 
 
-add_subdirectory("btchat")
+#add_subdirectory("btchat")
 add_subdirectory("network")
 add_subdirectory("android")
 add_subdirectory("notifications")

@@ -59,7 +59,6 @@ First, you must make sure that the following environment variables are defined:
 Additionally you can define the following ones, but you can also define them as CMake variables if you prefer:
 
 * ```ANDROID_SDK```: root directory of the Android SDK
-* ```ANT```: Path of the ANT executable
 
 You can then run CMake:.
 
@@ -139,6 +138,20 @@ Example:
 ```cmake
 add_qt_android_apk(my_app_apk my_app
     PACKAGE_SOURCES ${CMAKE_CURRENT_LIST_DIR}/my-android-sources
+)
+```
+
+### BUILDTOOLS_REVISION
+
+The revision of the Android SDK build tools. This must match a valid sub-folder of your <ANDROID_SDK>/build-tools directory. It seems like it can sometimes be needed, when the system cannot auto-detect it.
+
+Remains empty if not given.
+
+Example:
+
+```cmake
+add_qt_android_apk(my_app_apk my_app
+    BUILDTOOLS_REVISION "23.0.3"
 )
 ```
 
