@@ -136,6 +136,9 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     Logger::setViewer(ui->logView);
+    if (platformType() == PlatformType::Android) {
+        ui->logView->hide();
+    }
 
     double mainLoopInterval = 1000.0 / 60;
     Logger::log(QString("mainLoopInterval: %1").arg(mainLoopInterval));

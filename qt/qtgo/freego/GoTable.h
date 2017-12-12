@@ -102,7 +102,7 @@ public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(SGameSettings newSettings);
     void changeProgramSettings();
-    bool playMove(int row, int col);
+    bool playMove(const int row, const int col);
     bool passMove();
     bool undoMove();
     void finish(bool finishByResign);

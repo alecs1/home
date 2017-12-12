@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 
 #steps:
 #Android:
-#cmake -DCMAKE_TOOLCHAIN_FILE=/home/alex/exec/android-sdk-linux/ndk-bundle/build/cmake/android.toolchain.cmake ../qtgo -DCMAKE_BUILD_TYPE=Debug
 #cmake -DCMAKE_TOOLCHAIN_FILE=/usr/share/ECM/toolchain/Android.cmake ../qtgo -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/home/alex/exec/Qt/5.9.3/android_armv7 -DQTANDROID_EXPORTED_TARGET=FreeGo -DANDROID_APK_DIR=../qtgo/freego/android
+#make create-apk-FreeGo
 
 
 
@@ -148,7 +148,7 @@ add_subdirectory("gnugo")
 # endif (ANDROID)
 
 message("Disable qtcurve from the build if it fails, it's optional")
-message("ANDROID_SDK=" ${ANDROID_SDK})
-message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
-message("CMAKE_SYSROOT=" ${CMAKE_SYSROOT})
-message("ANDROID_NDK_ARCH_INCLUDES=" ${ANDROID_NDK_ARCH_INCLUDES})
+#message("ANDROID_SDK=" ${ANDROID_SDK})
+#message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
+#message("CMAKE_SYSROOT=" ${CMAKE_SYSROOT})
+#message("ANDROID_NDK_ARCH_INCLUDES=" ${ANDROID_NDK_ARCH_INCLUDES})

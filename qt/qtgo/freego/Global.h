@@ -18,7 +18,7 @@
 #define PASS_COUNT_TO_FINISH (2) //Two consecutive passes will end the game
 #define FREEGO_RESIGN_MOVE (-3) //A move with row=-3 will be a resign
 
-enum class GameState:uint8_t  {
+enum GameState:uint8_t  {
     Initial = 0, //At GUI start-up, clicking on the board will start the game
     Resumed, //TODO - how is Resumed diferent from Started?
     Stopped,
@@ -27,7 +27,7 @@ enum class GameState:uint8_t  {
 
 
 
-enum class PlatformType:uint8_t {
+enum PlatformType:uint8_t {
     LinuxDesktop = 0,
     Android,
     WindowsDesktop

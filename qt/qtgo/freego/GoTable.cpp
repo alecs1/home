@@ -554,7 +554,7 @@ float GoTable::stoneDiameter() {
  * @brief GoTable::playMove - try to play a move, all GUI conditions have been fullfilled, now check the logic ones.
  * Special case for the networked game: we play, and perform and undo in case the move is not accepted
  */
-bool GoTable::playMove(int row, int col) {
+bool GoTable::playMove(const int row, const int col) {
     Logger::log(QString("%1: %2, %3. Player %4 of type %5").arg(__func__).arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
     showHints = false;
 
@@ -564,11 +564,14 @@ bool GoTable::playMove(int row, int col) {
     else if (players[crtPlayer] == PlayerType::AI)
         computing = false;
 
-    if (!moveIsLegal(row, col, crtPlayer))
+    if (!moveIsLegal(row, col, crtPlayer)) {
+        Logger::log(QString("Move not legal: %1 %2. Plyer %3 of type %4").arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
         return false;
+    }
 
     if (state == GameState::Stopped)
         return false;
+
 
     if (row == FREEGO_PASS_MOVE) {
         passCount += 1;
@@ -582,23 +585,19 @@ bool GoTable::playMove(int row, int col) {
         passCount = 0;
     }
 
+    if (row == FREEGO_RESIGN_MOVE) {
+        Logger::log(QString("%1 - finish by resignation of player %2.").arg(__func__).arg(crtPlayer));
+        finish(true);
+        return false;
+    }
+
     cursorBlocked = true;
     updateCursor();
 
     bool retVal = false;
     if (useGNUGO) {
-        int pos = toGnuGoPos(row, col);
-        bool canPlay = is_legal(pos, crtPlayer);
-
-        if (canPlay) {
-            //TODO - maybe add wrapper for this call do centralise placing stones
-            play_move(pos, crtPlayer);
-            retVal = true;
-        }
-        else {
-            Logger::log(QString("Move not legal: %1 %2. Plyer %3 of type %4").arg(row).arg(col).arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])));
-        }
-        //printfGnuGoStruct();
+        play_move(toGnuGoPos(row, col), crtPlayer);
+        retVal = true;
         populateStructFromGnuGo();
     }
     else {
@@ -805,6 +804,9 @@ bool GoTable::moveIsLegal(int row, int col, int colour) {
     int pos = toGnuGoPos(row, col);
     if (row == FREEGO_PASS_MOVE)
         pos = PASS_MOVE;
+    if (row == FREEGO_RESIGN_MOVE) {
+        return true;
+    }
     return (is_legal(pos, colour));
 }
 
