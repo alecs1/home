@@ -410,12 +410,8 @@ bool GoTable::playMove(const int row, const int col) {
     }
 
     if (retVal == false) {
-        //refresh and go home
-        //update();
         return retVal;
     }
-
-
 
     //Aici - with a remote player we need to spin and wait for confirmation later in the process
 
@@ -443,7 +439,7 @@ bool GoTable::playMove(const int row, const int col) {
             state = GameState::Started;
         }
         if (players[crtPlayer] == PlayerType::AI) {
-            //QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+            AIPlayNextMove();
         }
     }
 
@@ -666,6 +662,29 @@ int GoTable::insertDefaultHandicap(int newHandicap) {
 }
 
 bool GoTable::AIPlayNextMove() {
+    int AIStrength = gameSettings.blackAIStrength;
+    if (crtPlayer == WHITE) {
+        AIStrength = gameSettings.whiteAIStrength;
+    }
+    aiThread->run_genmove(crtPlayer, AIStrength);
+
+    updateLogic();
+
+    return false;
+}
+
+//When we're waiting for a result coming from a different thread we need to check the result from the other thread
+void GoTable::updateLogic() {
+    //Logger::log(QString("%1").arg(__func__), Logger::DBG);
+
+    if (aiThread->mutex->tryLock()) {
+            Logger::log(QString("%1 - the AIThread is done!").arg(__func__), Logger::DBG);
+        }
+    else {
+        Logger::log(QString("%1 - the AIThread is still computing.").arg(__func__), Logger::DBG);
+        std::function<void(void)> f = std::bind(&GoTable::updateLogic, this);
+        QTimer::singleShot(1, f);
+    }
 }
 
 AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
@@ -673,6 +692,7 @@ AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 }
 
 bool AIThread::run_genmove(int color, int AIStrength) {
+    mutex->lock();
     printf("%s - color=%d\n", __func__, color);
     if(running)
         return false;
@@ -689,6 +709,7 @@ bool AIThread::run_genmove(int color, int AIStrength) {
 }
 
 bool AIThread::run_gnugo_estimate_score() {
+    mutex->lock();
     if(running)
         return false;
     running = true;
@@ -698,10 +719,10 @@ bool AIThread::run_gnugo_estimate_score() {
 }
 
 void AIThread::run_value_moves(int colour) {
-    if (mutex->tryLock() == false) {
-        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
-        mutex->lock();
-    }
+//    if (mutex->tryLock() == false) {
+//        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+//        mutex->lock();
+//    }
 
     //value_moves(colour, 0.0, 0.0, 1);
     //run genmove to fill in best_move_values
@@ -714,10 +735,10 @@ void AIThread::run_value_moves(int colour) {
 void AIThread::run() {
     printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
 
-    if (mutex->tryLock() == false) {
-        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
-        mutex->lock();
-    }
+//    if (mutex->tryLock() == false) {
+//        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
+//        mutex->lock();
+//    }
     set_level(p.strength);
     p.result = genmove(p.color, &p.move_value, &p.resign);
     mutex->unlock();

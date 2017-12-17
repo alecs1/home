@@ -20,6 +20,9 @@ public:
     bool run_gnugo_estimate_score();
     void run_value_moves(int colour);
 
+public:
+    QMutex* mutex = nullptr;
+
 signals:
     //void AIThreadPlaceStone(int row, int col);
     //void AIQuitsGame(bool accurate);
@@ -44,7 +47,6 @@ private:
         int result;
     };
     Parameters p;
-    QMutex* mutex = nullptr;
 };
 
 
@@ -104,6 +106,7 @@ protected:
                      float *total_score, int* playedMoves, int* crtColour, SGFTree* outTree);
 
     bool AIPlayNextMove();
+    void updateLogic();
 
 protected:
     GameStruct game;
@@ -120,12 +123,12 @@ protected:
     GameState state = GameState::Stopped;
 
 
-private:
+    //TODO - game and settings size duplicate info!
     //populate this with some default settings, which are then passed to the game
     SGameSettings gameSettings;
 
-    //TODO - game and settings size duplicate info!
 
+private:
     //GNUGo related:
     bool useGNUGO = true;
     bool estimateScore = false;

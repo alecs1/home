@@ -19,9 +19,6 @@ public:
 
     void setSecondPlayerToNetwork();
 
-    //TODO - temporary hack
-    SGameSettings* getGameSettingsPointer();
-
 public slots:
     void launchGamePressed(SGameSettings newSettings);
     void changeGameSettings(const SGameSettings &newSettings);
@@ -92,8 +89,6 @@ private:
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
     bool acceptDoubleClickConfirmation = false;
 
-    //populate this with some default settings, which are then passed to the game
-    SGameSettings gameSettings;
     SProgramSettings* programSettings;
 
     bool cursorBlocked = false;

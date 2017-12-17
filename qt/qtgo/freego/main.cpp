@@ -36,7 +36,6 @@ public:
 int main(int argc, char *argv[])
 {
     Logger::initLogging();
-    printf("\n\n\n\n\n\n\n\n%s - STAAAAARRTIIIIIIING\n\n\n\n\n\n\n\n", __func__);
 
     Q_INIT_RESOURCE(res);
 
@@ -83,7 +82,6 @@ int main(int argc, char *argv[])
     Cleaner c;
     MainWindow w;
     w.show();
-
 
     return a.exec();
 }
