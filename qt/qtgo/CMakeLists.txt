@@ -148,7 +148,3 @@ add_subdirectory("gnugo")
 # endif (ANDROID)
 
 message("Disable qtcurve from the build if it fails, it's optional")
-#message("ANDROID_SDK=" ${ANDROID_SDK})
-#message("CMAKE_PREFIX_PATH=" ${CMAKE_PREFIX_PATH})
-#message("CMAKE_SYSROOT=" ${CMAKE_SYSROOT})
-#message("ANDROID_NDK_ARCH_INCLUDES=" ${ANDROID_NDK_ARCH_INCLUDES})
