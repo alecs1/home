@@ -54,7 +54,8 @@ HEADERS += GameStruct.h \
            SettingsDialog.h \
            Utils.h \
            Settings.h \
-    DebugStuff.h
+    DebugStuff.h \
+    GoTableWidget.h
 FORMS += MainWindow.ui PlayerWidget.ui \
          GameEndDialog.ui \
          ConfirmMoveDialog.ui \

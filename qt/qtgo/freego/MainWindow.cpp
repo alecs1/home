@@ -8,7 +8,7 @@
 #include <QJsonDocument>
 
 #include "DrawAreaWidget.h"
-#include "GoTable.h"
+#include "GoTableWidget.h"
 #include "GameControlWidget.h"
 #include "SaveFile.h"
 #include "Settings.h"
@@ -37,8 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    printf("%s - %p\n", __func__, QThread::currentThreadId());
-
     ui->setupUi(this);
 
     #if defined(Q_OS_ANDROID)
@@ -67,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setupGameSettings();
 
     drawArea = new DrawAreaWidget(this);
-    table = new GoTable(drawArea);
+    table = new GoTableWidget(drawArea);
     drawArea->setChildTable(table);
 
     ui->centralWidget->setLayout(ui->gridLayout);

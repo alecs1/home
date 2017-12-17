@@ -1,6 +1,6 @@
 #include <QPainter>
 
-#include "GoTable.h"
+#include "GoTableWidget.h"
 #include "DrawAreaWidget.h"
 #include "Utils.h"
 
@@ -20,12 +20,12 @@ DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
     setMinimumHeight(300);
 }
 
-void DrawAreaWidget::setChildTable(GoTable *aTable) {
-    table = aTable;
-    QObject::connect(table, SIGNAL(highlightChanged(int,int)), this, SLOT(changeHighlight(int, int)));
+void DrawAreaWidget::setChildTable(GoTableWidget *aTable) {
+    tableW = aTable;
+    QObject::connect(tableW, SIGNAL(highlightChanged(int,int)), this, SLOT(changeHighlight(int, int)));
     delete gameSettings;
     //TODO - we actually need a signal when this changes
-    gameSettings = new SGameSettings(*table->getGameSettingsPointer());
+    gameSettings = new SGameSettings(*tableW->getGameSettingsPointer());
     setMinimumSize(computeMinSize());
 }
 
@@ -49,8 +49,8 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
     QFontMetrics fontMetrics(font);
     QFontMetrics hightlightFontMetrics(highlightFont);
     float textHeight = fontMetrics.height();
-    float dist = GoTable::gridDist(tableSize, gameSettings->size);
-    float diameter = dist * GoTable::stoneDiameter();
+    float dist = GoTableWidget::gridDist(tableSize, gameSettings->size);
+    float diameter = dist * GoTableWidget::stoneDiameter();
 
 
     //left and right
@@ -109,9 +109,9 @@ void DrawAreaWidget::paintEvent(QPaintEvent *) {
  * @return - min size of the table plus our own min size for drawing the fonts
  */
 QSize DrawAreaWidget::computeMinSize() {
-    Q_ASSERT(table);
-    int w = table->minimumSize().width();
-    int h = table->minimumSize().height();
+    Q_ASSERT(tableW);
+    int w = tableW->minimumSize().width();
+    int h = tableW->minimumSize().height();
     return QSize(w, h);
 }
 
@@ -122,7 +122,7 @@ void DrawAreaWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void DrawAreaWidget::updateSizes() {
-    if ( !(table && gameSettings)) {
+    if ( !(tableW && gameSettings)) {
         printf("%s - it's to early to do resizing, we don't have table and settings yet' :)\n", __func__);
         return;
     }
@@ -139,8 +139,8 @@ void DrawAreaWidget::updateSizes() {
     int columnCountEquiv = gameSettings->size + 1;
     if (showBottomAndRightSymbols)
         columnCountEquiv += 1;
-    float dist = GoTable::gridDist(boundingSize, columnCountEquiv);
-    float diameter = dist * GoTable::stoneDiameter();
+    float dist = GoTableWidget::gridDist(boundingSize, columnCountEquiv);
+    float diameter = dist * GoTableWidget::stoneDiameter();
 
     //top line (bottom line is different because it will have the descent cut out)
     int auxSmaller, auxLarger;
@@ -178,14 +178,14 @@ void DrawAreaWidget::updateSizes() {
     boundingSize = hSpace;
     if (vSpace < hSpace)
         boundingSize = vSpace;
-    dist = boundingSize / (gameSettings->size - 1 + GoTable::stoneDiameter());
-    tablePrivateSize = (gameSettings->size - 1 + GoTable::stoneDiameter()) * dist;
+    dist = boundingSize / (gameSettings->size - 1 + GoTableWidget::stoneDiameter());
+    tablePrivateSize = (gameSettings->size - 1 + GoTableWidget::stoneDiameter()) * dist;
     tableSize = (gameSettings->size + 1) * dist;
-    diameter = GoTable::stoneDiameter() * dist;
-    table->resize(tableSize, tableSize);
+    diameter = GoTableWidget::stoneDiameter() * dist;
+    tableW->resize(tableSize, tableSize);
     vOffset = topMargin - dist + diameter/2;
     hOffset = leftMargin - dist + diameter/2;
-    table->move(hOffset, vOffset);
+    tableW->move(hOffset, vOffset);
 }
 
 void DrawAreaWidget::changeProgramSettings() {

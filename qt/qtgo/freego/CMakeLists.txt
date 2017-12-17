@@ -44,7 +44,7 @@ qt5_wrap_ui(UI_HEADERS MainWindow.ui GameControlWidget.ui PlayerWidget.ui GameEn
 qt5_wrap_cpp(HEADER_MOC
     MainWindow.h
     DrawAreaWidget.h
-    GoTable.h
+    GoTableWidget.h
     GameControlWidget.h
     MiniGameControlWidget.h
     PlayerWidget.h
@@ -65,9 +65,15 @@ qt5_add_resources(RESOURCES_RCC res.qrc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/btchat)
 
-set (ALL_SOURCES MainWindow.cpp
-    GameStruct.cpp DrawAreaWidget.cpp GoTable.cpp GoTablePaint.cpp
-    main.cpp GameControlWidget.cpp MiniGameControlWidget.cpp PlayerWidget.cpp
+set (ALL_SOURCES
+    main.cpp
+    DrawAreaWidget.cpp
+    GameStruct.cpp
+    GoTable.cpp
+    GoTablePaint.cpp
+    GoTableWidget.cpp
+    MainWindow.cpp
+    GameControlWidget.cpp MiniGameControlWidget.cpp PlayerWidget.cpp
     GameEndDialog.cpp ConfirmMoveDialog.cpp RoundInfo.cpp SaveFile.cpp Global.cpp AboutDialog.cpp
     HelpDialog.cpp Handicap.cpp HandicapDialog.cpp BusyDialog.cpp ThirdPartyInfo.cpp SettingsWidget.cpp
     SettingsDialog.cpp Utils.cpp Settings.cpp DebugStuff.cpp Logger.cpp
@@ -88,7 +94,6 @@ else ()
 endif (ANDROID)
 
 
-#add_subdirectory("btchat")
 add_subdirectory("network")
 add_subdirectory("android")
 add_subdirectory("notifications")

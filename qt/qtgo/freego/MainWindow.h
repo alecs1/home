@@ -11,7 +11,7 @@
 #include "network/ProtoJson.h" //TODO - temporary.
 
 class DrawAreaWidget;
-class GoTable;
+class GoTableWidget;
 class RoundInfo;
 class GameControlWidget;
 class MiniGameControlWidget;
@@ -78,7 +78,7 @@ private:
     ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
-    GoTable* table;
+    GoTableWidget* table;
     RoundInfo* roundInfo = nullptr;
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;

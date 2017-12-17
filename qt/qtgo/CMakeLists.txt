@@ -127,9 +127,10 @@ endif(ANDROID)
 add_subdirectory("freego")
 
 #qtcurve is not used for now and only slows down Android build
-if ( (NOT WIN32) AND (NOT ANDROID) )
+#message("Disable qtcurve from the build if it fails, it's optional")
+#if ( (NOT WIN32) AND (NOT ANDROID) )
     #add_subdirectory("qtcurve")
-endif ( (NOT WIN32) AND (NOT ANDROID) )
+#endif ( (NOT WIN32) AND (NOT ANDROID) )
 
 
 add_subdirectory("gnugo")
@@ -147,4 +148,3 @@ add_subdirectory("gnugo")
 #     )
 # endif (ANDROID)
 
-message("Disable qtcurve from the build if it fails, it's optional")

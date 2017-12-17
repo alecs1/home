@@ -1,4 +1,4 @@
-#include "GoTable.h"
+#include "GoTableWidget.h"
 
 #include <QPainter>
 #include <QSvgRenderer>
@@ -12,7 +12,7 @@ extern float best_move_values[10];
 
 const QString fontName = "Liberation Sans";
 
-void GoTable::paint(QPaintDevice* target) const {
+void GoTableWidget::paint(QPaintDevice* target) const {
     const QColor colourMoveAllowed(0, 255, 0);
     const QColor colourMoveDenied(255, 0, 0);
     
@@ -184,12 +184,12 @@ void GoTable::paint(QPaintDevice* target) const {
 }
 
 
-void GoTable::paintEvent(QPaintEvent *) {
+void GoTableWidget::paintEvent(QPaintEvent *) {
     setAttribute(Qt::WA_TranslucentBackground); //only needed on Android
     paint(this);
 }
 
-bool GoTable::buildPixmaps(int diameter) {
+bool GoTableWidget::buildPixmaps(int diameter) {
     QSvgRenderer svgR;
 
     delete blackStonePixmap;

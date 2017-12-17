@@ -5,7 +5,7 @@
 #include "Global.h"
 #include "Settings.h"
 
-class GoTable;
+class GoTableWidget;
 
 /**
  * The area around the grid, containing the row and column numbering.
@@ -15,7 +15,7 @@ class DrawAreaWidget : public QWidget
     Q_OBJECT
 public:
     explicit DrawAreaWidget(QWidget *parent = 0);
-    void setChildTable(GoTable* aTable);
+    void setChildTable(GoTableWidget *aTable);
 
     void paintEvent(QPaintEvent *);
     void resizeEvent(QResizeEvent* event);
@@ -31,10 +31,10 @@ private:
     void updateSizes();
 
 private:
-    GoTable* table = NULL;
+    GoTableWidget* tableW = nullptr;
     //for now we duplicate stuff from GoTable
-    SGameSettings* gameSettings = NULL;
-    SProgramSettings* programSettings = NULL;
+    SGameSettings* gameSettings = nullptr;
+    SProgramSettings* programSettings = nullptr;
     bool showBottomAndRightSymbols = false;
     int tableSize;
     int highlightRow = -1, highlightCol = -1;
