@@ -55,6 +55,7 @@ public slots:
     void showAbout();
     void showHelp();
     void showSettings();
+    void showLogViewer(const bool show);
 
     void mainLoop();
 

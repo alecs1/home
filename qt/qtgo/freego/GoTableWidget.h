@@ -18,6 +18,7 @@ public:
     bool loadGameFromRemote(const QJsonObject& json);
 
     void setSecondPlayerToNetwork();
+    void setInteractable(const bool doInteract);
 
 public slots:
     void launchGamePressed(SGameSettings newSettings);
@@ -85,13 +86,12 @@ private:
 
 
     bool showHints = false;
-
+    bool interactable = true;
+    bool cursorBlocked = false;
     bool askPlayConfirmation; //ask the user to confirm placement of a stone;
     bool acceptDoubleClickConfirmation = false;
 
     SProgramSettings* programSettings;
-
-    bool cursorBlocked = false;
 
     //TODO: here or in the base?
     bool estimateScore = false;

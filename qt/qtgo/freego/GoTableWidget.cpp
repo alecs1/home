@@ -89,6 +89,26 @@ void GoTableWidget::setSecondPlayerToNetwork() {
     update();
 }
 
+/**
+ * @brief Set if the table should be interacted with or just draw the contents
+ * @param doInteract
+ */
+void GoTableWidget::setInteractable(const bool doInteract) {
+    if (doInteract == interactable) {
+        return;
+    }
+
+    interactable = doInteract;
+    if (interactable) {
+        setMouseTracking(true);
+    }
+    else {
+        setMouseTracking(false);
+    }
+    updateCursor();
+    update();
+}
+
 void GoTableWidget::changeProgramSettings() {
     update();
 }
@@ -109,6 +129,7 @@ bool GoTableWidget::loadGameFromRemote(const QJsonObject &json) {
         emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
         emit gameStateChanged(state);
     }
+    return success;
 }
 
 void GoTableWidget::launchGamePressed(SGameSettings newSettings) {
@@ -147,9 +168,6 @@ void GoTableWidget::mouseMoveEvent(QMouseEvent* ev) {
         emit highlightChanged(highlightRow, highlightCol);
         update();
     }
-
-    //QPointF localPos = ev->localPos();
-    //printf("%s - localPos=%f, %f, row=%d, col=%d\n", __func__, localPos.ry(), localPos.rx(), row, col);
 }
 
 void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
@@ -306,7 +324,10 @@ bool GoTableWidget::undoMove() {
 
 //change colour of mouse cursor to reflect the current player
 void GoTableWidget::updateCursor() {
-    if ( (state == GameState::Stopped) || cursorBlocked)
+    if (!interactable) {
+        unsetCursor();
+    }
+    else if ( (state == GameState::Stopped) || cursorBlocked)
         setCursor(*redCursor);
     else if (crtPlayer == BLACK)
         setCursor(*blackCursor);

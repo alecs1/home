@@ -9,17 +9,17 @@ class GoTableWidget;
 
 /**
  * The area around the grid, containing the row and column numbering.
+ * TODO - find what's the reason for separating this from the table
  */
-class DrawAreaWidget : public QWidget
+class DrawAreaWidget: public QWidget
 {
-    Q_OBJECT
+Q_OBJECT
 public:
-    explicit DrawAreaWidget(QWidget *parent = 0);
-    void setChildTable(GoTableWidget *aTable);
+    explicit DrawAreaWidget(QWidget* parent = 0);
+    void setChildTable(GoTableWidget* aTable);
 
     void paintEvent(QPaintEvent *);
     void resizeEvent(QResizeEvent* event);
-signals:
 
 public slots:
     void changeProgramSettings();

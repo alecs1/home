@@ -10,7 +10,7 @@ class AddressDialog;
 
 class AddressDialog : public QDialog
 {
-    Q_OBJECT
+Q_OBJECT
 
 public:
     explicit AddressDialog(const QStringList completionList, QWidget *parent = 0);

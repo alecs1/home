@@ -30,6 +30,7 @@
 #include "network/ProtoJson.h"
 
 #include "dialogs/AddressDialog.h"
+#include "dialogs/GameInvitation.h"
 
 #include "Global.h"
 
@@ -64,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setupGameSettings();
 
+    //TODO - this setup is stupid: the table is a child of the draw area, but still we need to call setChildTable
     drawArea = new DrawAreaWidget(this);
     table = new GoTableWidget(drawArea);
     drawArea->setChildTable(table);
@@ -74,6 +76,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->gridLayout->setColumnStretch(0, 5);
     ui->gridLayout->setColumnMinimumWidth(0, drawArea->minimumWidth());
     ui->gridLayout->setRowMinimumHeight(0, drawArea->minimumHeight());
+
+    ui->dockWidget->setVisible(false);
 
     //TODO: this type of size computation is a poor hack, instead my table should provide a good minimum hint.
     int minWidth = drawArea->minimumSize().width();
@@ -112,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSettings, SIGNAL(triggered(bool)), this, SLOT(showSettings()));
     connect(ui->actionHelp, SIGNAL(triggered(bool)), this, SLOT(showHelp()));
     connect(ui->actionAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
+    connect(ui->actionShow_Log_Viewer, SIGNAL(toggled(bool)), this, SLOT(showLogViewer(const bool)));
 
     connMan = new ConnMan(this);
     connect(connMan, SIGNAL(connStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)), this, SLOT(onConnStateChanged(ConnMan::ConnState, bool, ConnMan::ConnType)));
@@ -135,7 +140,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Logger::setViewer(ui->logView);
     if (platformType() == PlatformType::Android) {
-        ui->logView->hide();
+        ui->dockWidget->hide();
     }
 
     double mainLoopInterval = 1000.0 / 60;
@@ -328,6 +333,7 @@ void MainWindow::setupGameSettings() {
     actions.append(ui->actionAbout);
     actions.append(ui->actionAdjust_for_Small_Display);
     actions.append(ui->actionDebug_BT);
+    actions.append(ui->actionShow_Log_Viewer);
     //for android we disable network and stuff for now
 #if defined (Q_OS_ANDROID)
     if (false) {
@@ -482,6 +488,10 @@ void MainWindow::showSettings() {
     dialog.exec();
 }
 
+void MainWindow::showLogViewer(const bool show) {
+    ui->dockWidget->setVisible(show);
+}
+
 void MainWindow::mainLoop() {
     if (connMan) {
         connMan->update();
@@ -544,8 +554,16 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
         QJsonDocument doc(json);
 
-       //TODO - confirmation must show how the set-up game will look like
-        int ret = QMessageBox::question(this, "Remote game", QString("Remote player wants to start a new game. Accepting will delete your current game. Accept? \n%1").arg(doc.toJson().constData()));
+
+        DrawAreaWidget* auxBackground = new DrawAreaWidget();
+        GoTableWidget* aux = new GoTableWidget(auxBackground);
+        auxBackground->setChildTable(aux);
+        aux->loadGameFromRemote(json["gameSetup"].toObject());
+        aux->setInteractable(false);
+        GameInvitation dialog(this);
+        dialog.setImageWidget(auxBackground);
+        int ret = dialog.exec();
+
         if (ret == QMessageBox::Yes) {
             Logger::log(QString("Accepted game: %1").arg(doc.toJson().constData()), Logger::DBG);
             bool success = table->loadGameFromRemote(json["gameSetup"].toObject());
