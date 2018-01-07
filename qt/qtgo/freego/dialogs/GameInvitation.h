@@ -2,6 +2,8 @@
 
 #include <QDialog>
 
+#include "../GameStruct.h"
+
 namespace Ui {
 class GameInvitation;
 }
@@ -14,7 +16,8 @@ public:
     explicit GameInvitation(QWidget *parent = 0);
     ~GameInvitation();
 
-    void setImageWidget(QWidget* widget);
+    void setGridImageWidget(QWidget* widget);
+    void setColour(const colors colour);
 
 private:
     Ui::GameInvitation *ui;

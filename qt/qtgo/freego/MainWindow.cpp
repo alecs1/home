@@ -554,14 +554,33 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
         QJsonDocument doc(json);
 
-
+        //TODO - this is heavy game logic, not need to have in MainWindow
         DrawAreaWidget* auxBackground = new DrawAreaWidget();
         GoTableWidget* aux = new GoTableWidget(auxBackground);
         auxBackground->setChildTable(aux);
         aux->loadGameFromRemote(json["gameSetup"].toObject());
         aux->setInteractable(false);
         GameInvitation dialog(this);
-        dialog.setImageWidget(auxBackground);
+        dialog.setGridImageWidget(auxBackground);
+        int crtPlayer;
+        PlayerType crtType;
+        PlayerType opponentType;
+        aux->getPlayersState(crtPlayer, crtType, opponentType);
+        if (crtType == PlayerType::LocalHuman) {
+            dialog.setColour((colors)crtPlayer);
+        }
+        else {
+            if (crtPlayer == BLACK) {
+                dialog.setColour((colors)WHITE);
+            }
+            else if (crtPlayer == WHITE) {
+                dialog.setColour((colors)BLACK);
+            }
+            else {
+                Logger::log(QString("Setting invalid player: %1").arg(crtPlayer));
+                dialog.setColour((colors)EMPTY);
+            }
+        }
         int ret = dialog.exec();
 
         if (ret == QMessageBox::Yes) {

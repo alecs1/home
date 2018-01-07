@@ -2,11 +2,8 @@
 //#include <QResizeEvent>
 //#include <QPainter>
 #include <QCoreApplication>
-//#include <QMainWindow>
-//#include <QSvgRenderer>
 #include <QTimer>
 #include <QTime>
-//#include <QTextStream>
 #include <QMutex>
 
 //temporary for debug.
