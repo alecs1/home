@@ -198,8 +198,14 @@ GameState GoTable::getGameState() const {
     return state;
 }
 
-void GoTable::getPlayersState(int& crt, PlayerType& crtType, PlayerType& opponentType) const {
+void GoTable::getPlayersState(int& crt, PlayerType& crtType, int& opponent, PlayerType& opponentType) const {
     crt = this->crtPlayer;
+    if (crt == WHITE) {
+        opponent = BLACK;
+    }
+    else {
+        opponent = WHITE;
+    }
     crtType = players[crtPlayer];
     opponentType = players[otherColour(crtPlayer)];
 }
@@ -315,7 +321,7 @@ bool GoTable::loadGameFromRemote(const QJsonObject &json) {
     SGFNode* aux = NULL;
     SGameSettings auxSettings;
     SAuxGameInfo auxGameInfo;
-    bool success = SaveFile::loadSaveFromRemote(json, &aux, &auxSettings, &auxGameInfo);
+    bool success = SaveFile::loadSave(json, &aux, &auxSettings, &auxGameInfo);
     if (!success) {
         Logger::log(QString("%1 - could not load remote save: %2").arg(__func__).arg(QJsonDocument(json).toJson().constData()), Logger::ERR);
         return false;

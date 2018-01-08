@@ -91,22 +91,6 @@ bool SaveFile::loadSave(const QString saveFName, SGFNode **sgfNode, SGameSetting
     return success;
 }
 
-bool SaveFile::loadSaveFromRemote(const QJsonObject json, SGFNode **sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
-    bool success = loadSave(json, sgfNode, gameSettings, auxGameInfo);
-
-    //We're taking the settings sent for Network
-    if (gameSettings->white == PlayerType::Network) {
-        gameSettings->white = PlayerType::LocalHuman;
-        gameSettings->black = PlayerType::Network;
-    }
-    else {
-        gameSettings->white = PlayerType::Network;
-        gameSettings->black = PlayerType::LocalHuman;
-    }
-
-    return success;
-}
-
 bool SaveFile::writeSave(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
     addValidationData(json, sgfNode, gameSettings, auxGameInfo);
@@ -132,22 +116,29 @@ bool SaveFile::writeSave(QString saveFName, SGFNode *sgfNode, SGameSettings* gam
     return true;
 }
 
-/*!
- * \brief serialise to be read by a remote player
+/**
+ * @brief serialise to be read by a remote player
  */
 bool SaveFile::writeSaveForRemote(QJsonObject& json, SGFNode* sgfNode, SGameSettings* gameSettings, SAuxGameInfo* auxGameInfo) {
     json = serialiseGameState(sgfNode, gameSettings, auxGameInfo);
 
     //TODO - this belongs to GoTable
+     //The remote will see "LocalHuman" as himself and ourselves as Network
     if (gameSettings->white == PlayerType::LocalHuman) {
         QJsonObject remote = json["black"].toObject();
-        remote["type"] = playerTypeMap.left.at(PlayerType::Network);
+        remote["type"] = playerTypeMap.left.at(PlayerType::LocalHuman);
         json["black"] = remote; //is this necessary?
+        QJsonObject local = json["white"].toObject();
+        local["type"] = playerTypeMap.left.at(PlayerType::Network);
+        json["white"] = local;
     }
     else if (gameSettings->black == PlayerType::LocalHuman) {
         QJsonObject remote = json["white"].toObject();
-        remote["type"] = playerTypeMap.left.at(PlayerType::Network);
+        remote["type"] = playerTypeMap.left.at(PlayerType::LocalHuman);
         json["white"] = remote;
+        QJsonObject local = json["black"].toObject();
+        local["type"] = playerTypeMap.left.at(PlayerType::Network);
+        json["black"] = local;
     }
     else {
         Logger::log("Cannot decide which player should be the remote one! Need at least a human player!");

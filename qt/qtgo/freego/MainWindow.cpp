@@ -407,9 +407,9 @@ void MainWindow::setGameState(GameState state) {
 //TODO - disable playing when the network peer has disconnected
 void MainWindow::onMovePlayed(int row, int col) {
     Logger::log(QString("%1: %2 %3").arg(__func__).arg(row).arg(col));
-    int crtPlayer;
+    int crtPlayer, oppPlayer;
     PlayerType crtType, oppType;
-    table->getPlayersState(crtPlayer, crtType, oppType);
+    table->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
     Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
     if (crtType == PlayerType::Network) {
         ProtoJson::Msg msg;
@@ -562,10 +562,10 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         aux->setInteractable(false);
         GameInvitation dialog(this);
         dialog.setGridImageWidget(auxBackground);
-        int crtPlayer;
-        PlayerType crtType;
-        PlayerType opponentType;
-        aux->getPlayersState(crtPlayer, crtType, opponentType);
+        int crtPlayer, oppPlayer;
+        PlayerType crtType, oppType;
+        aux->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
+        Logger::log(QString("Players state: %1 %2 %3 %4").arg(crtPlayer).arg(crtType).arg(oppPlayer).arg(oppType));
         if (crtType == PlayerType::LocalHuman) {
             dialog.setColour((colors)crtPlayer);
         }
@@ -599,9 +599,9 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
     }
 
     else if (msg.type == ProtoJson::MsgType::PlayMove) {
-        int crtPlayer;
+        int crtPlayer, oppPlayer;
         PlayerType crtType, oppType;
-        table->getPlayersState(crtPlayer, crtType, oppType);
+        table->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
 
         if (crtType == PlayerType::Network) {
             QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();
@@ -616,4 +616,3 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         connMan->sendMessage(reply);
     }
 }
-
