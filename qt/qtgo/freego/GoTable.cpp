@@ -265,7 +265,7 @@ bool GoTable::loadGame(SGFNode* aux, SGameSettings auxSettings, SAuxGameInfo aux
     auxInfo = auxGameInfo;
 
 
-    if (aux == NULL) {
+    if (aux == nullptr) {
         Logger::log("aux == NULL", Logger::ERR);
         return false;
     }
@@ -292,8 +292,6 @@ bool GoTable::loadGame(SGFNode* aux, SGameSettings auxSettings, SAuxGameInfo aux
 
     sgfFreeNode(aux);
 
-    //updateSizes();
-    //update();
     return retVal;
 }
 

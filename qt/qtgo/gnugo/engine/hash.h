@@ -98,7 +98,8 @@ void hashdata_invert_ko(Hash_data *hd, int pos);
 void hashdata_invert_stone(Hash_data *hd, int pos, int color);
 void hashdata_invert_komaster(Hash_data *hd, int komaster);
 void hashdata_invert_kom_pos(Hash_data *hd, int kom_pos);
-void hashdata_calc_orientation_invariant(Hash_data *hd, Intersection *board,
+void hashdata_calc_orientation_invariant(struct board_lib_state_struct *internal_state,
+                                         Hash_data *hd, Intersection *board,
 					 int ko_pos);
 
 char *hashdata_to_string(Hash_data *hashdata);

@@ -133,7 +133,8 @@ add_subdirectory("freego")
 #endif ( (NOT WIN32) AND (NOT ANDROID) )
 
 
-add_subdirectory("gnugo")
+#add_subdirectory("gnugo")
+add_subdirectory("gnugo-lib")
 # 
 # if (ANDROID)
 #     set(PACKAGE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/freego/android")
