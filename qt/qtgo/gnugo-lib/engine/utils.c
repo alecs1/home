@@ -1123,7 +1123,7 @@ detect_owl_blunder(int move, int color, int *defense_point,
 	  int resultb;
 	  if (internal_state->board[neighbor] == color)
 	    continue;
-	  owl_analyze_semeai_after_move(move, color, neighbor, bpos,
+      owl_analyze_semeai_after_move(internal_state, move, color, neighbor, bpos,
 					NULL, &resultb, NULL, NULL, 0);
 	  if (resultb == 0)
 	    acode = WIN;
@@ -1271,7 +1271,7 @@ detect_tactical_blunder(int move, int color, int *defense_point,
 	for (k = 0; k < num_adj; k++) {
 	  int neighbor = adj[k];
 	  int resulta;
-	  owl_analyze_semeai_after_move(move, color, pos, neighbor,
+      owl_analyze_semeai_after_move(internal_state, move, color, pos, neighbor,
 					&resulta, NULL, NULL, NULL, 1);
 	  if (resulta != 0) {
 	    *return_value += 2 * worm[pos].effective_size;

@@ -291,11 +291,14 @@ int non_transitivity(int str1, int str2, int str3, int *move);
 int break_in(int str, const signed char goal[BOARDMAX], int *move);
 int block_off(int str1, const signed char goal[BOARDMAX], int *move);
 
-int obvious_false_eye(struct board_lib_state_struct *internal_state, int pos, int color);
-void estimate_lunch_eye_value(int lunch, int *min, int *probable, int *max,
-			      int appreciate_one_two_lunches);
+int obvious_false_eye(struct board_lib_state_struct *internal_state,
+                      int pos, int color);
+void estimate_lunch_eye_value(board_lib_state_struct *internal_state,
+                              int lunch, int *min, int *probable, int *max,
+                              int appreciate_one_two_lunches);
 int owl_topological_eye(int pos, int color);
-int vital_chain(int pos);
+int vital_chain(board_lib_state_struct *internal_state,
+                int pos);
 int confirm_safety(int move, int color, int *defense_point,
 		   signed char safe_stones[BOARDMAX]);
 int dragon_weak(struct board_lib_state_struct *internal_state,
@@ -497,7 +500,8 @@ void mark_safe_stones(board_lib_state_struct *internal_state,
                       signed char safe_stones[BOARDMAX]);
 
 
-int owl_lively(int pos);
+int owl_lively(board_lib_state_struct *internal_state,
+               int pos);
 int owl_escape_value(int pos);
 int owl_goal_dragon(int pos);
 int owl_eyespace(int pos);
@@ -508,7 +512,8 @@ int owl_proper_eye(int pos);
 int owl_eye_size(int pos);
 int owl_lunch(int str);
 int owl_strong_dragon(int pos);
-void owl_reasons(int color);
+void owl_reasons(board_lib_state_struct *internal_state,
+                 int color);
 
 void unconditional_life(int unconditional_territory[BOARDMAX], int color);
 void clear_unconditionally_meaningless_moves(void);
@@ -592,23 +597,32 @@ void uct_genmove(board_lib_state_struct *internal_state,
                  int *allowed_moves, int nodes, float *move_values,
                  int *move_frequencies);
 
-int owl_attack(int target, int *attack_point, int *certain, int *kworm);
-int owl_defend(int target, int *defense_point, int *certain, int *kworm);
-int owl_threaten_attack(int target, int *attack1, int *attack2);
-int owl_threaten_defense(int target, int *defend1, int *defend2);
-int owl_does_defend(int move, int target, int *kworm);
+int owl_attack(board_lib_state_struct *internal_state,
+               int target, int *attack_point, int *certain, int *kworm);
+int owl_defend(board_lib_state_struct *internal_state,
+               int target, int *defense_point, int *certain, int *kworm);
+int owl_threaten_attack(board_lib_state_struct *internal_state,
+                        int target, int *attack1, int *attack2);
+int owl_threaten_defense(board_lib_state_struct *internal_state,
+                         int target, int *defend1, int *defend2);
+int owl_does_defend(board_lib_state_struct *internal_state,
+                    int move, int target, int *kworm);
 int owl_confirm_safety(int move, int target, int *defense_point, int *kworm);
-int owl_does_attack(int move, int target, int *kworm);
+int owl_does_attack(board_lib_state_struct *internal_state,
+                    int move, int target, int *kworm);
 int owl_connection_defends(int move, int target1, int target2);
-int owl_substantial(int str);
-void owl_analyze_semeai(int apos, int bpos, 
-			int *resulta, int *resultb, int *semeai_move,
-			int *semeai_result_certain);
-void owl_analyze_semeai_after_move(int move, int color, int apos, int bpos,
-				   int *resulta, int *resultb,
-				   int *semeai_move,
-				   int *semeai_result_certain,
-				   int recompute_dragons);
+int owl_substantial(board_lib_state_struct *internal_state,
+                    int str);
+void owl_analyze_semeai(board_lib_state_struct *internal_state,
+                        int apos, int bpos,
+                        int *resulta, int *resultb, int *semeai_move,
+                        int *semeai_result_certain);
+void owl_analyze_semeai_after_move(board_lib_state_struct *internal_state,
+                                   int move, int color, int apos, int bpos,
+                                   int *resulta, int *resultb,
+                                   int *semeai_move,
+                                   int *semeai_result_certain,
+                                   int recompute_dragons);
 
 void set_limit_search(int value);
 void set_search_diamond(struct board_lib_state_struct *internal_state,
@@ -790,9 +804,10 @@ int is_marginal_eye_space(int pos);
 int max_eye_value(int pos);
 void test_eyeshape(board_lib_state_struct *internal_state,
                    int eyesize, int *eye_vertices);
-int analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
-		     char *analyzed_eyegraph, int outer_liberties,
-		     int ko_threats);
+int analyze_eyegraph(board_lib_state_struct *internal_state,
+                     const char *coded_eyegraph, struct eyevalue *value,
+                     char *analyzed_eyegraph, int outer_liberties,
+                     int ko_threats);
 
 
 /* debugging support */

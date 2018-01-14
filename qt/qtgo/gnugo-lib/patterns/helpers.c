@@ -346,7 +346,7 @@ threaten_to_capture_helper(int move, int str)
     return;
   if (find_defense(str, &defense_move) != 0
       && defense_move != NO_MOVE
-      && TRYMOVE(defense_move, board[str])) {
+      && TRYMOVE(defense_move, internal_state->board[str])) {
     if (internal_state->board[move] == EMPTY || attack(move, NULL) != 0) {
       popgo(internal_state);
       popgo(internal_state);
@@ -362,7 +362,7 @@ threaten_to_capture_helper(int move, int str)
   for (k = 0; k < adj; k++) {
     int lib;
     findlib(internal_state, adjs[k], 1, &lib);
-    if (TRYMOVE(lib, board[str])) {
+    if (TRYMOVE(lib, internal_state->board[str])) {
       if (!attack(str, NULL)
 	  && (internal_state->board[move] == EMPTY || attack(move, NULL) != 0)) {
 	popgo(internal_state);
@@ -429,7 +429,7 @@ defend_against_atari_helper(int move, int str)
 void
 amalgamate_most_valuable_helper(int apos, int bpos, int cpos)
 {
-  if (!is_same_dragon(apos, bpos) && !is_same_dragon(bpos, cpos)) {
+  if (!is_same_dragon(internal_state, apos, bpos) && !is_same_dragon(bpos, cpos)) {
     if (dragon[apos].effective_size >= dragon[cpos].effective_size)
       join_dragons(apos, bpos);
     else
@@ -455,7 +455,7 @@ finish_ko_helper(int pos)
   for (k = 0; k < adj; k++) {
     if (countstones(adjs[k]) == 1) {
       findlib(internal_state, adjs[k], 1, &lib);
-      if (is_ko(lib, board[pos], NULL))
+      if (is_ko(internal_state, lib, board[pos], NULL))
 	return 1;
     }
   }
@@ -559,7 +559,7 @@ connect_and_cut_helper(int Apos, int bpos, int cpos)
   int k;
 
   gg_assert(internal_state, IS_STONE(color));
-  gg_assert(liberties == 2);
+  gg_assert(internal_state, liberties == 2);
 
   if (libs[0] == bpos)
     dpos = libs[1];
@@ -738,7 +738,7 @@ backfill_replace(int move, int str)
     if (attack_and_defend(str, NULL, NULL, NULL, &defense_move)) {
       /* Must undo the trymove before adding the replacement move. */
       popgo(internal_state);
-      add_replacement_move(move, defense_move, board[str]);
+      add_replacement_move(move, defense_move, internal_state->board[str]);
     }
     else
       popgo(internal_state);
@@ -862,13 +862,13 @@ int distrust_tactics_helper(int str)
 	    && !liberty_of_string(internal_state, pos, adjs[r]))
 	  nakade = 0;
 	else if (internal_state->board[pos] == color) {
-	  if (same_string(pos, str))
+	  if (same_string(internal_state, pos, str))
 	    str_found = 1;
 	  else
 	    nakade = 0;
 	}
 	else if (internal_state->board[pos] == OTHER_COLOR(color)
-		 && !same_string(pos, adjs[r]))
+		 && !same_string(internal_state, pos, adjs[r]))
 	  nakade = 0;
       }
       if (!str_found)

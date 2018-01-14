@@ -113,16 +113,16 @@ void
 sgffile_begindump(SGFTree *tree)
 {
   static SGFTree local_tree;
-  gg_assert(sgf_dumptree == NULL);
+  gg_assert(internal_state->sgf_dumptree == NULL);
 
   if (tree == NULL)
     sgf_dumptree = &local_tree;
   else 
     sgf_dumptree = tree;
   
-  sgftree_clear(sgf_dumptree);
-  sgftreeCreateHeaderNode(sgf_dumptree, internal_state->board_size, komi, handicap);
-  sgffile_printboard(sgf_dumptree);
+  sgftree_clear(internal_state->sgf_dumptree);
+  sgftreeCreateHeaderNode(internal_state->sgf_dumptree, internal_state->board_size, komi, handicap);
+  sgffile_printboard(internal_state->sgf_dumptree);
 }
 
 
@@ -135,11 +135,11 @@ sgffile_enddump(const char *filename)
 {
   /* Check if we have a valid filename and a tree. */
   if (filename && *filename && sgf_dumptree) {
-    if (writesgf(sgf_dumptree->root, filename)) {
+    if (writesgf(internal_state->sgf_dumptree->root, filename)) {
       /* Only delete the tree if writesgf() succeeds. If it doesn't, one
        * will most likely wish to save into another (writable) file.
        */
-      sgfFreeNode(sgf_dumptree->root);
+      sgfFreeNode(internal_state->sgf_dumptree->root);
       sgf_dumptree = NULL;
     }
   }

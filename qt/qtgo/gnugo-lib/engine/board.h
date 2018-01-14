@@ -308,7 +308,8 @@ int is_legal(board_lib_state_struct *internal_state,
 int is_suicide(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_illegal_ko_capture(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_allowed_move(struct board_lib_state_struct *internal_state, int pos, int color);
-int is_ko(struct board_lib_state_struct *internal_state, int pos, int color, int *ko_pos);
+int is_ko(board_lib_state_struct *internal_state,
+          int pos, int color, int *ko_pos);
 int is_ko_point(struct board_lib_state_struct *internal_state, int pos);
 int does_capture_something(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_self_atari(struct board_lib_state_struct *internal_state, int pos, int color);
@@ -340,8 +341,10 @@ void mark_string(struct board_lib_state_struct *internal_state, int str, signed 
 int are_neighbors(struct board_lib_state_struct *internal_state, int pos1, int pos2);
 
 /* Count and/or find liberties at (pos). */
-int countlib(struct board_lib_state_struct *internal_state, int str);
-int findlib(struct board_lib_state_struct *internal_state, int str, int maxlib, int *libs);
+int countlib(board_lib_state_struct *internal_state,
+             int str);
+int findlib(board_lib_state_struct *internal_state,
+            int str, int maxlib, int *libs);
 int fastlib(struct board_lib_state_struct *internal_state, int pos, int color, int ignore_captures);
 int approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int maxlib, int *libs);
 int accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, int maxlib, int *libs);

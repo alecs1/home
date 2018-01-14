@@ -1396,7 +1396,7 @@ gtp_does_attack(char *s)
     return gtp_failure("string vertex must not be empty");
 
   /* to get the variations into the sgf file, clear the reading cache */
-  if (sgf_dumptree)
+  if (internal_state->sgf_dumptree)
     reading_cache_clear();
   
   attack_code = does_attack(POS(ti, tj), POS(i, j));
@@ -1434,7 +1434,7 @@ gtp_does_defend(char *s)
     return gtp_failure("string vertex must not be empty");
 
   /* to get the variations into the sgf file, clear the reading cache */
-  if (sgf_dumptree)
+  if (internal_state->sgf_dumptree)
     reading_cache_clear();
   
   defense_code = does_defend(POS(ti, tj), POS(i, j));
@@ -1912,7 +1912,7 @@ gtp_analyze_semeai_after_move(char *s)
 
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
-  owl_analyze_semeai_after_move(move, color, dragona, dragonb,
+  owl_analyze_semeai_after_move(internal_state, move, color, dragona, dragonb,
 				&resulta, &resultb, &semeai_move,
 				&result_certain, 0);
   gtp_start_response(GTP_SUCCESS);

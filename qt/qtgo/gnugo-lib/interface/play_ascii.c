@@ -1178,7 +1178,7 @@ showcapture(char *line)
   int str;
   int move;
 
-  gg_assert(line);
+  gg_assert(internal_state, line);
   str = string_to_location(internal_state->board_size, line);
   if (str == NO_MOVE || internal_state->board[str] == EMPTY) {
     printf("\ninvalid point!\n");
@@ -1198,7 +1198,7 @@ showdefense(char *line)
   int str;
   int move;
   
-  gg_assert(line);
+  gg_assert(internal_state, line);
   str = string_to_location(internal_state->board_size, line);
   if (str == NO_MOVE || internal_state->board[str] == EMPTY) {
     printf("\ninvalid point!\n");

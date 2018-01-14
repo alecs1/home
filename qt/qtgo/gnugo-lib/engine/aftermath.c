@@ -903,7 +903,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
        */
       if (cc != NO_MOVE && !owl_does_defend(move, cc, NULL)) {
 	int resulta, resultb;
-	owl_analyze_semeai_after_move(move, color, target, cc,
+    owl_analyze_semeai_after_move(internal_state, move, color, target, cc,
 				      &resulta, &resultb, NULL, NULL, 1);
 	if (resulta != 0)
 	  continue;

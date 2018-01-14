@@ -168,7 +168,7 @@ mc_add_liberty_edge(struct mc_board *mc, int pos, int lib, int dir)
   int first_liberty_edge = mc->first_liberty_edge[reference];
 
 #if !TURN_OFF_ASSERTIONS
-  gg_assert(lib + delta[dir] == pos);
+  gg_assert(internal_state, lib + delta[dir] == pos);
 #endif
   
   if (first_liberty_edge) {
@@ -198,7 +198,7 @@ mc_remove_liberty_edge(struct mc_board *mc, int pos, int lib, int dir)
   int previous = mc->previous_liberty_edge[this_liberty_edge];
   
 #if !TURN_OFF_ASSERTIONS
-  gg_assert(lib + delta[dir] == pos);
+  gg_assert(internal_state, lib + delta[dir] == pos);
 #endif
   
   if (next == this_liberty_edge) {
@@ -410,11 +410,11 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 {
   int pos;
 
-  ASSERT1(board_ko_pos == mc->board_ko_pos, mc->board_ko_pos);
+  ASSERT1(internal_state, board_ko_pos == mc->board_ko_pos, mc->board_ko_pos);
   for (pos = 0; pos < BOARDSIZE; pos++) {
     ASSERT1(internal_state, internal_state->board[pos] == mc->board[pos], pos);
     if (IS_STONE(internal_state->board[pos])) {
-      ASSERT1(internal_state, same_string(pos, mc->reference_stone[pos]), pos);
+      ASSERT1(internal_state, same_string(internal_state, pos, mc->reference_stone[pos]), pos);
       if (find_origin(internal_state, pos) == pos) {
 	int reference = mc->reference_stone[pos];
 	int pos2 = pos;

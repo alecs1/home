@@ -468,7 +468,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   }
 
   /* Pattern class b is obsolete in the pattern databases handled here. */
-  gg_assert(!(class & CLASS_b));
+  gg_assert(internal_state, !(class & CLASS_b));
 
   /* Pattern class e, expand to make territory. */
   if (class & CLASS_e) {

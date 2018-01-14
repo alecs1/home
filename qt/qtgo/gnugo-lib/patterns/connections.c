@@ -218,14 +218,14 @@ conn_callback(int anchor, int color, struct pattern *pattern, int ll,
 void
 find_cuts(void)
 {
-  matchpat(cut_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
+  matchpat(internal_state, cut_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
 }
 
 /* Find explicit connection patterns and amalgamate the involved dragons. */
 void
 find_connections(void)
 {
-  matchpat(conn_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
+  matchpat(internal_state, conn_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
 }
 
 

@@ -107,7 +107,7 @@ int  tt_get(Transposition_table *table, enum routine_id routine,
 	    int target1, int target2, int remaining_depth,
 	    Hash_data *extra_hash,
 	    int *value1, int *value2, int *move);
-void tt_update(struct board_lib_state_struct *internal_state,
+void tt_update(board_lib_state_struct *internal_state,
                Transposition_table *table, enum routine_id routine,
                int target, int target2, int remaining_depth,
                Hash_data *extra_hash,
@@ -178,9 +178,9 @@ void sgf_trace_semeai(struct board_lib_state_struct *internal_state,
  * and q. These must of course not be used for anything else in
  * the function.
  */
-#define SGFTRACE(move, result, message) \
-  if (sgf_dumptree) \
-    sgf_trace(read_function_name, q, move, result, message)
+#define SGFTRACE(internal_state, move, result, message) \
+  if (internal_state->sgf_dumptree) \
+    sgf_trace(internal_state, read_function_name, q, move, result, message)
 
 /* Corresponding macro for use in connection or semeai reading, where
  * two groups are involved.
@@ -190,9 +190,9 @@ void sgf_trace_semeai(struct board_lib_state_struct *internal_state,
     sgf_trace2(read_function_name, q1, q2, move, \
 	       result_to_string(result), message)
 
-#define SGFTRACE_SEMEAI(move, result1, result2, message) \
-  if (sgf_dumptree) \
-    sgf_trace_semeai(read_function_name, q1, q2, move, \
+#define SGFTRACE_SEMEAI(internal_state, move, result1, result2, message) \
+  if (internal_state->sgf_dumptree) \
+    sgf_trace_semeai(internal_state, read_function_name, q1, q2, move, \
 	             result1, result2, message)
 
 
@@ -206,24 +206,24 @@ void sgf_trace_semeai(struct board_lib_state_struct *internal_state,
 
 #if !TRACE_READ_RESULTS
 
-#define READ_RETURN0(routine, str, remaining_depth) \
+#define READ_RETURN0(internal_state, routine, str, remaining_depth) \
   do { \
-    tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
+    tt_update(internal_state, &ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
 	      0, 0, NO_MOVE);\
     return 0; \
   } while (0)
 
-#define READ_RETURN(routine, str, remaining_depth, point, move, value) \
+#define READ_RETURN(internal_state, routine, str, remaining_depth, point, move, value) \
   do { \
-    tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
+    tt_update(internal_state, &ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
               value, 0, move);\
     if ((value) != 0 && (point) != 0) *(point) = (move); \
     return (value); \
   } while (0)
 
-#define READ_RETURN_SEMEAI(routine, str1, str2, remaining_depth, point, move, value1, value2) \
+#define READ_RETURN_SEMEAI(internal_state, routine, str1, str2, remaining_depth, point, move, value1, value2) \
   do { \
-    tt_update(&ttable, routine, str1, str2, remaining_depth, NULL, \
+    tt_update(internal_state, &ttable, routine, str1, str2, remaining_depth, NULL, \
               value1, value2, move); \
     if ((value1) != 0 && (point) != 0) *(point) = (move); \
     return; \
@@ -245,9 +245,9 @@ void sgf_trace_semeai(struct board_lib_state_struct *internal_state,
     return (value); \
   } while (0)
 
-#define READ_RETURN2(routine, str, remaining_depth, point, move, value1, value2) \
+#define READ_RETURN2(internal_state, routine, str, remaining_depth, point, move, value1, value2) \
   do { \
-    tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
+    tt_update(internal_state, &ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
               value1, value2, move);\
     if ((value1) != 0 && (point) != 0) *(point) = (move); \
     return (value1); \

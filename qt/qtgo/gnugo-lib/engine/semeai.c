@@ -262,7 +262,7 @@ find_moves_to_make_seki()
 	  break;
       }
 
-      ASSERT1(opponent != NO_MOVE, opponent);
+      ASSERT1(internal_state, opponent != NO_MOVE, opponent);
 
       if (dragon[opponent].status != ALIVE)
 	continue;
@@ -377,7 +377,7 @@ find_moves_to_make_seki()
 	  break;
       }
 
-      ASSERT1(opponent != NO_MOVE, opponent);
+      ASSERT1(internal_state, opponent != NO_MOVE, opponent);
 
       if (dragon[opponent].status != ALIVE)
 	continue;
@@ -528,7 +528,7 @@ semeai_move_reasons(int color)
 			       dragon2[d].semeai_defense_target)
 	    && !neighbor_of_dragon(dragon2[d].semeai_defense_point,
 				   dragon2[d].origin)
-	    && !is_self_atari(dragon2[d].semeai_defense_point, color)) {
+	    && !is_self_atari(internal_state, dragon2[d].semeai_defense_point, color)) {
 	  
 	  /* If this is a move to fill the non-common liberties of the
 	   * target, and is not a ko or snap-back, then we mark all
@@ -560,7 +560,7 @@ semeai_move_reasons(int color)
 			       dragon2[d].origin)
 	    && !neighbor_of_dragon(dragon2[d].semeai_attack_point,
 				  dragon2[d].semeai_attack_target)
-	    && !is_self_atari(dragon2[d].semeai_attack_point, color)) {
+	    && !is_self_atari(internal_state, dragon2[d].semeai_attack_point, color)) {
 
           liberties = findlib(internal_state, dragon2[d].origin, MAXLIBS, libs);
 

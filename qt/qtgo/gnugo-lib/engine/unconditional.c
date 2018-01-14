@@ -348,7 +348,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
 	pos2 = stones[k] + delta[r];
 	if (!ON_BOARD(internal_state, pos2)
 	    || (internal_state->board[pos2] == color
-		&& !same_string(pos, pos2)))
+		&& !same_string(internal_state, pos, pos2)))
 	  isolated = 0;
       }
     }
@@ -440,7 +440,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
 	    && trymove(internal_state, pos + up + right, other, "unconditional_life", pos))
 	  locally_played_moves++;
 	if (internal_state->board[pos - right] == other && internal_state->board[pos + up + right] == other
-	    && same_string(pos - right, pos + up + right)) {
+	    && same_string(internal_state, pos - right, pos + up + right)) {
 	  /* This is a critical seki. Extend the string with one stone
            * in an arbitrary direction to break the seki.
 	   */

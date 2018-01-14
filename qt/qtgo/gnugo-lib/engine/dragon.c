@@ -229,7 +229,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	int kworm = NO_MOVE;
 	int owl_nodes_before = get_owl_node_counter();
 	start_timer(3);
-	acode = owl_attack(str, &attack_point, 
+    acode = owl_attack(internal_state, str, &attack_point,
 			   &DRAGON2(str).owl_attack_certain, &kworm);
 	DRAGON2(str).owl_attack_node_count
 	  = get_owl_node_counter() - owl_nodes_before;
@@ -239,7 +239,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	  DRAGON2(str).owl_attack_kworm = kworm;
 	  if (attack_point != NO_MOVE) {
 	    kworm = NO_MOVE;
-	    dcode = owl_defend(str, &defense_point,
+        dcode = owl_defend(internal_state, str, &defense_point,
 			       &DRAGON2(str).owl_defense_certain, &kworm);
 	    if (dcode != 0) {
 	      if (defense_point != NO_MOVE) {
@@ -283,7 +283,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	else {
 	  if (!DRAGON2(str).owl_attack_certain) {
 	    kworm = NO_MOVE;
-	    dcode = owl_defend(str, &defense_point, 
+        dcode = owl_defend(internal_state, str, &defense_point,
 			       &DRAGON2(str).owl_defense_certain, &kworm);
 	    if (dcode != 0) {
 	      /* If the result of owl_attack was not certain, we may
@@ -349,7 +349,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	    && (owl_threats 
 		|| thrashing_stone[str])) {
 	  if (acode && !dcode && DRAGON2(str).owl_attack_point != NO_MOVE) {
-	    if (owl_threaten_defense(str, &defense_point,
+        if (owl_threaten_defense(internal_state, str, &defense_point,
 				     &second_defense_point)) {
 	      DRAGON2(str).owl_threat_status = CAN_THREATEN_DEFENSE;
 	      DRAGON2(str).owl_defense_point = defense_point;
@@ -360,7 +360,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	  }
 	  else if (!acode) {
 	    int attack_point, second_attack_point;
-	    if (owl_threaten_attack(str, 
+        if (owl_threaten_attack(internal_state, str,
 				    &attack_point, &second_attack_point)) {
 	      DRAGON2(str).owl_threat_status = CAN_THREATEN_ATTACK;
 	      DRAGON2(str).owl_attack_point = attack_point;

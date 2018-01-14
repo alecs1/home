@@ -917,7 +917,7 @@ compute_active_connection_area(struct persistent_cache_entry *entry,
        */
       adj = chainlinks(internal_state, pos, adjs);
       for (r = 0; r < adj; r++) {
-	mark_string(adjs[r], active, -1);
+    mark_string(internal_state, adjs[r], active, -1);
     if (countlib(internal_state, adjs[r]) <= 3) {
 	  int s;
 	  int adjs2[MAXCHAIN];
@@ -927,7 +927,7 @@ compute_active_connection_area(struct persistent_cache_entry *entry,
 	    active[libs[s]] = 1;
       adj2 = chainlinks(internal_state, pos, adjs2);
 	  for (s = 0; s < adj2; s++)
-	    mark_string(adjs2[s], active, -1);
+        mark_string(internal_state, adjs2[s], active, -1);
 	}
       }
     }
@@ -1067,7 +1067,7 @@ compute_active_breakin_area(struct persistent_cache_entry *entry,
        */
       adj = chainlinks(internal_state, pos, adjs);
       for (r = 0; r < adj; r++) {
-	mark_string(adjs[r], active, -1);
+    mark_string(internal_state, adjs[r], active, -1);
     if (countlib(internal_state, adjs[r]) <= 3) {
 	  int s;
 	  int adjs2[MAXCHAIN];
@@ -1077,7 +1077,7 @@ compute_active_breakin_area(struct persistent_cache_entry *entry,
 	    active[libs[s]] = 1;
       adj2 = chainlinks(internal_state, pos, adjs2);
 	  for (s = 0; s < adj2; s++)
-	    mark_string(adjs2[s], active, -1);
+        mark_string(internal_state, adjs2[s], active, -1);
 	}
       }
     }
@@ -1199,7 +1199,7 @@ compute_active_owl_type_area(const signed char goal[BOARDMAX], int goal_color,
        */
       adj = chainlinks(internal_state, pos, adjs);
       for (r = 0; r < adj; r++) {
-	mark_string(adjs[r], active, -1);
+    mark_string(internal_state, adjs[r], active, -1);
     if (countlib(internal_state, adjs[r]) <= 3) {
 	  int s;
 	  int adjs2[MAXCHAIN];
@@ -1209,7 +1209,7 @@ compute_active_owl_type_area(const signed char goal[BOARDMAX], int goal_color,
 	    active[libs[s]] = 1;
       adj2 = chainlinks(internal_state, pos, adjs2);
 	  for (s = 0; s < adj2; s++)
-	    mark_string(adjs2[s], active, -1);
+        mark_string(internal_state, adjs2[s], active, -1);
 	}
       }
     }

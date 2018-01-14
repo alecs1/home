@@ -2418,7 +2418,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
  * status, but it should never be overestimated.
  */
 int
-obvious_false_eye(struct board_lib_state_struct *internal_state, int pos, int color)
+obvious_false_eye(internal_state, struct board_lib_state_struct *internal_state, int pos, int color)
 {
   int i = I(pos);
   int j = J(pos);
@@ -2664,7 +2664,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
      */
     examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL, 0);
 
-    attack_code = owl_attack(str, &attack_point, NULL, NULL);
+    attack_code = owl_attack(internal_state, str, &attack_point, NULL, NULL);
 
     if (attack_code == 0) {
       /* The owl code claims there is no attack. We test this by
@@ -2695,7 +2695,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       }
     }
     else {
-      defense_code = owl_defend(str, &defense_point, NULL, NULL);
+      defense_code = owl_defend(internal_state, str, &defense_point, NULL, NULL);
       if (defense_code == 0) {
 	/* The owl code claims there is no defense. We test this by
 	 * trying to defend on all empty spaces in the eyeshape.
@@ -3236,12 +3236,12 @@ tactical_life_defend(board_lib_state_struct *internal_state,
   results[hash] |= (1 << 2);
 
   /* Try to play on all relevant vertices. */
-  internal_state->num_moves = eyegraph_order_moves(internal_state, vertices, board[str], moves);
+  num_moves = eyegraph_order_moves(internal_state, vertices, internal_state->board[str], moves);
   for (k = 0; k < num_moves; k++) {
     int move = moves[k];
     if ((!is_suicide(internal_state, move, OTHER_COLOR(internal_state->board[str]))
-     || does_capture_something(internal_state, move, board[str]))
-    && eyegraph_trymove(internal_state, move, board[str], "tactical_life_defend", str,
+     || does_capture_something(internal_state, move, internal_state->board[str]))
+    && eyegraph_trymove(internal_state, move, internal_state->board[str], "tactical_life_defend", str,
 			    vertices)) {
       /* We were successful if no attack can be found. */
       result = !tactical_life_attack(internal_state, str, vertices, results);
@@ -3350,10 +3350,10 @@ tactical_life(board_lib_state_struct *internal_state,
 
     if (num_defenses != NULL && defense_points != NULL) {
       *num_defenses = 0;
-      num_moves = eyegraph_order_moves(internal_state, vertices, board[str], moves);
+      num_moves = eyegraph_order_moves(internal_state, vertices, internal_state->board[str], moves);
       for (k = 0; k < num_moves; k++) {
 	int move = moves[k];
-    if (eyegraph_trymove(internal_state, move, board[str], "tactical_life-C", str,
+    if (eyegraph_trymove(internal_state, move, internal_state->board[str], "tactical_life-C", str,
 			     vertices)) {
       if (!tactical_life_attack(internal_state, str, vertices, results))
 	    defense_points[(*num_defenses)++] = move;
@@ -3422,8 +3422,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
      */
     int a = 2;
 
-    if (sgf_dumptree)
-      sgftreeAddComment(sgf_dumptree, "Alive without extra eye.\n");
+    if (internal_state->sgf_dumptree)
+      sgftreeAddComment(internal_state->sgf_dumptree, "Alive without extra eye.\n");
     
     num_moves = eyegraph_order_moves(internal_state, vertices, BLACK, moves);
     for (k = 0; k < num_moves; k++) {
@@ -3434,15 +3434,15 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
     tactical_life(internal_state, 0, vertices, &acode, NULL, NULL,
 		      &dcode, NULL, NULL, tactical_life_results);
 	if (acode != 0) {
-	  tactical_life(1, vertices, &acode, NULL, NULL,
+      tactical_life(internal_state, 1, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
 	  if (acode != 0) {
 	    if (a == 1)
 	      *num_vital_attacks = 0;
 	    a = 0;
 	    vital_attacks[(*num_vital_attacks)++] = move;
-	    if (sgf_dumptree)
-	      sgftreeAddComment(sgf_dumptree,
+        if (internal_state->sgf_dumptree)
+          sgftreeAddComment(internal_state->sgf_dumptree,
 				"Ko threat to remove both eyes.\n");
 	  }
 	  else {
@@ -3450,30 +3450,30 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	      vital_attacks[(*num_vital_attacks)++] = move;
 	      a = 1;
 	    }
-	    if (sgf_dumptree)
-	      sgftreeAddComment(sgf_dumptree, "Ko threat to remove one eye.\n");
+        if (internal_state->sgf_dumptree)
+          sgftreeAddComment(internal_state->sgf_dumptree, "Ko threat to remove one eye.\n");
 	  }
 	}
     eyegraph_popgo(internal_state);
       }
     }
     set_eyevalue(result, a, 2, 2, 2);
-    if (sgf_dumptree) {
+    if (internal_state->sgf_dumptree) {
       if (a == 0)
-	sgftreeAddComment(sgf_dumptree, "Eyevalue 0222.\n");
+    sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0222.\n");
       else if (a == 1)
-	sgftreeAddComment(sgf_dumptree, "Eyevalue 1222.\n");
+    sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 1222.\n");
       else
-	sgftreeAddComment(sgf_dumptree, "Eyevalue 2222.\n");
+    sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 2222.\n");
     }
   }
   else if (defense_code != 0) {
     /* Critical without extra eye.
      * Possible results: 0022, 0122, 1122
      */
-    if (sgf_dumptree)
-      sgftreeAddComment(sgf_dumptree, "Critical without extra eye.\n");
-    tactical_life(1, vertices,
+    if (internal_state->sgf_dumptree)
+      sgftreeAddComment(internal_state->sgf_dumptree, "Critical without extra eye.\n");
+    tactical_life(internal_state, 1, vertices,
 		  &attack_code2, &num_attacks2, attack_points2,
 		  &defense_code2, NULL, NULL, tactical_life_results);
     for (k = 0; k < num_defenses; k++)
@@ -3483,8 +3483,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
       set_eyevalue(result, 0, 0, 2, 2);
       for (k = 0; k < num_attacks2; k++)
 	vital_attacks[(*num_vital_attacks)++] = attack_points2[k];
-      if (sgf_dumptree)
-	sgftreeAddComment(sgf_dumptree, "Eyevalue: 0022.\n");
+      if (internal_state->sgf_dumptree)
+    sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue: 0022.\n");
     }
     else {
       int a = 1;
@@ -3492,7 +3492,7 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	int move = attack_points[k];
     if (eyegraph_trymove(internal_state, move, BLACK, "evaluate_eyespace-B", NO_MOVE,
 			     vertices)) {
-	  evaluate_eyespace(&result2, vertices,
+      evaluate_eyespace(internal_state, &result2, vertices,
 			    &num_vital_attacks2, vital_attacks2,
 			    &num_vital_defenses2, vital_defenses2,
 			    tactical_life_results);
@@ -3513,11 +3513,11 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	}
       }
       set_eyevalue(result, a, 1, 2, 2);
-      if (sgf_dumptree) {
+      if (internal_state->sgf_dumptree) {
 	if (a == 0)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue: 0122.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue: 0122.\n");
 	else
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue: 1122.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue: 1122.\n");
       }	  
     }
   }
@@ -3527,9 +3527,9 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
      *
      * Now determine tactical life with an extra eye.
      */
-    if (sgf_dumptree)
-      sgftreeAddComment(sgf_dumptree, "Dead without extra eye.\n");
-    tactical_life(1, vertices,
+    if (internal_state->sgf_dumptree)
+      sgftreeAddComment(internal_state->sgf_dumptree, "Dead without extra eye.\n");
+    tactical_life(internal_state, 1, vertices,
 		  &attack_code, &num_attacks, attack_points,
 		  &defense_code, &num_defenses, defense_points,
 		  tactical_life_results);
@@ -3539,18 +3539,18 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
        */
       int a = 1;
       int d = 1;
-      if (sgf_dumptree)
-	sgftreeAddComment(sgf_dumptree, "Alive with extra eye.\n");
+      if (internal_state->sgf_dumptree)
+    sgftreeAddComment(internal_state->sgf_dumptree, "Alive with extra eye.\n");
       num_moves = eyegraph_order_moves(internal_state, vertices, BLACK, moves);
       for (k = 0; k < num_moves; k++) {
 	int acode, dcode;
 	int move = moves[k];
     if (eyegraph_trymove(internal_state, move, BLACK, "evaluate_eyespace-C", NO_MOVE,
 			     vertices)) {
-	  tactical_life(1, vertices, &acode, NULL, NULL,
+      tactical_life(internal_state, 1, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
 	  if (acode != 0) {
-	    evaluate_eyespace(&result2, vertices,
+        evaluate_eyespace(internal_state, &result2, vertices,
 			      &num_vital_attacks2, vital_attacks2,
 			      &num_vital_defenses2, vital_defenses2,
 			      tactical_life_results);
@@ -3558,8 +3558,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	    if (max_eye_threat(&result2) == 1) {
 	      vital_attacks[(*num_vital_attacks)++] = move;
 	      a = 0;
-	      if (sgf_dumptree)
-		sgftreeAddComment(sgf_dumptree, "Attacking ko threat.\n");
+          if (internal_state->sgf_dumptree)
+        sgftreeAddComment(internal_state->sgf_dumptree, "Attacking ko threat.\n");
 	    }
 	  }
       eyegraph_popgo(internal_state);
@@ -3575,7 +3575,7 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
       tactical_life(internal_state, 0, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
 	  if (dcode != 0) {
-	    evaluate_eyespace(&result2, vertices,
+        evaluate_eyespace(internal_state, &result2, vertices,
 			      &num_vital_attacks2, vital_attacks2,
 			      &num_vital_defenses2, vital_defenses2,
 			      tactical_life_results);
@@ -3583,23 +3583,23 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	    if (min_eye_threat(&result2) == 1) {
 	      vital_defenses[(*num_vital_defenses)++] = move;
 	      d = 2;
-	      if (sgf_dumptree)
-		sgftreeAddComment(sgf_dumptree, "Defending ko threat.\n");
+          if (internal_state->sgf_dumptree)
+        sgftreeAddComment(internal_state->sgf_dumptree, "Defending ko threat.\n");
 	    }
 	  }
       eyegraph_popgo(internal_state);
 	}
       }
       set_eyevalue(result, a, 1, 1, d);
-      if (sgf_dumptree) {
+      if (internal_state->sgf_dumptree) {
 	if (a == 0 && d == 1)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 0111.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0111.\n");
 	else if (a == 0 && d == 2)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 0112.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0112.\n");
 	else if (a == 1 && d == 1)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 1111.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 1111.\n");
 	else
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 1112.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 1112.\n");
       }
     }
     else if (defense_code != 0) {
@@ -3607,15 +3607,15 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
        * Possible results: 0011, 0012
        */
       int d = 1;
-      if (sgf_dumptree)
-	sgftreeAddComment(sgf_dumptree, "Critical with extra eye.\n");
+      if (internal_state->sgf_dumptree)
+    sgftreeAddComment(internal_state->sgf_dumptree, "Critical with extra eye.\n");
       for (k = 0; k < num_attacks; k++)
 	vital_attacks[(*num_vital_attacks)++] = attack_points[k];
       for (k = 0; k < num_defenses; k++) {
 	int move = defense_points[k];
     if (eyegraph_trymove(internal_state, move, WHITE, "evaluate_eyespace-E", NO_MOVE,
 			     vertices)) {
-	  evaluate_eyespace(&result2, vertices,
+      evaluate_eyespace(internal_state, &result2, vertices,
 			    &num_vital_attacks2, vital_attacks2,
 			    &num_vital_defenses2, vital_defenses2,
 			    tactical_life_results);
@@ -3636,11 +3636,11 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	}
       }
       set_eyevalue(result, 0, 0, 1, d);
-      if (sgf_dumptree) {
+      if (internal_state->sgf_dumptree) {
 	if (d == 1)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue: 0011.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue: 0011.\n");
 	else
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue: 0012.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue: 0012.\n");
       }	  
     }
     else {
@@ -3650,15 +3650,15 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
        * Determine whether there are ko threats and how serious.
        */
       int d = 0;
-      if (sgf_dumptree)
-	sgftreeAddComment(sgf_dumptree, "Dead with extra eye.\n");
+      if (internal_state->sgf_dumptree)
+    sgftreeAddComment(internal_state->sgf_dumptree, "Dead with extra eye.\n");
       num_moves = eyegraph_order_moves(internal_state, vertices, WHITE, moves);
       for (k = 0; k < num_moves; k++) {
 	int acode, dcode;
 	int move = moves[k];
     if (eyegraph_trymove(internal_state, move, WHITE, "evaluate_eyespace-F", NO_MOVE,
 			     vertices)) {
-	  tactical_life(1, vertices, &acode, NULL, NULL,
+      tactical_life(internal_state, 1, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
 	  if (dcode != 0) {
         tactical_life(internal_state, 0, vertices, &acode, NULL, NULL,
@@ -3668,8 +3668,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 		*num_vital_defenses = 0;
 	      d = 2;
 	      vital_defenses[(*num_vital_defenses)++] = move;
-	      if (sgf_dumptree)
-		sgftreeAddComment(sgf_dumptree,
+          if (internal_state->sgf_dumptree)
+        sgftreeAddComment(internal_state->sgf_dumptree,
 				  "Ko threat to make two eyes.\n");
 	    }
 	    else {
@@ -3677,8 +3677,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 		vital_defenses[(*num_vital_defenses)++] = move;
 		d = 1;
 	      }
-	      if (sgf_dumptree)
-		sgftreeAddComment(sgf_dumptree,
+          if (internal_state->sgf_dumptree)
+        sgftreeAddComment(internal_state->sgf_dumptree,
 				  "Ko threat to make one eye.\n");
 	    }
 	  }
@@ -3686,13 +3686,13 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
 	}
       }
       set_eyevalue(result, 0, 0, 0, d);
-      if (sgf_dumptree) {
+      if (internal_state->sgf_dumptree) {
 	if (d == 0)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 0000.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0000.\n");
 	else if (d == 1)
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 0001.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0001.\n");
 	else
-	  sgftreeAddComment(sgf_dumptree, "Eyevalue 0002.\n");
+      sgftreeAddComment(internal_state->sgf_dumptree, "Eyevalue 0002.\n");
       }
     }
   }
@@ -3703,7 +3703,8 @@ evaluate_eyespace(board_lib_state_struct *internal_state,
  *
  */
 static int
-add_margins(int num_margins, int *margins, int mx[BOARDMAX])
+add_margins(board_lib_state_struct *internal_state,
+            int num_margins, int *margins, int mx[BOARDMAX])
 {
   int k;
   int i, j;
@@ -3729,13 +3730,13 @@ add_margins(int num_margins, int *margins, int mx[BOARDMAX])
     && (!ON_BOARD(internal_state, pos + up - right) || mx[pos + up - right] == WHITE)) {
       for (i = -3; i <= 0; i++) {
 	for (j = 2; j < 6; j++) {
-	  if (white_area(mx, pos + j * up + i * right, up, right, pos, j)) {
+      if (white_area(internal_state, mx, pos + j * up + i * right, up, right, pos, j)) {
 	    int s = 1;
 	    while (mx[pos + s * up] == WHITE) {
 	      mx[pos + s * up] = BLACK;
 	      s++;
 	    }
-	    if (add_margins(num_margins - 1, margins, mx))
+        if (add_margins(internal_state, num_margins - 1, margins, mx))
 	      return 1;
 	    else
 	      memcpy(mx, old_mx, sizeof(old_mx));
@@ -3783,7 +3784,8 @@ add_margins(int num_margins, int *margins, int mx[BOARDMAX])
  * corner shapes. At most 4 ignored ko threats are considered.
  */
 int
-analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
+analyze_eyegraph(board_lib_state_struct *internal_state,
+                 const char *coded_eyegraph, struct eyevalue *value,
 		 char *analyzed_eyegraph, int outer_liberties,
 		 int ko_threats)
 {
@@ -3819,7 +3821,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   if (0)
     gprintf(internal_state, "Analyze eyegraph %s\n", coded_eyegraph);
 
-  gg_assert(outer_liberties >= 0 && outer_liberties <= 5);
+  gg_assert(internal_state, outer_liberties >= 0 && outer_liberties <= 5);
   gg_assert(internal_state, ko_threats >= -4 && ko_threats <= 4);
 
   if (ko_threats > 0)
@@ -3910,9 +3912,9 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
     if (c == '!' || c == '@' || c == '(' || c == ')' || c == '$')
       margins[num_margins++] = POS(i, j);
     if (c != '|' && c != '-' && c != '+' && c != '%'
-    && ON_BOARD(internal_state, pos(i, j)) && mx[POS(i, j)] != WHITE) {
-      vertices.type[vertices.num] = REGULAR;
-      vertices.pos[vertices.num++] = POS(i, j);
+        && ON_BOARD(internal_state, POS(i, j)) && mx[POS(i, j)] != WHITE) {
+          vertices.type[vertices.num] = REGULAR;
+          vertices.pos[vertices.num++] = POS(i, j);
     }
     j++;
   }
@@ -3999,7 +4001,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   vertices.type[vertices.num] = EXTRA_EYE;
   vertices.pos[vertices.num++] = vertices.extra_eye_pos;
 
-  if (!add_margins(num_margins, margins, mx))
+  if (!add_margins(internal_state, num_margins, margins, mx))
     return 0;
 
   /* Copy the mx array over to the board. */
@@ -4019,7 +4021,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
    * the playable vertices.
    */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (internal_state->board[pos] == WHITE && !same_string(pos, vertices.string)) {
+    if (internal_state->board[pos] == WHITE && !same_string(internal_state, pos, vertices.string)) {
       int k;
       for (k = vertices.num; vertices.type[k - 1] != REGULAR; k--) {
 	vertices.type[k] = vertices.type[k - 1];
@@ -4060,11 +4062,11 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   }
   memset(tactical_life_results, 0, table_size);
 
-  if (sgf_dumptree)
-    sgffile_printboard(sgf_dumptree);
+  if (internal_state->sgf_dumptree)
+    sgffile_printboard(internal_state->sgf_dumptree);
   
   /* Evaluate the eyespace on the board. */
-  evaluate_eyespace(value, &vertices,
+  evaluate_eyespace(internal_state, value, &vertices,
 		    &num_vital_attacks, vital_attacks,
 		    &num_vital_defenses, vital_defenses,
 		    tactical_life_results);

@@ -232,7 +232,7 @@ snapback(int str)
   SGFTree *save_sgf_dumptree = internal_state->sgf_dumptree;
 
   /* if more than one stone captured, not a snapback */
-  stones = countstones(str);
+  stones = countstones(internal_state, str);
   if (stones > 1)
     return 0;
 
@@ -293,8 +293,8 @@ ponnuki_connect(int *moves, int str1, int str2, zone *zn)
       for (k = 0; k < 4; k++) {
 	int pos = libs[r] + delta[k];
 	if (internal_state->board[pos] == internal_state->board[str1]
-	    && !same_string(pos, str1)
-	    && !same_string(pos, str2)) {
+	    && !same_string(internal_state, pos, str1)
+	    && !same_string(internal_state, pos, str2)) {
 	  /* try to connect pos to str2 in one move */
 	  /* play a common liberty */
 	  neighb = findlib(internal_state, pos, MAXLIBS, neighbs);
@@ -567,7 +567,7 @@ moves_to_connect_in_two_moves(int *moves, int str1, int str2)
     for (k = 0; k < 4; k++) {
       int pos = libs[r] + delta[k];
       if (internal_state->board[pos] == color
-	  && !same_string(pos, str1)
+	  && !same_string(internal_state, pos, str1)
 	  && quiescence_connect(pos, str2, &move)) {
 	add_array(moves, libs[r]);
 	add_array(moves, move);
@@ -581,7 +581,7 @@ moves_to_connect_in_two_moves(int *moves, int str1, int str2)
     for (k = 0; k < 4; k++) {
       int pos = libs[r] + delta[k];
       if (internal_state->board[pos] == color
-	  && !same_string(pos, str2)
+	  && !same_string(internal_state, pos, str2)
 	  && quiescence_connect(pos, str1, &move)) {
 	add_array(moves, libs[r]);
 	add_array(moves, move);
@@ -1875,7 +1875,7 @@ order_connection_moves(int *moves, int str1, int str2, int color_to_move,
       gprintf(internal_state, "%o  %1M %d\n", moves[i], scores[i]);
   }
 
-  if (sgf_dumptree) {
+  if (internal_state->sgf_dumptree) {
     char buf[500];
     char *pos;
     int chars;
@@ -1886,7 +1886,7 @@ order_connection_moves(int *moves, int str1, int str2, int color_to_move,
 	      board_size - I(moves[i]), scores[i], &chars);
       pos += chars;
     }
-    sgftreeAddComment(sgf_dumptree, buf);
+    sgftreeAddComment(internal_state->sgf_dumptree, buf);
   }
 }
 
@@ -2576,7 +2576,7 @@ find_connection_moves(int str1, int str2, int color_to_move,
       gprintf(internal_state, "%o%1M %f\n", moves[i], FIXED_TO_FLOAT(distances[i]));
   }
 
-  if (sgf_dumptree) {
+  if (internal_state->sgf_dumptree) {
     char buf[500];
     char *pos;
     int chars;
@@ -2593,7 +2593,7 @@ find_connection_moves(int str1, int str2, int color_to_move,
       sprintf(pos, "(cutoff %f)%n", FIXED_TO_FLOAT(cutoff), &chars);
       pos += chars;
     }
-    sgftreeAddComment(sgf_dumptree, buf);
+    sgftreeAddComment(internal_state->sgf_dumptree, buf);
   }
 
   if (num_moves == 0)
@@ -2882,7 +2882,7 @@ recursive_break(int str, const signed char goal[BOARDMAX], int *move,
 		&retval, NULL, &xpos) == 2) {
     /* FIXME: Use move for move ordering if tt_get() returned 1 */
     TRACE_CACHED_RESULT(retval, xpos);
-    SGFTRACE(xpos, retval, "cached");
+    SGFTRACE(internal_state, xpos, retval, "cached");
     if (move)
       *move = xpos;
     return retval;
@@ -2909,7 +2909,7 @@ recursive_break(int str, const signed char goal[BOARDMAX], int *move,
 	int acode = recursive_block(str, goal, NULL, has_passed, goal_hash);
 	popgo(internal_state);
 	if (acode == 0) {
-	  SGFTRACE(xpos, WIN, "break effective");
+	  SGFTRACE(internal_state, xpos, WIN, "break effective");
 	  READ_RETURN_HASH(BREAK_IN, str, depth - internal_state->stackp, goal_hash,
 			   move, xpos, WIN);
 	}
@@ -2939,12 +2939,12 @@ recursive_break(int str, const signed char goal[BOARDMAX], int *move,
   }
   
   if (savecode != 0) {
-    SGFTRACE(savemove, savecode, "saved move");
+    SGFTRACE(internal_state, savemove, savecode, "saved move");
     READ_RETURN_HASH(BREAK_IN, str, depth - internal_state->stackp, goal_hash,
 		     move, savemove, savecode);
   }
 
-  SGFTRACE(0, 0, NULL);
+  SGFTRACE(internal_state, 0, 0, NULL);
   READ_RETURN_HASH(BREAK_IN, str, depth - internal_state->stackp, goal_hash, move, NO_MOVE, 0);
 }
 
@@ -3000,14 +3000,14 @@ recursive_block(int str, const signed char goal[BOARDMAX], int *move,
       && tt_get(&ttable, BLOCK_OFF, str, NO_MOVE,
 		depth - internal_state->stackp, goal_hash, &retval, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT(retval, xpos);
-    SGFTRACE(xpos, retval, "cached");
+    SGFTRACE(internal_state, xpos, retval, "cached");
     if (move)
       *move = xpos;
     return retval;
   }
 
   if (ladder_capture(str, &xpos) == WIN) {
-    SGFTRACE(xpos, WIN, "string capturable");
+    SGFTRACE(internal_state, xpos, WIN, "string capturable");
     READ_RETURN_HASH(BLOCK_OFF, str, depth - internal_state->stackp, goal_hash,
 		     move, xpos, WIN);
   }
@@ -3025,7 +3025,7 @@ recursive_block(int str, const signed char goal[BOARDMAX], int *move,
 	int dcode = recursive_break(str, goal, NULL, has_passed, goal_hash);
 	popgo(internal_state);
 	if (dcode == 0) {
-	  SGFTRACE(xpos, WIN, "block effective");
+	  SGFTRACE(internal_state, xpos, WIN, "block effective");
 	  READ_RETURN_HASH(BLOCK_OFF, str, depth - internal_state->stackp, goal_hash,
 			   move, xpos, WIN);
 	}
@@ -3056,12 +3056,12 @@ recursive_block(int str, const signed char goal[BOARDMAX], int *move,
   }
   
   if (savecode != 0) {
-    SGFTRACE(savemove, savecode, "saved move");
+    SGFTRACE(internal_state, savemove, savecode, "saved move");
     READ_RETURN_HASH(BLOCK_OFF, str, depth - internal_state->stackp, goal_hash,
 		     move, savemove, savecode);
   }
 
-  SGFTRACE(0, 0, NULL);
+  SGFTRACE(internal_state, 0, 0, NULL);
   READ_RETURN_HASH(BLOCK_OFF, str, depth - internal_state->stackp, goal_hash,
 		   move, NO_MOVE, 0);
 }
@@ -3560,7 +3560,7 @@ spread_connection_distances(int color, struct connection_data *conn)
 	  int vulnerable1 = NO_MOVE;
 	  int vulnerable2 = NO_MOVE;
 	  if (approxlib(apos, other, 1, &lib) >= 1) {
-	    if (approxlib(lib, other, 2, NULL) > 2)
+	    if (approxlib(internal_state, lib, other, 2, NULL) > 2)
 	      vulnerable1 = lib;
 	    if (countlib(internal_state, pos) == 2) {
 	      int i;
@@ -3789,7 +3789,7 @@ spread_connection_distances(int color, struct connection_data *conn)
 	    && (conn->distances[fpos] > distance + FP(1.3)
 		|| conn->distances[epos] > distance + FP(1.3))
 	    && countlib(internal_state, pos) >= 3
-	    && (!ON_BOARD(cpos) || !ON_BOARD(hpos))) {
+	    && (!ON_BOARD(internal_state, cpos) || !ON_BOARD(hpos))) {
 	  ENQUEUE(conn, pos, fpos, distance + FP(1.3), FP(1.0),
 		  NO_MOVE, NO_MOVE);
 	  ENQUEUE(conn, pos, epos, distance + FP(1.3), FP(1.0),
@@ -3804,7 +3804,7 @@ spread_connection_distances(int color, struct connection_data *conn)
 	    && (conn->distances[jpos] > distance + FP(1.3)
 		|| conn->distances[epos] > distance + FP(1.3))
 	    && countlib(internal_state, pos) >= 3
-	    && (!ON_BOARD(internal_state, apos) || !ON_BOARD(kpos))) {
+	    && (!ON_BOARD(internal_state, apos) || !ON_BOARD(internal_state, kpos))) {
 	  ENQUEUE(conn, pos, jpos, distance + FP(1.3), FP(1.0),
 		  NO_MOVE, NO_MOVE);
 	  ENQUEUE(conn, pos, epos, distance + FP(1.3), FP(1.0),
@@ -4212,7 +4212,7 @@ no_escape_from_atari(int str)
   if (findlib(internal_state, str, 1, &lib) > 1)
     return 0;
 
-  if (accuratelib(lib, board[str], 2, NULL) > 1)
+  if (accuratelib(lib, internal_state->board[str], 2, NULL) > 1)
     return 0;
 
   /* FIXME: Should exclude snapback. */
@@ -4249,8 +4249,8 @@ no_escape_from_ladder(int str)
   if (countlib(internal_state, str) == 2
       && chainlinks2(str, adj, 1) == 0
       && findlib(internal_state, str, 2, libs) == 2
-      && approxlib(libs[0], board[str], 2, NULL) == 1
-      && approxlib(libs[1], board[str], 2, NULL) == 1
+      && approxlib(internal_state, libs[0], internal_state->board[str], 2, NULL) == 1
+      && approxlib(internal_state, libs[1], internal_state->board[str], 2, NULL) == 1
       && ladder_capture(str, NULL)
       && !find_defense(str, NULL))
     result = 1;
@@ -4294,7 +4294,7 @@ check_self_atari(int pos, int color_to_move)
    *        test below.
    */
   if (approxlib(internal_state, pos, color_to_move, 1, &lib) >= 1
-      && approxlib(lib, OTHER_COLOR(color_to_move), 3, NULL) <= 2
+      && approxlib(internal_state, lib, OTHER_COLOR(color_to_move), 3, NULL) <= 2
       && ladder_capturable(lib, OTHER_COLOR(color_to_move))) {
     int k;
     for (k = 0; k < 4; k++) {

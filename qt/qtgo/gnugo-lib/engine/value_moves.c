@@ -75,17 +75,17 @@ move_connects_strings(int pos, int color, int to_move)
     if (internal_state->board[ss[k]] == color) {
       int newlibs = approxlib(internal_state, pos, color, MAXLIBS, NULL);
       own_strings++;
-      if (newlibs >= countlib(ss[k])) {
-	if (countlib(ss[k]) <= 4)
+      if (newlibs >= countlib(internal_state, ss[k])) {
+    if (countlib(internal_state, ss[k]) <= 4)
 	  fewlibs++;
-	if (countlib(ss[k]) <= 2)
+    if (countlib(internal_state, ss[k]) <= 2)
 	  fewlibs++;
       }
     }
     else {
-      if (countlib(ss[k]) <= 2)
+      if (countlib(internal_state, ss[k]) <= 2)
 	fewlibs++;
-      if (countlib(ss[k]) <= 1 && to_move) {
+      if (countlib(internal_state, ss[k]) <= 1 && to_move) {
 	int dummy[MAXCHAIN];
 	fewlibs++;
 	fewlibs += chainlinks2(ss[k], dummy, 1);
@@ -363,7 +363,7 @@ do_find_more_owl_attack_and_defense_moves(int color, int pos,
       int acode = owl_does_attack(pos, dd, &kworm);
 
       if (acode >= DRAGON2(dd).owl_attack_code) {
-	add_owl_attack_move(pos, dd, kworm, acode);
+    add_owl_attack_move(internal_state, pos, dd, kworm, acode);
 	if (save_verbose)
       gprintf(internal_state, "Move at %1m upgraded to owl attack on %1m (%s).\n",
 		  pos, dd, result_to_string(acode));
@@ -443,7 +443,7 @@ try_large_scale_owl_attack(int pos, int color, int target, int dist)
     
     if (acode >= DRAGON2(target).owl_attack_code
 	&& acode == WIN) {
-      add_owl_attack_move(pos, target, kworm, acode);
+      add_owl_attack_move(internal_state, pos, target, kworm, acode);
       DEBUG(DEBUG_LARGE_SCALE | DEBUG_MOVE_REASONS,
 	    "Move at %1m owl-attacks %1m on a large scale(%s).\n", 
 	    pos, target, result_to_string(acode));
@@ -695,7 +695,7 @@ find_more_owl_attack_and_defense_moves(int color)
 	    int kworm = NO_MOVE;
 	    int acode = owl_does_attack(pos2, pos, &kworm);
 	    if (acode >= DRAGON2(pos).owl_attack_code) {
-	      add_owl_attack_move(pos2, pos, kworm, acode);
+          add_owl_attack_move(internal_state, pos2, pos, kworm, acode);
 	      if (save_verbose)
             gprintf(internal_state, "Move at %1m also owl attacks %1m (%s).\n",
 		        pos2, pos, result_to_string(acode));
@@ -721,14 +721,14 @@ try_potential_semeai_move(int pos, int color, struct move_reason *reason)
   ASSERT1(internal_state, IS_STONE(internal_state->board[dr1]), pos);
   switch (reason->type) {
     case POTENTIAL_SEMEAI_ATTACK:
-      owl_analyze_semeai_after_move(pos, color, dr1, dr2,
+      owl_analyze_semeai_after_move(internal_state, pos, color, dr1, dr2,
 				    &resulta, &resultb, NULL, &certain, 0);
       old_certain = DRAGON2(dr1).semeai_attack_certain;
       break;
     case POTENTIAL_SEMEAI_DEFENSE:
       old_certain = DRAGON2(dr1).semeai_defense_certain;
       /* In this case other dragon gets to move first after forced move. */
-      owl_analyze_semeai_after_move(pos, color, dr2, dr1,
+      owl_analyze_semeai_after_move(internal_state, pos, color, dr2, dr1,
 				    &resulta, &resultb, NULL, &certain, 0);
       break;
     default:
@@ -977,7 +977,7 @@ induce_secondary_move_reasons(int color)
 		DEBUG(DEBUG_MOVE_REASONS,
 		      "Strategical attack move at %1m induced for %1m due to defense of %1m\n",
 		      pos, origin, aa);
-		add_strategical_attack_move(pos, origin);
+        add_strategical_attack_move(internal_state, pos, origin);
 		do_find_more_owl_attack_and_defense_moves(color, pos,
 							  STRATEGIC_ATTACK_MOVE,
 							  origin);
@@ -2119,7 +2119,7 @@ estimate_territorial_value(int pos, int color, float our_score,
 	for (s = 0; s < num_adj; s++) {
 	  int adj = adjs[s];
 
-	  if (same_string(pos, adj))
+      if (same_string(internal_state, pos, adj))
 	    continue;
 	  if (dragon[adj].color == color
 	      && dragon[adj].status == DEAD
@@ -2412,7 +2412,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       else if (!doing_scoring && our_score > 0.0) {
 	/* tm - devalued this bonus (3.1.17) */
 	this_value = gg_min(0.9 * dragon[aa].effective_size,
-			    our_score/2.0 - board_size/2.0 - 1.0);
+                our_score/2.0 - internal_state->board_size/2.0 - 1.0);
 	this_value = gg_max(this_value, 0);
     TRACE(internal_state, "  %1m: %f - attack %1m, although it seems dead, as we are ahead\n",
 	      pos, this_value, aa);
@@ -3437,7 +3437,7 @@ reevaluate_ko_threats(int ko_move, int color, float ko_value)
   if (is_illegal_ko_capture(ko_move, color)) {
     for (k = 0; k <= 3; k++) {
       ko_stone = ko_move + delta[k];
-      if (ON_BOARD(ko_stone) && countlib(ko_stone) == 1)
+      if (ON_BOARD(internal_state, ko_stone) && countlib(ko_stone) == 1)
 	break;
     }
     ASSERT_ON_BOARD1(internal_state, ko_stone);

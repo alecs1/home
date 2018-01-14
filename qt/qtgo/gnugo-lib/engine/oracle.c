@@ -285,7 +285,7 @@ do_consult_oracle(int color)
   for (k = 0; k < MAX_ORACLE_MOVES; k++)
     oracle_moves[k].value = -1;
   
-  matchpat(oracle_callback, color, &oracle_db, oracle_moves, NULL);
+  matchpat(internal_state, oracle_callback, color, &oracle_db, oracle_moves, NULL);
   for (k = 0; k < MAX_ORACLE_MOVES; k++)
     if (oracle_moves[k].value > -1) {
       oracle_trymove(oracle_moves[k].pos, color, oracle_moves[k].reason,
@@ -432,8 +432,8 @@ do_metamachine_genmove(int color, int width, float *value)
 	dump_stack(internal_state);
       TRACE(internal_state, "score: %f\n", color == WHITE ? score[k] : -score[k]);
       sprintf(buf, "value %.2f", color == WHITE ? score[k] : -score[k]);
-      if (sgf_dumptree)
-	sgftreeAddComment(sgf_dumptree, buf);
+      if (internal_state->sgf_dumptree)
+	sgftreeAddComment(internal_state->sgf_dumptree, buf);
       oracle_popgo(internal_state);
     }
     if (best_move == -1

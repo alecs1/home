@@ -791,7 +791,7 @@ find_worm_attacks_and_defenses()
 	 * defense, so we try and see if it defends.
 	 */
 	attack_point = worm[str].attack_points[0];
-	if (!liberty_of_string(attack_point, str))
+	if (!liberty_of_string(internal_state, attack_point, str))
 	  if (trymove(internal_state, attack_point, worm[str].color, "make_worms", NO_MOVE)) {
 	    int acode = attack(str, NULL);
 	    if (acode != WIN) {
@@ -1487,7 +1487,7 @@ examine_cavity(int pos, int *edge)
    * Notice that the board appears completely empty if there's only a
    * single string and pos points to it.
    */
-  gg_assert(border_color == EMPTY
+  gg_assert(internal_state, border_color == EMPTY
 	    && ((pos == NO_MOVE
 		 && stones_on_board(internal_state, BLACK | WHITE) == 0)
 		|| (pos != NO_MOVE
@@ -1536,7 +1536,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
 	neighbor_empty = 1;
       else {
 	/* Count the neighbor as empty if it is part of the (ai, aj) string. */
-	if (str == find_origin(apos))
+	if (str == find_origin(internal_state, apos))
 	  neighbor_empty = 1;
 	else
 	  neighbor_empty = 0;

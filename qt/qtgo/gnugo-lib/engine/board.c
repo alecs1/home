@@ -1514,7 +1514,8 @@ are_neighbors(struct board_lib_state_struct *internal_state, int pos1, int pos2)
  * empty.
  */
 int
-countlib(struct board_lib_state_struct *internal_state, int str)
+countlib(board_lib_state_struct *internal_state,
+         int str)
 {
   ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
   
@@ -1533,7 +1534,7 @@ countlib(struct board_lib_state_struct *internal_state, int str)
  */
 
 int
-findlib(struct board_lib_state_struct *internal_state, int str, int maxlib, int *libs)
+findlib(board_lib_state_struct *internal_state, int str, int maxlib, int *libs)
 {
   int k;
   int liberties;
@@ -2161,7 +2162,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
       return liberties;
   }
 
-  liberties = do_accuratelib(pos, color, maxlib, libs);
+  liberties = do_accuratelib(internal_state, pos, color, maxlib, libs);
 
 #endif /* not USE_BOARD_CACHES */
 
@@ -2516,7 +2517,8 @@ have_common_lib(struct board_lib_state_struct *internal_state, int str1, int str
  */
 
 int
-countstones(struct board_lib_state_struct *internal_state, int str)
+countstones(struct board_lib_state_struct *internal_state,
+            int str)
 {
   ASSERT_ON_BOARD1(internal_state, str);
   ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
