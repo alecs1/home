@@ -67,7 +67,7 @@ combinations(struct board_lib_state_struct *internal_state, int color)
     if (save_verbose)
       gprintf(internal_state, "Combination attack for %C with size %d found at %1m\n",
 	      color, aa_val, attack_point);
-    add_my_atari_atari_move(attack_point, aa_val);
+    add_my_atari_atari_move(internal_state, attack_point, aa_val);
   }
   
   aa_val = atari_atari(internal_state, other, &attack_point, defense_points, save_verbose);
@@ -79,10 +79,10 @@ combinations(struct board_lib_state_struct *internal_state, int color)
     
     for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
       if (ON_BOARD(internal_state, pos) && defense_points[pos]) {
-	add_your_atari_atari_move(pos, aa_val);
-	if (save_verbose)
-      gprintf(internal_state, "- defense at %1m\n", pos);
-      }
+        add_your_atari_atari_move(internal_state, pos, aa_val);
+        if (save_verbose)
+          gprintf(internal_state, "- defense at %1m\n", pos);
+          }
     }
   }
   verbose = save_verbose;
@@ -137,22 +137,22 @@ find_double_threats(struct board_lib_state_struct *internal_state, int color)
         if (internal_state->board[a_threatened_groups[k]] == EMPTY
         || internal_state->board[a_threatened_groups[l]] == EMPTY) {
 	      if (!attack(ii, NULL)) {
-        TRACE(internal_state, "Double threat at %1m, either %1m or %1m attacked.\n",
-		      ii, a_threatened_groups[k], a_threatened_groups[l]);
-		add_either_move(ii, ATTACK_STRING, a_threatened_groups[k],
-				ATTACK_STRING, a_threatened_groups[l]);
-		remove_attack_threat_move(ii, a_threatened_groups[k]);
-		remove_attack_threat_move(ii, a_threatened_groups[l]);
+            TRACE(internal_state, "Double threat at %1m, either %1m or %1m attacked.\n",
+                  ii, a_threatened_groups[k], a_threatened_groups[l]);
+            add_either_move(internal_state, ii, ATTACK_STRING, a_threatened_groups[k],
+                    ATTACK_STRING, a_threatened_groups[l]);
+            remove_attack_threat_move(internal_state, ii, a_threatened_groups[k]);
+            remove_attack_threat_move(internal_state, ii, a_threatened_groups[l]);
 	      }
 	    }
 	    else if (!defend_both(a_threatened_groups[k],
 				  a_threatened_groups[l])) {
           TRACE(internal_state, "Double threat at %1m, either %1m or %1m attacked.\n",
 		    ii, a_threatened_groups[k], a_threatened_groups[l]);
-	      add_either_move(ii, ATTACK_STRING, a_threatened_groups[k],
+          add_either_move(internal_state, ii, ATTACK_STRING, a_threatened_groups[k],
 			      ATTACK_STRING, a_threatened_groups[l]);
-	      remove_attack_threat_move(ii, a_threatened_groups[k]);
-	      remove_attack_threat_move(ii, a_threatened_groups[l]);
+          remove_attack_threat_move(internal_state, ii, a_threatened_groups[k]);
+          remove_attack_threat_move(internal_state, ii, a_threatened_groups[l]);
 	    }
 	  }
     popgo(internal_state);
@@ -371,7 +371,7 @@ atari_atari(struct board_lib_state_struct *internal_state,
  *        function to return all defense moves.
  */
 int
-atari_atari_confirm_safety(struct board_lib_state_struct *internal_state,
+atari_atari_confirm_safety(board_lib_state_struct *internal_state,
                int color, int move, int *defense, int minsize,
 			   const signed char saved_dragons[BOARDMAX],
 			   const signed char saved_worms[BOARDMAX])
@@ -381,7 +381,7 @@ atari_atari_confirm_safety(struct board_lib_state_struct *internal_state,
   int pos;
   int blunder_size;
 
-  mark_safe_stones(color, move, saved_dragons, saved_worms, safe_stones);
+  mark_safe_stones(internal_state, color, move, saved_dragons, saved_worms, safe_stones);
   blunder_size = atari_atari_blunder_size(internal_state, color, move, defense_moves,
 					  safe_stones);
 
@@ -1019,7 +1019,7 @@ atari_atari_attack_patterns(struct board_lib_state_struct *internal_state,
   }
 #endif
   
-  matchpat(atari_atari_attack_callback, color, &aa_attackpat_db, NULL, goal);
+  matchpat(internal_state, atari_atari_attack_callback, color, &aa_attackpat_db, NULL, goal);
 }
 
 /* Try to attack every X string in the pattern, whether there is an attack
@@ -1253,8 +1253,8 @@ compute_aa_values(struct board_lib_state_struct *internal_state, int color)
 
     for (r = 0; r < liberties; r++) {
       if (!mx[libs[r]]
-	  && (whose_moyo(&initial_black_influence, libs[r]) == other
-	      || whose_moyo(&initial_white_influence, libs[r]) == other)) {
+      && (whose_moyo(internal_state, &initial_black_influence, libs[r]) == other
+          || whose_moyo(internal_state, &initial_white_influence, libs[r]) == other)) {
 	mx[libs[r]] = 1;
 	value++;
       }
@@ -1264,8 +1264,8 @@ compute_aa_values(struct board_lib_state_struct *internal_state, int color)
 	  continue;
 	mx[librd] = 1;
     if (internal_state->board[librd] == EMPTY
-	    && (whose_moyo(&initial_black_influence, librd) == other
-		|| (whose_moyo(&initial_white_influence, librd) == other)))
+        && (whose_moyo(internal_state, &initial_black_influence, librd) == other
+        || (whose_moyo(internal_state, &initial_white_influence, librd) == other)))
 	  value++;
       }
     }
@@ -1586,7 +1586,7 @@ is_atari(int pos, int color)
 {
   int other = OTHER_COLOR(color);
 
-  if (!is_legal(pos, color))
+  if (!is_legal(internal_state, pos, color))
     return 0;
   
   if (internal_state->board[SOUTH(pos)] == other

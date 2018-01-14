@@ -56,11 +56,11 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
    */
   if (class & CLASS_J) {
     TRACE(internal_state, "...joseki standard move\n");
-    add_expand_territory_move(move);
+    add_expand_territory_move(internal_state, move);
     TRACE(internal_state, "...expands territory\n");
     add_expand_moyo_move(move);
     TRACE(internal_state, "...expands moyo\n");
-    set_minimum_move_value(move, J_VALUE);
+    set_minimum_move_value(internal_state, move, J_VALUE);
     TRACE(internal_state, "... minimum move value %f\n", J_VALUE);
   }
 
@@ -72,7 +72,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
     if (class & CLASS_j) {
       min_value = j_VALUE;
       TRACE(internal_state, "...less urgent joseki move\n");
-      add_expand_territory_move(move);
+      add_expand_territory_move(internal_state, move);
       TRACE(internal_state, "...expands territory\n");
       add_expand_moyo_move(move);
       TRACE(internal_state, "...expands moyo\n");
@@ -107,7 +107,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
     else
       TRACE(internal_state, "...minimum move value %f (shape %f)\n", min_value, shape_value);
 
-    set_minimum_move_value(move, min_value);
+    set_minimum_move_value(internal_state, move, min_value);
   }
 
   /* Pattern class U, very urgent joseki move. Add strategical defense
@@ -127,7 +127,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
     }
     add_shape_value(move, 15);
     TRACE(internal_state, "...shape value 15\n");
-    set_minimum_move_value(move, U_VALUE);
+    set_minimum_move_value(internal_state, move, U_VALUE);
     TRACE(internal_state, "...(min) move value %f\n", U_VALUE);
   }
 
@@ -144,7 +144,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
        attribute++) {
     switch (attribute->type) {
     case MIN_VALUE:
-      set_minimum_move_value(move, attribute->value);
+      set_minimum_move_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...(min) move value %f\n", attribute->value);
       break;
 
@@ -154,7 +154,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
       break;
 
     case MIN_TERRITORY:
-      set_minimum_territorial_value(move, attribute->value);
+      set_minimum_territorial_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...(min) territorial value %f\n", attribute->value);
       break;
 
@@ -186,7 +186,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
 
     default:
       /* Must not happen. */
-      gg_assert(0);
+      gg_assert(internal_state, 0);
     }
   }
 }
@@ -260,7 +260,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
        * known by matchpat().
        */
       if ((class & CLASS_O)
-	  && board[pos] == color
+	  && internal_state->board[pos] == color
 	  && worm[pos].attack_points[0] != 0
 	  && !does_defend(move, pos))
 	return;
@@ -368,7 +368,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   }
   else {
     /* Allow illegal ko captures at this stage. */
-    if (!is_ko(move, color, NULL) && !is_legal(internal_state, move, color)) {
+    if (!is_ko(internal_state, move, color, NULL) && !is_legal(internal_state, move, color)) {
       if (0)
 	TRACE(internal_state, "  move at %1m wasn't legal, discarded\n", move);
       return;
@@ -472,7 +472,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
 
   /* Pattern class e, expand to make territory. */
   if (class & CLASS_e) {
-    add_expand_territory_move(move);
+    add_expand_territory_move(internal_state, move);
     TRACE(internal_state, "...expands territory\n");
   }
 

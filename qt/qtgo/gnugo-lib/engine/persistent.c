@@ -230,7 +230,7 @@ verify_stored_board(Intersection p[BOARDMAX])
       continue;
     else if (p[pos] == GRAY)
       continue;
-    else if ((p[pos] & 3) != board[pos])
+    else if ((p[pos] & 3) != internal_state->board[pos])
       return 0;
     else if (!(p[pos] & (HIGH_LIBERTY_BIT | HIGH_LIBERTY_BIT2)))
       continue;
@@ -393,7 +393,7 @@ find_persistent_cache_entry(struct persistent_cache *cache,
 	&& entry->bpos == bpos
 	&& entry->cpos == cpos
 	&& entry->color == color
-        && depth - stackp <= entry->remaining_depth
+        && depth - internal_state->stackp <= entry->remaining_depth
         && (entry->node_limit >= node_limit || entry->result_certain)
         && (goal_hash == NULL
 	    || hashdata_is_equal(entry->goal_hash, *goal_hash))
@@ -515,7 +515,7 @@ store_persistent_cache(struct persistent_cache *cache,
   entry->result2     	 = result2;
   entry->result_certain  = certain;
   entry->node_limit      = node_limit;
-  entry->remaining_depth = depth - stackp;
+  entry->remaining_depth = depth - internal_state->stackp;
   entry->move	         = move;
   entry->move2	         = move2;
   entry->score 		 = cost;
@@ -523,7 +523,7 @@ store_persistent_cache(struct persistent_cache *cache,
   entry->movenum 	 = internal_state->movenum;
 
   for (r = 0; r < MAX_CACHE_DEPTH; r++) {
-    if (r < stackp)
+    if (r < internal_state->stackp)
       get_move_from_stack(r, &(entry->stack[r]), &(entry->move_color[r]));
     else {
       entry->stack[r] = 0;
@@ -701,7 +701,7 @@ compute_active_reading_area(struct persistent_cache_entry *entry,
   }
 
   /* Also add the previously played stones to the active area. */
-  for (r = 0; r < stackp; r++)
+  for (r = 0; r < internal_state->stackp; r++)
     active[entry->stack[r]] = 5;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
@@ -797,7 +797,7 @@ reading_hotspots(float values[BOARDMAX])
 				 contribution);
       break;
     default:
-      gg_assert(0); /* Shouldn't happen. */
+      gg_assert(internal_state, 0); /* Shouldn't happen. */
       break;
     }
   }
@@ -872,7 +872,7 @@ compute_active_connection_area(struct persistent_cache_entry *entry,
   /* Distance two expansion through empty intersections and own stones. */
   for (k = 1; k < 3; k++) {
     for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-      if (!ON_BOARD(internal_state, pos) || board[pos] == other || active[pos] != 0)
+      if (!ON_BOARD(internal_state, pos) || internal_state->board[pos] == other || active[pos] != 0)
 	continue;
       if ((ON_BOARD(internal_state, SOUTH(pos)) && active[SOUTH(pos)] == k)
       || (ON_BOARD(internal_state, WEST(pos)) && active[WEST(pos)] == k)
@@ -892,7 +892,7 @@ compute_active_connection_area(struct persistent_cache_entry *entry,
       continue;
     for (r = 0; r < 4; r++) {
       int pos2 = pos + delta[r];
-      if (ON_BOARD(internal_state, pos2) && board[pos2] != other && active[pos2] != 0) {
+      if (ON_BOARD(internal_state, pos2) && internal_state->board[pos2] != other && active[pos2] != 0) {
     mark_string(internal_state, pos, active, 1);
 	break;
       }
@@ -934,11 +934,11 @@ compute_active_connection_area(struct persistent_cache_entry *entry,
   }
   
   /* Also add the previously played stones to the active area. */
-  for (r = 0; r < stackp; r++)
+  for (r = 0; r < internal_state->stackp; r++)
     active[entry->stack[r]] = 1;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    int value = board[pos];
+    int value = internal_state->board[pos];
     if (!ON_BOARD(internal_state, pos))
       continue;
     if (!active[pos])
@@ -1020,7 +1020,7 @@ compute_active_breakin_area(struct persistent_cache_entry *entry,
   /* Distance two expansion through empty intersections and own stones. */
   for (k = 1; k < 3; k++) {
     for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-      if (!ON_BOARD(internal_state, pos) || board[pos] == other || active[pos] != 0)
+      if (!ON_BOARD(internal_state, pos) || internal_state->board[pos] == other || active[pos] != 0)
 	continue;
       if ((ON_BOARD(internal_state, SOUTH(pos)) && active[SOUTH(pos)] == k)
       || (ON_BOARD(internal_state, WEST(pos)) && active[WEST(pos)] == k)
@@ -1041,7 +1041,7 @@ compute_active_breakin_area(struct persistent_cache_entry *entry,
     for (r = 0; r < 4; r++) {
       int pos2 = pos + delta[r];
       if (ON_BOARD(internal_state, pos2)
-	  && board[pos2] != other
+	  && internal_state->board[pos2] != other
 	  && active[pos2] && active[pos2] <= 2) {
     mark_string(internal_state, pos, active, 1);
 	break;
@@ -1084,7 +1084,7 @@ compute_active_breakin_area(struct persistent_cache_entry *entry,
   }
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    Intersection value = board[pos];
+    Intersection value = internal_state->board[pos];
     if (!ON_BOARD(internal_state, pos))
       continue;
     if (!active[pos])
@@ -1154,7 +1154,7 @@ compute_active_owl_type_area(const signed char goal[BOARDMAX], int goal_color,
   /* Distance four expansion through empty intersections and own stones. */
   for (k = 1; k < 5; k++) {
     for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-      if (!ON_BOARD(internal_state, pos) || board[pos] == other || active[pos] > 0)
+      if (!ON_BOARD(internal_state, pos) || internal_state->board[pos] == other || active[pos] > 0)
 	continue;
       if ((ON_BOARD(internal_state, SOUTH(pos)) && active[SOUTH(pos)] == k)
       || (ON_BOARD(internal_state, WEST(pos)) && active[WEST(pos)] == k)
@@ -1174,7 +1174,7 @@ compute_active_owl_type_area(const signed char goal[BOARDMAX], int goal_color,
       continue;
     for (r = 0; r < 4; r++) {
       int pos2 = pos + delta[r];
-      if (ON_BOARD(internal_state, pos2) && board[pos2] != other && active[pos2] != 0) {
+      if (ON_BOARD(internal_state, pos2) && internal_state->board[pos2] != other && active[pos2] != 0) {
     mark_string(internal_state, pos, active, 1);
 	break;
       }
@@ -1234,7 +1234,7 @@ compute_active_owl_area(struct persistent_cache_entry *entry,
   compute_active_owl_type_area(goal, goal_color, active);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    int value = board[pos];
+    int value = internal_state->board[pos];
     if (!ON_BOARD(internal_state, pos))
       continue;
     if (!active[pos])
@@ -1317,7 +1317,7 @@ compute_active_semeai_area(struct persistent_cache_entry *entry,
   compute_active_owl_type_area(goal, WHITE, active_w);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    int value = board[pos];
+    int value = internal_state->board[pos];
     if (!ON_BOARD(internal_state, pos))
       continue;
     if (!active_b[pos] && !active_w[pos])
@@ -1350,9 +1350,9 @@ mark_dragon_hotspot_values(float values[BOARDMAX], int dr,
       if (IS_STONE(internal_state->board[pos2])
       && (is_same_dragon(internal_state, pos2, dr)
 	      || (are_neighbor_dragons(pos2, dr)
-          && board[pos2] == internal_state->board[dr]))
+          && internal_state->board[pos2] == internal_state->board[dr]))
       && (countlib(internal_state, pos2) <= 4
-	      || is_edge_vertex(pos))) {
+          || is_edge_vertex(internal_state, pos))) {
 	if (k < 4) {
       if (is_same_dragon(internal_state, pos2, dr))
 	    values[pos] += contribution;
@@ -1369,7 +1369,7 @@ mark_dragon_hotspot_values(float values[BOARDMAX], int dr,
 	  int pos3 = pos + delta[k % 4];
 	  int pos4 = pos + delta[(k+1) % 4];
       if (internal_state->board[pos3] == EMPTY || countlib(internal_state, pos3) <= 2
-          || board[pos4] == EMPTY || countlib(internal_state, pos4) <= 2)
+          || internal_state->board[pos4] == EMPTY || countlib(internal_state, pos4) <= 2)
 	    values[pos] += 0.5 * contribution;
 	  break;
 	}
@@ -1448,7 +1448,7 @@ owl_hotspots(float values[BOARDMAX])
 	values[libs[r]] += contribution;
       break;
     default:
-      gg_assert(0); /* Shouldn't happen. */
+      gg_assert(internal_state, 0); /* Shouldn't happen. */
       break;
     }
   }

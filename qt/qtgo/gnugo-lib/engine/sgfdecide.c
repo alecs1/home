@@ -125,15 +125,15 @@ decide_connection(int apos, int bpos)
   int result;
   SGFTree tree;
 
-  ASSERT_ON_BOARD1(apos);
+  ASSERT_ON_BOARD1(internal_state, apos);
   ASSERT_ON_BOARD1(bpos);
   
-  if (internal_state->board[apos] == EMPTY || board[bpos] == EMPTY) {
+  if (internal_state->board[apos] == EMPTY || internal_state->board[bpos] == EMPTY) {
     fprintf(stderr, "gnugo: --decide-connection called on an empty vertex\n");
     return;
   }
 
-  if (internal_state->board[apos] != board[bpos]) {
+  if (internal_state->board[apos] != internal_state->board[bpos]) {
     fprintf(stderr, "gnugo: --decide-connection called for strings of different colors\n");
     return;
   }
@@ -309,9 +309,9 @@ decide_semeai(int apos, int bpos)
 {
   SGFTree tree;
   int resulta, resultb, move, result_certain;
-  int color = board[apos];
+  int color = internal_state->board[apos];
 
-  if (color == EMPTY || board[bpos] != OTHER_COLOR(color)) {
+  if (color == EMPTY || internal_state->board[bpos] != OTHER_COLOR(color)) {
     gprintf(internal_state, "gnugo: --decide-semeai called on invalid data\n");
     return;
   }
@@ -379,7 +379,7 @@ decide_position()
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!ON_BOARD(internal_state, pos)
 	|| dragon[pos].origin != pos
-	|| board[pos] == EMPTY
+	|| internal_state->board[pos] == EMPTY
 	|| DRAGON2(pos).escape_route >= 6)
       continue;
 

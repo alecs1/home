@@ -220,8 +220,8 @@ place_fixed_handicap(struct board_lib_state_struct *internal_state,
 static int remaining_handicap_stones = -1;
 static int total_handicap_stones = -1;
 
-static int find_free_handicap_pattern(struct board_lib_state_struct *internal_state);
-static void free_handicap_callback(struct board_lib_state_struct *internal_state,
+static int find_free_handicap_pattern(board_lib_state_struct *internal_state);
+static void free_handicap_callback(board_lib_state_struct *internal_state,
                                    int anchor, int color,
                    struct pattern *pattern,
                    int ll, void *data);
@@ -308,7 +308,7 @@ static struct handicap_match handicap_matches[MAX_HANDICAP_MATCHES];
 static int number_of_matches;
 
 static int
-find_free_handicap_pattern(struct board_lib_state_struct *internal_state)
+find_free_handicap_pattern(board_lib_state_struct *internal_state)
 {
   int k;
   int highest_value = -1;
@@ -320,7 +320,7 @@ find_free_handicap_pattern(struct board_lib_state_struct *internal_state)
   int move;
 
   number_of_matches = 0;
-  matchpat(free_handicap_callback, BLACK, &handipat_db, NULL, NULL);
+  matchpat(internal_state, free_handicap_callback, BLACK, &handipat_db, NULL, NULL);
 
   if (number_of_matches == 0)
     return 0;
@@ -378,7 +378,7 @@ find_free_handicap_pattern(struct board_lib_state_struct *internal_state)
 }
 
 static void
-free_handicap_callback(struct board_lib_state_struct *internal_state,
+free_handicap_callback(board_lib_state_struct *internal_state,
                        int anchor, int color, struct pattern *pattern,
 		       int ll, void *data)
 {

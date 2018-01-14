@@ -436,7 +436,7 @@ main(int argc, char *argv[])
 
   /* Call the engine to setup and clear the board. */
   board_size = MAX_BOARD;
-  clear_board();
+  clear_board(internal_state);
   
   /* Determine board size of the file. */
   if (!sgfGetIntProperty(sgf, "SZ", &boardsize)) {

@@ -251,7 +251,7 @@ find_moves_to_make_seki()
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
       int k;
-      int color = board[str];
+      int color = internal_state->board[str];
       int opponent = NO_MOVE;
       int certain;
       struct eyevalue reduced_genus;
@@ -366,7 +366,7 @@ find_moves_to_make_seki()
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
       int k;
-      int color = board[str];
+      int color = internal_state->board[str];
       int opponent = NO_MOVE;
       int certain;
       struct eyevalue reduced_genus;
@@ -535,7 +535,7 @@ semeai_move_reasons(int color)
 	   * non-common liberties of the target as potential semeai moves.
 	   */
 
-          liberties = findlib(dragon2[d].semeai_defense_target, MAXLIBS, libs);
+          liberties = findlib(internal_state, dragon2[d].semeai_defense_target, MAXLIBS, libs);
 
           for (r = 0; r < liberties; r++) {
             if (!neighbor_of_dragon(libs[r], dragon2[d].origin)
@@ -562,7 +562,7 @@ semeai_move_reasons(int color)
 				  dragon2[d].semeai_attack_target)
 	    && !is_self_atari(dragon2[d].semeai_attack_point, color)) {
 
-          liberties = findlib(dragon2[d].origin, MAXLIBS, libs);
+          liberties = findlib(internal_state, dragon2[d].origin, MAXLIBS, libs);
 
           for (r = 0; r < liberties; r++) {
             if (!neighbor_of_dragon(libs[r], dragon2[d].semeai_attack_target)

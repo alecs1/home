@@ -268,7 +268,7 @@ mc_queue_max_two_liberties(struct mc_board *mc, int str)
   int liberty_edge = mc->next_liberty_edge[first_liberty_edge];
   int second_liberty;
 #if !TURN_OFF_ASSERTIONS
-  ASSERT1(internal_state, internal_state, IS_STONE(mc->board[str]), str);
+  ASSERT1(internal_state, IS_STONE(mc->board[str]), str);
 #endif
   if (first_liberty == NO_MOVE)
     return;
@@ -332,7 +332,8 @@ mc_remove_string(struct mc_board *mc, int str)
 
 /* Initialize a Monte Carlo board struct from the global board. */
 static void
-mc_init_board_from_global_board(struct mc_board *mc)
+mc_init_board_from_global_board(board_lib_state_struct *internal_state,
+                                struct mc_board *mc)
 {
   int stones[BOARDMAX];
   int num_stones;
@@ -340,8 +341,8 @@ mc_init_board_from_global_board(struct mc_board *mc)
   int k;
   int r;
   
-  memcpy(mc->board, board, sizeof(mc->board));
-  mc->board_ko_pos = board_ko_pos;
+  memcpy(mc->board, internal_state->board, sizeof(mc->board));
+  mc->board_ko_pos = internal_state->board_ko_pos;
   mc->hash = board_hash;
   memset(mc->queue, 0, sizeof(mc->queue));
   mc->queue[0] = 1;
@@ -413,7 +414,7 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
   for (pos = 0; pos < BOARDSIZE; pos++) {
     ASSERT1(internal_state, internal_state->board[pos] == mc->board[pos], pos);
     if (IS_STONE(internal_state->board[pos])) {
-      ASSERT1(same_string(pos, mc->reference_stone[pos]), pos);
+      ASSERT1(internal_state, same_string(pos, mc->reference_stone[pos]), pos);
       if (find_origin(internal_state, pos) == pos) {
 	int reference = mc->reference_stone[pos];
 	int pos2 = pos;
@@ -427,7 +428,7 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	
 	do {
 	  ASSERT1(mc->reference_stone[pos2] == reference, pos2);
-	  ASSERT1(num_stones < countstones(internal_state, pos), pos);
+	  ASSERT1(internal_state, num_stones < countstones(internal_state, pos), pos);
 	  num_stones++;
 	  for (k = 0; k < 4; k++)
 	    if (internal_state->board[pos2 + delta[k]] == EMPTY) {
@@ -436,7 +437,7 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	    }
 	  pos2 = mc->next_stone[pos2];
 	} while (pos2 != pos);
-	ASSERT1(num_stones == countstones(internal_state, pos), pos);
+	ASSERT1(internal_state, num_stones == countstones(internal_state, pos), pos);
 
 	first_liberty_edge = mc->first_liberty_edge[reference];
 	liberty_edge = first_liberty_edge;
@@ -451,7 +452,7 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	  ASSERT1(liberty_of_string(liberty_edge >> 2, pos), pos);
 	  liberty_edge = mc->next_liberty_edge[liberty_edge];
 	} while (liberty_edge != first_liberty_edge);
-	ASSERT1(num_liberty_edges == 0, pos);
+	ASSERT1(internal_state, num_liberty_edges == 0, pos);
       }
     }
   }
@@ -461,25 +462,26 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 
 /* Write the Monte Carlo board to outfile. */
 static void
-mc_showboard(struct mc_board *mc, FILE *outfile)
+mc_showboard(board_lib_state_struct *internal_state,
+             struct mc_board *mc, FILE *outfile)
 {
   int i, j;
 
-  draw_letter_coordinates(outfile);
+  draw_letter_coordinates(internal_state, outfile);
   
   for (i = 0; i < internal_state->board_size; i++) {
     fprintf(outfile, "\n%2d", internal_state->board_size - i);
     
     for (j = 0; j < internal_state->board_size; j++) {
       if (mc->board[POS(i, j)] == EMPTY)
-	fprintf(outfile, " %c", is_hoshi_point(i, j) ? '+' : '.');
+    fprintf(outfile, " %c", is_hoshi_point(internal_state, i, j) ? '+' : '.');
       else
 	fprintf(outfile, " %c", mc->board[POS(i, j)] == BLACK ? 'X' : 'O');
     }
   }
   
   fprintf(outfile, "\n");
-  draw_letter_coordinates(outfile);
+  draw_letter_coordinates(internal_state, outfile);
 }
 
 
@@ -501,7 +503,7 @@ mc_countstones(struct mc_board *mc, int str, int maxstones)
 
 
 /* Suicide is incrementally tracked by the local context information. */
-#define mc_is_suicide(mc, pos, color) \
+#define mc_is_suicide(internal_state, mc, pos, color) \
   ((mc->local_context[pos] >> (21 + color)) & 1)
 
 
@@ -523,7 +525,7 @@ mc_is_legal(struct mc_board *mc, int pos, int color)
     }
   }
 
-  return !mc_is_suicide(mc, pos, color);
+  return !mc_is_suicide(internal_state, mc, pos, color);
 }
 #endif
 
@@ -539,7 +541,7 @@ mc_is_in_atari(struct mc_board *mc, int str, int *lib)
   int liberty = first_liberty_edge >> 2;
   int liberty_edge = mc->next_liberty_edge[first_liberty_edge];
 #if !TURN_OFF_ASSERTIONS
-  ASSERT1(internal_state, internal_state, IS_STONE(mc->board[str]), str);
+  ASSERT1(internal_state, IS_STONE(mc->board[str]), str);
 #endif
   if (lib)
     *lib = liberty;
@@ -721,7 +723,8 @@ mc_is_self_atari(struct mc_board *mc, int pos, int color)
  * the relevant information is already available.
  */
 static void
-mc_update_local_context(struct mc_board *mc, int pos)
+mc_update_local_context(board_lib_state_struct *internal_state,
+                        struct mc_board *mc, int pos)
 {
   int min_white_liberties = 0;
   int min_black_liberties = 0;
@@ -787,7 +790,7 @@ mc_update_local_context(struct mc_board *mc, int pos)
     black_captured_stones = mc_stones_in_atari(mc, pos, WHITE, 3);
 
   mc->local_context[pos] &= 0xffff;
-  mc->local_context[pos] |= internal_state->black_captured_stones << 16;
+  mc->local_context[pos] |= black_captured_stones << 16;
   mc->local_context[pos] |= white_captured_stones << 18;
   mc->local_context[pos] |= white_self_atari << 20;
   mc->local_context[pos] |= black_self_atari << 21;
@@ -798,7 +801,8 @@ mc_update_local_context(struct mc_board *mc, int pos)
 
 /* Play the move at pos by color. */
 static int
-mc_play_move(struct mc_board *mc, int pos, int color)
+mc_play_move(board_lib_state_struct *internal_state,
+             struct mc_board *mc, int pos, int color)
 {
   int k;
   int captured_stones = 0;
@@ -828,7 +832,7 @@ mc_play_move(struct mc_board *mc, int pos, int color)
   }
   
   /* Test for suicide. */
-  if (mc_is_suicide(mc, pos, color))
+  if (mc_is_suicide(internal_state, mc, pos, color))
     return 0;
 
   if (mc->board_ko_pos != NO_MOVE)
@@ -901,7 +905,7 @@ mc_play_move(struct mc_board *mc, int pos, int color)
    */
   for (pos2 = mc->queue[0]; pos2 != 1; pos2 = mc->queue[pos2])
     if (pos2 != pos)
-      mc_update_local_context(mc, pos2);
+      mc_update_local_context(internal_state, mc, pos2);
 
   /* Add the immediate neighborhood of the move to the update queue
    * for recomputation of move values later on.
@@ -1029,7 +1033,7 @@ mc_register_geometry_pattern(unsigned int pattern, unsigned short n)
  * invariant geometry numbers.
  */
 static void
-mc_init_pattern_geometries(void)
+mc_init_pattern_geometries(board_lib_state_struct *internal_state)
 {
   unsigned int pattern;
   unsigned short n = 1;
@@ -1047,7 +1051,7 @@ mc_init_pattern_geometries(void)
       n += mc_register_geometry_pattern(pattern, n);
   }
 
-  gg_assert(n == NUM_GEOMETRIES + 1);
+  gg_assert(internal_state, n == NUM_GEOMETRIES + 1);
 }
 
 
@@ -1250,7 +1254,8 @@ mc_get_size_of_pattern_values_table(void)
  * NULL, load directly into mc_patterns.values.
  */
 int
-mc_load_patterns_from_db(const char *filename, unsigned int *values)
+mc_load_patterns_from_db(board_lib_state_struct *internal_state,
+                         const char *filename, unsigned int *values)
 {
   FILE *pattern_file;
   char buf[80];
@@ -1266,7 +1271,7 @@ mc_load_patterns_from_db(const char *filename, unsigned int *values)
   if (!values)
     values = mc_patterns.values;
 
-  mc_init_pattern_geometries();
+  mc_init_pattern_geometries(internal_state);
   
   pattern_file = fopen(filename, "r");
   if (!pattern_file) {
@@ -1350,9 +1355,10 @@ mc_load_patterns_from_db(const char *filename, unsigned int *values)
 
 /* Set up local pattern values. */
 void
-mc_init_patterns(const unsigned int *values)
+mc_init_patterns(board_lib_state_struct *internal_state,
+                 const unsigned int *values)
 {
-  mc_init_pattern_geometries();
+  mc_init_pattern_geometries(internal_state);
   memcpy(mc_patterns.values, values, sizeof(mc_patterns.values));
 }
 
@@ -1388,7 +1394,7 @@ mc_init_move_values(struct mc_board *mc)
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (mc->board[pos] == EMPTY) {
       int partition = pos & (NUM_MOVE_PARTITIONS - 1);
-      if (!mc_is_suicide(mc, pos, WHITE)) {
+      if (!mc_is_suicide(internal_state, mc, pos, WHITE)) {
 	int pattern = mc_find_pattern_number(mc, pos, WHITE, 0);
 	unsigned int value = mc_patterns.values[pattern];
 	mc->move_values_white[pos] = value;
@@ -1397,7 +1403,7 @@ mc_init_move_values(struct mc_board *mc)
 	mc->move_partition_lists_white[pos] = mc->move_partition_lists_white[partition];
 	mc->move_partition_lists_white[partition] = pos;
       }
-      if (!mc_is_suicide(mc, pos, BLACK)) {
+      if (!mc_is_suicide(internal_state, mc, pos, BLACK)) {
 	int pattern = mc_find_pattern_number(mc, pos, BLACK, 0);
 	unsigned int value = mc_patterns.values[pattern];
 	mc->move_values_black[pos] = value;
@@ -1470,7 +1476,7 @@ mc_update_move_values(struct mc_board *mc)
   int partition;
   for (pos = mc->queue[0]; pos != 1; pos = mc->queue[pos]) {
     partition = pos & (NUM_MOVE_PARTITIONS - 1);
-    if ((mc->board[pos] != EMPTY || mc_is_suicide(mc, pos, WHITE))) {
+    if ((mc->board[pos] != EMPTY || mc_is_suicide(internal_state, mc, pos, WHITE))) {
       if (mc->move_partition_lists_white[pos] != 0) {
 	mc_remove_move(pos, partition, mc->move_values_white,
 		       mc->move_partition_lists_white,
@@ -1490,7 +1496,7 @@ mc_update_move_values(struct mc_board *mc)
 		       &mc->move_value_sum_white);
     }
 
-    if ((mc->board[pos] != EMPTY || mc_is_suicide(mc, pos, BLACK))) {
+    if ((mc->board[pos] != EMPTY || mc_is_suicide(internal_state, mc, pos, BLACK))) {
       if (mc->move_partition_lists_black[pos] != 0) {
 	mc_remove_move(pos, partition, mc->move_values_black,
 		       mc->move_partition_lists_black,
@@ -1531,7 +1537,8 @@ struct mc_game {
 
 /* Generate a random move. */
 static int
-mc_generate_random_move(struct mc_game *game)
+mc_generate_random_move(board_lib_state_struct *internal_state,
+                        struct mc_game *game)
 {
   struct mc_board *mc = &game->mc;
   int last_move = game->last_move;
@@ -1562,7 +1569,7 @@ mc_generate_random_move(struct mc_game *game)
     if (mc_debug) {
       int pos;
       fprintf(stderr, "Reached 600 iterations.\n");
-      mc_showboard(mc, stderr);
+      mc_showboard(internal_state, mc, stderr);
       for (k = 0; k < game->depth; k++)
 	gprintf(internal_state, "%1m ", game->move_history[k]);
       gprintf(internal_state, "\n");
@@ -1681,9 +1688,10 @@ mc_generate_random_move(struct mc_game *game)
 }
 
 
-static int mc_play_random_move(struct mc_game *game, int move)
+static int mc_play_random_move(board_lib_state_struct *internal_state,
+                               struct mc_game *game, int move)
 {
-  int result = mc_play_move(&game->mc, move, game->color_to_move);
+  int result = mc_play_move(internal_state, &game->mc, move, game->color_to_move);
   mc_update_move_values(&game->mc);
   
   if (result) {
@@ -1707,7 +1715,8 @@ static int mc_play_random_move(struct mc_game *game, int move)
   return result;
 }
 
-static int mc_play_random_game(struct mc_game *game)
+static int mc_play_random_game(board_lib_state_struct *internal_state,
+                               struct mc_game *game)
 {
   struct mc_board *mc = &game->mc;
   
@@ -1719,9 +1728,9 @@ static int mc_play_random_game(struct mc_game *game)
 
   /* First finish the game, if it isn't already. */
   while (game->consecutive_passes < 3) {
-    move = mc_generate_random_move(game);
-    result = mc_play_random_move(game, move);
-    ASSERT1(result, move);
+    move = mc_generate_random_move(internal_state, game);
+    result = mc_play_random_move(internal_state, game, move);
+    ASSERT1(internal_state, result, move);
   }
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
@@ -1815,7 +1824,8 @@ uct_init_node(struct uct_tree *tree, int *allowed_moves)
 }
 
 static struct uct_node *
-uct_find_node(struct uct_tree *tree, struct uct_node *parent, int move)
+uct_find_node(board_lib_state_struct *internal_state,
+              struct uct_tree *tree, struct uct_node *parent, int move)
 {
   struct uct_node *node = NULL;
   Hash_data *boardhash = &tree->game.mc.hash;
@@ -1827,7 +1837,7 @@ uct_find_node(struct uct_tree *tree, struct uct_node *parent, int move)
 
   while (hashtable[hash_index] != 0) {
     int node_index = hashtable[hash_index];
-    gg_assert(node_index > 0 && node_index < tree->num_nodes);
+    gg_assert(internal_state, node_index > 0 && node_index < tree->num_nodes);
     if (hashdata_is_equal(tree->nodes[node_index].boardhash, *boardhash)) {
       node = &tree->nodes[node_index];
       break;
@@ -1839,7 +1849,7 @@ uct_find_node(struct uct_tree *tree, struct uct_node *parent, int move)
 
   if (!node) {
     node = uct_init_node(tree, NULL);
-    gg_assert(hash_index < tree->hashtable_size);
+    gg_assert(internal_state, hash_index < tree->hashtable_size);
     hashtable[hash_index] = node - tree->nodes;
   }
   
@@ -1883,7 +1893,8 @@ uct_update_move_ordering(struct uct_tree *tree, int move)
 
 
 static void
-uct_init_move_ordering(struct uct_tree *tree)
+uct_init_move_ordering(board_lib_state_struct *internal_state,
+                       struct uct_tree *tree)
 {
   int pos;
   int k = 0;
@@ -1909,13 +1920,15 @@ uct_init_move_ordering(struct uct_tree *tree)
 
 
 static float
-uct_finish_and_score_game(struct mc_game *game)
+uct_finish_and_score_game(board_lib_state_struct *internal_state,
+                          struct mc_game *game)
 {
-  return komi + mc_play_random_game(game);
+  return internal_state->komi + mc_play_random_game(internal_state, game);
 }
 
 static struct uct_node *
-uct_play_move(struct uct_tree *tree, struct uct_node *node, float alpha,
+uct_play_move(board_lib_state_struct *internal_state,
+              struct uct_tree *tree, struct uct_node *node, float alpha,
 	      float *gamma, int *move)
 {
   struct uct_arc *child_arc;
@@ -1955,7 +1968,7 @@ uct_play_move(struct uct_tree *tree, struct uct_node *node, float alpha,
       if (k == -1 && best_uct_value > 0.0)
 	continue;
       else if (k == -1)
-	pos = mc_generate_random_move(&tree->game);
+    pos = mc_generate_random_move(internal_state, &tree->game);
       else
 	pos = tree->move_ordering[k];
       
@@ -1987,26 +2000,27 @@ uct_play_move(struct uct_tree *tree, struct uct_node *node, float alpha,
 	    proper_small_eye = 0;
 	}
 	
-	if (!proper_small_eye && mc_play_random_move(&tree->game, *move))
-	  return uct_find_node(tree, node, *move);
+    if (!proper_small_eye && mc_play_random_move(internal_state, &tree->game, *move))
+      return uct_find_node(internal_state, tree, node, *move);
       }
     }
   }
   
   if (!next_arc) {
-    mc_play_random_move(&tree->game, PASS_MOVE);
+    mc_play_random_move(internal_state, &tree->game, PASS_MOVE);
     *move = PASS_MOVE;
-    return uct_find_node(tree, node, PASS_MOVE);
+    return uct_find_node(internal_state, tree, node, PASS_MOVE);
   }
 
   *move = next_arc->move;
-  mc_play_random_move(&tree->game, next_arc->move);
+  mc_play_random_move(internal_state, &tree->game, next_arc->move);
   
   return next_arc->node;
 }
 
 static float
-uct_traverse_tree(struct uct_tree *tree, struct uct_node *node,
+uct_traverse_tree(board_lib_state_struct *internal_state,
+                  struct uct_tree *tree, struct uct_node *node,
 		  float alpha, float beta)
 {
   int color = tree->game.color_to_move;
@@ -2018,15 +2032,15 @@ uct_traverse_tree(struct uct_tree *tree, struct uct_node *node,
   /* FIXME: Unify these. */
   if (num_passes == 3 || tree->game.depth >= UCT_MAX_SEARCH_DEPTH
       || (node->games == 0 && node != tree->nodes))
-    result = uct_finish_and_score_game(&tree->game);
+    result = uct_finish_and_score_game(internal_state, &tree->game);
   else {
     struct uct_node *next_node;
-    next_node = uct_play_move(tree, node, alpha, &gamma, &move);
+    next_node = uct_play_move(internal_state, tree, node, alpha, &gamma, &move);
     
     gamma += 0.00;
     if (gamma > 0.8)
       gamma = 0.8;
-    result = uct_traverse_tree(tree, next_node, beta, gamma);
+    result = uct_traverse_tree(internal_state, tree, next_node, beta, gamma);
   }
 
   node->games++;
@@ -2096,12 +2110,13 @@ uct_dump_tree_recursive(struct uct_node *node, SGFTree *sgf_tree, int color,
 
 
 static void
-uct_dump_tree(struct uct_tree *tree, const char *filename, int color,
+uct_dump_tree(board_lib_state_struct *internal_state,
+              struct uct_tree *tree, const char *filename, int color,
 	      int cutoff)
 {
   SGFTree sgf_tree;
   sgftree_clear(&sgf_tree);
-  sgftreeCreateHeaderNode(&sgf_tree, internal_state->board_size, komi, 0);
+  sgftreeCreateHeaderNode(&sgf_tree, internal_state->board_size, internal_state->komi, 0);
   sgffile_printboard(&sgf_tree);
 
   uct_dump_tree_recursive(&tree->nodes[0], &sgf_tree, color, cutoff, 0);
@@ -2112,7 +2127,8 @@ uct_dump_tree(struct uct_tree *tree, const char *filename, int color,
 
 
 void
-uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
+uct_genmove(board_lib_state_struct *internal_state,
+            int color, int *move, int *forbidden_moves, int *allowed_moves,
 	    int nodes, float *move_values, int *move_frequencies)
 {
   struct uct_tree tree;
@@ -2125,7 +2141,7 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
   struct uct_arc *most_games_arc;
   int pos;
 
-  mc_init_board_from_global_board(&starting_position.mc);
+  mc_init_board_from_global_board(internal_state, &starting_position.mc);
   mc_init_move_values(&starting_position.mc);
   starting_position.color_to_move = color;
   /* FIXME: Fill in correct information. */
@@ -2155,13 +2171,13 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
   tree.num_used_arcs = 0;
   tree.forbidden_moves = forbidden_moves;
   uct_init_node(&tree, allowed_moves);
-  uct_init_move_ordering(&tree);
+  uct_init_move_ordering(internal_state, &tree);
 
   /* Play simulations. FIXME: Terribly dirty fix. */
   while (tree.num_used_arcs < tree.num_arcs - 10) {
     int last_used_arcs = tree.num_used_arcs;
     tree.game = starting_position;
-    uct_traverse_tree(&tree, &tree.nodes[0], 1.0, 0.9);
+    uct_traverse_tree(internal_state, &tree, &tree.nodes[0], 1.0, 0.9);
     /* FIXME: Ugly workaround for solved positions before running out
      * of nodes.
      */
@@ -2184,7 +2200,7 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
 
   /* Dump sgf tree of the significant part of the search tree. */
   if (0)
-    uct_dump_tree(&tree, "/tmp/ucttree.sgf", color, 50);
+    uct_dump_tree(internal_state, &tree, "/tmp/ucttree.sgf", color, 50);
     
   /* Print information about the search tree. */
   if (mc_debug) {

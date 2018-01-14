@@ -86,7 +86,7 @@ play_solo(Gameinfo *gameinfo, int moves)
     reset_owl_node_counter();
     move = genmove(gameinfo->to_move, &move_value, NULL);
 
-    gnugo_play_move(move, gameinfo->to_move);
+    gnugo_play_move(internal_state, move, gameinfo->to_move);
     sgffile_add_debuginfo(sgftree.lastnode, move_value);
     sgftreeAddPlay(&sgftree, gameinfo->to_move, I(move), J(move));
     sgffile_output(&sgftree);
@@ -161,7 +161,7 @@ load_and_analyze_sgf_file(Gameinfo *gameinfo)
   if (metamachine)
     sgffile_enddump(outfilename);
   else {
-    gnugo_play_move(move, next);
+    gnugo_play_move(internal_state, move, next);
     sgftreeAddPlay(&sgftree, next, I(move), J(move));
     sgftreeAddComment(&sgftree, "load and analyze mode");
     sgffile_add_debuginfo(sgftree.lastnode, move_value);
@@ -245,7 +245,7 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
 	gprintf(internal_state, "%d %s move PASS\n", movenum, 
 		next == WHITE ? "white (O)" : "black (X)");
       }
-      play_move(move, next);
+      play_move(internal_state, move, next);
       sgffile_add_debuginfo(score_tree->lastnode, move_value);
       sgftreeAddPlay(score_tree, next, I(move), J(move));
       sgffile_output(score_tree);

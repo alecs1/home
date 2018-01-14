@@ -81,7 +81,8 @@ static int known_good_attack_threats[BOARDMAX][MAX_ATTACK_THREATS];
 static int known_safe_moves[BOARDMAX];
 
 /* Helper functions to check conditions in discard rules. */
-typedef int (*discard_condition_fn_ptr)(int pos, int what);
+typedef int (*discard_condition_fn_ptr)(board_lib_state_struct *internal_state,
+                                        int pos, int what);
 
 struct discard_rule {
   int reason_type[MAX_REASONS];
@@ -93,7 +94,7 @@ struct discard_rule {
 
 /* Initialize move reason data structures. */
 void
-clear_move_reasons(void)
+clear_move_reasons(board_lib_state_struct *internal_state)
 {
   int pos;
   int k;
@@ -155,7 +156,8 @@ clear_move_reasons(void)
  * If necessary, add a new entry.
  */
 int
-find_connection(int worm1, int worm2)
+find_connection(board_lib_state_struct *internal_state,
+                int worm1, int worm2)
 {
   int k;
   
@@ -171,7 +173,7 @@ find_connection(int worm1, int worm2)
       return k;
   
   /* Add a new entry. */
-  gg_assert(next_connection < MAX_CONNECTIONS);
+  gg_assert(internal_state, next_connection < MAX_CONNECTIONS);
   conn_worm1[next_connection] = worm1;
   conn_worm2[next_connection] = worm2;
   next_connection++;
@@ -180,7 +182,8 @@ find_connection(int worm1, int worm2)
 
 
 static int
-find_either_data(int reason1, int what1, int reason2, int what2)
+find_either_data(board_lib_state_struct *internal_state,
+                 int reason1, int what1, int reason2, int what2)
 {
   int k;
   
@@ -199,7 +202,7 @@ find_either_data(int reason1, int what1, int reason2, int what2)
       return k;
   
   /* Add a new entry. */
-  gg_assert(next_either < MAX_EITHER);
+  gg_assert(internal_state, next_either < MAX_EITHER);
   either_data[next_either].reason1 = reason1;
   either_data[next_either].what1   = what1;
   either_data[next_either].reason2 = reason2;
@@ -209,7 +212,8 @@ find_either_data(int reason1, int what1, int reason2, int what2)
 }
 
 static int
-find_all_data(int reason1, int what1, int reason2, int what2)
+find_all_data(board_lib_state_struct *internal_state,
+              int reason1, int what1, int reason2, int what2)
 {
   int k;
   
@@ -228,7 +232,7 @@ find_all_data(int reason1, int what1, int reason2, int what2)
       return k;
   
   /* Add a new entry. */
-  gg_assert(next_all < MAX_ALL);
+  gg_assert(internal_state, next_all < MAX_ALL);
   all_data[next_all].reason1 = reason1;
   all_data[next_all].what1   = what1;
   all_data[next_all].reason2 = reason2;
@@ -238,7 +242,8 @@ find_all_data(int reason1, int what1, int reason2, int what2)
 }
 
 static int
-find_pair_data(int what1, int what2)
+find_pair_data(board_lib_state_struct *internal_state,
+               int what1, int what2)
 {
   int k;
   
@@ -248,7 +253,7 @@ find_pair_data(int what1, int what2)
       return k;
   
   /* Add a new entry. */
-  gg_assert(next_either < MAX_EITHER);
+  gg_assert(internal_state, next_either < MAX_EITHER);
   either_data[next_either].what1   = what1;
   either_data[next_either].what2   = what2;
   next_either++;
@@ -264,7 +269,8 @@ find_pair_data(int what1, int what2)
  * trace output function. Do some code cleanup here.
  */
 static int
-get_pos(int reason, int what)
+get_pos(board_lib_state_struct *internal_state,
+        int reason, int what)
 {
   switch (reason) {
   case ATTACK_MOVE:
@@ -321,7 +327,7 @@ get_pos(int reason, int what)
 
   default:
     /* We should never get here: */
-    gg_assert(0);
+    gg_assert(internal_state, 0);
     return 0; /* To keep gcc happy. */
   }
 }
@@ -332,20 +338,21 @@ get_pos(int reason, int what)
  * (a worm).
  */
 void
-add_lunch(int eater, int food)
+add_lunch(board_lib_state_struct *internal_state,
+          int eater, int food)
 {
   int k;
   int dragon1 = dragon[eater].origin;
   int worm1   = worm[food].origin;
-  ASSERT_ON_BOARD1(eater);
-  ASSERT_ON_BOARD1(food);
+  ASSERT_ON_BOARD1(internal_state, eater);
+  ASSERT_ON_BOARD1(internal_state, food);
   
   for (k = 0; k < next_lunch; k++)
     if ((lunch_dragon[k] == dragon1) && (lunch_worm[k] == worm1))
       return;
   
   /* Add a new entry. */
-  gg_assert(next_lunch < MAX_LUNCHES);
+  gg_assert(internal_state, next_lunch < MAX_LUNCHES);
   lunch_dragon[next_lunch] = dragon1;
   lunch_worm[next_lunch] = worm1;
   next_lunch++;
@@ -360,7 +367,8 @@ add_lunch(int eater, int food)
  * table is full.
  */ 
 static void
-add_move_reason(int pos, int type, int what)
+add_move_reason(board_lib_state_struct *internal_state,
+                int pos, int type, int what)
 {
   int k;
 
@@ -408,7 +416,8 @@ add_move_reason(int pos, int type, int what)
  * wasn't there.
  */ 
 static void
-remove_move_reason(int pos, int type, int what)
+remove_move_reason(board_lib_state_struct *internal_state,
+                   int pos, int type, int what)
 {
   int k;
   int n = -1; /* Position of the move reason to be deleted. */
@@ -440,7 +449,8 @@ remove_move_reason(int pos, int type, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-move_reason_known(int pos, int type, int what)
+move_reason_known(board_lib_state_struct *internal_state,
+                  int pos, int type, int what)
 {
   int k;
   int r;
@@ -467,15 +477,16 @@ move_reason_known(int pos, int type, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-attack_move_reason_known(int pos, int what)
+attack_move_reason_known(board_lib_state_struct *internal_state,
+                         int pos, int what)
 {
-  ASSERT1(internal_state, internal_state, what < 0 || IS_STONE(internal_state->board[what]), what);
+  ASSERT1(internal_state, what < 0 || IS_STONE(internal_state->board[what]), what);
   what = worm[what].origin;
-  if (move_reason_known(pos, ATTACK_MOVE, what))
+  if (move_reason_known(internal_state, pos, ATTACK_MOVE, what))
     return WIN;
-  if (move_reason_known(pos, ATTACK_MOVE_GOOD_KO, what))
+  if (move_reason_known(internal_state, pos, ATTACK_MOVE_GOOD_KO, what))
     return KO_A;
-  if (move_reason_known(pos, ATTACK_MOVE_BAD_KO, what))
+  if (move_reason_known(internal_state, pos, ATTACK_MOVE_BAD_KO, what))
     return KO_B;
   return 0;
 }
@@ -485,15 +496,16 @@ attack_move_reason_known(int pos, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-defense_move_reason_known(int pos, int what)
+defense_move_reason_known(board_lib_state_struct *internal_state,
+                          int pos, int what)
 {
-  ASSERT1(internal_state, internal_state, what < 0 || IS_STONE(internal_state->board[what]), what);
+  ASSERT1(internal_state, what < 0 || IS_STONE(internal_state->board[what]), what);
   what = worm[what].origin;
-  if (move_reason_known(pos, DEFEND_MOVE, what))
+  if (move_reason_known(internal_state, pos, DEFEND_MOVE, what))
     return WIN;
-  if (move_reason_known(pos, DEFEND_MOVE_GOOD_KO, what))
+  if (move_reason_known(internal_state, pos, DEFEND_MOVE_GOOD_KO, what))
     return KO_A;
-  if (move_reason_known(pos, DEFEND_MOVE_BAD_KO, what))
+  if (move_reason_known(internal_state, pos, DEFEND_MOVE_BAD_KO, what))
     return KO_B;
   return 0;
 }
@@ -502,11 +514,12 @@ defense_move_reason_known(int pos, int what)
  * whether we know of a tactical attack or defense move.
  */
 static int
-tactical_move_vs_whole_dragon_known(int pos, int what)
+tactical_move_vs_whole_dragon_known(board_lib_state_struct *internal_state,
+                                    int pos, int what)
 {
   return ((worm[what].size == dragon[what].size)
-	  && (attack_move_reason_known(pos, what)
-	      || defense_move_reason_known(pos, what)));
+      && (attack_move_reason_known(internal_state, pos, what)
+          || defense_move_reason_known(internal_state, pos, what)));
 }
 
 /*
@@ -514,13 +527,14 @@ tactical_move_vs_whole_dragon_known(int pos, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-owl_attack_move_reason_known(int pos, int what)
+owl_attack_move_reason_known(board_lib_state_struct *internal_state,
+                             int pos, int what)
 {
-  if (move_reason_known(pos, OWL_ATTACK_MOVE, what))
+  if (move_reason_known(internal_state, pos, OWL_ATTACK_MOVE, what))
     return WIN;
-  if (move_reason_known(pos, OWL_ATTACK_MOVE_GOOD_KO, what))
+  if (move_reason_known(internal_state, pos, OWL_ATTACK_MOVE_GOOD_KO, what))
     return KO_A;
-  if (move_reason_known(pos, OWL_ATTACK_MOVE_BAD_KO, what))
+  if (move_reason_known(internal_state, pos, OWL_ATTACK_MOVE_BAD_KO, what))
     return KO_B;
   return 0;
 }
@@ -530,13 +544,14 @@ owl_attack_move_reason_known(int pos, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-owl_defense_move_reason_known(int pos, int what)
+owl_defense_move_reason_known(board_lib_state_struct *internal_state,
+                              int pos, int what)
 {
-  if (move_reason_known(pos, OWL_DEFEND_MOVE, what))
+  if (move_reason_known(internal_state, pos, OWL_DEFEND_MOVE, what))
     return WIN;
-  if (move_reason_known(pos, OWL_DEFEND_MOVE_GOOD_KO, what))
+  if (move_reason_known(internal_state, pos, OWL_DEFEND_MOVE_GOOD_KO, what))
     return KO_A;
-  if (move_reason_known(pos, OWL_DEFEND_MOVE_BAD_KO, what))
+  if (move_reason_known(internal_state, pos, OWL_DEFEND_MOVE_BAD_KO, what))
     return KO_B;
   return 0;
 }
@@ -546,10 +561,11 @@ owl_defense_move_reason_known(int pos, int what)
  * A negative value for 'what' means only match 'type'.
  */
 int
-owl_move_reason_known(int pos, int what)
+owl_move_reason_known(board_lib_state_struct *internal_state,
+                      int pos, int what)
 {
-  return (owl_attack_move_reason_known(pos, what)
-          || owl_defense_move_reason_known(pos, what));
+  return (owl_attack_move_reason_known(internal_state, pos, what)
+          || owl_defense_move_reason_known(internal_state, pos, what));
 }
 
 /*
@@ -557,47 +573,57 @@ owl_move_reason_known(int pos, int what)
  * involves a specific worm.
  */
 static int
-owl_move_vs_worm_known(int pos, int what)
+owl_move_vs_worm_known(board_lib_state_struct *internal_state,
+                       int pos, int what)
 {
-  return owl_move_reason_known(pos, dragon[what].origin);
+  return owl_move_reason_known(internal_state, pos, dragon[what].origin);
 }
 
 int
-semeai_move_reason_known(int pos, int what)
+semeai_move_reason_known(board_lib_state_struct *internal_state,
+                         int pos, int what)
 {
-  return move_reason_known(pos, SEMEAI_MOVE, what);
+  return move_reason_known(internal_state, pos, SEMEAI_MOVE, what);
 }
 
 /* Check whether a worm is inessential */
 static int
-concerns_inessential_worm(int pos, int what)
+concerns_inessential_worm(board_lib_state_struct *internal_state,
+                          int pos, int what)
 {
   UNUSED(pos);
+  UNUSED(internal_state);
   return DRAGON2(what).safety == INESSENTIAL
         || worm[what].inessential;
 }
 
 /* Check whether a dragon is inessential */
 static int
-concerns_inessential_dragon(int pos, int what)
+concerns_inessential_dragon(board_lib_state_struct *internal_state,
+                            int pos, int what)
 {
   UNUSED(pos);
+  UNUSED(internal_state);
   return DRAGON2(what).safety == INESSENTIAL; 
 }
 
 static int
-move_is_marked_unsafe(int pos, int what)
+move_is_marked_unsafe(board_lib_state_struct *internal_state,
+                      int pos, int what)
 {
   UNUSED(what);
+  UNUSED(internal_state);
   return (!move[pos].move_safety
 	  && !adjacent_to_nondead_stone(pos, current_color));
 }
 
 /* Check whether a dragon is non-critical. */
 static int
-concerns_noncritical_dragon(int pos, int what)
+concerns_noncritical_dragon(board_lib_state_struct *internal_state,
+                            int pos, int what)
 {
   UNUSED(pos);
+  UNUSED(internal_state);
   return (dragon[what].status != CRITICAL
 	  && worm[what].attack_codes[0] == 0);
 }
@@ -608,9 +634,11 @@ concerns_noncritical_dragon(int pos, int what)
  * FIXME: Ko?
  */
 static int
-either_worm_attackable(int pos, int what)
+either_worm_attackable(board_lib_state_struct *internal_state,
+                       int pos, int what)
 {
   UNUSED(pos);
+  UNUSED(internal_state);
   return (either_data[what].reason1 == ATTACK_STRING
       	  && either_data[what].reason2 == ATTACK_STRING
           && (worm[either_data[what].what1].attack_codes[0] != 0
@@ -622,9 +650,11 @@ either_worm_attackable(int pos, int what)
  * FIXME: Ko?
  */
 static int
-one_of_both_attackable(int pos, int what)
+one_of_both_attackable(board_lib_state_struct *internal_state,
+                       int pos, int what)
 {
   UNUSED(pos);
+  UNUSED(internal_state);
   return (all_data[what].reason1 == DEFEND_STRING
       	  && all_data[what].reason2 == DEFEND_STRING
    	  && (worm[all_data[what].what1].attack_codes[0] != 0
@@ -640,17 +670,18 @@ one_of_both_attackable(int pos, int what)
  * at (ww).
  */
 void
-add_attack_move(int pos, int ww, int code)
+add_attack_move(board_lib_state_struct *internal_state,
+                int pos, int ww, int code)
 {
-  ASSERT_ON_BOARD1(ww);
+  ASSERT_ON_BOARD1(internal_state, ww);
   ww = worm[ww].origin;
 
   if (code == WIN)
-    add_move_reason(pos, ATTACK_MOVE, ww);
+    add_move_reason(internal_state, pos, ATTACK_MOVE, ww);
   else if (code == KO_A)
-    add_move_reason(pos, ATTACK_MOVE_GOOD_KO, ww);
+    add_move_reason(internal_state, pos, ATTACK_MOVE_GOOD_KO, ww);
   else if (code == KO_B)
-    add_move_reason(pos, ATTACK_MOVE_BAD_KO, ww);
+    add_move_reason(internal_state, pos, ATTACK_MOVE_BAD_KO, ww);
 }
 
 /*
@@ -658,17 +689,18 @@ add_attack_move(int pos, int ww, int code)
  * at (ww).
  */
 void
-add_defense_move(int pos, int ww, int code)
+add_defense_move(board_lib_state_struct *internal_state,
+                 int pos, int ww, int code)
 {
-  ASSERT_ON_BOARD1(ww);
+  ASSERT_ON_BOARD1(internal_state, ww);
   ww = worm[ww].origin;
 
   if (code == WIN)
-    add_move_reason(pos, DEFEND_MOVE, ww);
+    add_move_reason(internal_state, pos, DEFEND_MOVE, ww);
   else if (code == KO_A)
-    add_move_reason(pos, DEFEND_MOVE_GOOD_KO, ww);
+    add_move_reason(internal_state, pos, DEFEND_MOVE_GOOD_KO, ww);
   else if (code == KO_B)
-    add_move_reason(pos, DEFEND_MOVE_BAD_KO, ww);
+    add_move_reason(internal_state, pos, DEFEND_MOVE_BAD_KO, ww);
 }
 
 /*
@@ -676,21 +708,23 @@ add_defense_move(int pos, int ww, int code)
  * attack the worm at (ww). 
  */
 void
-add_attack_threat_move(int pos, int ww, int code)
+add_attack_threat_move(board_lib_state_struct *internal_state,
+                       int pos, int ww, int code)
 {
   UNUSED(code);
   
-  ASSERT_ON_BOARD1(ww);
-  add_move_reason(pos, ATTACK_THREAT, worm[ww].origin);
+  ASSERT_ON_BOARD1(internal_state, ww);
+  add_move_reason(internal_state, pos, ATTACK_THREAT, worm[ww].origin);
 }
 
 /* Remove an attack threat move reason. */
 
 void
-remove_attack_threat_move(int pos, int ww)
+remove_attack_threat_move(board_lib_state_struct *internal_state,
+                          int pos, int ww)
 {
-  ASSERT_ON_BOARD1(ww);
-  remove_move_reason(pos, ATTACK_THREAT, worm[ww].origin);
+  ASSERT_ON_BOARD1(internal_state, ww);
+  remove_move_reason(internal_state, pos, ATTACK_THREAT, worm[ww].origin);
 }
 
 /*
@@ -698,12 +732,13 @@ remove_attack_threat_move(int pos, int ww)
  * at (ww).
  */
 void
-add_defense_threat_move(int pos, int ww, int code)
+add_defense_threat_move(board_lib_state_struct *internal_state,
+                        int pos, int ww, int code)
 {
   UNUSED(code);
 
-  ASSERT_ON_BOARD1(ww);
-  add_move_reason(pos, DEFEND_THREAT, worm[ww].origin);
+  ASSERT_ON_BOARD1(internal_state, ww);
+  add_move_reason(internal_state, pos, DEFEND_THREAT, worm[ww].origin);
 }
 
 
@@ -797,18 +832,19 @@ get_biggest_owl_target(int pos)
  * distinct.
  */
 void
-add_connection_move(int pos, int w1, int w2)
+add_connection_move(board_lib_state_struct *internal_state,
+                    int pos, int w1, int w2)
 {
   int connection;
 
-  ASSERT_ON_BOARD1(w1);
-  ASSERT_ON_BOARD1(w2);
-  ASSERT1(internal_state, internal_state, worm[w1].color == worm[w2].color, w1);
+  ASSERT_ON_BOARD1(internal_state, w1);
+  ASSERT_ON_BOARD1(internal_state, w2);
+  ASSERT1(internal_state, worm[w1].color == worm[w2].color, w1);
   if (worm[w1].origin == worm[w2].origin)
     return;
   
-  connection = find_connection(worm[w1].origin, worm[w2].origin);
-  add_move_reason(pos, CONNECT_MOVE, connection);
+  connection = find_connection(internal_state, worm[w1].origin, worm[w2].origin);
+  add_move_reason(internal_state, pos, CONNECT_MOVE, connection);
 }
 
 /*
@@ -817,16 +853,17 @@ add_connection_move(int pos, int w1, int w2)
  * distinct.
  */
 void
-add_cut_move(int pos, int w1, int w2)
+add_cut_move(board_lib_state_struct *internal_state,
+             int pos, int w1, int w2)
 {
   int connection;
 
-  ASSERT_ON_BOARD1(w1);
-  ASSERT_ON_BOARD1(w2);
-  ASSERT1(internal_state, internal_state, worm[w1].color == worm[w2].color, w1);
+  ASSERT_ON_BOARD1(internal_state, w1);
+  ASSERT_ON_BOARD1(internal_state, w2);
+  ASSERT1(internal_state, worm[w1].color == worm[w2].color, w1);
   if (worm[w1].origin == worm[w2].origin)
     return;
-  connection = find_connection(worm[w1].origin, worm[w2].origin);
+  connection = find_connection(internal_state, worm[w1].origin, worm[w2].origin);
   
   /*
    * Ignore the cut or connection if either (w1) or (w2)
@@ -836,7 +873,7 @@ add_cut_move(int pos, int w1, int w2)
       || (worm[w2].attack_codes[0] != 0 && worm[w2].defense_codes[0] == 0))
     return;
   
-  add_move_reason(pos, CUT_MOVE, connection);
+  add_move_reason(internal_state, pos, CUT_MOVE, connection);
 
 }
 
@@ -846,9 +883,10 @@ add_cut_move(int pos, int w1, int w2)
  * must *not* be played.
  */
 void
-add_antisuji_move(int pos)
+add_antisuji_move(board_lib_state_struct *internal_state,
+                  int pos)
 {
-  add_move_reason(pos, ANTISUJI_MOVE, 0);
+  add_move_reason(internal_state, pos, ANTISUJI_MOVE, 0);
 }
 
 /*
@@ -860,10 +898,11 @@ add_antisuji_move(int pos)
  * must be added for the two dragons.
  */
 void
-add_semeai_move(int pos, int dr)
+add_semeai_move(board_lib_state_struct *internal_state,
+                int pos, int dr)
 {
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, SEMEAI_MOVE, dragon[dr].origin);
+  add_move_reason(internal_state, pos, SEMEAI_MOVE, dragon[dr].origin);
 }
 
 /*
@@ -871,17 +910,18 @@ add_semeai_move(int pos, int dr)
  * kill/save the dragon at (dr1) in the semeai against (dr2).
  */
 static void
-add_potential_semeai_move(int pos, int type, int dr1, int dr2)
+add_potential_semeai_move(board_lib_state_struct *internal_state,
+                          int pos, int type, int dr1, int dr2)
 {
-  ASSERT1(ON_BOARD(dr1), pos);
-  ASSERT1(ON_BOARD(dr2), pos);
+  ASSERT1(internal_state, ON_BOARD(internal_state, dr1), pos);
+  ASSERT1(internal_state, ON_BOARD(internal_state, dr2), pos);
   if (next_semeai >= MAX_POTENTIAL_SEMEAI)
     DEBUG(DEBUG_MOVE_REASONS,
 	  "Potential semeai move at %1m dropped as list was full\n", pos);
   else {
     semeai_target1[next_semeai] = dr1;
     semeai_target2[next_semeai] = dr2;
-    add_move_reason(pos, type, next_semeai);
+    add_move_reason(internal_state, pos, type, next_semeai);
     next_semeai++;
   }
 }
@@ -891,9 +931,10 @@ add_potential_semeai_move(int pos, int type, int dr1, int dr2)
  * kill the dragon at (dr1) in the semeai against (dr2).
  */
 void
-add_potential_semeai_attack(int pos, int dr1, int dr2)
+add_potential_semeai_attack(board_lib_state_struct *internal_state,
+                            int pos, int dr1, int dr2)
 {
-  add_potential_semeai_move(pos, POTENTIAL_SEMEAI_ATTACK, dr1, dr2);
+  add_potential_semeai_move(internal_state, pos, POTENTIAL_SEMEAI_ATTACK, dr1, dr2);
 }
 
 /*
@@ -901,9 +942,10 @@ add_potential_semeai_attack(int pos, int dr1, int dr2)
  * save the dragon at (dr1) in the semeai against (dr2).
  */
 void
-add_potential_semeai_defense(int pos, int dr1, int dr2)
+add_potential_semeai_defense(board_lib_state_struct *internal_state,
+                             int pos, int dr1, int dr2)
 {
-  add_potential_semeai_move(pos, POTENTIAL_SEMEAI_DEFENSE, dr1, dr2);
+  add_potential_semeai_move(internal_state, pos, POTENTIAL_SEMEAI_DEFENSE, dr1, dr2);
 }
 
 /*
@@ -914,10 +956,11 @@ add_potential_semeai_defense(int pos, int dr1, int dr2)
  * in the counting of liberties.
  */
 void
-add_semeai_threat(int pos, int dr)
+add_semeai_threat(board_lib_state_struct *internal_state,
+                  int pos, int dr)
 {
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, SEMEAI_THREAT, dragon[dr].origin);
+  add_move_reason(internal_state, pos, SEMEAI_THREAT, dragon[dr].origin);
 }
 
 /*
@@ -937,14 +980,15 @@ add_semeai_threat(int pos, int dr)
  *        atari_atari moves.
  */
 void
-add_either_move(int pos, int reason1, int target1, int reason2, int target2)
+add_either_move(board_lib_state_struct *internal_state,
+                int pos, int reason1, int target1, int reason2, int target2)
 {
   int what1 = 0;
   int what2 = 0;
   int index;
 
-  ASSERT_ON_BOARD1(target1);
-  ASSERT_ON_BOARD1(target2);
+  ASSERT_ON_BOARD1(internal_state, target1);
+  ASSERT_ON_BOARD1(internal_state, target2);
   if (reason1 == reason2 && target1 == target2)
     return;
   
@@ -986,8 +1030,8 @@ add_either_move(int pos, int reason1, int target1, int reason2, int target2)
     break;
   }
 
-  index = find_either_data(reason1, what1, reason2, what2);
-  add_move_reason(pos, EITHER_MOVE, index);
+  index = find_either_data(internal_state, reason1, what1, reason2, what2);
+  add_move_reason(internal_state, pos, EITHER_MOVE, index);
 }
 
 
@@ -1008,14 +1052,15 @@ add_either_move(int pos, int reason1, int target1, int reason2, int target2)
  *        atari_atari moves.
  */
 void
-add_all_move(int pos, int reason1, int target1, int reason2, int target2)
+add_all_move(board_lib_state_struct *internal_state,
+             int pos, int reason1, int target1, int reason2, int target2)
 {
   int what1 = 0;
   int what2 = 0;
   int index;
 
-  ASSERT_ON_BOARD1(target1);
-  ASSERT_ON_BOARD1(target2);
+  ASSERT_ON_BOARD1(internal_state, target1);
+  ASSERT_ON_BOARD1(internal_state, target2);
   if (reason1 == reason2 && target1 == target2)
     return;
   
@@ -1041,19 +1086,20 @@ add_all_move(int pos, int reason1, int target1, int reason2, int target2)
     break;
   }
 
-  index = find_all_data(reason1, what1, reason2, what2);
-  add_move_reason(pos, ALL_MOVE, index);
+  index = find_all_data(internal_state, reason1, what1, reason2, what2);
+  add_move_reason(internal_state, pos, ALL_MOVE, index);
 }
 
 
 void
-add_loss_move(int pos, int target1, int target2)
+add_loss_move(board_lib_state_struct *internal_state,
+              int pos, int target1, int target2)
 {
   int what1 = dragon[target1].origin;
   int what2 = worm[target2].origin;
-  int index = find_pair_data(what1, what2);
-  ASSERT1(target2 != NO_MOVE, pos);
-  add_move_reason(pos, OWL_DEFEND_MOVE_LOSS, index);
+  int index = find_pair_data(internal_state, what1, what2);
+  ASSERT1(internal_state, target2 != NO_MOVE, pos);
+  add_move_reason(internal_state, pos, OWL_DEFEND_MOVE_LOSS, index);
 }
 
 /*
@@ -1061,9 +1107,10 @@ add_loss_move(int pos, int target1, int target2)
  * territory.
  */
 void
-add_expand_territory_move(int pos)
+add_expand_territory_move(board_lib_state_struct *internal_state,
+                          int pos)
 {
-  add_move_reason(pos, EXPAND_TERRITORY_MOVE, 0);
+  add_move_reason(internal_state, pos, EXPAND_TERRITORY_MOVE, 0);
 }
 
 /*
@@ -1071,18 +1118,20 @@ add_expand_territory_move(int pos)
  * moyo.
  */
 void
-add_expand_moyo_move(int pos)
+add_expand_moyo_move(board_lib_state_struct *internal_state,
+                     int pos)
 {
-  add_move_reason(pos, EXPAND_MOYO_MOVE, 0);
+  add_move_reason(internal_state, pos, EXPAND_MOYO_MOVE, 0);
 }
 
 /*
  * Add to the reasons for the move at (pos) that it is an invasion.
  */
 void
-add_invasion_move(int pos)
+add_invasion_move(board_lib_state_struct *internal_state,
+                  int pos)
 {
-  add_move_reason(pos, INVASION_MOVE, 0);
+  add_move_reason(internal_state, pos, INVASION_MOVE, 0);
 }
 
 /*
@@ -1095,7 +1144,8 @@ add_invasion_move(int pos)
  * shape contributions.
  */
 void
-add_shape_value(int pos, float value)
+add_shape_value(board_lib_state_struct *internal_state,
+                int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value > 0.0) {
@@ -1125,11 +1175,12 @@ add_worthwhile_threat_move(int pos)
  * the dragon (dr) on a strategical level.
  */
 void
-add_strategical_attack_move(int pos, int dr)
+add_strategical_attack_move(board_lib_state_struct *internal_state,
+                            int pos, int dr)
 {
   dr = dragon[dr].origin;
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, STRATEGIC_ATTACK_MOVE, dr);
+  add_move_reason(internal_state, pos, STRATEGIC_ATTACK_MOVE, dr);
 }
 
 /*
@@ -1137,11 +1188,12 @@ add_strategical_attack_move(int pos, int dr)
  * the dragon (dr) on a strategical level.
  */
 void
-add_strategical_defense_move(int pos, int dr)
+add_strategical_defense_move(board_lib_state_struct *internal_state,
+                             int pos, int dr)
 {
   dr = dragon[dr].origin;
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, STRATEGIC_DEFEND_MOVE, dr);
+  add_move_reason(internal_state, pos, STRATEGIC_DEFEND_MOVE, dr);
 }
 
 /*
@@ -1149,20 +1201,21 @@ add_strategical_defense_move(int pos, int dr)
  * code reports an attack on the dragon (dr).
  */
 void
-add_owl_attack_move(int pos, int dr, int kworm, int code)
+add_owl_attack_move(board_lib_state_struct *internal_state,
+                    int pos, int dr, int kworm, int code)
 {
   dr = dragon[dr].origin;
 
   ASSERT_ON_BOARD1(internal_state, dr);
   if (code == WIN)
-    add_move_reason(pos, OWL_ATTACK_MOVE, dr);
+    add_move_reason(internal_state, pos, OWL_ATTACK_MOVE, dr);
   else if (code == KO_A)
-    add_move_reason(pos, OWL_ATTACK_MOVE_GOOD_KO, dr);
+    add_move_reason(internal_state, pos, OWL_ATTACK_MOVE_GOOD_KO, dr);
   else if (code == KO_B)
-    add_move_reason(pos, OWL_ATTACK_MOVE_BAD_KO, dr);
+    add_move_reason(internal_state, pos, OWL_ATTACK_MOVE_BAD_KO, dr);
   else if (code == GAIN) {
-    ASSERT_ON_BOARD1(kworm);
-    add_move_reason(pos, OWL_ATTACK_MOVE_GAIN, find_pair_data(dr, kworm));
+    ASSERT_ON_BOARD1(internal_state, kworm);
+    add_move_reason(internal_state, pos, OWL_ATTACK_MOVE_GAIN, find_pair_data(internal_state, dr, kworm));
   }
 }
 
@@ -1171,17 +1224,18 @@ add_owl_attack_move(int pos, int dr, int kworm, int code)
  * code reports a defense of the dragon (dr).
  */
 void
-add_owl_defense_move(int pos, int dr, int code)
+add_owl_defense_move(board_lib_state_struct *internal_state,
+                     int pos, int dr, int code)
 {
   dr = dragon[dr].origin;
 
   ASSERT_ON_BOARD1(internal_state, dr);
   if (code == WIN)
-    add_move_reason(pos, OWL_DEFEND_MOVE, dr);
+    add_move_reason(internal_state, pos, OWL_DEFEND_MOVE, dr);
   else if (code == KO_A)
-    add_move_reason(pos, OWL_DEFEND_MOVE_GOOD_KO, dr);
+    add_move_reason(internal_state, pos, OWL_DEFEND_MOVE_GOOD_KO, dr);
   else if (code == KO_B)
-    add_move_reason(pos, OWL_DEFEND_MOVE_BAD_KO, dr);
+    add_move_reason(internal_state, pos, OWL_DEFEND_MOVE_BAD_KO, dr);
 }
 
 /*
@@ -1191,13 +1245,14 @@ add_owl_defense_move(int pos, int dr, int code)
  * can be the first move.
  */
 void
-add_owl_attack_threat_move(int pos, int dr, int code)
+add_owl_attack_threat_move(board_lib_state_struct *internal_state,
+                           int pos, int dr, int code)
 {
   UNUSED(code);
   dr = dragon[dr].origin;
   
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, OWL_ATTACK_THREAT, dragon[dr].origin);
+  add_move_reason(internal_state, pos, OWL_ATTACK_THREAT, dragon[dr].origin);
   add_worthwhile_threat_move(pos);
 }
 
@@ -1206,11 +1261,12 @@ add_owl_attack_threat_move(int pos, int dr, int code)
  * good place to play.  
  */
 void
-add_owl_uncertain_defense_move(int pos, int dr)
+add_owl_uncertain_defense_move(board_lib_state_struct *internal_state,
+                               int pos, int dr)
 {
   dr = dragon[dr].origin;
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, UNCERTAIN_OWL_DEFENSE, dragon[dr].origin);
+  add_move_reason(internal_state, pos, UNCERTAIN_OWL_DEFENSE, dragon[dr].origin);
 }
 
 /* The owl code found the opponent dragon alive, or the friendly
@@ -1218,11 +1274,12 @@ add_owl_uncertain_defense_move(int pos, int dr)
  * an attack or defense which is expected to fail but might succeed.
  */
 void
-add_owl_uncertain_attack_move(int pos, int dr)
+add_owl_uncertain_attack_move(board_lib_state_struct *internal_state,
+                              int pos, int dr)
 {
   dr = dragon[dr].origin;
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, UNCERTAIN_OWL_ATTACK, dragon[dr].origin);
+  add_move_reason(internal_state, pos, UNCERTAIN_OWL_ATTACK, dragon[dr].origin);
 }
 
 /*
@@ -1232,13 +1289,14 @@ add_owl_uncertain_attack_move(int pos, int dr)
  * can be the first move.
  */
 void
-add_owl_defense_threat_move(int pos, int dr, int code)
+add_owl_defense_threat_move(board_lib_state_struct *internal_state,
+                            int pos, int dr, int code)
 {
   UNUSED(code);
   dr = dragon[dr].origin;
 
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, OWL_DEFEND_THREAT, dragon[dr].origin);
+  add_move_reason(internal_state, pos, OWL_DEFEND_THREAT, dragon[dr].origin);
   add_worthwhile_threat_move(pos);
 }
 
@@ -1248,18 +1306,20 @@ add_owl_defense_threat_move(int pos, int dr, int code)
  * permitted per move.
  */
 void
-add_my_atari_atari_move(int pos, int size)
+add_my_atari_atari_move(board_lib_state_struct *internal_state,
+                        int pos, int size)
 {
-  add_move_reason(pos, MY_ATARI_ATARI_MOVE, size);
+  add_move_reason(internal_state, pos, MY_ATARI_ATARI_MOVE, size);
 }
 
 /* Add to the reasons for the move at (pos) that it stops a
  * combination attack for the opponent.
  */
 void
-add_your_atari_atari_move(int pos, int size)
+add_your_atari_atari_move(board_lib_state_struct *internal_state,
+                          int pos, int size)
 {
-  add_move_reason(pos, YOUR_ATARI_ATARI_MOVE, size);
+  add_move_reason(internal_state, pos, YOUR_ATARI_ATARI_MOVE, size);
 }
 
 
@@ -1272,17 +1332,19 @@ add_your_atari_atari_move(int pos, int size)
  * for the dragon to live.
  */
 void
-add_owl_prevent_threat_move(int pos, int dr)
+add_owl_prevent_threat_move(board_lib_state_struct *internal_state,
+                            int pos, int dr)
 {
   ASSERT_ON_BOARD1(internal_state, dr);
-  add_move_reason(pos, OWL_PREVENT_THREAT, dragon[dr].origin);
+  add_move_reason(internal_state, pos, OWL_PREVENT_THREAT, dragon[dr].origin);
 }
 
 /*
  * Add value of followup moves. 
  */
 void
-add_followup_value(int pos, float value)
+add_followup_value(board_lib_state_struct *internal_state,
+                   int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value > move[pos].followup_value)
@@ -1293,7 +1355,8 @@ add_followup_value(int pos, float value)
  * Add value of reverse followup moves. 
  */
 void
-add_reverse_followup_value(int pos, float value)
+add_reverse_followup_value(board_lib_state_struct *internal_state,
+                           int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value > move[pos].reverse_followup_value)
@@ -1304,7 +1367,8 @@ add_reverse_followup_value(int pos, float value)
  * Set a minimum allowed value for the move.
  */
 int
-set_minimum_move_value(int pos, float value)
+set_minimum_move_value(board_lib_state_struct *internal_state,
+                       int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value > move[pos].min_value) {
@@ -1318,7 +1382,8 @@ set_minimum_move_value(int pos, float value)
  * Set a maximum allowed value for the move.
  */
 void
-set_maximum_move_value(int pos, float value)
+set_maximum_move_value(board_lib_state_struct *internal_state,
+                       int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value < move[pos].max_value)
@@ -1329,7 +1394,8 @@ set_maximum_move_value(int pos, float value)
  * Set a minimum allowed territorial value for the move.
  */
 void
-set_minimum_territorial_value(int pos, float value)
+set_minimum_territorial_value(board_lib_state_struct *internal_state,
+                              int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value > move[pos].min_territory)
@@ -1340,7 +1406,8 @@ set_minimum_territorial_value(int pos, float value)
  * Set a maximum allowed territorial value for the move.
  */
 void
-set_maximum_territorial_value(int pos, float value)
+set_maximum_territorial_value(board_lib_state_struct *internal_state,
+                              int pos, float value)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (value < move[pos].max_territory)
@@ -1352,14 +1419,15 @@ set_maximum_territorial_value(int pos, float value)
  * to (to). 
  */
 void
-add_replacement_move(int from, int to, int color)
+add_replacement_move(board_lib_state_struct *internal_state,
+                     int from, int to, int color)
 {
   int cc;
   int pos;
   int dummy;
 
-  ASSERT_ON_BOARD1(from);
-  ASSERT_ON_BOARD1(to);
+  ASSERT_ON_BOARD1(internal_state, from);
+  ASSERT_ON_BOARD1(internal_state, to);
 
   if (internal_state->board[from] != EMPTY)
     return;
@@ -1381,7 +1449,7 @@ add_replacement_move(int from, int to, int color)
      * (But not in the stable release.)
      */
     if (0) {
-      ASSERT1(dd == to || to == replacement_map[dd], from);
+      ASSERT1(internal_state, dd == to || to == replacement_map[dd], from);
     }
     /* There already is a redistribution in effect so we
      * have nothing more to do.
@@ -1394,7 +1462,7 @@ add_replacement_move(int from, int to, int color)
   /* Verify that we don't introduce a cyclic redistribution. */
   if (cc == from) {
     gprintf(internal_state, "Cyclic point redistribution detected.\n");
-    ASSERT1(0, from);
+    ASSERT1(internal_state, 0, from);
   }
 
   /* Update the replacement map. Make sure that all replacements
@@ -1414,7 +1482,8 @@ add_replacement_move(int from, int to, int color)
 
 /* Find worms rescued by a move at (pos). */
 void
-get_saved_worms(int pos, signed char saved[BOARDMAX])
+get_saved_worms(board_lib_state_struct *internal_state,
+                int pos, signed char saved[BOARDMAX])
 {
   int k;
   memset(saved, 0, sizeof(saved[0]) * BOARDMAX);
@@ -1457,7 +1526,8 @@ get_saved_worms(int pos, signed char saved[BOARDMAX])
  * is returned (unless it is a NULL pointer).
  */
 void
-mark_changed_dragon(int pos, int color, int affected, int affected2,
+mark_changed_dragon(board_lib_state_struct *internal_state,
+                    int pos, int color, int affected, int affected2,
     		    int move_reason_type, signed char safe_stones[BOARDMAX],
 		    float strength[BOARDMAX], float *effective_size)
 {
@@ -1466,7 +1536,7 @@ mark_changed_dragon(int pos, int color, int affected, int affected2,
   int result_to_beat = 0;
 
   ASSERT1(internal_state, internal_state->board[pos] == EMPTY, pos);
-  ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[affected]), pos);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[affected]), pos);
 
   if (effective_size)
     *effective_size = 0.0;
@@ -1510,7 +1580,7 @@ mark_changed_dragon(int pos, int color, int affected, int affected2,
       result_to_beat = WIN;
       break;
     case SEMEAI_MOVE:
-      ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[affected]), pos);
+      ASSERT1(internal_state, IS_STONE(internal_state->board[affected]), pos);
       if (internal_state->board[affected] == color)
 	result_to_beat = WIN;
       else {
@@ -1522,20 +1592,20 @@ mark_changed_dragon(int pos, int color, int affected, int affected2,
 
     default:
       /* mark_changed_dragon() called with invalid move reason. */
-      ASSERT1(0, pos);
+      ASSERT1(internal_state, 0, pos);
   }
 
   if (move_reason_type == OWL_ATTACK_MOVE_GAIN)
-    mark_changed_string(affected2, safe_stones, strength, new_status);
+    mark_changed_string(internal_state, affected2, safe_stones, strength, new_status);
   else {
     for (ii = first_worm_in_dragon(affected); ii != NO_MOVE; 
-	 ii = next_worm_in_dragon(ii))
+     ii = next_worm_in_dragon(internal_state, ii))
       if (new_status == 0)
-	mark_changed_string(ii, safe_stones, strength, new_status);
+    mark_changed_string(internal_state, ii, safe_stones, strength, new_status);
       else {
 	int worm_is_safe = 0;
 	if (worm[ii].attack_codes[0] == NO_MOVE
-	    || defense_move_reason_known(pos, ii))
+        || defense_move_reason_known(internal_state, pos, ii))
 	  worm_is_safe = 1;
 	else if (trymove(internal_state, pos, color, "mark-changed-dragon", ii)) {
 	    if (REVERSE_RESULT(attack(ii, NULL)) >= result_to_beat)
@@ -1546,14 +1616,14 @@ mark_changed_dragon(int pos, int color, int affected, int affected2,
 	  /* This string can now be considered safe. Hence we mark the
 	   * whole string as such:
 	   */
-	  mark_changed_string(ii, safe_stones, strength, new_status);
+      mark_changed_string(internal_state, ii, safe_stones, strength, new_status);
 	  if (effective_size)
 	    *effective_size += worm[ii].effective_size;
 	}
       }
     if (move_reason_type == OWL_DEFEND_MOVE_LOSS) {
       new_status = 0;
-      mark_changed_string(affected2, safe_stones, strength, new_status);
+      mark_changed_string(internal_state, affected2, safe_stones, strength, new_status);
     }
   }
 }
@@ -1562,23 +1632,24 @@ mark_changed_dragon(int pos, int color, int affected, int affected2,
  * with the new strength.
  */
 void
-mark_changed_string(int affected, signed char safe_stones[BOARDMAX],
+mark_changed_string(board_lib_state_struct *internal_state,
+                    int affected, signed char safe_stones[BOARDMAX],
     		    float strength[BOARDMAX], signed char new_status)
 {
   float new_strength;
   int ii;
 
-  ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[affected]), affected);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[affected]), affected);
 
   if (new_status == 0)
     new_strength = 0.0;
   else {
-    gg_assert(new_status == INFLUENCE_SAVED_STONE);
+    gg_assert(internal_state, new_status == INFLUENCE_SAVED_STONE);
     new_strength = DEFAULT_STRENGTH;
   }
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (internal_state->board[ii] == internal_state->board[affected]
-	&& same_string(ii, affected)) {
+    && same_string(internal_state, ii, affected)) {
       strength[ii] = new_strength;
       safe_stones[ii] = new_status;
     }
@@ -1587,7 +1658,8 @@ mark_changed_string(int affected, signed char safe_stones[BOARDMAX],
 
 /* Find dragons rescued by a move at (pos). */
 void
-get_saved_dragons(int pos, signed char saved[BOARDMAX])
+get_saved_dragons(board_lib_state_struct *internal_state,
+                  int pos, signed char saved[BOARDMAX])
 {
   int k;
   memset(saved, 0, sizeof(saved[0]) * BOARDMAX);
@@ -1605,7 +1677,7 @@ get_saved_dragons(int pos, signed char saved[BOARDMAX])
      * move is unsafe.
      */
     if (move_reasons[r].type == OWL_DEFEND_MOVE)
-      mark_dragon(what, saved, 1);
+      mark_dragon(internal_state, what, saved, 1);
   }    
 }
 
@@ -1618,7 +1690,8 @@ get_saved_dragons(int pos, signed char saved[BOARDMAX])
  * move[pos].move_safety.
  */
 void
-mark_safe_stones(int color, int move_pos,
+mark_safe_stones(board_lib_state_struct *internal_state,
+                 int color, int move_pos,
 		 const signed char saved_dragons[BOARDMAX],
     		 const signed char saved_worms[BOARDMAX],
 		 signed char safe_stones[BOARDMAX])
@@ -1658,7 +1731,8 @@ mark_safe_stones(int color, int move_pos,
  * number of move reasons.
  */
 int
-list_move_reasons(FILE *out, int move_pos)
+list_move_reasons(board_lib_state_struct *internal_state,
+                  FILE *out, int move_pos)
 {
   int m;
   int n;
@@ -1931,7 +2005,8 @@ static struct discard_rule discard_rules[] =
  * reasons and marks them accordingly in their status field.
  */
 void
-discard_redundant_move_reasons(int pos)
+discard_redundant_move_reasons(board_lib_state_struct *internal_state,
+                               int pos)
 {
   int k1, k2;
   int l;
@@ -1943,9 +2018,9 @@ discard_redundant_move_reasons(int pos)
         if (r < 0)
           break;
         if ((move_reasons[r].type == discard_rules[k1].reason_type[k2])
-            && (discard_rules[k1].condition(pos, move_reasons[r].what))) {
+            && (discard_rules[k1].condition(internal_state, pos, move_reasons[r].what))) {
           DEBUG(DEBUG_MOVE_REASONS, discard_rules[k1].trace_message,
-                pos, get_pos(move_reasons[r].type, move_reasons[r].what)); 
+                pos, get_pos(internal_state, move_reasons[r].type, move_reasons[r].what));
           move_reasons[r].status |= discard_rules[k1].flags;
         }
       } 
@@ -1998,12 +2073,13 @@ scale_randomness(int pos, float scaling)
  * through all the moves. Such threats are found with patterns.
  */
 void
-register_good_attack_threat(int move, int target)
+register_good_attack_threat(board_lib_state_struct *internal_state,
+                            int move, int target)
 {
   int k;
-  ASSERT_ON_BOARD1(move);
-  ASSERT_ON_BOARD1(target);
-  ASSERT1(internal_state, internal_state, IS_STONE(worm[target].color), move);
+  ASSERT_ON_BOARD1(internal_state, move);
+  ASSERT_ON_BOARD1(internal_state, target);
+  ASSERT1(internal_state, IS_STONE(worm[target].color), move);
 
   target = worm[target].origin;
   for (k = 0; k < MAX_ATTACK_THREATS; k++) {
@@ -2019,12 +2095,13 @@ register_good_attack_threat(int move, int target)
 
 /* Determine if an attack threat is registered as good (see above). */
 int
-is_known_good_attack_threat(int move, int target)
+is_known_good_attack_threat(board_lib_state_struct *internal_state,
+                            int move, int target)
 {
   int k;
-  ASSERT_ON_BOARD1(move);
-  ASSERT_ON_BOARD1(target);
-  ASSERT1(internal_state, internal_state, IS_STONE(worm[target].color), move);
+  ASSERT_ON_BOARD1(internal_state, move);
+  ASSERT_ON_BOARD1(internal_state, target);
+  ASSERT1(internal_state, IS_STONE(worm[target].color), move);
 
   target = worm[target].origin;
   for (k = 0; k < MAX_ATTACK_THREATS; k++) {
@@ -2045,18 +2122,20 @@ is_known_good_attack_threat(int move, int target)
  * which deal with such special cases.
  */
 void
-register_known_safe_move(int move)
+register_known_safe_move(board_lib_state_struct *internal_state,
+                         int move)
 {
-  ASSERT_ON_BOARD1(move);
+  ASSERT_ON_BOARD1(internal_state, move);
   
   known_safe_moves[move] = 1;
 }
 
 
 int
-is_known_safe_move(int move)
+is_known_safe_move(board_lib_state_struct *internal_state,
+                   int move)
 {
-  ASSERT_ON_BOARD1(move);
+  ASSERT_ON_BOARD1(internal_state, move);
   
   return known_safe_moves[move];
 }

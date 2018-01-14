@@ -35,15 +35,19 @@
 static void add_influence_source(int pos, int color, float strength,
                                  float attenuation,
                                  struct influence_data *q);
-static void print_influence(const struct influence_data *q,
-			    const char *info_string);
-static void print_numeric_influence(const struct influence_data *q,
-				    const float values[BOARDMAX],
-				    const char *format, int width,
-				    int draw_stones, int mark_epsilon);
-static void print_influence_areas(const struct influence_data *q);
+static void print_influence(struct board_lib_state_struct *internal_state,
+                            const struct influence_data *q,
+                const char *info_string);
+static void print_numeric_influence(struct board_lib_state_struct *internal_state,
+                                    const struct influence_data *q,
+                    const float values[BOARDMAX],
+                    const char *format, int width,
+                    int draw_stones, int mark_epsilon);
+static void print_influence_areas(struct board_lib_state_struct *internal_state,
+                                  const struct influence_data *q);
  
-static void value_territory(struct influence_data *q);
+static void value_territory(struct board_lib_state_struct *internal_state,
+                            struct influence_data *q);
 static void enter_intrusion_source(int source_pos, int strength_pos,
                                    float strength, float attenuation,
                                    struct influence_data *q);
@@ -536,7 +540,8 @@ enter_intrusion_source(int source_pos, int strength_pos,
 
 /* Comparison of intrusions datas, to sort them. */
 static int
-compare_intrusions(const void *p1, const void *p2)
+compare_intrusions(struct board_lib_state_struct *internal_state,
+                   const void *p1, const void *p2)
 {
   const struct intrusion_data *intr1 = p1;
   const struct intrusion_data *intr2 = p2;
@@ -668,7 +673,8 @@ add_marked_intrusions(struct influence_data *q)
  * color as O.
  */
 static void
-influence_callback(int anchor, int color, struct pattern *pattern, int ll,
+influence_callback(struct board_lib_state_struct *internal_state,
+                   int anchor, int color, struct pattern *pattern, int ll,
 		   void *data)
 {
   int pos = AFFINE_TRANSFORM(pattern->move_offset, ll, anchor);
@@ -881,7 +887,8 @@ influence_callback(int anchor, int color, struct pattern *pattern, int ll,
  *                     in a critcal dragon brought to life by this move
  */
 static void
-followup_influence_callback(int anchor, int color, struct pattern *pattern,
+followup_influence_callback(struct board_lib_state_struct *internal_state,
+                            int anchor, int color, struct pattern *pattern,
                             int ll, void *data)
 {
   int k;
@@ -961,14 +968,15 @@ influence_erase_territory(struct board_lib_state_struct *internal_state,
  * Reset permeability to 1.0 at intrusion points.
  */
 static void
-find_influence_patterns(struct influence_data *q)
+find_influence_patterns(struct board_lib_state_struct *internal_state,
+                        struct influence_data *q)
 {
   int ii;
 
   current_influence = q;
-  matchpat(influence_callback, ANCHOR_COLOR, &influencepat_db, q, NULL);
+  matchpat(internal_state, influence_callback, ANCHOR_COLOR, &influencepat_db, q, NULL);
   if (q->color_to_move != EMPTY)
-    matchpat(influence_callback, q->color_to_move, &barrierspat_db, q, NULL);
+    matchpat(internal_state, influence_callback, q->color_to_move, &barrierspat_db, q, NULL);
 
   if (q->is_territorial_influence)
     add_marked_intrusions(q);
@@ -1004,7 +1012,7 @@ find_influence_patterns(struct influence_data *q)
 	q->white_permeability[ii] *= white_reduction;
     }
 
-  reset_unblocked_blocks(q);
+  reset_unblocked_blocks(internal_state, q);
 }
 
 /* This function checks whether we have two or more adjacent blocks for
@@ -1012,7 +1020,8 @@ find_influence_patterns(struct influence_data *q)
  * least valuable blocks; otherwise, it returns NO_MOVE.
  */
 static int
-check_double_block(int color, int pos, const struct influence_data *q)
+check_double_block(struct board_lib_state_struct *internal_state,
+                   int color, int pos, const struct influence_data *q)
 {
   int k;
   int block_neighbors = 0;
@@ -1039,7 +1048,7 @@ check_double_block(int color, int pos, const struct influence_data *q)
 	float this_value = sign * q->territory_value[neighbor];
 	int j;
 	for (j = 0; j < 4; j++)
-	  if (ON_BOARD(neighbor + delta[j]))
+      if (ON_BOARD(internal_state, neighbor + delta[j]))
 	    this_value += sign * q->territory_value[neighbor + delta[j]];
 	/* We use an artifical tie breaker to avoid possible platform
 	 * dependency.
@@ -1050,7 +1059,7 @@ check_double_block(int color, int pos, const struct influence_data *q)
 	}
       }
     }
-    ASSERT1(internal_state, internal_state, ON_BOARD1(internal_state, smallest_block), pos);
+    ASSERT1(internal_state, ON_BOARD1(internal_state, smallest_block), pos);
     return smallest_block;
   }
   return NO_MOVE;
@@ -1067,7 +1076,8 @@ check_double_block(int color, int pos, const struct influence_data *q)
  * See endgame:840 for an example where this is essential.
  */
 static void
-remove_double_blocks(struct influence_data *q,
+remove_double_blocks(struct board_lib_state_struct *internal_state,
+                     struct influence_data *q,
     		     const signed char inhibited_sources[BOARDMAX])
 {
   int ii;
@@ -1079,7 +1089,7 @@ remove_double_blocks(struct influence_data *q,
     if (internal_state->board[ii] == EMPTY
 	&& !(inhibited_sources && inhibited_sources[ii])
 	&& strength[ii] > 0.0) {
-      double_blocks[num_blocks] = check_double_block(q->color_to_move, ii, q);
+      double_blocks[num_blocks] = check_double_block(internal_state, q->color_to_move, ii, q);
       if (double_blocks[num_blocks] != NO_MOVE) {
 	num_blocks++;
 	if (num_blocks == MAX_DOUBLE_BLOCKS)
@@ -1092,9 +1102,9 @@ remove_double_blocks(struct influence_data *q,
 			   ? q->black_permeability : q->white_permeability);
     for (k = 0; k < num_blocks; k++) {
       DEBUG(DEBUG_INFLUENCE, "Removing block for %s at %1m.\n",
-	    color_to_string(q->color_to_move), double_blocks[k]);
+        color_to_string(internal_state, q->color_to_move), double_blocks[k]);
       permeability[double_blocks[k]] = 1.0;
-      accumulate_influence(q, double_blocks[k], q->color_to_move);
+      accumulate_influence(internal_state, q, double_blocks[k], q->color_to_move);
     }
   }
 }
@@ -1106,35 +1116,36 @@ remove_double_blocks(struct influence_data *q,
  * q->is_territorial_influence and q->color_to_move must be set by the caller.
  */
 static void
-do_compute_influence(const signed char safe_stones[BOARDMAX],
+do_compute_influence(struct board_lib_state_struct *internal_state,
+                     const signed char safe_stones[BOARDMAX],
 		     const signed char inhibited_sources[BOARDMAX],
     		     const float strength[BOARDMAX], struct influence_data *q,
 		     int move, const char *trace_message)
 {
   int ii;
-  init_influence(q, safe_stones, strength);
+  init_influence(internal_state, q, safe_stones, strength);
 
   modify_depth_values(internal_state->stackp - 1);
-  find_influence_patterns(q);
-  modify_depth_values(1 - stackp);
+  find_influence_patterns(internal_state, q);
+  modify_depth_values(1 - internal_state->stackp);
   
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (ON_BOARD(internal_state, ii) && !(inhibited_sources && inhibited_sources[ii])) {
       if (q->white_strength[ii] > 0.0)
-	accumulate_influence(q, ii, WHITE);
+    accumulate_influence(internal_state, q, ii, WHITE);
       if (q->black_strength[ii] > 0.0)
-	accumulate_influence(q, ii, BLACK);
+    accumulate_influence(internal_state, q, ii, BLACK);
     }
 
-  value_territory(q);
-  remove_double_blocks(q, inhibited_sources);
+  value_territory(internal_state, q);
+  remove_double_blocks(internal_state, q, inhibited_sources);
 
-  value_territory(q);
+  value_territory(internal_state, q);
   
   if ((move == NO_MOVE
        && (printmoyo & PRINTMOYO_INITIAL_INFLUENCE))
       || (debug_influence && move == debug_influence))
-    print_influence(q, trace_message);
+    print_influence(internal_state, q, trace_message);
 }
 
 
@@ -1158,7 +1169,8 @@ do_compute_influence(const signed char safe_stones[BOARDMAX],
  */
 
 void
-compute_influence(int color, const signed char safe_stones[BOARDMAX],
+compute_influence(struct board_lib_state_struct *internal_state,
+                  int color, const signed char safe_stones[BOARDMAX],
     	          const float strength[BOARDMAX], struct influence_data *q,
 		  int move, const char *trace_message)
 {
@@ -1179,7 +1191,7 @@ compute_influence(int color, const signed char safe_stones[BOARDMAX],
   influence_id++;
   q->id = influence_id;
 
-  do_compute_influence(safe_stones, NULL, strength,
+  do_compute_influence(internal_state, safe_stones, NULL, strength,
 		       q, move, trace_message);
 
   debug = save_debug;
@@ -1189,7 +1201,8 @@ compute_influence(int color, const signed char safe_stones[BOARDMAX],
  * neither color, EMPTY is returned.
  */
 int
-whose_territory(const struct influence_data *q, int pos)
+whose_territory(struct board_lib_state_struct *internal_state,
+                const struct influence_data *q, int pos)
 {
   float bi = q->black_influence[pos];
   float wi = q->white_influence[pos];
@@ -1211,12 +1224,13 @@ whose_territory(const struct influence_data *q, int pos)
  * influences is totally ad hoc.
  */
 int
-whose_moyo(const struct influence_data *q, int pos)
+whose_moyo(struct board_lib_state_struct *internal_state,
+           const struct influence_data *q, int pos)
 {
   float bi = q->black_influence[pos];
   float wi = q->white_influence[pos];
 
-  int territory_color = whose_territory(q, pos);
+  int territory_color = whose_territory(internal_state, q, pos);
   if (territory_color != EMPTY)
     return territory_color;
     
@@ -1240,12 +1254,13 @@ whose_moyo(const struct influence_data *q, int pos)
  * It has a slightly different definition of moyo than whose_moyo.
  */
 int
-whose_moyo_restricted(const struct influence_data *q, int pos)
+whose_moyo_restricted(struct board_lib_state_struct *internal_state,
+                      const struct influence_data *q, int pos)
 {
   float bi = q->black_influence[pos];
   float wi = q->white_influence[pos];
 
-  int territory_color = whose_territory(q, pos);
+  int territory_color = whose_territory(internal_state, q, pos);
 
   /* default */
   if (territory_color != EMPTY)
@@ -1269,12 +1284,13 @@ whose_moyo_restricted(const struct influence_data *q, int pos)
  * hoc.
  */
 int
-whose_area(const struct influence_data *q, int pos)
+whose_area(struct board_lib_state_struct *internal_state,
+           const struct influence_data *q, int pos)
 {
   float bi = q->black_influence[pos];
   float wi = q->white_influence[pos];
 
-  int moyo_color = whose_moyo(q, pos);
+  int moyo_color = whose_moyo(internal_state, q, pos);
   if (moyo_color != EMPTY)
     return moyo_color;
   
@@ -1289,7 +1305,8 @@ whose_area(const struct influence_data *q, int pos)
 
  
 static void
-value_territory(struct influence_data *q)
+value_territory(struct board_lib_state_struct *internal_state,
+                struct influence_data *q)
 {
   int ii;
   int dist_i, dist_j;
@@ -1434,7 +1451,8 @@ value_territory(struct influence_data *q)
  * toward the region size.
  */
 static void
-segment_region(struct influence_data *q, owner_function_ptr region_owner,
+segment_region(struct board_lib_state_struct *internal_state,
+               struct influence_data *q, owner_function_ptr region_owner,
 	       struct moyo_data *regions)
 {
   int ii;
@@ -1450,7 +1468,7 @@ segment_region(struct influence_data *q, owner_function_ptr region_owner,
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (ON_BOARD(internal_state, ii)
 	&& !marked[ii]
-	&& region_owner(q, ii) != EMPTY) {
+    && region_owner(internal_state, q, ii) != EMPTY) {
       /* Found an unlabelled intersection. Use flood filling to find
        * the rest of the region.
        */
@@ -1458,7 +1476,7 @@ segment_region(struct influence_data *q, owner_function_ptr region_owner,
       float terr_val = 0.0;
       int queue_start = 0;
       int queue_end = 1;
-      int color = region_owner(q, ii);
+      int color = region_owner(internal_state, q, ii);
       regions->number++;
       marked[ii] = 1;
       q->queue[0] = ii;
@@ -1466,7 +1484,7 @@ segment_region(struct influence_data *q, owner_function_ptr region_owner,
 	int tt = q->queue[queue_start];
 	int k;
 	queue_start++;
-	if (!q->safe[tt] || board[tt] != color) {
+    if (!q->safe[tt] || internal_state->board[tt] != color) {
 	  size++;
 	  if (q->is_territorial_influence)
 	    terr_val += gg_abs(q->territory_value[tt]);
@@ -1474,9 +1492,9 @@ segment_region(struct influence_data *q, owner_function_ptr region_owner,
 	regions->segmentation[tt] = regions->number;
 	for (k = 0; k < 4; k++) {
 	  int d = delta[k];
-	  if (ON_BOARD(tt + d)
+      if (ON_BOARD(internal_state, tt + d)
 	      && !marked[tt + d]
-	      && region_owner(q, tt + d) == color) {
+          && region_owner(internal_state, q, tt + d) == color) {
 	    q->queue[queue_end] = tt + d;
 	    queue_end++;
 	    marked[tt + d] = 1;
@@ -1493,10 +1511,11 @@ segment_region(struct influence_data *q, owner_function_ptr region_owner,
 
 /* Export a territory segmentation. */
 void
-influence_get_territory_segmentation(struct influence_data *q,
+influence_get_territory_segmentation(struct board_lib_state_struct *internal_state,
+                                     struct influence_data *q,
     			             struct moyo_data *moyos)
 {
-  segment_region(q, whose_territory, moyos);
+  segment_region(internal_state, q, whose_territory, moyos);
 }
 
 
@@ -1513,10 +1532,11 @@ influence_territory(const struct influence_data *q, int pos, int color)
 }
 
 int
-influence_considered_lively(const struct influence_data *q, int pos)
+influence_considered_lively(struct board_lib_state_struct *internal_state,
+                            const struct influence_data *q, int pos)
 {
-  int color = board[pos];
-  ASSERT1(internal_state, internal_state, IS_STONE(color), pos);
+  int color = internal_state->board[pos];
+  ASSERT1(internal_state, IS_STONE(color), pos);
   return (q->safe[pos]
           && ((color == WHITE && q->white_strength[pos] > 0)
 	      || (color == BLACK && q->black_strength[pos] > 0)));
@@ -1528,7 +1548,8 @@ influence_considered_lively(const struct influence_data *q, int pos)
  * base->safe.
  */
 void
-compute_followup_influence(const struct influence_data *base,
+compute_followup_influence(struct board_lib_state_struct *internal_state,
+                           const struct influence_data *base,
     			   struct influence_data *q,
 			   int move, const char *trace_message) 
 {
@@ -1539,7 +1560,7 @@ compute_followup_influence(const struct influence_data *base,
   int save_debug = debug;
 
   memcpy(q, base, sizeof(*q));
-  ASSERT1(internal_state, internal_state, IS_STONE(q->color_to_move), move);
+  ASSERT1(internal_state, IS_STONE(q->color_to_move), move);
   q->color_to_move = color;
  
   /* We mark the saved stones and their neighbors in the goal array.
@@ -1564,7 +1585,7 @@ compute_followup_influence(const struct influence_data *base,
   q->intrusion_counter = 0;
   current_influence = q;
   /* Match B patterns for saved stones. */
-  matchpat_goal_anchor(followup_influence_callback, color, &barrierspat_db, 
+  matchpat_goal_anchor(internal_state, followup_influence_callback, color, &barrierspat_db,
            	       q, goal, 1);
 
   debug = save_debug;
@@ -1572,7 +1593,7 @@ compute_followup_influence(const struct influence_data *base,
   /* Now add the intrusions. */
   add_marked_intrusions(q);
 
-  reset_unblocked_blocks(q);
+  reset_unblocked_blocks(internal_state, q);
   
   /* Spread influence for new influence sources. */
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
@@ -1581,12 +1602,12 @@ compute_followup_influence(const struct influence_data *base,
             && q->black_strength[ii] > base->black_strength[ii])
           || (color == WHITE
               && q->white_strength[ii] > base->white_strength[ii]))
-        accumulate_influence(q, ii, color);
+        accumulate_influence(internal_state, q, ii, color);
 
-  value_territory(q);
+  value_territory(internal_state, q);
 
   if (debug_influence && debug_influence == move)
-    print_influence(q, trace_message);
+    print_influence(internal_state, q, trace_message);
 }
 
 
@@ -1595,7 +1616,8 @@ compute_followup_influence(const struct influence_data *base,
  */
 
 void
-compute_escape_influence(int color, const signed char safe_stones[BOARDMAX],
+compute_escape_influence(struct board_lib_state_struct *internal_state,
+                         int color, const signed char safe_stones[BOARDMAX],
 			 const signed char goal[BOARDMAX],
     			 const float strength[BOARDMAX],
     			 signed char escape_value[BOARDMAX])
@@ -1626,8 +1648,8 @@ compute_escape_influence(int color, const signed char safe_stones[BOARDMAX],
      * case the board size should have changed between calls.
      */
     for (ii = BOARDMIN; ii < BOARDMAX; ii++) {
-      if (cached_board[ii] != board[ii]) {
-	cached_board[ii] = board[ii];
+      if (cached_board[ii] != internal_state->board[ii]) {
+    cached_board[ii] = internal_state->board[ii];
 	board_was_cached = 0;
       }
     }
@@ -1655,18 +1677,18 @@ compute_escape_influence(int color, const signed char safe_stones[BOARDMAX],
   if (!(debug & DEBUG_ESCAPE))
     debug &= ~DEBUG_INFLUENCE;
 
-  do_compute_influence(safe_stones, goal, strength,
+  do_compute_influence(internal_state, safe_stones, goal, strength,
       		       &escape_influence, -1, NULL);
 
   debug = save_debug;
   
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (ON_BOARD(internal_state, ii)) {
-      if (whose_moyo(&escape_influence, ii) == color)
+      if (whose_moyo(internal_state, &escape_influence, ii) == color)
 	escape_value[ii] = 4;
-      else if (whose_area(&escape_influence, ii) == color)
+      else if (whose_area(internal_state, &escape_influence, ii) == color)
 	escape_value[ii] = 2;
-      else if (whose_area(&escape_influence, ii) == EMPTY) {
+      else if (whose_area(internal_state, &escape_influence, ii) == EMPTY) {
 	if (goal) {
 	  escape_value[ii] = 0;
 
@@ -1695,7 +1717,7 @@ compute_escape_influence(int color, const signed char safe_stones[BOARDMAX],
     }
 
   if (0 && (debug & DEBUG_ESCAPE) && verbose > 0)
-    print_influence(&escape_influence, "escape influence");
+    print_influence(internal_state, &escape_influence, "escape influence");
 
   if (!goal) {
     /* Save the computed values in the cache. */
@@ -1722,13 +1744,14 @@ static int territory_cache_color = -1;
  * to make the territory computation against.
  */
 int 
-retrieve_delta_territory_cache(int pos, int color, float *move_value,
+retrieve_delta_territory_cache(struct board_lib_state_struct *internal_state,
+                               int pos, int color, float *move_value,
     			       float *followup_value,
 			       const struct influence_data *base,
 			       Hash_data safety_hash)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
-  ASSERT1(internal_state, internal_state, IS_STONE(color), pos);
+  ASSERT1(internal_state, IS_STONE(color), pos);
 
   /* We check whether the color, the board position, or the base influence
    * data has changed since the cache entry got entered.
@@ -1753,7 +1776,8 @@ retrieve_delta_territory_cache(int pos, int color, float *move_value,
 }
 
 void 
-store_delta_territory_cache(int pos, int color,
+store_delta_territory_cache(struct board_lib_state_struct *internal_state,
+                            int pos, int color,
 			    float move_value, float followup_value,
 			    const struct influence_data *base,
 			    Hash_data safety_hash)
@@ -1761,7 +1785,7 @@ store_delta_territory_cache(int pos, int color,
   int i;
 
   ASSERT_ON_BOARD1(internal_state, pos);
-  ASSERT1(internal_state, internal_state, IS_STONE(color), pos);
+  ASSERT1(internal_state, IS_STONE(color), pos);
 
   if (territory_cache_position_number != position_number
       || territory_cache_color != color
@@ -1789,15 +1813,16 @@ store_delta_territory_cache(int pos, int color,
  * (move) is only passed for debugging output.
  */
 float
-influence_delta_territory(const struct influence_data *base,
+influence_delta_territory(struct board_lib_state_struct *internal_state,
+                          const struct influence_data *base,
     			  const struct influence_data *q, int color,
 			  int move)
 {
   int ii;
   float total_delta = 0.0;
   float this_delta;
-  ASSERT_ON_BOARD1(move);
-  ASSERT1(internal_state, internal_state, IS_STONE(color), move);
+  ASSERT_ON_BOARD1(internal_state, move);
+  ASSERT1(internal_state, IS_STONE(color), move);
 
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (ON_BOARD(internal_state, ii)) {
@@ -1838,7 +1863,8 @@ influence_delta_territory(const struct influence_data *base,
  * computed in advance.
  */
 float
-influence_score(const struct influence_data *q, int use_chinese_rules)
+influence_score(struct board_lib_state_struct *internal_state,
+                const struct influence_data *q, int use_chinese_rules)
 {
   float score = 0.0;
   int ii;
@@ -1848,9 +1874,9 @@ influence_score(const struct influence_data *q, int use_chinese_rules)
       score += q->territory_value[ii];
   
   if (use_chinese_rules)
-    score += stones_on_board(internal_state, WHITE) - stones_on_board(internal_state, BLACK) + komi + handicap;
+    score += stones_on_board(internal_state, WHITE) - stones_on_board(internal_state, BLACK) + internal_state->komi + internal_state->handicap;
   else
-    score += internal_state->black_captured - internal_state->white_captured + komi;
+    score += internal_state->black_captured - internal_state->white_captured + internal_state->komi;
 
   return score;
 }
@@ -1861,7 +1887,8 @@ influence_score(const struct influence_data *q, int use_chinese_rules)
  * over)
  */
 float
-game_status(int color)
+game_status(struct board_lib_state_struct *internal_state,
+            int color)
 {
   struct influence_data *iq = INITIAL_INFLUENCE(color);
   struct influence_data *oq = OPPOSITE_INFLUENCE(color);
@@ -1872,12 +1899,12 @@ game_status(int color)
     if (ON_BOARD(internal_state, ii)) {
       if (iq->safe[ii])
 	count += WEIGHT_TERRITORY;
-      else if (whose_territory(iq, ii) != EMPTY
-	       && whose_territory(oq, ii) != EMPTY)
+      else if (whose_territory(internal_state, iq, ii) != EMPTY
+           && whose_territory(internal_state, oq, ii) != EMPTY)
 	count += WEIGHT_TERRITORY;
-      else if (whose_moyo(oq, ii) != EMPTY)
+      else if (whose_moyo(internal_state, oq, ii) != EMPTY)
 	count += WEIGHT_MOYO;
-      else if (whose_area(oq, ii) != EMPTY)
+      else if (whose_area(internal_state, oq, ii) != EMPTY)
 	count += WEIGHT_AREA;
     }
 
@@ -1899,7 +1926,8 @@ debug_influence_move(int move)
  * for debugging.
  */
 void
-get_influence(const struct influence_data *q,
+get_influence(struct board_lib_state_struct *internal_state,
+              const struct influence_data *q,
 	      float white_influence[BOARDMAX],
 	      float black_influence[BOARDMAX],
 	      float white_strength[BOARDMAX],
@@ -1927,17 +1955,17 @@ get_influence(const struct influence_data *q,
     non_territory[ii] = q->non_territory[ii];
 
     if (internal_state->board[ii] == EMPTY) {
-      if (whose_territory(q, ii) == WHITE)
+      if (whose_territory(internal_state, q, ii) == WHITE)
 	influence_regions[ii] = 3;
-      else if (whose_territory(q, ii) == BLACK)
+      else if (whose_territory(internal_state, q, ii) == BLACK)
 	influence_regions[ii] = -3;
-      else if (whose_moyo(q, ii) == WHITE)
+      else if (whose_moyo(internal_state, q, ii) == WHITE)
 	influence_regions[ii] = 2;
-      else if (whose_moyo(q, ii) == BLACK)
+      else if (whose_moyo(internal_state, q, ii) == BLACK)
 	influence_regions[ii] = -2;
-      else if (whose_area(q, ii) == WHITE)
+      else if (whose_area(internal_state, q, ii) == WHITE)
 	influence_regions[ii] = 1;
-      else if (whose_area(q, ii) == BLACK)
+      else if (whose_area(internal_state, q, ii) == BLACK)
 	influence_regions[ii] = -1;
       else
 	influence_regions[ii] = 0;
@@ -1955,56 +1983,57 @@ get_influence(const struct influence_data *q,
  * printmoyo bitmap (controlled by -m command line option).
  */
 void
-print_influence(const struct influence_data *q, const char *info_string)
+print_influence(struct board_lib_state_struct *internal_state,
+                const struct influence_data *q, const char *info_string)
 {
   if (printmoyo & PRINTMOYO_ATTENUATION) {
     /* Print the attenuation values. */
     fprintf(stderr, "white attenuation (%s):\n", info_string);
-    print_numeric_influence(q, q->white_attenuation, "%3.2f", 3, 0, 0);
+    print_numeric_influence(internal_state, q, q->white_attenuation, "%3.2f", 3, 0, 0);
     fprintf(stderr, "black attenuation (%s):\n", info_string);
-    print_numeric_influence(q, q->black_attenuation, "%3.2f", 3, 0, 0);
+    print_numeric_influence(internal_state, q, q->black_attenuation, "%3.2f", 3, 0, 0);
   }
 
   if (printmoyo & PRINTMOYO_PERMEABILITY) {
     /* Print the white permeability values. */
     fprintf(stderr, "white permeability:\n");
-    print_numeric_influence(q, q->white_permeability, "%3.1f", 3, 0, 0);
+    print_numeric_influence(internal_state, q, q->white_permeability, "%3.1f", 3, 0, 0);
     
     /* Print the black permeability values. */
     fprintf(stderr, "black permeability:\n");
-    print_numeric_influence(q, q->black_permeability, "%3.1f", 3, 0, 0);
+    print_numeric_influence(internal_state, q, q->black_permeability, "%3.1f", 3, 0, 0);
   }
 
   if (printmoyo & PRINTMOYO_STRENGTH) {
     /* Print the strength values. */
     fprintf(stderr, "white strength:\n");
     if (q->is_territorial_influence)
-      print_numeric_influence(q, q->white_strength, "%5.1f", 5, 0, 0);
+      print_numeric_influence(internal_state, q, q->white_strength, "%5.1f", 5, 0, 0);
     else
-      print_numeric_influence(q, q->white_strength, "%3.0f", 3, 0, 1);
+      print_numeric_influence(internal_state, q, q->white_strength, "%3.0f", 3, 0, 1);
     fprintf(stderr, "black strength:\n");
     if (q->is_territorial_influence)
-      print_numeric_influence(q, q->black_strength, "%5.1f", 5, 0, 0);
+      print_numeric_influence(internal_state, q, q->black_strength, "%5.1f", 5, 0, 0);
     else
-      print_numeric_influence(q, q->black_strength, "%3.0f", 3, 0, 1);
+      print_numeric_influence(internal_state, q, q->black_strength, "%3.0f", 3, 0, 1);
   }
 
   if (printmoyo & PRINTMOYO_NUMERIC_INFLUENCE) {
     /* Print the white influence values. */
     fprintf(stderr, "white influence (%s):\n", info_string);
-    print_numeric_influence(q, q->white_influence, "%5.1f", 5, 1, 0);
+    print_numeric_influence(internal_state, q, q->white_influence, "%5.1f", 5, 1, 0);
     /* Print the black influence values. */
     fprintf(stderr, "black influence (%s):\n", info_string);
-    print_numeric_influence(q, q->black_influence, "%5.1f", 5, 1, 0);
+    print_numeric_influence(internal_state, q, q->black_influence, "%5.1f", 5, 1, 0);
   }
 
   if (printmoyo & PRINTMOYO_PRINT_INFLUENCE) {
     fprintf(stderr, "influence regions (%s):\n", info_string);
-    print_influence_areas(q);
+    print_influence_areas(internal_state, q);
   }
   if (printmoyo & PRINTMOYO_VALUE_TERRITORY) {
     fprintf(stderr, "territory (%s)", info_string);
-    print_numeric_influence(q, q->territory_value, "%5.2f", 5, 1, 0);
+    print_numeric_influence(internal_state, q, q->territory_value, "%5.2f", 5, 1, 0);
   }
 }
 
@@ -2014,7 +2043,8 @@ print_influence(const struct influence_data *q, const char *info_string)
  * Print numeric influence values.
  */
 static void
-print_numeric_influence(const struct influence_data *q,
+print_numeric_influence(struct board_lib_state_struct *internal_state,
+                        const struct influence_data *q,
 			const float values[BOARDMAX],
 			const char *format, int width,
 			int draw_stones, int mark_epsilon)
@@ -2069,7 +2099,8 @@ print_numeric_influence(const struct influence_data *q,
 
 /* Draw colored board illustrating territory, moyo, and area. */
 static void
-print_influence_areas(const struct influence_data *q)
+print_influence_areas(struct board_lib_state_struct *internal_state,
+                      const struct influence_data *q)
 {
   int ii;
   start_draw_board();
@@ -2084,27 +2115,27 @@ print_influence_areas(const struct influence_data *q)
         else
 	  c = 'X';
       }
-      else if (whose_territory(q, ii) == WHITE) {
+      else if (whose_territory(internal_state, q, ii) == WHITE) {
 	c = 'o';
 	color = GG_COLOR_CYAN;
       }
-      else if (whose_territory(q, ii) == BLACK) {
+      else if (whose_territory(internal_state, q, ii) == BLACK) {
 	c = 'x';
 	color = GG_COLOR_CYAN;
       }
-      else if (whose_moyo(q, ii) == WHITE) {
+      else if (whose_moyo(internal_state, q, ii) == WHITE) {
 	c = 'o';
 	color = GG_COLOR_YELLOW;
       }
-      else if (whose_moyo(q, ii) == BLACK) {
+      else if (whose_moyo(internal_state, q, ii) == BLACK) {
 	c = 'x';
 	color = GG_COLOR_YELLOW;
       }
-      else if (whose_area(q, ii) == WHITE) {
+      else if (whose_area(internal_state, q, ii) == WHITE) {
 	c = 'o';
 	color = GG_COLOR_RED;
       }
-      else if (whose_area(q, ii) == BLACK) {
+      else if (whose_area(internal_state, q, ii) == BLACK) {
 	c = 'x';
 	color = GG_COLOR_RED;
       }

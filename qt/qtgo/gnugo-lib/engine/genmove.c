@@ -102,7 +102,7 @@ reset_engine(struct board_lib_state_struct *internal_state)
   dragons_refinedly_examined = -1;
 
   /* Prepare our table of move reasons. */
-  clear_move_reasons();
+  clear_move_reasons(internal_state);
   clear_break_in_list();
 
   /* Set up depth values (see comments there for details). */
@@ -358,7 +358,7 @@ monte_carlo_genmove(struct board_lib_state_struct *internal_state,
 
   number_of_simulations = mc_games_per_level * gg_max(get_level(), 1);
   
-  uct_genmove(color, &best_uct_move, forbidden_move, allowed_moves,
+  uct_genmove(internal_state, color, &best_uct_move, forbidden_move, allowed_moves,
 	      number_of_simulations, move_values, move_frequencies);
 
   best_move = best_uct_move;
@@ -467,7 +467,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     average_score = (white_score + black_score)/2.0;
   else
     average_score = -(white_score + black_score)/2.0;
-  choose_strategy(color, average_score, game_status(color));
+  choose_strategy(color, average_score, game_status(internal_state, color));
 
   if (printboard) {
     if (printboard == 1)
@@ -756,7 +756,7 @@ revise_thrashing_dragon(struct board_lib_state_struct *internal_state,
     }
 
   set_strength_data(internal_state, OTHER_COLOR(color), safe_stones, strength);
-  compute_influence(OTHER_COLOR(color), safe_stones, strength,
+  compute_influence(internal_state, OTHER_COLOR(color), safe_stones, strength,
       		    OPPOSITE_INFLUENCE(color),
 		    NO_MOVE, "revised thrashing dragon");
   compute_refined_dragon_weaknesses(internal_state);
@@ -811,13 +811,13 @@ compute_scores(struct board_lib_state_struct *internal_state,
   float strength[BOARDMAX];
 
   set_strength_data(internal_state, WHITE, safe_stones, strength);
-  compute_influence(EMPTY, safe_stones, strength, &move_influence,
+  compute_influence(internal_state, EMPTY, safe_stones, strength, &move_influence,
       		    NO_MOVE, "White territory estimate");
-  white_score = influence_score(&move_influence, use_chinese_rules);
+  white_score = influence_score(internal_state, &move_influence, use_chinese_rules);
   set_strength_data(internal_state, BLACK, safe_stones, strength);
-  compute_influence(EMPTY, safe_stones, strength, &move_influence,
+  compute_influence(internal_state, EMPTY, safe_stones, strength, &move_influence,
       		    NO_MOVE, "White territory estimate");
-  black_score = influence_score(&move_influence, use_chinese_rules);
+  black_score = influence_score(internal_state, &move_influence, use_chinese_rules);
 
   if (verbose || showscore) {
     if (white_score == black_score)
@@ -847,7 +847,7 @@ break_mirror_go(struct board_lib_state_struct *internal_state,
       && color == BLACK
       && stones_on_board(internal_state, BLACK | WHITE) > 10
       && test_symmetry_after_move(tengen, color, 1)) {
-    set_minimum_move_value(tengen, 30.0);
+    set_minimum_move_value(internal_state, tengen, 30.0);
     TRACE(internal_state, "Play %1m to break mirror go, value 30.\n", tengen);
   }
 }
@@ -894,7 +894,7 @@ should_resign(struct board_lib_state_struct *internal_state,
       return 0;
   }
   /* Is it already too late to try something ? */
-  status = game_status(color);
+  status = game_status(internal_state, color);
   if (status < 0.8)
     /* Still "too early".
      * Note: the 0.8 constant is very conservative, we actually could give

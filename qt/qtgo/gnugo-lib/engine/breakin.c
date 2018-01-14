@@ -153,7 +153,7 @@ compute_smaller_goal(struct board_lib_state_struct *internal_state,
 	goal_neighbors++;
 #if 0
     if (goal_neighbors > 2
-	|| goal_neighbors == 2 && !is_edge_vertex(pos))
+    || goal_neighbors == 2 && !is_edge_vertex(internal_state, pos))
 #else
     if (goal_neighbors >= 2)
       smaller_goal[pos] = 1;
@@ -359,7 +359,7 @@ break_in_goal(struct board_lib_state_struct *internal_state,
     if (conn.distances[pos] > min_distance + FP(1.001))
       break;
     if (internal_state->board[pos] == intruder
-	&& influence_considered_lively(q, pos)) {
+    && influence_considered_lively(internal_state, q, pos)) {
       /* Discard this string in case the shortest path goes via a string
        * that we have in the candidate list already.
        */
@@ -399,7 +399,7 @@ break_in_goal(struct board_lib_state_struct *internal_state,
   }
 
   for (k = 0; k < num_non_territory; k++)
-    influence_erase_territory(q, non_territory[k], owner);
+    influence_erase_territory(internal_state, q, non_territory[k], owner);
   if (0 && num_non_territory > 0 && (debug & DEBUG_BREAKIN))
     showboard(0);
 }
@@ -422,7 +422,7 @@ break_territories(struct board_lib_state_struct *internal_state,
   if (!experimental_break_in || get_level() < 10)
     return;
 
-  influence_get_territory_segmentation(q, &territories);
+  influence_get_territory_segmentation(internal_state, q, &territories);
   for (k = 1; k <= territories.number; k++) {
     signed char goal[BOARDMAX];
     int pos;
@@ -459,10 +459,11 @@ clear_break_in_list()
  * otherwise.)
  */
 void
-break_in_move_reasons(struct board_lib_state_struct *internal_state, int color)
+break_in_move_reasons(struct board_lib_state_struct *internal_state,
+                      int color)
 {
   int k;
   for (k = 0; k < num_break_ins; k++)
     if (internal_state->board[break_in_list[k].str] == color)
-      add_expand_territory_move(break_in_list[k].move);
+      add_expand_territory_move(internal_state, break_in_list[k].move);
 }

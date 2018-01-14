@@ -32,9 +32,9 @@
 int
 disconnect_helper(int apos, int bpos)
 {
-  int color = board[apos];
+  int color = internal_state->board[apos];
   int move;
-  ASSERT1(color == internal_state->board[bpos] && IS_STONE(color), apos);
+  ASSERT1(internal_state, color == internal_state->board[bpos] && IS_STONE(color), apos);
 
   if (disconnect(apos, bpos, &move)) {
     add_cut(apos, bpos, move);
@@ -162,7 +162,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
      * can be attacked.
      */
     if ((pattern->class & CLASS_C)
-	&& board[pos] == color
+	&& internal_state->board[pos] == color
 	&& pattern->patn[k].att == ATT_O
 	&& ((pattern->class & CLASS_s) || attack(pos, NULL) == 0)) {
       if (first_dragon == NO_MOVE)

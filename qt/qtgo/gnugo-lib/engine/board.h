@@ -184,7 +184,7 @@ const char *color_to_string(struct board_lib_state_struct *internal_state, int c
 /* ================================================================ */
 
 /* The board and the other parameters deciding the current position. */
-struct board_lib_state_struct {
+typedef struct board_lib_state_struct {
     int          board_size;             /* board size (usually 19) */
     Intersection board[BOARDSIZE];       /* go board */
     int          board_ko_pos;
@@ -228,7 +228,7 @@ struct board_lib_state_struct {
     int stackp;                /* stack pointer */
     int count_variations;      /* count (decidestring) */
     SGFTree *sgf_dumptree;
-};
+} board_lib_state_struct;
 
 
 /* This struct holds the internal board state. */
@@ -303,7 +303,8 @@ int get_trymove_counter(void);
 
 /* move properties */
 int is_pass(int pos);
-int is_legal(struct board_lib_state_struct *internal_state, int pos, int color);
+int is_legal(board_lib_state_struct *internal_state,
+             int pos, int color);
 int is_suicide(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_illegal_ko_capture(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_allowed_move(struct board_lib_state_struct *internal_state, int pos, int color);
@@ -314,7 +315,8 @@ int is_self_atari(struct board_lib_state_struct *internal_state, int pos, int co
 
 /* Purely geometric functions. */
 int is_edge_vertex(struct board_lib_state_struct *internal_state, int pos);
-int is_corner_vertex(struct board_lib_state_struct *internal_state, int pos);
+int is_corner_vertex(board_lib_state_struct *internal_state,
+                     int pos);
 int edge_distance(struct board_lib_state_struct *internal_state, int pos);
 int square_dist(int pos1, int pos2);
 int rotate1(struct board_lib_state_struct *internal_state, int pos, int rot);
@@ -329,8 +331,10 @@ int extended_chainlinks(struct board_lib_state_struct *internal_state, int str, 
 int liberty_of_string(struct board_lib_state_struct *internal_state, int pos, int str);
 int second_order_liberty_of_string(struct board_lib_state_struct *internal_state, int pos, int str);
 int neighbor_of_string(struct board_lib_state_struct *internal_state, int pos, int str);
-int has_neighbor(struct board_lib_state_struct *internal_state, int pos, int color);
-int same_string(struct board_lib_state_struct *internal_state, int str1, int str2);
+int has_neighbor(board_lib_state_struct *internal_state,
+                 int pos, int color);
+int same_string(board_lib_state_struct *internal_state,
+                int str1, int str2);
 int adjacent_strings(struct board_lib_state_struct *internal_state, int str1, int str2);
 void mark_string(struct board_lib_state_struct *internal_state, int str, signed char mx[BOARDMAX], signed char mark);
 int are_neighbors(struct board_lib_state_struct *internal_state, int pos1, int pos2);

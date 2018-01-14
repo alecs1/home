@@ -111,7 +111,7 @@ make_worms(void)
       int lib1, lib2, lib3, lib4;
       
       ping_cave(pos, &lib1, &lib2, &lib3, &lib4);
-      ASSERT1(internal_state, internal_state, worm[pos].liberties == lib1, pos);
+      ASSERT1(internal_state, worm[pos].liberties == lib1, pos);
       worm[pos].liberties2 = lib2;
       worm[pos].liberties3 = lib3;
       worm[pos].liberties4 = lib4;
@@ -253,7 +253,7 @@ make_worms(void)
     /* Find which colors to try at what points. */
     for (str = BOARDMIN; str < BOARDMAX; str++) {
       if (IS_STONE(internal_state->board[str]) && is_worm_origin(str, str)) {
-	color = board[str];
+	color = internal_state->board[str];
 	moves_to_try[worm[str].defense_points[0]] |= color;
 	moves_to_try[worm[str].attack_points[0]] |= OTHER_COLOR(color);
       }
@@ -533,7 +533,7 @@ build_worms()
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!ON_BOARD(internal_state, pos) || worm[pos].origin != NO_MOVE)
       continue;
-    worm[pos].color = board[pos];
+    worm[pos].color = internal_state->board[pos];
     worm[pos].origin = pos;
     worm[pos].inessential = 0;
     worm[pos].invincible = 0;
@@ -637,7 +637,7 @@ do_compute_effective_worm_sizes(int color, int (*cw)[MAX_CLOSE_WORMS],
 		break;
 	      }
 	    if (!already_counted) {
-	      ASSERT1(nworms[pos] < 2*(internal_state->board_size-1), pos);
+	      ASSERT1(internal_state, nworms[pos] < 2*(internal_state->board_size-1), pos);
 	      worms[pos][nworms[pos]] = worms[pos2][k];
 	      nworms[pos]++;
 	    }
@@ -817,7 +817,7 @@ find_worm_attacks_and_defenses()
    *    attacks or defends other strings.
    */
   for (str = BOARDMIN; str < BOARDMAX; str++) {
-    color = board[str];
+    color = internal_state->board[str];
     if (!IS_STONE(color) || !is_worm_origin(str, str))
       continue;
     
@@ -883,7 +883,7 @@ find_worm_threats()
   int color;
   
   for (str = BOARDMIN; str < BOARDMAX; str++) {
-    color = board[str];
+    color = internal_state->board[str];
     if (!IS_STONE(color) || !is_worm_origin(str, str))
       continue;
 
@@ -946,7 +946,7 @@ find_worm_threats()
 	for (l = 0; l < 4; l++) {
 	  int bb = libs[k] + delta[l];
 	  
-	  if (!ON_BOARD(bb)
+	  if (!ON_BOARD(internal_state, bb)
 	      || IS_STONE(internal_state->board[bb])
 	      || liberty_of_string(internal_state, bb, str))
 	    continue;
@@ -988,7 +988,7 @@ find_lunch(int str, int *lunch)
   int pos;
   int k;
 
-  ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
   ASSERT1(internal_state, internal_state->stackp == 0, str);
 
   *lunch = NO_MOVE;
@@ -997,7 +997,7 @@ find_lunch(int str, int *lunch)
       continue;
     for (k = 0; k < 8; k++) {
       int apos = pos + delta[k];
-      if (ON_BOARD(apos) && is_same_worm(apos, str)) {
+      if (ON_BOARD(internal_state, apos) && is_same_worm(apos, str)) {
 	if (worm[pos].attack_codes[0] != 0 && !is_ko_point(internal_state, pos)) {
 	  /*
 	   * If several adjacent lunches are found, we pick the 
@@ -1179,7 +1179,7 @@ change_tactical_point(int str, int move, int code,
 		      int codes[MAX_TACTICAL_POINTS])
 {
   ASSERT_ON_BOARD1(str);
-  ASSERT1(str == worm[str].origin, str);
+  ASSERT1(internal_state, str == worm[str].origin, str);
   
   movelist_change_point(move, code, MAX_TACTICAL_POINTS, points, codes);
   propagate_worm2(str);
@@ -1201,7 +1201,7 @@ propagate_worm(int pos)
   int num_stones;
   int stones[MAX_BOARD * MAX_BOARD];
   gg_assert(internal_state, internal_state->stackp == 0);
-  ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[pos]), pos);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[pos]), pos);
 
   num_stones = findstones(internal_state, pos, MAX_BOARD * MAX_BOARD, stones);
   for (k = 0; k < num_stones; k++)
@@ -1221,7 +1221,7 @@ propagate_worm2(int str)
 {
   int pos;
   ASSERT_ON_BOARD1(str);
-  ASSERT1(internal_state, internal_state, IS_STONE(worm[str].color), str);
+  ASSERT1(internal_state, IS_STONE(worm[str].color), str);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
     if (internal_state->board[pos] == internal_state->board[str] && is_same_worm(pos, str)
@@ -1241,7 +1241,7 @@ worm_reasons(int color)
   int k;
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(internal_state, pos) || board[pos] == EMPTY)
+    if (!ON_BOARD(internal_state, pos) || internal_state->board[pos] == EMPTY)
       continue;
 
     if (!is_worm_origin(pos, pos))
@@ -1317,7 +1317,7 @@ ping_cave(int str, int *lib1, int *lib2, int *lib3, int *lib4)
   int libs[MAXLIBS];
   int mrc[BOARDMAX];
   int mse[BOARDMAX];
-  int color = board[str];
+  int color = internal_state->board[str];
   int other = OTHER_COLOR(color);
 
   memset(mse, 0, sizeof(mse));
@@ -1334,10 +1334,10 @@ ping_cave(int str, int *lib1, int *lib2, int *lib3, int *lib4)
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
     if (ON_BOARD(internal_state, pos)
 	&& mse[pos]
-	&& (((      !ON_BOARD(internal_state, SOUTH(pos)) || board[SOUTH(pos)] == other)
-	     && (   !ON_BOARD(internal_state, NORTH(pos)) || board[NORTH(pos)] == other))
-	    || ((   !ON_BOARD(internal_state, WEST(pos))  || board[WEST(pos)]  == other)
-		&& (!ON_BOARD(internal_state, EAST(pos))  || board[EAST(pos)]  == other))))
+	&& (((      !ON_BOARD(internal_state, SOUTH(pos)) || internal_state->board[SOUTH(pos)] == other)
+	     && (   !ON_BOARD(internal_state, NORTH(pos)) || internal_state->board[NORTH(pos)] == other))
+	    || ((   !ON_BOARD(internal_state, WEST(pos))  || internal_state->board[WEST(pos)]  == other)
+		&& (!ON_BOARD(internal_state, EAST(pos))  || internal_state->board[EAST(pos)]  == other))))
       mse[pos] = 0;
   
   *lib2 = 0;
@@ -1379,10 +1379,10 @@ ping_recurse(int pos, int *counter,
   if (!is_ko_point(internal_state, pos)) {
     for (k = 0; k < 4; k++) {
       int apos = pos + delta[k];
-      if (ON_BOARD(apos)
+      if (ON_BOARD(internal_state, apos)
 	  && mr[apos] == 0
 	  && (mx[apos] == 1
-	      || board[apos] == color))
+	      || internal_state->board[apos] == color))
 	ping_recurse(apos, counter, mx, mr, color);
     }
   }
@@ -1397,9 +1397,9 @@ static int
 touching(int pos, int color)
 {
   return (internal_state->board[SOUTH(pos)] == color
-	  || board[WEST(pos)] == color
-	  || board[NORTH(pos)] == color
-	  || board[EAST(pos)] == color);
+	  || internal_state->board[WEST(pos)] == color
+	  || internal_state->board[NORTH(pos)] == color
+	  || internal_state->board[EAST(pos)] == color);
 }
 
 
@@ -1440,7 +1440,7 @@ markcomponent(int str, int pos, int mg[BOARDMAX])
   mg[pos] = 1;
   for (k = 0; k < 4; k++) {
     int apos = pos + delta[k];
-    if (ON_BOARD(apos)
+    if (ON_BOARD(internal_state, apos)
 	&& mg[apos] == 0
 	&& (internal_state->board[apos] == EMPTY || !is_same_worm(apos, str)))
       markcomponent(str, apos, mg);
@@ -1523,13 +1523,13 @@ cavity_recurse(int pos, int mx[BOARDMAX],
 
   mx[pos] = 1;
 
-  if (edge && is_edge_vertex(pos) && board[pos] == EMPTY)
+  if (edge && is_edge_vertex(internal_state, pos) && internal_state->board[pos] == EMPTY)
     (*edge)++;
 
   /* Loop over the four neighbors. */
   for (k = 0; k < 4; k++) {
     int apos = pos + delta[k];
-    if (ON_BOARD(apos) && !mx[apos]) {
+    if (ON_BOARD(internal_state, apos) && !mx[apos]) {
       int neighbor_empty = 0;
       
       if (internal_state->board[apos] == EMPTY)
@@ -1543,7 +1543,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
       }
       
       if (!neighbor_empty)
-	*border_color |= board[apos];
+	*border_color |= internal_state->board[apos];
       else
 	cavity_recurse(apos, mx, border_color, edge, str);
     }
@@ -1555,7 +1555,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
 static void
 find_attack_patterns(void)
 {
-  matchpat(attack_callback, ANCHOR_OTHER, &attpat_db, NULL, NULL);
+  matchpat(internal_state, attack_callback, ANCHOR_OTHER, &attpat_db, NULL, NULL);
 }
 
 /* Try to attack every X string in the pattern, whether there is an attack
@@ -1734,10 +1734,10 @@ compute_worm_influence()
   signed char safe_stones[BOARDMAX];
 
   get_lively_stones(BLACK, safe_stones);
-  compute_influence(BLACK, safe_stones, NULL, &initial_black_influence,
+  compute_influence(internal_state, BLACK, safe_stones, NULL, &initial_black_influence,
       		    NO_MOVE, "initial black influence");
   get_lively_stones(WHITE, safe_stones);
-  compute_influence(WHITE, safe_stones, NULL, &initial_white_influence,
+  compute_influence(internal_state, WHITE, safe_stones, NULL, &initial_white_influence,
       		    NO_MOVE, "initial white influence");
 }
 

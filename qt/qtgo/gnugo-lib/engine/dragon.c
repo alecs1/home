@@ -53,7 +53,7 @@
 
 static void initialize_supplementary_dragon_data(struct board_lib_state_struct *internal_state);
 static void find_lunches(struct board_lib_state_struct *internal_state);
-static void eye_computations(struct board_lib_state_struct *internal_state);
+static void eye_computations(board_lib_state_struct *internal_state);
 static void revise_inessentiality(struct board_lib_state_struct *internal_state);
 static void find_neighbor_dragons(struct board_lib_state_struct *internal_state);
 static void add_adjacent_dragons(struct board_lib_state_struct *internal_state,
@@ -134,14 +134,14 @@ make_dragons(struct board_lib_state_struct *internal_state,
    */
   initialize_supplementary_dragon_data(internal_state);
   
-  make_domains(black_eye, white_eye, 0);
+  make_domains(internal_state, black_eye, white_eye, 0);
 
   /* Find adjacent worms which can be easily captured: */
   find_lunches(internal_state);
 
   /* Find topological half eyes and false eyes. */
-  find_half_and_false_eyes(BLACK, black_eye, half_eye, NULL);
-  find_half_and_false_eyes(WHITE, white_eye, half_eye, NULL);
+  find_half_and_false_eyes(internal_state, BLACK, black_eye, half_eye, NULL);
+  find_half_and_false_eyes(internal_state, WHITE, white_eye, half_eye, NULL);
 
   /* Compute the number of eyes, half eyes, determine attack/defense points
    * etc. for all eye spaces. */
@@ -468,7 +468,7 @@ find_lunches(struct board_lib_state_struct *internal_state)
 	continue;
 
       /* Tell the move generation code about the lunch. */
-      add_lunch(str, food);
+      add_lunch(internal_state, str, food);
 	
       /* If several lunches are found, we pick the juiciest.
        * First maximize cutstone, then minimize liberties.
@@ -496,7 +496,7 @@ find_lunches(struct board_lib_state_struct *internal_state)
  * black_vital_points and white_vital_points.
  */
 static void
-eye_computations(struct board_lib_state_struct *internal_state)
+eye_computations(board_lib_state_struct *internal_state)
 { 
   int str;
 
@@ -509,12 +509,12 @@ eye_computations(struct board_lib_state_struct *internal_state)
       struct eyevalue value;
       int attack_point, defense_point;
       
-      compute_eyes(str, &value, &attack_point, &defense_point, 
+      compute_eyes(internal_state, str, &value, &attack_point, &defense_point,
 		   black_eye, half_eye, 1);
       DEBUG(DEBUG_EYES, "Black eyespace at %1m: %s\n", str,
 	    eyevalue_to_string(&value));
       black_eye[str].value = value;
-      propagate_eye(str, black_eye);
+      propagate_eye(internal_state, str, black_eye);
     }
     
     if (white_eye[str].color == WHITE
@@ -522,12 +522,12 @@ eye_computations(struct board_lib_state_struct *internal_state)
       struct eyevalue value;
       int attack_point, defense_point;
       
-      compute_eyes(str, &value, &attack_point, &defense_point,
+      compute_eyes(internal_state, str, &value, &attack_point, &defense_point,
 		   white_eye, half_eye, 1);
       DEBUG(DEBUG_EYES, "White eyespace at %1m: %s\n", str,
 	    eyevalue_to_string(&value));
       white_eye[str].value = value;
-      propagate_eye(str, white_eye);
+      propagate_eye(internal_state, str, white_eye);
     }
   }
 }
@@ -825,8 +825,8 @@ find_neighbor_dragons(struct board_lib_state_struct *internal_state)
 
 	/* We can always expand the first step, regardless of influence. */
 	if (dist == 1
-	    || (whose_area(INITIAL_INFLUENCE(color), pos) == color
-		&& whose_area(INITIAL_INFLUENCE(color), pos2)
+        || (whose_area(internal_state, INITIAL_INFLUENCE(color), pos) == color
+        && whose_area(internal_state, INITIAL_INFLUENCE(color), pos2)
 		   != OTHER_COLOR(color))) {
 	  /* Expansion ok. Now see if someone else has tried to
 	   * expand here. In that case we indicate a collision by
@@ -1070,7 +1070,7 @@ dragon_looks_inessential(int origin)
    */
   for (k = 0; k < DRAGON2(origin).neighbors; k++) {
     d = DRAGON2(origin).adjacent[k];
-    if (DRAGON(d).color != board[origin]
+    if (DRAGON(d).color != internal_state->board[origin]
 	&& (DRAGON(d).status != DEAD
 	    || dragon2[d].escape_route > 0))
       return 0;
@@ -1222,12 +1222,12 @@ compute_dragon_influence(struct board_lib_state_struct *internal_state)
   float strength[BOARDMAX];
 
   set_strength_data(internal_state, BLACK, safe_stones, strength);
-  compute_influence(BLACK, safe_stones, strength, &initial_black_influence,
+  compute_influence(internal_state, BLACK, safe_stones, strength, &initial_black_influence,
                     NO_MOVE, "initial black influence, dragons known");
   break_territories(internal_state, BLACK, &initial_black_influence, 1, NO_MOVE);
 
   set_strength_data(internal_state, WHITE, safe_stones, strength);
-  compute_influence(WHITE, safe_stones, strength, &initial_white_influence,
+  compute_influence(internal_state, WHITE, safe_stones, strength, &initial_white_influence,
                     NO_MOVE, "initial white influence, dragons known");
   break_territories(internal_state, WHITE, &initial_white_influence, 1, NO_MOVE);
 }
@@ -1257,7 +1257,7 @@ compute_dragon_genus(struct board_lib_state_struct *internal_state,
 	  && black_eye[pos].origin == pos
 	  && (eye_to_exclude == NO_MOVE
 	      || black_eye[eye_to_exclude].origin != pos)
-	  && find_eye_dragons(pos, black_eye, BLACK, &dr, 1) == 1
+      && find_eye_dragons(internal_state, pos, black_eye, BLACK, &dr, 1) == 1
       && is_same_dragon(internal_state, dr, d)) {
     TRACE(internal_state, "eye at %1m (%s) found for dragon at %1m--augmenting genus\n",
 	      pos, eyevalue_to_string(&black_eye[pos].value), dr);
@@ -1280,7 +1280,7 @@ compute_dragon_genus(struct board_lib_state_struct *internal_state,
 	  && white_eye[pos].origin == pos
 	  && (eye_to_exclude == NO_MOVE
 	      || white_eye[eye_to_exclude].origin != pos)
-	  && find_eye_dragons(pos, white_eye, WHITE, &dr, 1) == 1
+      && find_eye_dragons(internal_state, pos, white_eye, WHITE, &dr, 1) == 1
       && is_same_dragon(internal_state, dr, d)) {
     TRACE(internal_state, "eye at %1m (%s) found for dragon at %1m--augmenting genus\n",
 	      pos, eyevalue_to_string(&white_eye[pos].value), dr);
@@ -2032,7 +2032,7 @@ compute_escape(struct board_lib_state_struct *internal_state,
    * area (2) or EMPTY (1).  Values may change without notice.
    */
   get_lively_stones(OTHER_COLOR(internal_state->board[pos]), safe_stones);
-  compute_escape_influence(internal_state->board[pos], safe_stones, NULL, 0, escape_value);
+  compute_escape_influence(internal_state, internal_state->board[pos], safe_stones, NULL, 0, escape_value);
 
   /* If we can reach a live group, award 6 points. */
   for (ii = BOARDMIN; ii < BOARDMAX; ii++) {
@@ -2093,7 +2093,7 @@ compute_surrounding_moyo_sizes(struct board_lib_state_struct *internal_state,
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!ON_BOARD(internal_state, pos))
       continue;
-    moyo_color = whose_moyo_restricted(q, pos);
+    moyo_color = whose_moyo_restricted(internal_state, q, pos);
     
     if (moyo_color == internal_state->board[pos])
       continue;
@@ -2369,7 +2369,7 @@ mark_dragon(struct board_lib_state_struct *internal_state,
 
 /* The following two functions allow to traverse all worms in a dragon:
  * for (ii = first_worm_in_dragon(pos); ii != NO_MOVE;
- *      ii = next_worm_in_dragon(ii);)
+ *      ii = next_worm_in_dragon(internal_state, ii);)
  *   ...
  * At the moment first_worm_in_dragon(pos) will always be the origin
  * of the dragon, but you should not rely on that.
@@ -2523,7 +2523,7 @@ cut_reasons(struct board_lib_state_struct *internal_state,
     if (internal_state->board[cut_list[k].apos] == OTHER_COLOR(color)
     && !is_same_dragon(internal_state, cut_list[k].apos, cut_list[k].bpos)
 	&& string_connect(cut_list[k].apos, cut_list[k].bpos, NULL) == WIN)
-      add_cut_move(cut_list[k].move, cut_list[k].apos, cut_list[k].bpos);
+      add_cut_move(internal_state, cut_list[k].move, cut_list[k].apos, cut_list[k].bpos);
 }
 
 

@@ -528,7 +528,7 @@ main(int argc, char *argv[])
 	break;
 	
       case OPT_KOMI: 
-	if (sscanf(gg_optarg, "%f", &komi) != 1) {
+	if (sscanf(gg_optarg, "%f", &internal_state->komi) != 1) {
 	  fprintf(stderr, "Invalid komi selection: %s\n", gg_optarg);
 	  fprintf(stderr, "Try `gnugo --help' for more information.\n");
 	  exit(EXIT_FAILURE);

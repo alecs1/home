@@ -48,7 +48,8 @@
 
 /* interface.c */
 /* Initialize the whole thing. Should be called once. */
-void init_gnugo(float memory, unsigned int random_seed);
+void init_gnugo(struct board_lib_state_struct *internal_state,
+                float memory, unsigned int random_seed);
 
 
 /* ================================================================ */
@@ -111,11 +112,16 @@ enum dragon_status {
 
 
 int check_boardsize(int boardsize, FILE *out);
-void gnugo_clear_board(int boardsize);
-void gnugo_play_move(int move, int color);
-int gnugo_play_sgfnode(SGFNode *node, int to_move);
-int gnugo_sethand(int desired_handicap, SGFNode *node);
-float gnugo_estimate_score(float *upper, float *lower);
+void gnugo_clear_board(struct board_lib_state_struct *internal_state,
+                       int boardsize);
+void gnugo_play_move(struct board_lib_state_struct *internal_state,
+                     int move, int color);
+int gnugo_play_sgfnode(struct board_lib_state_struct *internal_state,
+                       SGFNode *node, int to_move);
+int gnugo_sethand(struct board_lib_state_struct *internal_state,
+                  int desired_handicap, SGFNode *node);
+float gnugo_estimate_score(struct board_lib_state_struct *internal_state,
+                           float *upper, float *lower);
 
 /* ================================================================ */
 /*                           Game handling                          */
@@ -129,12 +135,16 @@ typedef struct {
   int computer_player;	/* BLACK, WHITE, or EMPTY (used as BOTH) */
 } Gameinfo;
 
-void gameinfo_clear(Gameinfo *ginfo);
-void gameinfo_print(Gameinfo *ginfo);
-int gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
-			      const char *untilstr, int orientation);
-int gameinfo_play_sgftree(Gameinfo *gameinfo, SGFTree *tree,
-			  const char *untilstr);
+void gameinfo_clear(struct board_lib_state_struct *internal_state,
+                    Gameinfo *ginfo);
+void gameinfo_print(struct board_lib_state_struct *internal_state,
+                    Gameinfo *ginfo);
+int gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
+                              Gameinfo *gameinfo, SGFTree *tree,
+                              const char *untilstr, int orientation);
+int gameinfo_play_sgftree(struct board_lib_state_struct *internal_state,
+                          Gameinfo *gameinfo, SGFTree *tree,
+                          const char *untilstr);
 
 
 /* ================================================================ */

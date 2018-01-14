@@ -184,7 +184,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 
       TRACE(internal_state, "\nyour move: %1m\n\n", move);
       sgftreeAddPlay(&sgftree, to_move, I(move), J(move));
-      gnugo_play_move(move, yourcolor);
+      gnugo_play_move(internal_state, move, yourcolor);
       sgffile_output(&sgftree);
 
     }
@@ -195,7 +195,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
       if (autolevel_on)
 	adjust_level_offset(mycolor);
       move = genmove(mycolor, &move_value, NULL);
-      gnugo_play_move(move, mycolor);
+      gnugo_play_move(internal_state, move, mycolor);
       sgffile_add_debuginfo(sgftree.lastnode, move_value);
       
       if (is_pass(move)) {

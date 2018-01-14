@@ -98,7 +98,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   int left_corners = 0, right_corners = 0;
   int corners = 0;
   int top_row, bottom_row;
-  int color = board[pos];
+  int color = internal_state->board[pos];
   int other = OTHER_COLOR(color);
   int gi = 0;
   int gj = 0;
@@ -140,18 +140,18 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* descend markings from stones lying on the 2nd and third lines */
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-    if (ON_BOARD(dpos) && mn[dpos]) {
+    if (ON_BOARD(internal_state, dpos) && mn[dpos]) {
       for (k = 0; k < 4; k++) {
         int d = delta[k];
-        if (!ON_BOARD(dpos + d))
+        if (!ON_BOARD(internal_state, dpos + d))
           continue;
-        if (!ON_BOARD(dpos + 2*d)) {
+        if (!ON_BOARD(internal_state, dpos + 2*d)) {
           if (internal_state->board[dpos + d] == EMPTY)
             mn[dpos + d] = 1;
         }
-        else if (!ON_BOARD(dpos + 3*d)) {
+        else if (!ON_BOARD(internal_state, dpos + 3*d)) {
           if (internal_state->board[dpos + d] == EMPTY
-              && board[dpos + 2*d] == EMPTY)
+              && internal_state->board[dpos + 2*d] == EMPTY)
             mn[dpos + 2*d] = 1;
         }
       }
@@ -160,7 +160,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* compute minimum distances to the goal */
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-    if (ON_BOARD(dpos) && mn[dpos]) 
+    if (ON_BOARD(internal_state, dpos) && mn[dpos]) 
       sd[dpos] = goal_dist(dpos, mf);
 
   /* revise markings */
@@ -168,7 +168,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   do {
     found_some = 0;
     for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-      if (ON_BOARD(dpos) && mn[dpos] && sd[dpos] > 8) {
+      if (ON_BOARD(internal_state, dpos) && mn[dpos] && sd[dpos] > 8) {
         /* discard markings if we can find 2 stones
          * that verify :
          * - it is closer to the goal than we are
@@ -197,13 +197,13 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* prepare corner array */
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-    if (ON_BOARD(dpos) && mn[dpos])
+    if (ON_BOARD(internal_state, dpos) && mn[dpos])
       corner[corners++] = dpos;
 
   /* compute gravity center of the goal */
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-    if (ON_BOARD(dpos) && mf[dpos]) {
+    if (ON_BOARD(internal_state, dpos) && mf[dpos]) {
       gi += I(dpos);
       gj += J(dpos);
       stones++;
@@ -219,7 +219,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* if apos is not NO_MOVE, mark it. */
 
   if (apos != NO_MOVE) {
-    ASSERT_ON_BOARD1(apos);
+    ASSERT_ON_BOARD1(internal_state, apos);
     mn[apos] = 1;
   }
   
@@ -372,9 +372,9 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* mark the expanded region */
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
-    if (ON_BOARD(dpos) && mn[dpos] == 1)
+    if (ON_BOARD(internal_state, dpos) && mn[dpos] == 1)
       for (k = 0; k < 4; k++)
-	if (ON_BOARD(dpos + delta[k]) && !mn[dpos + delta[k]])
+	if (ON_BOARD(internal_state, dpos + delta[k]) && !mn[dpos + delta[k]])
 	  mn[dpos + delta[k]] = 2;
       
   /* Mark allied dragons that intersect the (unexpanded) hull.
@@ -387,9 +387,9 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++) {
     int mpos;
-    if (ON_BOARD(dpos) 
+    if (ON_BOARD(internal_state, dpos) 
 	&& mn[dpos] == 1
-	&& board[dpos] == color
+	&& internal_state->board[dpos] == color
 	&& are_neighbor_dragons(pos, dpos)
 	&& !mf[dpos]) {
 
@@ -410,16 +410,16 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
      * Consequently, we allow inclusion of the stones at kosumi distance
      * in the mf (friendly) array.
      */
-    if (ON_BOARD(dpos) 
+    if (ON_BOARD(internal_state, dpos) 
 	&& mn[dpos] == 2
-	&& board[dpos] == color
+	&& internal_state->board[dpos] == color
 	&& are_neighbor_dragons(pos, dpos)
 	&& !mf[dpos]) {
       for (k = 4; k < 8; k++)
-	if (ON_BOARD(dpos + delta[k]) && board[dpos + delta[k]] == color
+	if (ON_BOARD(internal_state, dpos + delta[k]) && internal_state->board[dpos + delta[k]] == color
 	    && mn[dpos + delta[k]] == 1
-	    && board[dpos + delta[k-4]] == EMPTY
-	    && board[dpos + delta[(k-3)%4]] == EMPTY) {
+	    && internal_state->board[dpos + delta[k-4]] == EMPTY
+	    && internal_state->board[dpos + delta[(k-3)%4]] == EMPTY) {
 	  for (mpos = BOARDMIN; mpos < BOARDMAX; mpos++)
 	    if (ON_BOARD(internal_state, mpos) && is_same_dragon(mpos, dpos))
 	      mf[mpos] = 2;
@@ -480,19 +480,19 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 
   if (surrounded) {
     for (dpos = BOARDMIN; dpos < BOARDMAX && surrounded; dpos++) {
-      if (!ON_BOARD(dpos) || !mf[dpos])
+      if (!ON_BOARD(internal_state, dpos) || !mf[dpos])
 	continue;
 
       for (k = 0; k < 4; k++) {
 	int up = delta[k];
 	int right = delta[(k + 1) % 4];
 	if (internal_state->board[dpos + up] == EMPTY
-	    && board[dpos + 2*up] == color
+	    && internal_state->board[dpos + 2*up] == color
 	    && mn[dpos + 2*up] != 1
-	    && ON_BOARD(dpos + up + right)
-	    && board[dpos + up + right] != other
-	    && ON_BOARD(dpos + up - right)
-	    && board[dpos + up - right] != other) {
+	    && ON_BOARD(internal_state, dpos + up + right)
+	    && internal_state->board[dpos + up + right] != other
+	    && ON_BOARD(internal_state, dpos + up - right)
+	    && internal_state->board[dpos + up - right] != other) {
 	  surrounded = 0;
 	  break;
 	}

@@ -95,7 +95,7 @@ cut_possible(int pos, int color)
 int
 does_attack(int move, int str)
 {
-  int color = board[str];
+  int color = internal_state->board[str];
   int other = OTHER_COLOR(color);
   int result = 0;
   int acode = 0;
@@ -144,7 +144,7 @@ does_attack(int move, int str)
 int
 does_defend(int move, int str)
 {
-  int color = board[str];
+  int color = internal_state->board[str];
   int other = OTHER_COLOR(color);
   int result = 0;
   int spos = NO_MOVE;
@@ -296,7 +296,7 @@ test_symmetry_after_move(int move, int color, int strict)
     if (!ON_BOARD(internal_state, pos))
       continue;
     
-    sum = board[pos] + board[MIRROR_MOVE(pos)];
+    sum = internal_state->board[pos] + board[MIRROR_MOVE(pos)];
     if (sum != EMPTY + EMPTY && sum != BLACK + WHITE) {
       if (strict || sum == EMPTY + WHITE || sum == EMPTY + BLACK) {
 	result = 0;
@@ -369,8 +369,8 @@ play_break_through_n(int color, int num_moves, ...)
 #endif
   
   if (internal_state->board[xpos] == EMPTY
-      || board[ypos] == EMPTY
-      || board[zpos] == EMPTY)
+      || internal_state->board[ypos] == EMPTY
+      || internal_state->board[zpos] == EMPTY)
     success = 1;
   else
     success = break_through(xpos, ypos, zpos);
@@ -525,13 +525,13 @@ play_attack_defend2_n(int color, int do_attack, int num_moves, ...)
 
   /* FIXED: tm - returns ko results correctly (3.1.22) */
   if (do_attack) {
-    if (internal_state->board[ypos] == EMPTY || board[zpos] == EMPTY)
+    if (internal_state->board[ypos] == EMPTY || internal_state->board[zpos] == EMPTY)
       success = WIN;
     else
       success = attack_either(ypos, zpos);
   }
   else {
-    if (internal_state->board[ypos] == EMPTY || board[zpos] == EMPTY)
+    if (internal_state->board[ypos] == EMPTY || internal_state->board[zpos] == EMPTY)
       success = 0;
     else
       success = defend_both(ypos, zpos);
@@ -603,13 +603,13 @@ play_connect_n(int color, int do_connect, int num_moves, ...)
   
   /* See if ypos and zpos can be connected (or disconnected). */
   if (do_connect) {
-    if (internal_state->board[ypos] == EMPTY || board[zpos] == EMPTY)
+    if (internal_state->board[ypos] == EMPTY || internal_state->board[zpos] == EMPTY)
       success = 0;
     else
       success = string_connect(ypos, zpos, NULL);
   }
   else {
-    if (internal_state->board[ypos] == EMPTY || board[zpos] == EMPTY)
+    if (internal_state->board[ypos] == EMPTY || internal_state->board[zpos] == EMPTY)
       success = WIN;
     else
       success = disconnect(ypos, zpos, NULL);
@@ -1000,7 +1000,7 @@ blunder_size(int move, int color, int *defense_point,
 	     signed char safe_stones[BOARDMAX])
 {
   int libs[5];
-  int liberties = accuratelib(move, color, 5, libs);
+  int liberties = accuratelib(internal_state, move, color, 5, libs);
   int trouble = 0;
   int save_verbose = verbose;
   float return_value = 0.0;
@@ -1383,8 +1383,8 @@ double_atari(int move, int color, float *value,
     int dn = deltaj[k];
     
     /* because (m, n) and (m+dm, n+dn) are opposite
-     * corners of a square, ON_BOARD2(m, n) && ON_BOARD2(m+dm, n+dn)
-     * implies ON_BOARD2(m+dm, n) and ON_BOARD2(n, n+dn)
+     * corners of a square, ON_BOARD2(internal_state, m, n) && ON_BOARD2(internal_state, m+dm, n+dn)
+     * implies ON_BOARD2(internal_state, m+dm, n) and ON_BOARD2(n, n+dn)
      *
      * Only try to attack supposedly safe stones.
      */
@@ -1429,7 +1429,7 @@ playing_into_snapback(int move, int color)
   int k;
   
   if (approxlib(internal_state, move, color, 1, NULL) != 0
-      || accuratelib(move, color, 2, libs) != 1)
+      || accuratelib(internal_state, move, color, 2, libs) != 1)
     return 0;
 
   for (k = 0; k < 4; k++)
@@ -1670,7 +1670,7 @@ do_find_superstring(struct board_lib_state_struct *internal_state,
   signed char ma[BOARDMAX]; /* adjacent strings */
 
   int k, l, r;
-  int color = board[str];
+  int color = internal_state->board[str];
   int other = OTHER_COLOR(color);
 
   memset(mx, 0, sizeof(mx));
@@ -1723,7 +1723,7 @@ do_find_superstring(struct board_lib_state_struct *internal_state,
       int gpos = pos + up;
       int unsafe_move;
       
-      if (!ON_BOARD(apos))
+      if (!ON_BOARD(internal_state, apos))
 	continue;
       
       /* Case 1. Nothing to do since stones are added string by string. */
@@ -1766,9 +1766,9 @@ do_find_superstring(struct board_lib_state_struct *internal_state,
        * outside the board array. (Notice that fpos is two steps away
        * from pos, which we know is on the board.)
        */
-      if (internal_state->board[apos] == color && board[bpos] == EMPTY
-	  && board[fpos] == color && board[epos] == color && !mx[epos]
-	  && board[gpos] == EMPTY)
+      if (internal_state->board[apos] == color && internal_state->board[bpos] == EMPTY
+      && internal_state->board[fpos] == color && internal_state->board[epos] == color && !mx[epos]
+      && internal_state->board[gpos] == EMPTY)
 	superstring_add_string(epos, &num_my_stones, my_stones,
 			       num_stones, stones,
 			       num_libs, libs, maxlibs,
@@ -1778,7 +1778,7 @@ do_find_superstring(struct board_lib_state_struct *internal_state,
       
       /* Case 4. */
       if (internal_state->board[bpos] == color && !mx[bpos]
-	  && board[apos] == EMPTY && board[gpos] == EMPTY)
+      && internal_state->board[apos] == EMPTY && internal_state->board[gpos] == EMPTY)
 	superstring_add_string(bpos, &num_my_stones, my_stones,
 			       num_stones, stones,
 			       num_libs, libs, maxlibs,
@@ -1864,7 +1864,7 @@ superstring_add_string(int str,
   
   mark_string(internal_state, str, mx, 1);
   if (stones) {
-    gg_assert(num_stones);
+    gg_assert(internal_state, num_stones);
     for (k = 0; k < new_stones; k++) {
       if (do_add) {
 	stones[*num_stones] = my_stones[*num_my_stones + k];
@@ -1876,7 +1876,7 @@ superstring_add_string(int str,
 
   /* Pick up the liberties of the new string. */
   if (libs) {
-    gg_assert(num_libs);
+    gg_assert(internal_state, num_libs);
     /* Get the liberties of the string. */
     num_my_libs = findlib(internal_state, str, MAXLIBS, my_libs);
 
@@ -1901,7 +1901,7 @@ superstring_add_string(int str,
 
   /* Pick up adjacent strings to the new string. */
   if (adjs) {
-    gg_assert(num_adj);
+    gg_assert(internal_state, num_adj);
     num_my_adj = chainlinks(internal_state, str, my_adjs);
     for (k = 0; k < num_my_adj; k++) {
       if (liberty_cap > 0 && countlib(my_adjs[k]) > liberty_cap)
@@ -1925,7 +1925,7 @@ static double timers[NUMBER_OF_TIMERS];
 void
 start_timer(int n)
 {
-  gg_assert(n >= 0 && n < NUMBER_OF_TIMERS);
+  gg_assert(internal_state, n >= 0 && n < NUMBER_OF_TIMERS);
   if (!showtime)
     return;
 
@@ -1940,7 +1940,7 @@ time_report(int n, const char *occupation, int move, double mintime)
 {
   double t;
   double dt;
-  gg_assert(n >= 0 && n < NUMBER_OF_TIMERS);
+  gg_assert(internal_state, n >= 0 && n < NUMBER_OF_TIMERS);
 
   if (!showtime)
     return 0.0;

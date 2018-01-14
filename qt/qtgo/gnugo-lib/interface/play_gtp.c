@@ -458,7 +458,7 @@ gtp_set_boardsize(char *s)
     update_random_seed();
 
   board_size = boardsize;
-  clear_board();
+  clear_board(internal_state);
   gtp_internal_set_boardsize(boardsize);
   reset_engine(internal_state);
   return gtp_success("");
@@ -499,7 +499,7 @@ gtp_clear_board(char *s)
   if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     update_random_seed();
 
-  clear_board();
+  clear_board(internal_state);
   init_timers();
   
   return gtp_success("");
@@ -524,7 +524,7 @@ gtp_set_orientation(char *s)
   if (orientation < 0 || orientation > 7)
     return gtp_failure("unacceptable orientation");
 
-  clear_board();
+  clear_board(internal_state);
   gtp_orientation = orientation;
   gtp_set_vertex_transform_hooks(rotate_on_input, rotate_on_output);
   return gtp_success("");
@@ -557,7 +557,7 @@ gtp_query_orientation(char *s)
 static int
 gtp_set_komi(char *s)
 {
-  if (sscanf(s, "%f", &komi) < 1)
+  if (sscanf(s, "%f", &internal_state->komi) < 1)
     return gtp_failure("komi not a float");
   
   return gtp_success("");
@@ -686,7 +686,7 @@ gtp_fixed_handicap(char *s)
   int this_handicap;
 
   if (gtp_version == 1)
-    clear_board();
+    clear_board(internal_state);
   else if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     return gtp_failure("board not empty");
 
@@ -697,7 +697,7 @@ gtp_fixed_handicap(char *s)
     return gtp_failure("invalid handicap");
 
   if (place_fixed_handicap(this_handicap) != this_handicap) {
-    clear_board();
+    clear_board(internal_state);
     return gtp_failure("invalid handicap");
   }
 
@@ -780,7 +780,7 @@ gtp_set_free_handicap(char *s)
     n = gtp_decode_coord(s, &i, &j);
     if (n > 0) {
       if (internal_state->board[POS(i, j)] != EMPTY) {
-	clear_board();
+	clear_board(internal_state);
 	return gtp_failure("repeated vertex");
       }
       add_stone(internal_state, POS(i, j), BLACK);
@@ -793,7 +793,7 @@ gtp_set_free_handicap(char *s)
   }
 
   if (k < 2) {
-    clear_board();
+    clear_board(internal_state);
     return gtp_failure("invalid handicap");
   }
 
@@ -2195,7 +2195,7 @@ gtp_dragon_status(char *s)
     if (ON_BOARD(internal_state, pos)
 	&& (pos == str
 	    || (str == NO_MOVE
-		&& board[pos] != EMPTY
+		&& internal_state->board[pos] != EMPTY
 		&& dragon[pos].origin == pos))) {
       if (str == NO_MOVE)
 	gtp_mprintf("%m: ", I(pos), J(pos));
@@ -2427,7 +2427,7 @@ gtp_genmove_black(char *s)
 
   move = genmove(BLACK, NULL, NULL);
 
-  gnugo_play_move(move, BLACK);
+  gnugo_play_move(internal_state, move, BLACK);
 
   gtp_start_response(GTP_SUCCESS);
   gtp_print_vertex(I(move), J(move));
@@ -2452,7 +2452,7 @@ gtp_genmove_white(char *s)
 
   move = genmove(WHITE, NULL, NULL);
 
-  gnugo_play_move(move, WHITE);
+  gnugo_play_move(internal_state, move, WHITE);
 
   gtp_start_response(GTP_SUCCESS);
   gtp_print_vertex(I(move), J(move));
@@ -2487,7 +2487,7 @@ gtp_genmove(char *s)
   if (resign)
     return gtp_success("resign");
 
-  gnugo_play_move(move, color);
+  gnugo_play_move(internal_state, move, color);
 
   gtp_start_response(GTP_SUCCESS);
   gtp_print_vertex(I(move), J(move));
@@ -2666,7 +2666,7 @@ gtp_kgs_genmove_cleanup(char *s)
 
   capture_all_dead = save_capture_all_dead;
   
-  gnugo_play_move(move, color);
+  gnugo_play_move(internal_state, move, color);
 
   gtp_start_response(GTP_SUCCESS);
   gtp_print_vertex(I(move), J(move));
@@ -2949,7 +2949,7 @@ finish_and_score_game(int seed)
     return;
 
   doing_scoring = 1;
-  store_board(&saved_pos);
+  store_board(internal_state, &saved_pos);
 
   /* Let black start if we have no move history. Otherwise continue
    * alternation.
@@ -2961,7 +2961,7 @@ finish_and_score_game(int seed)
 
   do {
     move = genmove_conservative(next, NULL);
-    gnugo_play_move(move, next);
+    gnugo_play_move(internal_state, move, next);
     if (move != PASS_MOVE) {
       pass = 0;
       moves++;
@@ -2979,7 +2979,7 @@ finish_and_score_game(int seed)
       saved_board[i][j] = BOARD(i, j);
     }
 
-  restore_board(&saved_pos);
+  restore_board(internal_state, &saved_pos);
   doing_scoring = 0;
 
   /* Update the status for vertices which were changed while finishing

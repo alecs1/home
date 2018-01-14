@@ -155,7 +155,7 @@ throw_in_atari_helper(ARGS)
     bpos = libs[1];
   
   if (TRYMOVE(move, color)) {
-    if (!attack(cpos, NULL) && !(ON_BOARD(dpos) && attack(dpos, NULL))) {
+    if (!attack(cpos, NULL) && !(ON_BOARD(internal_state, dpos) && attack(dpos, NULL))) {
       if (TRYMOVE(bpos, other)) {
 	if (attack(apos, NULL))
 	  success = 1;
@@ -260,12 +260,12 @@ cutstone2_helper(ARGS)
 int 
 edge_double_sente_helper(int move, int apos, int bpos, int cpos)
 {
-  int color = board[cpos];
+  int color = internal_state->board[cpos];
   int success = 0;
   ASSERT1((color == BLACK || color == WHITE), move);
   
   if (TRYMOVE(move, color)) {
-    ASSERT1(countlib(internal_state, move) == 2, move);
+    ASSERT1(internal_state, countlib(internal_state, move) == 2, move);
     success = connect_and_cut_helper(move, apos, bpos);
     popgo(internal_state);
   }
@@ -396,7 +396,7 @@ defend_against_atari_helper(int move, int str)
   int libs[2];
   int k;
 
-  ASSERT1(countlib(internal_state, str) == 2, str);
+  ASSERT1(internal_state, countlib(internal_state, str) == 2, str);
 
   /* No value if the string can capture out of atari. */
   adj = chainlinks2(str, adjs, 1);
@@ -499,7 +499,7 @@ squeeze_ko_helper(int pos)
 int
 backfill_helper(int apos, int bpos, int cpos)
 {
-  int color = board[cpos];
+  int color = internal_state->board[cpos];
   int other = OTHER_COLOR(color);
   int dpos  = NO_MOVE;
 
@@ -551,7 +551,7 @@ connect_and_cut_helper(int Apos, int bpos, int cpos)
 {
   int dpos;
   int epos = NO_MOVE;
-  int other = board[Apos];
+  int other = internal_state->board[Apos];
   int color = OTHER_COLOR(other);
   int libs[2];
   int liberties = findlib(Apos, 2, libs);
@@ -573,13 +573,13 @@ connect_and_cut_helper(int Apos, int bpos, int cpos)
       break;
     }
 
-  gg_assert(epos != NO_MOVE);
+  gg_assert(internal_state, epos != NO_MOVE);
   
   if (TRYMOVE(bpos, color)) {
     if (TRYMOVE(dpos, other)) {
       if (TRYMOVE(cpos, other)) {
 	if (internal_state->board[bpos] == EMPTY
-	    || board[epos] == EMPTY
+	    || internal_state->board[epos] == EMPTY
 	    || !defend_both(bpos, epos))
 	  result = 1;
 	popgo(internal_state);
@@ -625,7 +625,7 @@ connect_and_cut_helper2(int Apos, int bpos, int cpos, int color)
 	break;
       }
 
-    gg_assert(epos != NO_MOVE);
+    gg_assert(internal_state, epos != NO_MOVE);
     
     if (TRYMOVE(bpos, other)) {
       if (!find_defense(Apos, &dpos) || dpos == NO_MOVE) {
@@ -637,7 +637,7 @@ connect_and_cut_helper2(int Apos, int bpos, int cpos, int color)
       if (TRYMOVE(dpos, color)) {
 	if (TRYMOVE(cpos, color)) {
 	  if (internal_state->board[bpos] == EMPTY
-	      || board[epos] == EMPTY
+	      || internal_state->board[epos] == EMPTY
 	      || !defend_both(bpos, epos))
 	    result = 1;
 	  popgo(internal_state);
@@ -657,10 +657,10 @@ connect_and_cut_helper2(int Apos, int bpos, int cpos, int color)
 void
 test_attack_either_move(int move, int color, int worma, int wormb)
 {
-  ASSERT_ON_BOARD1(move);
+  ASSERT_ON_BOARD1(internal_state, move);
   ASSERT1(internal_state, internal_state->board[move] == EMPTY, move);
   ASSERT1(internal_state, internal_state->board[worma] == OTHER_COLOR(color)
-          && board[wormb] == OTHER_COLOR(color), move);
+          && internal_state->board[wormb] == OTHER_COLOR(color), move);
 
   if (!defend_both(worma, wormb)) {
     if (0)
@@ -670,7 +670,7 @@ test_attack_either_move(int move, int color, int worma, int wormb)
   }
   if (trymove(internal_state, move, color, "test_attack_either_move", worma)) {
     if (internal_state->board[worma] == OTHER_COLOR(color)
-	&& board[wormb] == OTHER_COLOR(color)) {
+	&& internal_state->board[wormb] == OTHER_COLOR(color)) {
       if (!find_defense(worma, NULL) || !find_defense(wormb, NULL)) {
 	if (0)
 	  gprintf(internal_state, "%1m: Rej. attack_either_move for %1m & %1m (regular attack)\n",
@@ -831,7 +831,7 @@ break_mirror_helper(int str, int color)
  */
 int distrust_tactics_helper(int str)
 {
-  int color = board[str];
+  int color = internal_state->board[str];
   int adj;
   int adjs[MAXCHAIN];
   int k;
@@ -839,7 +839,7 @@ int distrust_tactics_helper(int str)
   int s;
   int lib = countlib(internal_state, str);
 
-  ASSERT1(internal_state, internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
   
   if (lib > 2)
     return 1;
@@ -859,7 +859,7 @@ int distrust_tactics_helper(int str)
       for (k = 0; k < 4; k++) {
 	int pos = adjlibs[s] + delta[k];
 	if (internal_state->board[pos] == EMPTY
-	    && !liberty_of_string(pos, adjs[r]))
+	    && !liberty_of_string(internal_state, pos, adjs[r]))
 	  nakade = 0;
 	else if (internal_state->board[pos] == color) {
 	  if (same_string(pos, str))
@@ -898,7 +898,7 @@ bent_four_helper(int str)
 {
   int stones[4];
   int good_corner_found = 0;
-  int color = board[str];
+  int color = internal_state->board[str];
   int k;
 
   if (!IS_STONE(color))

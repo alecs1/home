@@ -99,7 +99,8 @@ static int make_solid_eye(struct board_lib_state_struct *internal_state, int pos
  */
 
 int
-aftermath_genmove(struct board_lib_state_struct *internal_state, int color, int do_capture_dead_stones,
+aftermath_genmove(board_lib_state_struct *internal_state,
+                  int color, int do_capture_dead_stones,
 		  int allowed_moves[BOARDMAX])
 {
   int move = do_aftermath_genmove(internal_state, color, NULL, do_capture_dead_stones);
@@ -1202,7 +1203,8 @@ aftermath_compute_score(struct board_lib_state_struct *internal_state, int color
  * BLACK_TERRITORY, and DAME.
  */
 enum dragon_status
-aftermath_final_status(struct board_lib_state_struct *internal_state, int color, int pos)
+aftermath_final_status(board_lib_state_struct *internal_state,
+                       int color, int pos)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   play_aftermath(internal_state, color, NULL);

@@ -344,11 +344,11 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
 	  if (attack(pos, NULL) != 0) {
         TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 		  1, attacks[k]);
-	    add_expand_territory_move(attacks[k]);
+        add_expand_territory_move(internal_state, attacks[k]);
 	    /* FIXME: We just guess the value here. Find a way to calculate it
 	     *	      (more) precisely.
 	     */
-	    set_minimum_territorial_value(attacks[k], 1.0);
+        set_minimum_territorial_value(internal_state, attacks[k], 1.0);
 	  }
 
 	  popgo(internal_state);
@@ -358,18 +358,18 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
     else if (essential_liberties > 0  && essential_libs[0] == attacks[0]) {
       TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 	    1, attacks[k]);
-      add_expand_territory_move(attacks[0]);
+      add_expand_territory_move(internal_state, attacks[0]);
       /* FIXME: We just guess the value here. Find a way to calculate it
        *	(more) precisely.
        */
-      set_minimum_territorial_value(attacks[0], 1.0);
+      set_minimum_territorial_value(internal_state, attacks[0], 1.0);
     }
 
     if (value > 0 && does_attack(apos, pos)) {
       TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 	    value, apos);
-      add_expand_territory_move(apos);
-      set_minimum_territorial_value(apos, (float) value);
+      add_expand_territory_move(internal_state, apos);
+      set_minimum_territorial_value(internal_state, apos, (float) value);
     }
   }
   else {
@@ -447,8 +447,8 @@ endgame_find_backfilling_dame(struct board_lib_state_struct *internal_state,
       move = potential_moves[k];
       TRACE(internal_state, "  backfilling dame found at %1m for string %1m\n", move, str);
       if (color == color_to_move) {
-	add_expand_territory_move(move);
-	set_minimum_territorial_value(move, 0.1);
+        add_expand_territory_move(internal_state, move);
+        set_minimum_territorial_value(internal_state, move, 0.1);
       }
       break;
     }

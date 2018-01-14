@@ -281,7 +281,7 @@ showboard(int xo)
     fprintf(stderr, "\n%2d", ii);
     
     for (j = 0; j < internal_state->board_size; j++)
-      showchar(i, j, is_hoshi_point(i, j) ? '+' : '.', xo);
+      showchar(i, j, is_hoshi_point(internal_state, i, j) ? '+' : '.', xo);
     
     fprintf(stderr, " %d", ii);
     

@@ -54,7 +54,7 @@ play_replay(SGFTree *tree, int color_to_replay)
    * has already been loaded before this function is called. Now we
    * only have to clear the board before starting over.
    */
-  clear_board();
+  clear_board(internal_state);
  
   if (!quiet) {
     printf("Board Size:   %d\n", internal_state->board_size);
@@ -131,11 +131,11 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     switch (sgf_prop->name) {
     case SGFAB:
       /* add black */
-      add_stone(get_sgfmove(sgf_prop), BLACK);
+      add_stone(internal_state, get_sgfmove(sgf_prop), BLACK);
       break;
     case SGFAW:
       /* add white */
-      add_stone(get_sgfmove(sgf_prop), WHITE);
+      add_stone(internal_state, get_sgfmove(sgf_prop), WHITE);
       break;
     case SGFB:
     case SGFW:

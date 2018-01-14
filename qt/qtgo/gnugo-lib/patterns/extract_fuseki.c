@@ -837,7 +837,7 @@ examine_game(SGFNode *sgf, int collect_statistics)
     black_player = hash_string(PB);
   
   /* Call the engine to clear the board. */
-  clear_board();
+  clear_board(internal_state);
   
   /* Loop through the first moves_per_game moves of each game. */
   for (k = 0; k < moves_per_game && node != NULL; node = node->child) {
@@ -952,7 +952,7 @@ check_game(SGFNode *sgf, char *sgfname)
     
   /* No handicap games */
   if (handicap_value == 0) {
-    if (sgfGetIntProperty(sgf, "HA", &handicap) && handicap > 1) {
+    if (sgfGetIntProperty(sgf, "HA", &internal_state->handicap) && internal_state->handicap > 1) {
       if (WARN)
 	fprintf(stderr,
 		"No handicap games allowed, sgf file %s has handicap %d\n",
@@ -963,14 +963,14 @@ check_game(SGFNode *sgf, char *sgfname)
     
   /* Only handicap games */
   if (handicap_value > 1) {
-    if (!sgfGetIntProperty(sgf, "HA", &handicap)) {
+    if (!sgfGetIntProperty(sgf, "HA", &internal_state->handicap)) {
       if (WARN)
 	fprintf(stderr, "Sgf file %s is not a handicap game\n", sgfname);
       return 0;
     }
       
     /* only specific handicap games */
-    if (handicap_value != 10 && handicap != handicap_value) {
+    if (handicap_value != 10 && internal_state->handicap != handicap_value) {
       if (WARN)
 	fprintf(stderr,
 		"Sgf file %s has wrong number of handicap stones %d\n",
@@ -979,7 +979,7 @@ check_game(SGFNode *sgf, char *sgfname)
     }
 
     /* any reasonable handicap games */
-    if (handicap_value == 10 && (handicap < 2 || handicap > 9)) {
+    if (handicap_value == 10 && (handicap < 2 || internal_state->handicap > 9)) {
       if (WARN)
 	fprintf(stderr,
 		"Sgf file %s has wrong/weird number of handicap stones %d\n",
@@ -1104,7 +1104,7 @@ collect_situations(void)
     }
     
     if (!sgfGetCharProperty(sgf, "RE", &RE)) {
-      gg_assert(0);
+      gg_assert(internal_state, 0);
     }
 
     if (strncmp(RE, "B+", 2) == 0)
@@ -1112,7 +1112,7 @@ collect_situations(void)
     else if (strncmp(RE, "W+", 2) == 0)
       winner = WHITE;
     else {
-      gg_assert(0);
+      gg_assert(internal_state, 0);
     }
     
     if (!examine_game(sgf, winner)) {
@@ -1271,7 +1271,7 @@ analyze_statistics(void)
 	winning_moves[number_of_winning_moves].move_success = 0;
 	
 	while (i < number_of_moves) {
-	  gg_assert(0.01 * min_move_percent*move_frequencies[0].n_player 
+	  gg_assert(internal_state, 0.01 * min_move_percent*move_frequencies[0].n_player 
 		     > move_frequencies[i].n_player
 		     || move_frequencies[i].n_player < min_move_freq);
 	  gg_assert(situation_table[move_frequencies[i].index].pre.values[0]
@@ -1598,7 +1598,7 @@ main(int argc, char *argv[])
 	    moves_per_game);
   
   handicap_value = atoi(argv[4]);
-  if (handicap_value < 0 || handicap_value > 10)
+  if (handicap_value < 0 || internal_state->handicap_value > 10)
     fprintf(stderr, "Warning: unusual handicap value: %d.\n",
 	    handicap_value);
   

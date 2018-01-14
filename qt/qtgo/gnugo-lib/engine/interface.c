@@ -38,7 +38,8 @@
  */
 
 void
-init_gnugo(float memory, unsigned int seed)
+init_gnugo(struct board_lib_state_struct *internal_state,
+           float memory, unsigned int seed)
 {
   /* We need a fixed seed when initializing the Zobrist hashing to get
    * reproducable results.
@@ -48,7 +49,7 @@ init_gnugo(float memory, unsigned int seed)
   reading_cache_init(memory * 1024 * 1024);
   set_random_seed(seed);
   persistent_cache_init();
-  clear_board();
+  clear_board(internal_state);
 
   transformation_init();
   dfa_match_init();
@@ -94,10 +95,11 @@ int check_boardsize(int boardsize, FILE *out)
  * Clear the board.
  */
 void
-gnugo_clear_board(int boardsize)
+gnugo_clear_board(struct board_lib_state_struct *internal_state,
+                  int boardsize)
 {
-  board_size = boardsize;
-  clear_board();
+  internal_state->board_size = boardsize;
+  clear_board(internal_state);
   init_timers();
 #if 0
   if (metamachine && oracle_exists)
@@ -108,17 +110,18 @@ gnugo_clear_board(int boardsize)
 /* Play a move and start the clock */
 
 void
-gnugo_play_move(int move, int color)
+gnugo_play_move(struct board_lib_state_struct *internal_state,
+                int move, int color)
 {
 #if ORACLE
   if (oracle_exists)
-    oracle_play_move(move, color);
+    oracle_play_move(internal_state, move, color);
   else
-    play_move(move, color);
+    play_move(internal_state, move, color);
 #else
-  play_move(move, color);
+  play_move(internal_state, move, color);
 #endif
-  clock_push_button(color);
+  clock_push_button(internal_state, color);
 }
 
 
@@ -128,7 +131,8 @@ gnugo_play_move(int move, int color)
  */
 
 int
-gnugo_play_sgfnode(SGFNode *node, int to_move)
+gnugo_play_sgfnode(struct board_lib_state_struct *internal_state,
+                   SGFNode *node, int to_move)
 {
   SGFProperty *prop;
 
@@ -136,12 +140,12 @@ gnugo_play_sgfnode(SGFNode *node, int to_move)
     switch (prop->name) {
     case SGFAB:
       /* A black stone. */
-      add_stone(get_sgfmove(prop), BLACK);
+      add_stone(internal_state, get_sgfmove(prop), BLACK);
       break;
 
     case SGFAW:
       /* A white stone. */
-      add_stone(get_sgfmove(prop), WHITE);
+      add_stone(internal_state, get_sgfmove(prop), WHITE);
       break;
 
     case SGFPL:
@@ -156,7 +160,7 @@ gnugo_play_sgfnode(SGFNode *node, int to_move)
     case SGFB:
       /* An ordinary move. */
       to_move = (prop->name == SGFW) ? WHITE : BLACK;
-      gnugo_play_move(get_sgfmove(prop), to_move);
+      gnugo_play_move(internal_state, get_sgfmove(prop), to_move);
       to_move = OTHER_COLOR(to_move);
       break;
     }
@@ -170,9 +174,10 @@ gnugo_play_sgfnode(SGFNode *node, int to_move)
  * updates the sgf file.
  */
 int
-gnugo_sethand(int desired_handicap, SGFNode *node)
+gnugo_sethand(struct board_lib_state_struct *internal_state,
+              int desired_handicap, SGFNode *node)
 {
-  place_fixed_handicap(desired_handicap);
+  place_fixed_handicap(internal_state, desired_handicap);
   sgffile_recordboard(node);
   return internal_state->handicap;
 }
@@ -185,7 +190,8 @@ gnugo_sethand(int desired_handicap, SGFNode *node)
  */
 
 float
-gnugo_estimate_score(float *upper, float *lower)
+gnugo_estimate_score(struct board_lib_state_struct *internal_state,
+                     float *upper, float *lower)
 {
   silent_examine_position(internal_state, EXAMINE_DRAGONS);
   if (upper != NULL)
@@ -206,9 +212,10 @@ gnugo_estimate_score(float *upper, float *lower)
  */
 
 void
-gameinfo_clear(Gameinfo *gameinfo)
+gameinfo_clear(struct board_lib_state_struct *internal_state,
+               Gameinfo *gameinfo)
 {
-  gnugo_clear_board(internal_state->board_size);
+  gnugo_clear_board(internal_state, internal_state->board_size);
   gameinfo->handicap = 0;
   gameinfo->to_move = BLACK;
   sgftree_clear(&gameinfo->game_record);
@@ -223,13 +230,14 @@ gameinfo_clear(Gameinfo *gameinfo)
  */
 
 void
-gameinfo_print(Gameinfo *gameinfo)
+gameinfo_print(struct board_lib_state_struct *internal_state,
+               Gameinfo *gameinfo)
 {
   printf("Board Size:   %d\n", internal_state->board_size);
   printf("Handicap      %d\n", gameinfo->handicap);
-  printf("Komi:         %.1f\n", komi);
-  printf("Move Number:  %d\n", movenum);
-  printf("To Move:      %s\n", color_to_string(gameinfo->to_move));
+  printf("Komi:         %.1f\n", internal_state->komi);
+  printf("Move Number:  %d\n", internal_state->movenum);
+  printf("To Move:      %s\n", color_to_string(internal_state, gameinfo->to_move));
 
   printf("Computer player: ");
   if (gameinfo->computer_player == WHITE)
@@ -256,7 +264,8 @@ gameinfo_print(Gameinfo *gameinfo)
  */
 
 int
-gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
+gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
+                          Gameinfo *gameinfo, SGFTree *tree,
 			  const char *untilstr, int orientation)
 {
   int bs;
@@ -270,24 +279,24 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
   if (!check_boardsize(bs, stderr))
     return EMPTY;
   
-  handicap = 0;
-  if (sgfGetIntProperty(tree->root, "HA", &handicap) && handicap > 1)
+  internal_state->handicap = 0;
+  if (sgfGetIntProperty(tree->root, "HA", &internal_state->handicap) && internal_state->handicap > 1)
     next = WHITE;
   gameinfo->handicap = internal_state->handicap;
   
-  if (handicap > bs * bs - 1 || handicap < 0) {
+  if (internal_state->handicap > bs * bs - 1 || internal_state->handicap < 0) {
     gprintf(internal_state, " Handicap HA[%d] is unreasonable.\n Modify SGF file.\n",
-	    handicap);
+        internal_state->handicap);
     return EMPTY;
   }
   
-  gnugo_clear_board(bs);
+  gnugo_clear_board(internal_state, bs);
 
-  if (!sgfGetFloatProperty(tree->root, "KM", &komi)) {
+  if (!sgfGetFloatProperty(tree->root, "KM", &internal_state->komi)) {
     if (gameinfo->handicap == 0)
-      komi = 5.5;
+      internal_state->komi = 5.5;
     else
-      komi = 0.5;
+      internal_state->komi = 0.5;
   }
 
   /* Now we can safely parse the until string (which depends on board size). */
@@ -324,7 +333,7 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	 * without reference to the order in which the stones are
 	 * placed on the board.
 	 */
-	move = rotate1(get_sgfmove(prop), orientation);
+    move = rotate1(internal_state, get_sgfmove(prop), orientation);
     if (internal_state->board[move] != EMPTY)
       gprintf(internal_state, "Illegal SGF! attempt to add a stone at occupied point %1m\n",
 		  move);
@@ -345,9 +354,9 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	else
 	  next = BLACK;
 	/* following really should not be needed for proper sgf file */
-	if (stones_on_board(GRAY) == 0 && next == WHITE) {
-	  place_fixed_handicap(gameinfo->handicap);
-	  sgfOverwritePropertyInt(tree->root, "HA", handicap);
+    if (stones_on_board(internal_state, GRAY) == 0 && next == WHITE) {
+      place_fixed_handicap(internal_state, gameinfo->handicap);
+      sgfOverwritePropertyInt(tree->root, "HA", internal_state->handicap);
 	}
 	break;
 	      
@@ -355,22 +364,22 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
       case SGFB:
 	next = prop->name == SGFW ? WHITE : BLACK;
 	/* following really should not be needed for proper sgf file */
-	if (stones_on_board(GRAY) == 0 && next == WHITE) {
-	  place_fixed_handicap(gameinfo->handicap);
-	  sgfOverwritePropertyInt(tree->root, "HA", handicap);
+    if (stones_on_board(internal_state, GRAY) == 0 && next == WHITE) {
+      place_fixed_handicap(internal_state, gameinfo->handicap);
+      sgfOverwritePropertyInt(tree->root, "HA", internal_state->handicap);
 	}
 
 	move = get_sgfmove(prop);
-	if (move == untilmove || movenum == until - 1) {
+    if (move == untilmove || internal_state->movenum == until - 1) {
 	  gameinfo->to_move = next;
 	  /* go back so that variant will be added to the proper node */
 	  sgftreeBack(tree);
 	  return next;
 	}
 
-	move = rotate1(move, orientation);
-	if (move == PASS_MOVE || board[move] == EMPTY) {
-	  gnugo_play_move(move, next);
+    move = rotate1(internal_state, move, orientation);
+	if (move == PASS_MOVE || internal_state->board[move] == EMPTY) {
+      gnugo_play_move(internal_state, move, next);
 	  next = OTHER_COLOR(next);
 	}
 	else {
@@ -390,7 +399,7 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	 * (board_ko_i, board_ko_j) is set to the location of
 	 * the ko.
 	 */
-	move = rotate1(get_sgfmove(prop), orientation);
+    move = rotate1(internal_state, get_sgfmove(prop), orientation);
 
 	if (internal_state->board_size > 1)
 	{
@@ -400,8 +409,8 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
         move_color = OTHER_COLOR(internal_state->board[NORTH(move)]);
 	  else 
         move_color = OTHER_COLOR(internal_state->board[SOUTH(move)]);
-	  if (is_ko(move, move_color, NULL))
-	    board_ko_pos = move;
+      if (is_ko(internal_state, move, move_color, NULL))
+        internal_state->board_ko_pos = move;
 	}
 	break;
       }
@@ -415,9 +424,10 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 /* Same as previous function, using standard orientation */
 
 int
-gameinfo_play_sgftree(Gameinfo *gameinfo, SGFTree *tree, const char *untilstr)
+gameinfo_play_sgftree(struct board_lib_state_struct *internal_state,
+                      Gameinfo *gameinfo, SGFTree *tree, const char *untilstr)
 {
-  return gameinfo_play_sgftree_rot(gameinfo, tree, untilstr, 0);
+  return gameinfo_play_sgftree_rot(internal_state, gameinfo, tree, untilstr, 0);
 }
 
 

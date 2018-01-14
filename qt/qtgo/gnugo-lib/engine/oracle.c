@@ -201,7 +201,7 @@ oracle_popgo(void)
 int
 oracle_play_move(int pos, int color)
 {
-  play_move(pos, color);
+  play_move(internal_state, pos, color);
 
   if (debug & DEBUG_ORACLE_STREAM)
     gfprintf(stderr, "%o%s %1m\n", 

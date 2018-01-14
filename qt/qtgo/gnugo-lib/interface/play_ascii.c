@@ -497,7 +497,7 @@ computer_move(Gameinfo *gameinfo, int *passes)
   else
     *passes = 0;
 
-  gnugo_play_move(move, gameinfo->to_move);
+  gnugo_play_move(internal_state, move, gameinfo->to_move);
   sgffile_add_debuginfo(sgftree.lastnode, move_value);
   sgftreeAddPlay(&sgftree, gameinfo->to_move, I(move), J(move));
   if (resignation_declined)
@@ -531,7 +531,7 @@ do_move(Gameinfo *gameinfo, char *command, int *passes, int force)
   *passes = 0;
   TRACE(internal_state, "\nyour move: %1m\n\n", move);
   init_sgf(gameinfo);
-  gnugo_play_move(move, gameinfo->to_move);
+  gnugo_play_move(internal_state, move, gameinfo->to_move);
   sgffile_add_debuginfo(sgftree.lastnode, 0.0);
   sgftreeAddPlay(&sgftree, gameinfo->to_move, I(move), J(move));
   sgffile_output(&sgftree);
@@ -606,7 +606,7 @@ play_ascii(SGFTree *tree, Gameinfo *gameinfo, char *filename, char *until)
     if (gameinfo->handicap == 0)
       gameinfo->to_move = BLACK;
     else {
-      gameinfo->handicap = place_fixed_handicap(gameinfo->handicap);
+      gameinfo->handicap = place_fixed_handicap(internal_state, gameinfo->handicap);
       gameinfo->to_move = WHITE;
     }
     sgf_initialized = 0;
@@ -721,9 +721,9 @@ do_play_ascii(Gameinfo *gameinfo)
 	    break;
 	  /* Init board. */
 	  board_size = num;
-	  clear_board();
+	  clear_board(internal_state);
 	  /* In case max handicap changes on smaller board. */
-	  gameinfo->handicap = place_fixed_handicap(gameinfo->handicap);
+	  gameinfo->handicap = place_fixed_handicap(internal_state, gameinfo->handicap);
 	  sgfOverwritePropertyInt(sgftree.root, "SZ", internal_state->board_size);
 	  sgfOverwritePropertyInt(sgftree.root, "HA", gameinfo->handicap);
 	  break;
@@ -743,7 +743,7 @@ do_play_ascii(Gameinfo *gameinfo)
 	    break;
 	  }
 	  /* Init board. */
-	  clear_board();
+	  clear_board(internal_state);
 	  /* Place stones on board but don't record sgf 
 	   * in case we change more info. */
 	  gameinfo->handicap = place_fixed_handicap(num);
@@ -1158,7 +1158,7 @@ ascii_count(Gameinfo *gameinfo)
     }
     else {
       int pos = string_to_location(internal_state->board_size, line);
-      if (pos == NO_MOVE || board[pos] == EMPTY)
+      if (pos == NO_MOVE || internal_state->board[pos] == EMPTY)
 	printf("\ninvalid!\n");
       else {
 	enum dragon_status status = dragon_status(pos);
@@ -1180,7 +1180,7 @@ showcapture(char *line)
 
   gg_assert(line);
   str = string_to_location(internal_state->board_size, line);
-  if (str == NO_MOVE || board[str] == EMPTY) {
+  if (str == NO_MOVE || internal_state->board[str] == EMPTY) {
     printf("\ninvalid point!\n");
     return;
   }
@@ -1200,7 +1200,7 @@ showdefense(char *line)
   
   gg_assert(line);
   str = string_to_location(internal_state->board_size, line);
-  if (str == NO_MOVE || board[str] == EMPTY) {
+  if (str == NO_MOVE || internal_state->board[str] == EMPTY) {
     printf("\ninvalid point!\n");
     return;
   }
@@ -1249,12 +1249,12 @@ ascii_free_handicap(Gameinfo *gameinfo, char *handicap_string)
       return;
     }
 
-    clear_board();
+    clear_board(internal_state);
     handi = place_free_handicap(handi);
     printf("\nPlaced %d stones of free handicap.\n", handi);
   }
   else { /* User is to place handicap */
-    clear_board();
+    clear_board(internal_state);
     handi = 0;
 
     while (1) {
@@ -1280,7 +1280,7 @@ ascii_free_handicap(Gameinfo *gameinfo, char *handicap_string)
 	}
       }
       else if (!strncmp(line, "clear", 5)) {
-        clear_board();
+        clear_board(internal_state);
         handi = 0;
       }
       else if (!strncmp(line, "done", 4)) {

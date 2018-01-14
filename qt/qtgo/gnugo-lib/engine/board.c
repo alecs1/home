@@ -871,7 +871,7 @@ play_move_no_history(struct board_lib_state_struct *internal_state, int pos, int
 
   /* Check the hash table to see if it corresponds to the cumulative one. */
   hashdata_recalc(&oldkey, board, board_ko_pos);
-  gg_assert(hashdata_is_equal(oldkey, board_hash));
+  gg_assert(internal_state, hashdata_is_equal(oldkey, board_hash));
 #endif
 
   if (internal_state->board_ko_pos != NO_MOVE)
@@ -892,7 +892,7 @@ play_move_no_history(struct board_lib_state_struct *internal_state, int pos, int
 #if CHECK_HASHING
     /* Check the hash table to see if it equals the previous one. */
     hashdata_recalc(&oldkey, board, board_ko_pos);
-    gg_assert(hashdata_is_equal(oldkey, board_hash));
+    gg_assert(internal_state, hashdata_is_equal(oldkey, board_hash));
 #endif
   }
 
@@ -1067,7 +1067,7 @@ is_pass(int pos)
 
 
 /*
- * is_legal(pos, color) determines whether the move (color) at pos is
+ * is_legal(internal_state, pos, color) determines whether the move (color) at pos is
  * legal. This is for internal use in the engine and always assumes
  * that suicide is allowed and only simple ko restrictions, no
  * superko, regardless of the rules actually used in the game.
@@ -2975,7 +2975,7 @@ has_neighbor(struct board_lib_state_struct *internal_state, int pos, int color)
  */
 
 int
-same_string(struct board_lib_state_struct *internal_state, int str1, int str2)
+same_string(board_lib_state_struct *internal_state, int str1, int str2)
 {
   ASSERT_ON_BOARD1(internal_state, str1);
   ASSERT_ON_BOARD1(internal_state, str2);

@@ -417,7 +417,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
   /* Now see whether there are any significant sekis on the board. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!potential_sekis[pos]
-	|| board[pos] == EMPTY
+	|| internal_state->board[pos] == EMPTY
 	|| find_origin(internal_state, pos) != pos)
       continue;
     for (r = 0; r < 4; r++) {
@@ -425,13 +425,13 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
       int right = delta[(r + 1) % 4];
       int locally_played_moves = 0;
       if (internal_state->board[pos + up] != color
-	  || board[pos + up + up] != EMPTY
-	  || board[pos - up] != EMPTY)
+	  || internal_state->board[pos + up + up] != EMPTY
+	  || internal_state->board[pos - up] != EMPTY)
 	continue;
       for (k = 0; k < 2; k++) {
 	if (k == 1)
 	  right = -right;
-	if (internal_state->board[pos + right] != EMPTY || board[pos + up - right] != EMPTY)
+	if (internal_state->board[pos + right] != EMPTY || internal_state->board[pos + up - right] != EMPTY)
 	  continue;
 	if (internal_state->board[pos - right] == EMPTY
 	    && trymove(internal_state, pos - right, other, "unconditional_life", pos))
@@ -439,7 +439,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
 	if (internal_state->board[pos + up + right] == EMPTY
 	    && trymove(internal_state, pos + up + right, other, "unconditional_life", pos))
 	  locally_played_moves++;
-	if (internal_state->board[pos - right] == other && board[pos + up + right] == other
+	if (internal_state->board[pos - right] == other && internal_state->board[pos + up + right] == other
 	    && same_string(pos - right, pos + up + right)) {
 	  /* This is a critical seki. Extend the string with one stone
            * in an arbitrary direction to break the seki.
@@ -466,7 +466,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
 
   /* Capture the strings involved in potential sekis. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!potential_sekis[pos] || board[pos] == EMPTY)
+    if (!potential_sekis[pos] || internal_state->board[pos] == EMPTY)
       continue;
     /* Play as many liberties as we can. */
     liberties = findlib(internal_state, pos, MAXLIBS, libs);

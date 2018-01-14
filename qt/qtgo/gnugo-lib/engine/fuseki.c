@@ -255,7 +255,7 @@ announce_move(struct board_lib_state_struct *internal_state,
       move = POS(internal_state->board_size - 1 - j, internal_state->board_size - 1 - i);
   }
   
-  if (set_minimum_move_value(move, value))
+  if (set_minimum_move_value(internal_state, move, value))
     TRACE(internal_state, "Fuseki Player suggests %1m with value %d\n", move, value);
 }
 
@@ -311,7 +311,7 @@ search_fuseki_database(struct board_lib_state_struct *internal_state,
   /* Do the matching. */
   num_fuseki_moves = 0;
   fuseki_total_value = 0;
-  fullboard_matchpat(fuseki_callback, color, database);
+  fullboard_matchpat(internal_state, fuseki_callback, color, database);
 
   /* No match. */
   if (num_fuseki_moves == 0)
@@ -337,7 +337,7 @@ search_fuseki_database(struct board_lib_state_struct *internal_state,
    * traces and in the output file.
    */
   for (k = 0; k < num_fuseki_moves; k++)
-    set_minimum_move_value(fuseki_moves[k], 74);
+    set_minimum_move_value(internal_state, fuseki_moves[k], 74);
 
   return 1;
 }
