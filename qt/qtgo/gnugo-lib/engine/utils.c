@@ -1247,7 +1247,7 @@ detect_tactical_blunder(int move, int color, int *defense_point,
       
       popgo(internal_state);
       decrease_depth_values();
-      owl_attacks = owl_does_attack(move, pos, NULL);
+      owl_attacks = owl_does_attack(internal_state, move, pos, NULL);
       if (owl_attacks != WIN) {
 	*return_value += 2 * worm[pos].effective_size;
 	defense_effective = 1;

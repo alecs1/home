@@ -502,16 +502,25 @@ void mark_safe_stones(board_lib_state_struct *internal_state,
 
 int owl_lively(board_lib_state_struct *internal_state,
                int pos);
-int owl_escape_value(int pos);
+int owl_escape_value(board_lib_state_struct *internal_state,
+                     int pos);
 int owl_goal_dragon(int pos);
-int owl_eyespace(int pos);
-int owl_big_eyespace(int pos);
-int owl_mineye(int pos);
-int owl_maxeye(int pos);
-int owl_proper_eye(int pos);
-int owl_eye_size(int pos);
-int owl_lunch(int str);
-int owl_strong_dragon(int pos);
+int owl_eyespace(board_lib_state_struct *internal_state,
+                 int pos);
+int owl_big_eyespace(board_lib_state_struct *internal_state,
+                     int pos);
+int owl_mineye(board_lib_state_struct *internal_state,
+               int pos);
+int owl_maxeye(board_lib_state_struct *internal_state,
+               int pos);
+int owl_proper_eye(board_lib_state_struct *internal_state,
+                   int pos);
+int owl_eye_size(board_lib_state_struct *internal_state,
+                 int pos);
+int owl_lunch(board_lib_state_struct *internal_state,
+              int str);
+int owl_strong_dragon(board_lib_state_struct *internal_state,
+                      int pos);
 void owl_reasons(board_lib_state_struct *internal_state,
                  int color);
 
@@ -607,10 +616,12 @@ int owl_threaten_defense(board_lib_state_struct *internal_state,
                          int target, int *defend1, int *defend2);
 int owl_does_defend(board_lib_state_struct *internal_state,
                     int move, int target, int *kworm);
-int owl_confirm_safety(int move, int target, int *defense_point, int *kworm);
+int owl_confirm_safety(board_lib_state_struct *internal_state,
+                       int move, int target, int *defense_point, int *kworm);
 int owl_does_attack(board_lib_state_struct *internal_state,
                     int move, int target, int *kworm);
-int owl_connection_defends(int move, int target1, int target2);
+int owl_connection_defends(board_lib_state_struct *internal_state,
+                           int move, int target1, int target2);
 int owl_substantial(board_lib_state_struct *internal_state,
                     int str);
 void owl_analyze_semeai(board_lib_state_struct *internal_state,
@@ -811,7 +822,8 @@ int analyze_eyegraph(board_lib_state_struct *internal_state,
 
 
 /* debugging support */
-void goaldump(const signed char goal[BOARDMAX]);
+void goaldump(board_lib_state_struct *internal_state,
+              const signed char goal[BOARDMAX]);
 void move_considered(int move, float value);
 
 

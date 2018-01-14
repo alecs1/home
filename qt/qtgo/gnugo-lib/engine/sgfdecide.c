@@ -63,13 +63,13 @@ decide_string(int pos)
   if (acode) {
     if (acode == WIN)
       gprintf(internal_state, "%1m can be attacked at %1m (%d variations)\n", 
-	      pos, aa, count_variations);
+	      pos, aa, internal_state->count_variations);
     else if (acode == KO_A)
 	gprintf(internal_state, "%1m can be attacked with ko (good) at %1m (%d variations)\n", 
-	      pos, aa, count_variations);
+	      pos, aa, internal_state->count_variations);
     else if (acode == KO_B)
 	gprintf(internal_state, "%1m can be attacked with ko (bad) at %1m (%d variations)\n", 
-		pos, aa, count_variations);
+		pos, aa, internal_state->count_variations);
 
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
@@ -81,17 +81,17 @@ decide_string(int pos)
     if (dcode) {
       if (dcode == WIN)
 	gprintf(internal_state, "%1m can be defended at %1m (%d variations)\n", 
-		pos, dd, count_variations);
+		pos, dd, internal_state->count_variations);
       else if (dcode == KO_A)
 	gprintf(internal_state, "%1m can be defended with ko (good) at %1m (%d variations)\n", 
-		pos, dd, count_variations);
+		pos, dd, internal_state->count_variations);
       else if (dcode == KO_B)
 	gprintf(internal_state, "%1m can be defended with ko (bad) at %1m (%d variations)\n", 
-		pos, dd, count_variations);
+		pos, dd, internal_state->count_variations);
     }
     else
       gprintf(internal_state, "%1m cannot be defended (%d variations)\n", 
-	      pos, count_variations);
+	      pos, internal_state->count_variations);
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
       draw_reading_shadow();
@@ -100,7 +100,7 @@ decide_string(int pos)
   }
   else {
     gprintf(internal_state, "%1m cannot be attacked (%d variations)\n", 
-	    pos, count_variations);
+	    pos, internal_state->count_variations);
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
       draw_reading_shadow();
@@ -149,40 +149,40 @@ decide_connection(int apos, int bpos)
   if (result == WIN) {
     if (move == NO_MOVE)
       gprintf(internal_state, "%1m and %1m are connected as it stands (%d variations)\n", 
-	      apos, bpos, count_variations);
+	      apos, bpos, internal_state->count_variations);
     else
 	gprintf(internal_state, "%1m and %1m can be connected at %1m (%d variations)\n", 
-		apos, bpos, move, count_variations);
+		apos, bpos, move, internal_state->count_variations);
   }
   else if (result == KO_A)
     gprintf(internal_state, "%1m and %1m can be connected with ko (good) at %1m (%d variations)\n", 
-	    apos, bpos, move, count_variations);
+	    apos, bpos, move, internal_state->count_variations);
   else if (result == KO_B)
     gprintf(internal_state, "%1m and %1m can be connected with ko (bad) at %1m (%d variations)\n", 
-	    apos, bpos, move, count_variations);
+	    apos, bpos, move, internal_state->count_variations);
   else
     gprintf(internal_state, "%1m and %1m cannot be connected (%d variations)\n", 
-	    apos, bpos, count_variations);
+	    apos, bpos, internal_state->count_variations);
   
   count_variations = 1;
   result = disconnect(apos, bpos, &move);
   if (result == WIN) {
     if (move == NO_MOVE)
       gprintf(internal_state, "%1m and %1m are disconnected as it stands (%d variations)\n", 
-	      apos, bpos, count_variations);
+	      apos, bpos, internal_state->count_variations);
     else
 	gprintf(internal_state, "%1m and %1m can be disconnected at %1m (%d variations)\n", 
-		apos, bpos, move, count_variations);
+		apos, bpos, move, internal_state->count_variations);
   }
   else if (result == KO_A)
     gprintf(internal_state, "%1m and %1m can be disconnected with ko (good) at %1m (%d variations)\n", 
-	    apos, bpos, move, count_variations);
+	    apos, bpos, move, internal_state->count_variations);
   else if (result == KO_B)
     gprintf(internal_state, "%1m and %1m can be disconnected with ko (bad) at %1m (%d variations)\n", 
-	    apos, bpos, move, count_variations);
+	    apos, bpos, move, internal_state->count_variations);
   else
     gprintf(internal_state, "%1m and %1m cannot be disconnected (%d variations)\n", 
-	    apos, bpos, count_variations);
+	    apos, bpos, internal_state->count_variations);
   
   sgffile_enddump(outfilename);
   count_variations = 0;
@@ -226,20 +226,20 @@ decide_owl(int pos)
 	gprintf(internal_state, "%1m is dead as it stands", pos);
       else
 	gprintf(internal_state, "%1m can be attacked at %1m (%d variations)", 
-		pos, move, count_variations);
+		pos, move, internal_state->count_variations);
     }
     else if (acode == KO_A)
       gprintf(internal_state, "%1m can be attacked with ko (good) at %1m (%d variations)", 
-	      pos, move, count_variations);
+	      pos, move, internal_state->count_variations);
     else if (acode == KO_B)
       gprintf(internal_state, "%1m can be attacked with ko (bad) at %1m (%d variations)", 
-	      pos, move, count_variations);
+	      pos, move, internal_state->count_variations);
     else if (acode == GAIN)
       gprintf(internal_state, "%1m can be attacked with gain (captures %1m) at %1m (%d variations)", 
-	      pos, kworm, move, count_variations);
+	      pos, kworm, move, internal_state->count_variations);
   }
   else 
-    gprintf(internal_state, "%1m cannot be attacked (%d variations)", pos, count_variations);
+    gprintf(internal_state, "%1m cannot be attacked (%d variations)", pos, internal_state->count_variations);
   
   if (result_certain)
     gprintf(internal_state, "\n");
@@ -255,21 +255,21 @@ decide_owl(int pos)
 	gprintf(internal_state, "%1m is alive as it stands", pos);
       else 
 	gprintf(internal_state, "%1m can be defended at %1m (%d variations)", 
-		pos, move, count_variations);
+		pos, move, internal_state->count_variations);
     }
     else if (dcode == KO_A)
       gprintf(internal_state, "%1m can be defended with ko (good) at %1m (%d variations)", 
-	      pos, move, count_variations);
+	      pos, move, internal_state->count_variations);
     else if (dcode == KO_B)
       gprintf(internal_state, "%1m can be defended with ko (bad) at %1m (%d variations)", 
-	      pos, move, count_variations);
+	      pos, move, internal_state->count_variations);
     else if (dcode == LOSS)
       gprintf(internal_state, "%1m can be defended with loss (loses %1m) at %1m (%d variations)", 
-	      pos, kworm, move, count_variations);
+	      pos, kworm, move, internal_state->count_variations);
   }
   else
     gprintf(internal_state, "%1m cannot be defended (%d variations)",
-	    pos, count_variations);
+	    pos, internal_state->count_variations);
 
   if (result_certain)
     gprintf(internal_state, "\n");
@@ -333,7 +333,7 @@ decide_semeai(int apos, int bpos)
 	  apos, result_to_string(resulta), move);
   gprintf(internal_state, "Semeai attack of %1m: result %s %1m\n",
 	  bpos, result_to_string(resultb), move);
-  gprintf(internal_state, "%d nodes%s\n\n", count_variations,
+  gprintf(internal_state, "%d nodes%s\n\n", internal_state->count_variations,
 	  result_certain ? "" : ", uncertain result");
   
   gprintf(internal_state, "Analyzing semeai between %1m and %1m, %C moves first\n",
@@ -343,7 +343,7 @@ decide_semeai(int apos, int bpos)
 	  bpos, result_to_string(resultb), move);
   gprintf(internal_state, "Semeai attack of %1m: result %s %1m\n",
 	  apos, result_to_string(resulta), move);
-  gprintf(internal_state, "%d nodes%s\n", count_variations,
+  gprintf(internal_state, "%d nodes%s\n", internal_state->count_variations,
 	  result_certain ? "" : ", uncertain result");
 
   sgffile_enddump(outfilename);
@@ -393,17 +393,17 @@ decide_position()
 	  gprintf(internal_state, "%1m is dead as it stands\n", pos);
 	else
 	  gprintf(internal_state, "%1m can be attacked at %1m (%d variations)\n", 
-		  pos, move, count_variations);
+		  pos, move, internal_state->count_variations);
       }
       else if (acode == KO_A)
 	gprintf(internal_state, "%1m can be attacked with ko (good) at %1m (%d variations)\n", 
-		pos, move, count_variations);
+		pos, move, internal_state->count_variations);
       else if (acode == KO_B)
 	gprintf(internal_state, "%1m can be attacked with ko (bad) at %1m (%d variations)\n", 
-		pos, move, count_variations);
+		pos, move, internal_state->count_variations);
       else if (acode == GAIN)
 	gprintf(internal_state, "%1m can be attacked with gain (captures %1m) at %1m (%d variations)", 
-		pos, kworm, move, count_variations);
+		pos, kworm, move, internal_state->count_variations);
       
       count_variations = 1;
       dcode = owl_defend(pos, &move, NULL, &kworm);
@@ -413,25 +413,25 @@ decide_position()
 	    gprintf(internal_state, "%1m is alive as it stands\n", pos);
 	  else 
 	    gprintf(internal_state, "%1m can be defended at %1m (%d variations)\n", 
-		    pos, move, count_variations);
+		    pos, move, internal_state->count_variations);
 	}
 	else if (dcode == KO_A)
 	  gprintf(internal_state, "%1m can be defended with ko (good) at %1m (%d variations)\n", 
-		  pos, move, count_variations);
+		  pos, move, internal_state->count_variations);
 	else if (dcode == KO_B)
 	  gprintf(internal_state, "%1m can be defended with ko (bad) at %1m (%d variations)\n",
-		  pos, move, count_variations);
+		  pos, move, internal_state->count_variations);
 	else if (dcode == LOSS)
 	  gprintf(internal_state, "%1m can be defended with loss (loses %1m) at %1m (%d variations)", 
-		  pos, kworm, move, count_variations);
+		  pos, kworm, move, internal_state->count_variations);
       }
       else
 	gprintf(internal_state, "%1m cannot be defended (%d variations)\n", 
-		pos, count_variations);
+		pos, internal_state->count_variations);
     }
     else 
       gprintf(internal_state, "%1m cannot be attacked (%d variations)\n", 
-	      pos, count_variations);
+	      pos, internal_state->count_variations);
     
     if (acode) {
       if (dcode)

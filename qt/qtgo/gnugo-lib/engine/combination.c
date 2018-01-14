@@ -607,7 +607,7 @@ compute_aa_status(struct board_lib_state_struct *internal_state,
       && is_self_atari(internal_state, libs[1], color))
 	continue;
       
-      if (!owl_substantial(pos)) {
+      if (!owl_substantial(internal_state, pos)) {
 	int pos2;
 	for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++)
       if (internal_state->board[pos2] == other && find_origin(internal_state, pos2) == pos)

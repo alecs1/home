@@ -167,7 +167,7 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     
     /* Now report on how well the computer generated the move. */
     if (new_move != old_move || !quiet) {
-      mprintf("Move %d (%C): ", movenum + 1, color);
+      mprintf("Move %d (%C): ", internal_state->movenum + 1, color);
     
       if (resign)
 	printf("GNU Go resigns ");

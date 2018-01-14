@@ -733,7 +733,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
 	|| !safe_move(move, color)
 	|| (DRAGON2(bb).safety != INVINCIBLE
 	    && DRAGON2(bb).safety != STRONGLY_ALIVE
-	    && owl_does_defend(move, bb, NULL) != WIN)
+        && owl_does_defend(internal_state, move, bb, NULL) != WIN)
 	|| (!confirm_safety(move, color, NULL, NULL))) {
       score[move] = 0;
     }
@@ -769,7 +769,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
         popgo(internal_state);
 	    for (r = 0; r < neighbors && move_ok; r++) {
 	      if (dragon[adjs[r]].status == DEAD
-		  && !owl_does_attack(move, adjs[r], NULL)) {
+          && !owl_does_attack(internal_state, move, adjs[r], NULL)) {
 		DEBUG(DEBUG_AFTERMATH,
 		      "Blunder: %1m becomes more alive after %1m\n",
 		      adjs[r], move);
@@ -897,11 +897,11 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
     /* Consult the owl code to determine whether the considered move
      * really is effective. Blunders should be detected here.
      */
-    if (owl_does_attack(move, target, NULL) == WIN) {
+    if (owl_does_attack(internal_state, move, target, NULL) == WIN) {
       /* If we have an adjacent own dragon, which is not inessential,
        * verify that it remains safe.
        */
-      if (cc != NO_MOVE && !owl_does_defend(move, cc, NULL)) {
+      if (cc != NO_MOVE && !owl_does_defend(internal_state, move, cc, NULL)) {
 	int resulta, resultb;
     owl_analyze_semeai_after_move(internal_state, move, color, target, cc,
 				      &resulta, &resultb, NULL, NULL, 1);

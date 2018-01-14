@@ -62,7 +62,7 @@ static void add_adjacent_dragon(struct board_lib_state_struct *internal_state,
                                 int a, int b);
 static int dragon_invincible(struct board_lib_state_struct *internal_state,
                              int pos);
-static int dragon_looks_inessential(int origin);
+static int dragon_looks_inessential(board_lib_state_struct *internal_state, int origin);
 static void identify_thrashing_dragons(struct board_lib_state_struct *internal_state);
 static void analyze_false_eye_territory(struct board_lib_state_struct *internal_state);
 static int connected_to_eye(struct board_lib_state_struct *internal_state,
@@ -264,7 +264,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 		/* Let's see whether the attacking move might be the right
 		 * defense:
 		 */
-		dcode = owl_does_defend(DRAGON2(str).owl_attack_point,
+        dcode = owl_does_defend(internal_state, DRAGON2(str).owl_attack_point,
 					str, NULL);
 		if (dcode != 0) {
 		  DRAGON2(str).owl_defense_point
@@ -393,7 +393,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
      * code can be improved.
      */
     true_genus = max_eyes(genus) + min_eyes(genus);
-    if (dragon_looks_inessential(origin))
+    if (dragon_looks_inessential(internal_state, origin))
       dragon2[d].safety = INESSENTIAL;
     else if (dragon[origin].size == worm[origin].size
 	     && worm[origin].attack_codes[0] != 0
@@ -1043,7 +1043,8 @@ dragon_invincible(struct board_lib_state_struct *internal_state,
  *        position.
  */
 static int
-dragon_looks_inessential(int origin)
+dragon_looks_inessential(board_lib_state_struct *internal_state,
+                         int origin)
 {
 #if 0
   int d;
@@ -1056,7 +1057,7 @@ dragon_looks_inessential(int origin)
   if (worm[origin].size >= 3 && worm[origin].liberties >= 4)
     return 0;
 
-  if (owl_substantial(origin))
+  if (owl_substantial(internal_state, origin))
     return 0;
 
 #if 0

@@ -466,7 +466,7 @@ is_lively(board_lib_state_struct *internal_state,
     return 0;
 
   if (owl_call)
-    return owl_lively(pos);
+    return owl_lively(internal_state, pos);
   else
     return (!worm[pos].inessential
 	    && (worm[pos].attack_codes[0] == 0
@@ -2418,7 +2418,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
  * status, but it should never be overestimated.
  */
 int
-obvious_false_eye(internal_state, struct board_lib_state_struct *internal_state, int pos, int color)
+obvious_false_eye(struct board_lib_state_struct *internal_state, int pos, int color)
 {
   int i = I(pos);
   int j = J(pos);
@@ -2673,7 +2673,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       for (k = 0; k < eyesize; k++) {
     if (internal_state->board[eye_vertices[k]] == EMPTY
         && is_legal(internal_state, eye_vertices[k], BLACK)
-	    && owl_does_attack(eye_vertices[k], str, NULL)) {
+        && owl_does_attack(internal_state, eye_vertices[k], str, NULL)) {
       gprintf(internal_state, "%1m alive, but %1m attacks:\n", str, eye_vertices[k]);
 	  showboard(0);
       gprintf(internal_state, "\n");
@@ -2687,7 +2687,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       if (internal_stones == eyesize - 1) {
 	for (k = 0; k < eyesize; k++) {
       if (internal_state->board[eye_vertices[k]] == EMPTY
-	      && !owl_does_defend(eye_vertices[k], str, NULL)) {
+          && !owl_does_defend(internal_state, eye_vertices[k], str, NULL)) {
         gprintf(internal_state, "%1m alive, but almost filled with nakade:\n", str);
 	    showboard(0);
 	  }
@@ -2703,7 +2703,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
 	for (k = 0; k < eyesize; k++) {
       if (internal_state->board[eye_vertices[k]] == EMPTY
           && is_legal(internal_state, eye_vertices[k], WHITE)
-	      && owl_does_defend(eye_vertices[k], str, NULL)) {
+          && owl_does_defend(internal_state, eye_vertices[k], str, NULL)) {
         gprintf(internal_state, "%1m dead, but %1m defends:\n", str, eye_vertices[k]);
 	    showboard(0);
         gprintf(internal_state, "\n");
@@ -2719,7 +2719,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       gprintf(internal_state, "Bad attack point %1m:\n", attack_point);
 	  showboard(0);
 	}
-	else if (!owl_does_attack(attack_point, str, NULL)) {
+    else if (!owl_does_attack(internal_state, attack_point, str, NULL)) {
       gprintf(internal_state, "Attack point %1m failed:\n", attack_point);
 	  showboard(0);
 	}
@@ -2729,7 +2729,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       gprintf(internal_state, "Bad defense point %1m:\n", defense_point);
 	  showboard(0);
 	}
-	else if (!owl_does_defend(defense_point, str, NULL)) {
+    else if (!owl_does_defend(internal_state, defense_point, str, NULL)) {
       gprintf(internal_state, "Defense point %1m failed:\n", defense_point);
 	  showboard(0);
 	}

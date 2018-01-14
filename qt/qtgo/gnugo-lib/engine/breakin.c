@@ -244,7 +244,7 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
     print_connection_distances(&conn);
   DEBUG(DEBUG_BREAKIN, "Trying to break in from %1m to:\n", str);
   if (debug & DEBUG_BREAKIN)
-    goaldump(smaller_goal);
+    goaldump(internal_state, smaller_goal);
   while ((color_to_move == internal_state->board[str]
           && break_in(str, smaller_goal, &move))
          || (color_to_move == OTHER_COLOR(internal_state->board[str])
@@ -315,7 +315,7 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
 			 &conn, goal, smaller_goal);
     DEBUG(DEBUG_BREAKIN, "Now trying to break to smaller goal:\n", str);
     if (debug & DEBUG_BREAKIN)
-      goaldump(smaller_goal);
+      goaldump(internal_state, smaller_goal);
 
     if (saved_move == NO_MOVE)
       saved_move = move;
@@ -343,7 +343,7 @@ break_in_goal(struct board_lib_state_struct *internal_state,
   DEBUG(DEBUG_BREAKIN,
         "Trying to break (%C to move) %C's territory ", color_to_move, owner);
   if (debug & DEBUG_BREAKIN)
-    goaldump(goal);
+    goaldump(internal_state, goal);
   /* Compute nearby fields of goal. */
   init_connection_data(intruder, goal, NO_MOVE, FP(3.01), &conn, 1);
   k = conn.queue_end;

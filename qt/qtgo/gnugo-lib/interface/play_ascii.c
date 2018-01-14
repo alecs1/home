@@ -662,7 +662,7 @@ do_play_ascii(Gameinfo *gameinfo)
 
 #if !READLINE
       /* Print the prompt */
-      mprintf("%s(%d): ", color_to_string(gameinfo->to_move), movenum + 1);
+      mprintf("%s(%d): ", color_to_string(gameinfo->to_move), internal_state->movenum + 1);
 
       /* Read a line of input. */
       line_ptr = line;
@@ -670,7 +670,7 @@ do_play_ascii(Gameinfo *gameinfo)
 	return;
 #else
       snprintf(line, 79, "%s(%d): ",
-	       color_to_string(gameinfo->to_move), movenum + 1);
+	       color_to_string(gameinfo->to_move), internal_state->movenum + 1);
       if (!(line_ptr = readline(line)))
 	return;
 
@@ -1229,8 +1229,8 @@ ascii_goto(Gameinfo *gameinfo, char *line)
   else if (!strncmp(line, "first", 4))
     movenumber = "1";
   
-  printf("goto %s\n", movenumber);
-  gameinfo_play_sgftree(gameinfo, &sgftree, movenumber);
+  printf("goto %s\n", internal_state->movenumber);
+  gameinfo_play_sgftree(gameinfo, &sgftree, internal_state->movenumber);
 }
 
 

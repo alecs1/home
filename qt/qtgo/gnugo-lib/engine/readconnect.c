@@ -249,7 +249,7 @@ snapback(int str)
   if (trymove(internal_state, lib, OTHER_COLOR(internal_state->board[str]), "snapback", str)) {
     liberties = 0;
     if (IS_STONE(internal_state->board[lib]))
-      liberties = countlib(lib);
+      liberties = countlib(internal_state, lib);
     popgo(internal_state);
     sgf_dumptree = save_sgf_dumptree;
     if (liberties > 1)
@@ -1870,7 +1870,7 @@ order_connection_moves(int *moves, int str1, int str2, int color_to_move,
   }
 
   if (0) {
-    gprintf(internal_state, "%oVariation %d:\n", count_variations);
+    gprintf(internal_state, "%oVariation %d:\n", internal_state->count_variations);
     for (i = 1; i <= moves[0]; i++)
       gprintf(internal_state, "%o  %1M %d\n", moves[i], scores[i]);
   }
@@ -3097,7 +3097,7 @@ break_in(int str, const signed char goal[BOARDMAX], int *move)
 				      breakin_node_limit, &result, move)) {
     if (debug & DEBUG_BREAKIN) {
       gprintf(internal_state, "Break-in from %1m to:\n", str);
-      goaldump(goal);
+      goaldump(internal_state, goal);
       gprintf(internal_state, "Result cached: %s %1m\n", result_to_string(result), *move);
     }
     return result;
@@ -3115,13 +3115,13 @@ break_in(int str, const signed char goal[BOARDMAX], int *move)
     gprintf(internal_state, "%obreak_in    %1M, result %s %1M (%d, %d nodes, %f seconds)\n",
 	    str, result_to_string(result), *move,
 	    nodes_connect, tactical_nodes, gg_cputime() - start);
-    goaldump(goal);
+    goaldump(internal_state, goal);
     dump_stack(internal_state);
   }
   if (0) {
     gprintf(internal_state, "%obreak_in %1m %d %1m ", str, result, *move);
     dump_stack(internal_state);
-    goaldump(goal);
+    goaldump(internal_state, goal);
   }
   store_persistent_breakin_cache(BREAK_IN, str, &goal_hash, result, *move,
       				 tactical_nodes, breakin_node_limit,
@@ -3157,7 +3157,7 @@ block_off(int str, const signed char goal[BOARDMAX], int *move)
 				      breakin_node_limit, &result, move)) {
     if (debug & DEBUG_BREAKIN) {
       gprintf(internal_state, "Blocking off %1m from:\n", str);
-      goaldump(goal);
+      goaldump(internal_state, goal);
       gprintf(internal_state, "Result cached: %s %1m\n", result_to_string(result), *move);
     }
     return result;
@@ -3176,12 +3176,12 @@ block_off(int str, const signed char goal[BOARDMAX], int *move)
     gprintf(internal_state, "%oblock_off %1m, result %s %1m (%d, %d nodes, %f seconds)\n",
 	    str, result_to_string(result), *move,
 	    nodes_connect, tactical_nodes, gg_cputime() - start);
-    goaldump(goal);
+    goaldump(internal_state, goal);
     dump_stack(internal_state);
   }
   if (0) {
     gprintf(internal_state, "%oblock_off %1m %d %1m ", str, result, *move);
-    goaldump(goal);
+    goaldump(internal_state, goal);
     dump_stack(internal_state);
   }
   store_persistent_breakin_cache(BLOCK_OFF, str, &goal_hash, result, *move,

@@ -621,7 +621,7 @@ filllib_confirm_safety(struct board_lib_state_struct *internal_state,
   save_verbose = verbose;
   if (verbose > 0)
     verbose--;
-  if (!owl_does_defend(move, apos, NULL))
+  if (!owl_does_defend(internal_state, move, apos, NULL))
     return 0;
   verbose = save_verbose;
   

@@ -237,12 +237,12 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
       move = genmove_conservative(next, &move_value);
       if (move != PASS_MOVE) {
 	pass = 0;
-	gprintf(internal_state, "%d %s move %1m\n", movenum,
+	gprintf(internal_state, "%d %s move %1m\n", internal_state->movenum,
 		next == WHITE ? "white (O)" : "black (X)", move);
       }
       else {
 	pass++;
-	gprintf(internal_state, "%d %s move PASS\n", movenum, 
+	gprintf(internal_state, "%d %s move PASS\n", internal_state->movenum, 
 		next == WHITE ? "white (O)" : "black (X)");
       }
       play_move(internal_state, move, next);

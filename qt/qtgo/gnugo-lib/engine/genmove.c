@@ -307,7 +307,7 @@ collect_move_reasons(struct board_lib_state_struct *internal_state,
 {
   worm_reasons(color);
   semeai_move_reasons(color);
-  owl_reasons(color);
+  owl_reasons(internal_state, color);
   cut_reasons(internal_state, color);
   break_in_move_reasons(internal_state, color);
   unconditional_move_reasons(color);

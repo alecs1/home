@@ -175,7 +175,8 @@ static struct persistent_cache semeai_cache =
 
 
 static void
-draw_active_area(Intersection board[BOARDMAX], int apos)
+draw_active_area(board_lib_state_struct *internal_state,
+                 Intersection board[BOARDMAX], int apos)
 {
   int i, j, ii;
   int c = ' ';
@@ -222,7 +223,8 @@ draw_active_area(Intersection board[BOARDMAX], int apos)
  * 0 otherwise.
  */
 static int
-verify_stored_board(Intersection p[BOARDMAX])
+verify_stored_board(board_lib_state_struct *internal_state,
+                    Intersection p[BOARDMAX])
 {
   int pos;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
@@ -247,7 +249,8 @@ verify_stored_board(Intersection p[BOARDMAX])
  * a board showing the active area.
  */
 static void
-print_persistent_cache_entry(struct persistent_cache_entry *entry)
+print_persistent_cache_entry(board_lib_state_struct *internal_state,
+                             struct persistent_cache_entry *entry)
 {
   int r;
 
@@ -279,23 +282,25 @@ print_persistent_cache_entry(struct persistent_cache_entry *entry)
 	    entry->stack[r]);
   }
 
-  draw_active_area(entry->board, entry->apos);
+  draw_active_area(internal_state, entry->board, entry->apos);
 }
 
 /* To keep GCC happy and have the function included in the
  * gnugo executable. Can be used from gdb.
  */
-void print_persistent_cache(struct persistent_cache *cache);
+void print_persistent_cache(board_lib_state_struct *internal_state,
+                            struct persistent_cache *cache);
 
 
 /* Can be used from gdb. */
 void
-print_persistent_cache(struct persistent_cache *cache)
+print_persistent_cache(board_lib_state_struct *internal_state,
+                       struct persistent_cache *cache)
 {
   int k;
   gprintf(internal_state, "Entire content of %s:\n", cache->name);
   for (k = 0; k < cache->current_size; k++)
-    print_persistent_cache_entry(cache->table + k);
+    print_persistent_cache_entry(internal_state, cache->table + k);
 }
 
 
@@ -315,7 +320,8 @@ print_persistent_cache(struct persistent_cache *cache)
  * not required for correct operation though. 
  */
 static void
-purge_persistent_cache(struct persistent_cache *cache)
+purge_persistent_cache(board_lib_state_struct *internal_state,
+                       struct persistent_cache *cache)
 {
   int k;
   int r;

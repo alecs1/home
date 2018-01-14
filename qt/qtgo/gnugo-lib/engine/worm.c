@@ -1178,7 +1178,7 @@ change_tactical_point(int str, int move, int code,
 		      int points[MAX_TACTICAL_POINTS],
 		      int codes[MAX_TACTICAL_POINTS])
 {
-  ASSERT_ON_BOARD1(str);
+  ASSERT_ON_BOARD1(internal_state, str);
   ASSERT1(internal_state, str == worm[str].origin, str);
   
   movelist_change_point(move, code, MAX_TACTICAL_POINTS, points, codes);
@@ -1220,7 +1220,7 @@ static void
 propagate_worm2(int str)
 {
   int pos;
-  ASSERT_ON_BOARD1(str);
+  ASSERT_ON_BOARD1(internal_state, str);
   ASSERT1(internal_state, IS_STONE(worm[str].color), str);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)

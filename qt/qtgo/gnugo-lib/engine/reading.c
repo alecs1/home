@@ -5306,7 +5306,7 @@ order_moves(int str, struct reading_moves *moves, int color,
 
 
   if (0) {
-    gprintf(internal_state, "%oVariation %d:\n", count_variations);
+    gprintf(internal_state, "%oVariation %d:\n", internal_state->count_variations);
     for (i = moves->num_tried; i < moves->num; i++)
       gprintf(internal_state, "%o  %1M %d\n", moves->pos[i], moves->score[i]);
   }
