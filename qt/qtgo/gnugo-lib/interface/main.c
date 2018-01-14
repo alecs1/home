@@ -844,7 +844,7 @@ main(int argc, char *argv[])
 
       case OPT_LIMIT_SEARCH:
 	{
-	  int pos = string_to_location(board_size, gg_optarg);
+	  int pos = string_to_location(internal_state->board_size, gg_optarg);
 	  if (pos == NO_MOVE) {
 	    fprintf(stderr, "gnugo: use --limit-search <pos>\n");
 	    return EXIT_FAILURE;
@@ -1029,7 +1029,7 @@ main(int argc, char *argv[])
   }
   else
   /* Initialize and empty sgf tree if there was no infile. */
-    sgftreeCreateHeaderNode(&sgftree, board_size, komi, handicap);
+    sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, handicap);
 
   /* Set the game_record to be identical to the loaded one or the
    * newly created empty sgf tree.
@@ -1039,7 +1039,7 @@ main(int argc, char *argv[])
   /* Notice that we need to know the board size before we can do this.
    */
   if (debuginfluence_move[0]) {
-    int pos = string_to_location(board_size, debuginfluence_move);
+    int pos = string_to_location(internal_state->board_size, debuginfluence_move);
     debug_influence_move(pos);
   }
   
@@ -1153,7 +1153,7 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      str = string_to_location(board_size, decide_this); 
+      str = string_to_location(internal_state->board_size, decide_this); 
       if (str == NO_MOVE) {
 	fprintf(stderr, "gnugo: --decide-string: strange coordinate \n");
 	return EXIT_FAILURE;
@@ -1172,14 +1172,14 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      str1 = string_to_location(board_size, decide_this);
+      str1 = string_to_location(internal_state->board_size, decide_this);
       if (str1 == NO_MOVE) {
 	fprintf(stderr,
 		"usage: --decide-connection [first string]/[second string]\n");
 	return EXIT_FAILURE;
       }
 
-      str2 = string_to_location(board_size, decide_that);
+      str2 = string_to_location(internal_state->board_size, decide_that);
       if (str2 == NO_MOVE) {
 	fprintf(stderr,
 		"usage: --decide-connection [first string]/[second string]\n");
@@ -1199,7 +1199,7 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      pos = string_to_location(board_size, decide_this);
+      pos = string_to_location(internal_state->board_size, decide_this);
       if (pos == NO_MOVE) {
 	fprintf(stderr, "gnugo: --decide-dragon: strange coordinate \n");
 	return EXIT_FAILURE;
@@ -1218,7 +1218,7 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      pos = string_to_location(board_size, decide_this);
+      pos = string_to_location(internal_state->board_size, decide_this);
       if (pos == NO_MOVE) {
 	fprintf(stderr, "gnugo: --decide-dragon-data: strange coordinate \n");
 	return EXIT_FAILURE;
@@ -1237,14 +1237,14 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      pos1 = string_to_location(board_size, decide_this);
+      pos1 = string_to_location(internal_state->board_size, decide_this);
       if (pos1 == NO_MOVE) {
 	fprintf(stderr, 
 		"usage: --decide-semeai [first dragon]/[second dragon]\n");
 	return EXIT_FAILURE;
       }
 
-      pos2 = string_to_location(board_size, decide_that);
+      pos2 = string_to_location(internal_state->board_size, decide_that);
       if (pos2 == NO_MOVE) {
 	fprintf(stderr, 
 		"usage: --decide-semeai [first dragon]/[second dragon]\n");
@@ -1275,7 +1275,7 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
       }
 
-      pos = string_to_location(board_size, decide_this);
+      pos = string_to_location(internal_state->board_size, decide_this);
       if (pos == NO_MOVE) {
 	fprintf(stderr, "gnugo: --decide-eye: strange coordinate \n");
 	return EXIT_FAILURE;
@@ -1301,7 +1301,7 @@ main(int argc, char *argv[])
     
   case MODE_DECIDE_SURROUNDED:
     {
-      int pos = string_to_location(board_size, decide_this);
+      int pos = string_to_location(internal_state->board_size, decide_this);
 
       if (pos == NO_MOVE) {
 	fprintf(stderr, 

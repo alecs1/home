@@ -272,7 +272,7 @@ dump_board_sgf(struct board_lib_state_struct *internal_state)
 void 
 abortgo(struct board_lib_state_struct *internal_state, const char *file, int line, const char *msg, int pos)
 {
-  gprintf("%o\n\n***assertion failure:\n%s:%d - %s near %1m***\n\n",
+  gprintf(internal_state, "%o\n\n***assertion failure:\n%s:%d - %s near %1m***\n\n",
 	  file, line, msg, pos);
   dump_stack(internal_state);
 
@@ -483,14 +483,14 @@ simple_showboard(struct board_lib_state_struct *internal_state, FILE *outfile)
 {
   int i, j;
 
-  draw_letter_coordinates(outfile);
+  draw_letter_coordinates(internal_state, outfile);
   
   for (i = 0; i < internal_state->board_size; i++) {
-    fprintf(outfile, "\n%2d", board_size - i);
+    fprintf(outfile, "\n%2d", internal_state->board_size - i);
     
     for (j = 0; j < internal_state->board_size; j++) {
       if (BOARD(i, j) == EMPTY)
-	fprintf(outfile, " %c", is_hoshi_point(i, j) ? '+' : '.');
+    fprintf(outfile, " %c", is_hoshi_point(internal_state, i, j) ? '+' : '.');
       else
 	fprintf(outfile, " %c", BOARD(i, j) == BLACK ? 'X' : 'O');
     }
@@ -498,16 +498,16 @@ simple_showboard(struct board_lib_state_struct *internal_state, FILE *outfile)
     fprintf(outfile, " %d", internal_state->board_size - i);
     
     if ((internal_state->board_size < 10 && i == internal_state->board_size-2)
-	|| (board_size >= 10 && i == 8))
-      fprintf(outfile, "     WHITE (O) has captured %d stones", black_captured);
+    || (internal_state->board_size >= 10 && i == 8))
+      fprintf(outfile, "     WHITE (O) has captured %d stones", internal_state->black_captured);
     
     if ((internal_state->board_size < 10 && i == internal_state->board_size-1)
     || (internal_state->board_size >= 10 && i == 9))
-      fprintf(outfile, "     BLACK (X) has captured %d stones", white_captured);
+      fprintf(outfile, "     BLACK (X) has captured %d stones", internal_state->white_captured);
   }
   
   fprintf(outfile, "\n");
-  draw_letter_coordinates(outfile);
+  draw_letter_coordinates(internal_state, outfile);
 }
 
 
@@ -515,17 +515,17 @@ simple_showboard(struct board_lib_state_struct *internal_state, FILE *outfile)
  * This function cannot be in sgf/ as it has to understand the 1-D board.
  */
 void
-mark_goal_in_sgf(signed char goal[BOARDMAX])
+mark_goal_in_sgf(struct board_lib_state_struct *internal_state, signed char goal[BOARDMAX])
 {
   int pos;
   SGFNode *node;
 
-  if (!sgf_dumptree)
+  if (!internal_state->sgf_dumptree)
     return;
-  node = sgftreeNodeCheck(sgf_dumptree);
+  node = sgftreeNodeCheck(internal_state->sgf_dumptree);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos) && goal[pos])
+    if (ON_BOARD(internal_state, pos) && goal[pos])
       sgfSquare(node, I(pos), J(pos));
 }
 

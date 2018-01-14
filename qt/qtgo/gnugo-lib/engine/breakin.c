@@ -66,15 +66,15 @@ static int num_break_ins;
 
 /* Adds all empty intersections that have two goal neighbors to the goal. */
 static void
-enlarge_goal(signed char goal[BOARDMAX])
+enlarge_goal(struct board_lib_state_struct *internal_state, signed char goal[BOARDMAX])
 {
   int pos;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == EMPTY && !goal[pos]) {
+    if (internal_state->board[pos] == EMPTY && !goal[pos]) {
       int k;
       int goal_neighbors = 0;
       for (k = 0; k < 4; k++)
-	if (board[pos + delta[k]] == EMPTY && goal[pos + delta[k]] == 1)
+    if (internal_state->board[pos + delta[k]] == EMPTY && goal[pos + delta[k]] == 1)
 	  goal_neighbors++;
       if (goal_neighbors >= 2)
 	goal[pos] = 2;
@@ -89,7 +89,8 @@ enlarge_goal(signed char goal[BOARDMAX])
  * of "blocking off", i.e. when color_to_move == owner.
  */
 static void
-compute_smaller_goal(int owner, int color_to_move,
+compute_smaller_goal(struct board_lib_state_struct *internal_state,
+                 int owner, int color_to_move,
     		     const struct connection_data *conn,
     		     const signed char goal[BOARDMAX],
 		     signed char smaller_goal[BOARDMAX])
@@ -114,10 +115,10 @@ compute_smaller_goal(int owner, int color_to_move,
 	/* How many stones have we used to jump from coming_from to pos?
 	 * Use Manhattan metric as a guess.
 	 */
-	if (!goal[pos] && board[pos] == OTHER_COLOR(owner)) {
+    if (!goal[pos] && internal_state->board[pos] == OTHER_COLOR(owner)) {
 	  int i;
 	  int stones[MAX_BOARD * MAX_BOARD];
-	  int num_stones = findstones(pos, MAX_BOARD * MAX_BOARD, stones);
+      int num_stones = findstones(internal_state, pos, MAX_BOARD * MAX_BOARD, stones);
 	  int smallest_distance = 3;
 
 	  for (i = 0; i < num_stones; i++) {
@@ -146,9 +147,9 @@ compute_smaller_goal(int owner, int color_to_move,
      * or that is on an edge and has only two goal neighbors.
      */
     for (j = 0; j < 4; j++)
-      if (ON_BOARD(pos + delta[j])
+      if (ON_BOARD(internal_state, pos + delta[j])
 	  && goal[pos + delta[j]]
-	  && (board[pos] == EMPTY || goal[pos] == OTHER_COLOR(owner)))
+      && (internal_state->board[pos] == EMPTY || goal[pos] == OTHER_COLOR(owner)))
 	goal_neighbors++;
 #if 0
     if (goal_neighbors > 2
@@ -170,7 +171,7 @@ compute_smaller_goal(int owner, int color_to_move,
     memset(marked, 0, BOARDMAX);
     for (k = 0; k < conn->queue_end; k++) {
       int pos = conn->queue[k];
-      if (ON_BOARD(pos) && smaller_goal[pos] && !marked[pos]) {
+      if (ON_BOARD(internal_state, pos) && smaller_goal[pos] && !marked[pos]) {
 	/* Floodfill the connected component of (pos) in the goal. */
 	int queue_start = 0;
 	int queue_end = 1;
@@ -180,12 +181,12 @@ compute_smaller_goal(int owner, int color_to_move,
 	marked[pos] = mark;
 	queue[0] = pos;
 	while (queue_start < queue_end) {
-	  test_gray_border();
+      test_gray_border(internal_state);
 	  for (j = 0; j < 4; j++) {
 	    int pos2 = queue[queue_start] + delta[j];
-	    if (!ON_BOARD(pos2))
+        if (!ON_BOARD(internal_state, pos2))
 	      continue;
-	    ASSERT1(marked[pos2] == 0 || marked[pos2] == mark, pos2);
+        ASSERT1(internal_state, marked[pos2] == 0 || marked[pos2] == mark, pos2);
 	    if (smaller_goal[pos2]
 		&& !marked[pos2]) {
 	      sizes[(int) mark]++;
@@ -219,7 +220,8 @@ compute_smaller_goal(int owner, int color_to_move,
  * try again.
  */
 static int
-break_in_goal_from_str(int str, signed char goal[BOARDMAX],
+break_in_goal_from_str(struct board_lib_state_struct *internal_state,
+                  int str, signed char goal[BOARDMAX],
     		      int *num_non_territory, int non_territory[BOARDMAX],
     		      int color_to_move, int info_pos)
 {
@@ -229,23 +231,23 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
   struct connection_data conn;
 
   /* When blocking off, we use a somewhat smaller goal area. */
-  if (color_to_move == board[str])
+  if (color_to_move == internal_state->board[str])
     compute_connection_distances(str, NO_MOVE, FP(3.01), &conn, 1);
   else
     compute_connection_distances(str, NO_MOVE, FP(2.81), &conn, 1);
 
   sort_connection_queue_tail(&conn);
   expand_connection_queue(&conn);
-  compute_smaller_goal(OTHER_COLOR(board[str]), color_to_move,
+  compute_smaller_goal(internal_state, OTHER_COLOR(internal_state->board[str]), color_to_move,
       		       &conn, goal, smaller_goal);
   if (0 && (debug & DEBUG_BREAKIN))
     print_connection_distances(&conn);
   DEBUG(DEBUG_BREAKIN, "Trying to break in from %1m to:\n", str);
   if (debug & DEBUG_BREAKIN)
     goaldump(smaller_goal);
-  while ((color_to_move == board[str]
+  while ((color_to_move == internal_state->board[str]
           && break_in(str, smaller_goal, &move))
-         || (color_to_move == OTHER_COLOR(board[str])
+         || (color_to_move == OTHER_COLOR(internal_state->board[str])
 	     && !block_off(str, smaller_goal, NULL))) { 
     /* Successful break-in/unsuccessful block. Now where exactly can we
      * erase territory? This is difficult, and the method here is very
@@ -257,7 +259,7 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
     int save_num = *num_non_territory;
     int affected_size = 0;
     int cut_off_distance = FP(3.5);
-    if (ON_BOARD(move) && goal[move]) {
+    if (ON_BOARD(internal_state, move) && goal[move]) {
       non_territory[(*num_non_territory)++] = move;
       if (info_pos)
 	DEBUG(DEBUG_TERRITORY | DEBUG_BREAKIN,
@@ -272,7 +274,7 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
       if (conn.distances[pos] > cut_off_distance + FP(0.31))
 	break;
       if (goal[pos]
-	  && (!ON_BOARD(conn.coming_from[pos])
+      && (!ON_BOARD(internal_state, conn.coming_from[pos])
 	      || !goal[conn.coming_from[pos]])) {
 	non_territory[(*num_non_territory)++] = pos;
 	if (info_pos)
@@ -300,7 +302,7 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
 	goal[pos] = 0;
       }
       for (j = 0; j < 4; j++)
-	if (ON_BOARD(pos + delta[j]) && goal[pos + delta[j]])
+	if (ON_BOARD(internal_state, pos + delta[j]) && goal[pos + delta[j]])
 	  affected_size++;
       /* Don't kill too much territory at a time. */
       if (affected_size >= 5) {
@@ -309,7 +311,7 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
       }
     }
 
-    compute_smaller_goal(OTHER_COLOR(board[str]), color_to_move,
+    compute_smaller_goal(internal_state, OTHER_COLOR(internal_state->board[str]), color_to_move,
 			 &conn, goal, smaller_goal);
     DEBUG(DEBUG_BREAKIN, "Now trying to break to smaller goal:\n", str);
     if (debug & DEBUG_BREAKIN)
@@ -324,7 +326,8 @@ break_in_goal_from_str(int str, signed char goal[BOARDMAX],
 #define MAX_TRIES 10
 
 static void
-break_in_goal(int color_to_move, int owner, signed char goal[BOARDMAX],
+break_in_goal(struct board_lib_state_struct *internal_state,
+              int color_to_move, int owner, signed char goal[BOARDMAX],
     	      struct influence_data *q, int store, int info_pos)
 {
   struct connection_data conn;
@@ -355,23 +358,23 @@ break_in_goal(int color_to_move, int owner, signed char goal[BOARDMAX],
     int pos = conn.queue[k];
     if (conn.distances[pos] > min_distance + FP(1.001))
       break;
-    if (board[pos] == intruder
+    if (internal_state->board[pos] == intruder
 	&& influence_considered_lively(q, pos)) {
       /* Discard this string in case the shortest path goes via a string
        * that we have in the candidate list already.
        */
       int pos2 = pos;
-      while (ON_BOARD(pos2)) {
+      while (ON_BOARD(internal_state, pos2)) {
         pos2 = conn.coming_from[pos2];
-	if (IS_STONE(board[pos2]))
-	  pos2 = find_origin(pos2);
+    if (IS_STONE(internal_state->board[pos2]))
+      pos2 = find_origin(internal_state, pos2);
 
 	if (used[pos2])
 	  break;
       }
 
       used[pos] = 1;
-      if (ON_BOARD(pos2))
+      if (ON_BOARD(internal_state, pos2))
 	continue;
       if (candidates == 0)
 	min_distance = conn.distances[pos];
@@ -384,10 +387,10 @@ break_in_goal(int color_to_move, int owner, signed char goal[BOARDMAX],
   /* Finally, try the break-ins. */
   memset(non_territory, 0, BOARDMAX);
   for (k = 0; k < candidates; k++) {
-    int move = break_in_goal_from_str(candidate_strings[k], goal,
+    int move = break_in_goal_from_str(internal_state, candidate_strings[k], goal,
   		                     &num_non_territory, non_territory,
 				     color_to_move, info_pos);
-    if (store && ON_BOARD(move) && num_break_ins < MAX_BREAK_INS) {
+    if (store && ON_BOARD(internal_state, move) && num_break_ins < MAX_BREAK_INS) {
       /* Remember the move as a possible move candidate for later. */
       break_in_list[num_break_ins].str = candidate_strings[k];
       break_in_list[num_break_ins].move = move;
@@ -409,7 +412,8 @@ break_in_goal(int color_to_move, int owner, signed char goal[BOARDMAX],
  * later gets used to generate move reasons).
  */
 void
-break_territories(int color_to_move, struct influence_data *q, int store,
+break_territories(struct board_lib_state_struct *internal_state,
+                  int color_to_move, struct influence_data *q, int store,
     		  int info_pos)
 {
   struct moyo_data territories;
@@ -426,17 +430,17 @@ break_territories(int color_to_move, struct influence_data *q, int store,
 
     memset(goal, 0, BOARDMAX);
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-      if (ON_BOARD(pos) && territories.segmentation[pos] == k) {
+      if (ON_BOARD(internal_state, pos) && territories.segmentation[pos] == k) {
 	goal[pos] = 1;
-	if (board[pos] != territories.owner[k])
+    if (internal_state->board[pos] != territories.owner[k])
 	  size++;
       }
     if (size < 10)
       continue;
 
     if (color_to_move == OTHER_COLOR(territories.owner[k]))
-      enlarge_goal(goal);
-    break_in_goal(color_to_move, territories.owner[k], goal, q, store,
+      enlarge_goal(internal_state, goal);
+    break_in_goal(internal_state, color_to_move, territories.owner[k], goal, q, store,
 		  info_pos);
   }
 }
@@ -455,10 +459,10 @@ clear_break_in_list()
  * otherwise.)
  */
 void
-break_in_move_reasons(int color)
+break_in_move_reasons(struct board_lib_state_struct *internal_state, int color)
 {
   int k;
   for (k = 0; k < num_break_ins; k++)
-    if (board[break_in_list[k].str] == color)
+    if (internal_state->board[break_in_list[k].str] == color)
       add_expand_territory_move(break_in_list[k].move);
 }

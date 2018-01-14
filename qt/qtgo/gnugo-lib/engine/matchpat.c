@@ -151,7 +151,7 @@ static void matchpat_loop(matchpat_callback_fn_ptr callback,
  * the board. This table relies on the fact that color is
  * 1 or 2.
  *
- * For pattern element i,  require  (board[pos] & andmask[i]) == valmask[i]
+ * For pattern element i,  require  (internal_state->board[pos] & andmask[i]) == valmask[i]
  *
  * .XO) For i=0,1,2, board[pos] & 3 is a no-op, so we check board[pos]
  *	== valmask
@@ -240,26 +240,26 @@ fixup_patterns_for_board_size(struct pattern *pattern)
 	pattern->minj = pattern->maxj - pattern->width;
       
       /* we extend the pattern in the direction opposite the constraint,
-       * such that maxi (+ve) - mini (-ve) = board_size-1
+       * such that maxi (+ve) - mini (-ve) = internal_state->board_size-1
        * Note : the pattern may be wider than the board, so
        * we need to be a bit careful !
        */
       
       if (pattern->edge_constraints & NORTH_EDGE)
-	if (pattern->maxi < (board_size-1) + pattern->mini)
-	  pattern->maxi = (board_size-1) + pattern->mini;
+    if (pattern->maxi < (internal_state->board_size-1) + pattern->mini)
+      pattern->maxi = (internal_state->board_size-1) + pattern->mini;
       
       if (pattern->edge_constraints & SOUTH_EDGE)
-	if (pattern->mini > pattern->maxi - (board_size-1))
-	  pattern->mini = pattern->maxi - (board_size-1);
+    if (pattern->mini > pattern->maxi - (internal_state->board_size-1))
+      pattern->mini = pattern->maxi - (internal_state->board_size-1);
       
       if (pattern->edge_constraints & WEST_EDGE)
-	if (pattern->maxj <  (board_size-1) + pattern->minj)
-	  pattern->maxj = (board_size-1) + pattern->minj;
+    if (pattern->maxj <  (internal_state->board_size-1) + pattern->minj)
+      pattern->maxj = (internal_state->board_size-1) + pattern->minj;
       
       if (pattern->edge_constraints & EAST_EDGE)
-	if (pattern->minj > pattern->maxj - (board_size-1))
-	  pattern->minj = pattern->maxj - (board_size-1);
+    if (pattern->minj > pattern->maxj - (internal_state->board_size-1))
+      pattern->minj = pattern->maxj - (internal_state->board_size-1);
     }
 }
 
@@ -273,7 +273,7 @@ prepare_for_match(int color)
   int other = OTHER_COLOR(color);
 
   /* Basic sanity checks. */
-  gg_assert(color != EMPTY);
+  gg_assert(internal_state, color != EMPTY);
 
   /* If we set one of class_mask[XXX][color] and
    * class_mask[XXX][other], we have to explicitly set or reset the
@@ -336,7 +336,7 @@ do_matchpat(struct board_lib_state_struct *internal_state,
   }
 
   /* Try each pattern - NULL pattern marks end of list. Assume at least 1 */
-  gg_assert(pattern->patn);
+  gg_assert(internal_state, pattern->patn);
 
   do {
     /*
@@ -361,7 +361,7 @@ do_matchpat(struct board_lib_state_struct *internal_state,
        * anchored_at_X, we can check that
        *   board[pos] == (color ^ anchored_at_X)
        * which is equivalent to
-       *   (board[pos] ^ color) == anchored_at_X)
+       *   (internal_state->board[pos] ^ color) == anchored_at_X)
        * and the LHS is something we precomputed.
        */
 
@@ -438,10 +438,10 @@ do_matchpat(struct board_lib_state_struct *internal_state,
 	  /* transform pattern real coordinate... */
 	  pos = AFFINE_TRANSFORM(pattern->patn[k].offset, ll, anchor);
 
-	  ASSERT_ON_BOARD1(pos);
+      ASSERT_ON_BOARD1(internal_state, pos);
 
 	  /* ...and check that board[pos] matches (see above). */
-	  if ((board[pos] & and_mask[color-1][att]) != val_mask[color-1][att])
+      if ((internal_state->board[pos] & and_mask[color-1][att]) != val_mask[color-1][att])
 	    goto match_failed;
 
 	  if (goal != NULL && board[pos] != EMPTY && goal[pos])
@@ -506,7 +506,7 @@ matchpat_loop(matchpat_callback_fn_ptr callback, int color, int anchor,
   int pos;
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == anchor && (!anchor_in_goal || goal[pos] != 0))
+    if (internal_state->board[pos] == anchor && (!anchor_in_goal || goal[pos] != 0))
       do_matchpat(pos, callback, color, pdb->patterns,
 		  callback_data, goal);
   }
@@ -601,8 +601,8 @@ dfa_prepare_for_match(int color)
   int i, j;
   int pos;
     
-  if (dfa_board_size != board_size) {
-    dfa_board_size = board_size;
+  if (dfa_board_size != internal_state->board_size) {
+    dfa_board_size = internal_state->board_size;
     /* clean up the board */
     for (pos = 0; pos < DFA_BASE * DFA_BASE; pos++)
       dfa_p[pos] = OUT_BOARD;
@@ -735,7 +735,7 @@ check_pattern_light(int anchor, matchpat_callback_fn_ptr callback, int color,
 #endif
   
   if (0)
-    gprintf("check_pattern_light @ %1m rot:%d pattern: %s\n", 
+    gprintf(internal_state, "check_pattern_light @ %1m rot:%d pattern: %s\n",
 	    anchor, ll, pattern->name);
 
   /* Throw out duplicating orientations of symmetric patterns. */
@@ -757,7 +757,7 @@ check_pattern_light(int anchor, matchpat_callback_fn_ptr callback, int color,
 
     /* transform pattern real coordinate... */
     pos = AFFINE_TRANSFORM(pattern->patn[k].offset, ll, anchor);
-    ASSERT_ON_BOARD1(pos);
+    ASSERT_ON_BOARD1(internal_state, pos);
 
     if (!anchor_in_goal) { 
       /* goal check */
@@ -811,7 +811,7 @@ dfa_matchpat_loop(matchpat_callback_fn_ptr callback, int color, int anchor,
   int pos;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == anchor && (!anchor_in_goal || goal[pos] != 0))
+    if (internal_state->board[pos] == anchor && (!anchor_in_goal || goal[pos] != 0))
       do_dfa_matchpat(pdb->pdfa, pos, callback, color, pdb->patterns,
 		      callback_data, goal, anchor_in_goal);
   }
@@ -859,9 +859,9 @@ matchpat_goal_anchor(matchpat_callback_fn_ptr callback, int color,
   prepare_fn_ptr_t prepare = prepare_for_match;
 
   /* check board size */
-  if (pdb->fixed_for_size != board_size) {
+  if (pdb->fixed_for_size != internal_state->board_size) {
     fixup_patterns_for_board_size(pdb->patterns);
-    pdb->fixed_for_size = board_size;
+    pdb->fixed_for_size = internal_state->board_size;
   }
 
   /* select pattern matching strategy */
@@ -901,12 +901,12 @@ matchpat_goal_anchor(matchpat_callback_fn_ptr callback, int color,
 static int
 fullboard_transform(int pos, int trans)
 {
-  int dx = I(pos) - (board_size-1)/2;
-  int dy = J(pos) - (board_size-1)/2;
+  int dx = I(pos) - (internal_state->board_size-1)/2;
+  int dy = J(pos) - (internal_state->board_size-1)/2;
   int x, y;
-  gg_assert(POS((board_size-1)/2, (board_size-1)/2) + DELTA(dx, dy) == pos);
+  gg_assert(POS((internal_state->board_size-1)/2, (internal_state->board_size-1)/2) + DELTA(dx, dy) == pos);
   TRANSFORM2(dx, dy, &x, &y, trans);
-  return POS(x + (board_size-1)/2, y + (board_size-1)/2);
+  return POS(x + (internal_state->board_size-1)/2, y + (internal_state->board_size-1)/2);
 }
 
 /* A dedicated matcher which can only do fullboard matching on
@@ -918,14 +918,14 @@ fullboard_matchpat(fullboard_matchpat_callback_fn_ptr callback, int color,
 {
   int ll;   /* Iterate over transformations (rotations or reflections)  */
   /* We transform around the center point. */
-  int number_of_stones_on_board = stones_on_board(BLACK | WHITE);
+  int number_of_stones_on_board = stones_on_board(internal_state, BLACK | WHITE);
   static int color_map[gg_max(WHITE, BLACK) + 1];
   /* One hash value for each rotation/reflection: */
   Hash_data current_board_hash[8];
   
   /* Basic sanity check. */
-  gg_assert(color != EMPTY);
-  gg_assert(board_size % 2 == 1);
+  gg_assert(internal_state, color != EMPTY);
+  gg_assert(internal_state->board_size % 2 == 1);
 
   color_map[EMPTY] = EMPTY;
   if (color == WHITE) {
@@ -942,7 +942,7 @@ fullboard_matchpat(fullboard_matchpat_callback_fn_ptr callback, int color,
     Intersection p[BOARDSIZE];
     int pos;
     for (pos = 0; pos < BOARDSIZE; pos++)
-      if (ON_BOARD(pos))
+      if (ON_BOARD(internal_state, pos))
 	p[pos] = color_map[board[fullboard_transform(pos, ll)]];
       else
 	p[pos] = GRAY;
@@ -963,7 +963,7 @@ fullboard_matchpat(fullboard_matchpat_callback_fn_ptr callback, int color,
       if (hashdata_is_equal(current_board_hash[ll], pattern->fullboard_hash)) {
 	/* A match!  - Call back to the invoker to let it know. */
 	int pos = AFFINE_TRANSFORM(pattern->move_offset, ll,
-			           POS((board_size-1)/2, (board_size-1)/2));
+                       POS((internal_state->board_size-1)/2, (internal_state->board_size-1)/2));
 	callback(pos, pattern, ll);
       }
   }
@@ -1027,7 +1027,7 @@ do_corner_matchpat(int num_variations, struct corner_variation *variation,
       if (NUM_STONES(second_corner) == stones
 	  && (!pattern->symmetric || trans < 4)) {
 	/* We have found a matching pattern. */
-	ASSERT1(board[move] == EMPTY, move);
+    ASSERT1(internal_state->board[move] == EMPTY, move);
 
 	callback(move, callback_color, pattern, trans, pattern_stones, stones);
 	continue;
@@ -1058,8 +1058,8 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
   int k;
 
   for (k = 0; k < 8; k++) {
-    int anchor = POS(corner_x[k] * (board_size - 1),
-		     corner_y[k] * (board_size - 1));
+    int anchor = POS(corner_x[k] * (internal_state->board_size - 1),
+             corner_y[k] * (internal_state->board_size - 1));
     int i;
     int j;
     int dx = TRANSFORM(OFFSET(1, 0), k);
@@ -1070,12 +1070,12 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
     /* Fill in the NUM_STONES() array. We use `max_width' and `max_height'
      * fields of database structure to stop working as early as possible.
      */
-    NUM_STONES(anchor) = IS_STONE(board[anchor]);
+    NUM_STONES(anchor) = IS_STONE(internal_state->board[anchor]);
 
     pos = anchor;
     for (i = 1; i < database->max_height; i++) {
       pos += dx;
-      if (!ON_BOARD(pos)) {
+      if (!ON_BOARD(internal_state, pos)) {
 	do {
 	  NUM_STONES(pos) = BOARDMAX;
 	  pos += dx;
@@ -1084,13 +1084,13 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
 	break;
       }
 
-      NUM_STONES(pos) = NUM_STONES(pos - dx) + IS_STONE(board[pos]);
+      NUM_STONES(pos) = NUM_STONES(pos - dx) + IS_STONE(internal_state->board[pos]);
     }
 
     pos = anchor;
     for (j = 1; j < database->max_width; j++) {
       pos += dy;
-      if (!ON_BOARD(pos)) {
+      if (!ON_BOARD(internal_state, pos)) {
 	do {
 	  NUM_STONES(pos) = BOARDMAX;
 	  pos += dy;
@@ -1099,7 +1099,7 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
 	break;
       }
       
-      NUM_STONES(pos) = NUM_STONES(pos - dy) + IS_STONE(board[pos]);
+      NUM_STONES(pos) = NUM_STONES(pos - dy) + IS_STONE(internal_state->board[pos]);
     }
     
     for (i = 1; i < database->max_height; i++) {
@@ -1108,7 +1108,7 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
 	pos += dx;
 	NUM_STONES(pos) = NUM_STONES(pos - dx) + NUM_STONES(pos - dy)
 			- NUM_STONES(pos - dx - dy);
-    if (ON_BOARD1(internal_state, pos) && IS_STONE(board[pos]))
+    if (ON_BOARD1(internal_state, pos) && IS_STONE(internal_state->board[pos]))
 	  NUM_STONES(pos)++;
       }
     }
@@ -1119,7 +1119,7 @@ corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
     for (i = 0; i < database->num_top_variations; i++) {
       int move = AFFINE_TRANSFORM(variation->move_offset, k, anchor);
 
-      if (NUM_STONES(move) == 1 && IS_STONE(board[move])) {
+      if (NUM_STONES(move) == 1 && IS_STONE(internal_state->board[move])) {
 	pattern_stones[0] = move;
 	do_corner_matchpat(variation->num_variations, variation->variations,
 			   board[move], callback, color, k, anchor, 1);

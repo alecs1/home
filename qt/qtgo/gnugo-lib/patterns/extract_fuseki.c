@@ -383,10 +383,10 @@ init_zobrist_table(unsigned int hash[8][MAX_BOARD][MAX_BOARD])
   unsigned int k;
   int m, n;
   int i, j;
-  int mid = board_size/2;
+  int mid = internal_state->board_size/2;
   
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       hash[0][m][n] = 0;
       for (k = 0; 32*k < CHAR_BIT*sizeof(hash[0][0][0]); k++)
 	hash[0][m][n] |= gg_urand() << k*32;
@@ -394,8 +394,8 @@ init_zobrist_table(unsigned int hash[8][MAX_BOARD][MAX_BOARD])
   
   /* Fill in all transformations of the hash table. */
   for (k = 1; k < 8; k++)
-    for (m = 0; m < board_size; m++)
-      for (n = 0; n < board_size; n++) {
+    for (m = 0; m < internal_state->board_size; m++)
+      for (n = 0; n < internal_state->board_size; n++) {
 	TRANSFORM2(m-mid, n-mid, &i, &j, k);
 	hash[k][m][n] = hash[0][i+mid][j+mid];
       }
@@ -403,8 +403,8 @@ init_zobrist_table(unsigned int hash[8][MAX_BOARD][MAX_BOARD])
   /* Debug output. */
   if (0) {
     for (k = 0; k < 8; k++) {
-      for (m = 0; m < board_size; m++) {
-	for (n = 0; n < board_size; n++)
+      for (m = 0; m < internal_state->board_size; m++) {
+	for (n = 0; n < internal_state->board_size; n++)
 	  fprintf(stderr, "%8x ", hash[k][m][n]);
 	fprintf(stderr, "\n");
       }
@@ -465,8 +465,8 @@ common_hash_board(struct invariant_hash *hash, int color_to_play)
   for (k = 0; k < 8; k++)
     hash->values[k] = 0;
   
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       for (k = 0; k < 8; k++) {
 	if (BOARD(m, n) == color_to_play)
 	  hash->values[k] ^= O_hash[k][m][n];
@@ -539,9 +539,9 @@ get_move_from_sgf(SGFNode *node, int *m, int *n, int *color)
     }
     switch (prop->name) {
     case SGFAB:
-      get_moveXY(prop, &i, &j, board_size);
+      get_moveXY(prop, &i, &j, internal_state->board_size);
       /* Put handicap stones on the board at once. */
-      add_stone(POS(i, j), BLACK);
+      add_stone(internal_state, POS(i, j), BLACK);
       break;
       
     case SGFAW:
@@ -560,7 +560,7 @@ get_move_from_sgf(SGFNode *node, int *m, int *n, int *color)
     case SGFB:
       *color = (prop->name == SGFW) ? WHITE : BLACK;
       
-      if (!get_moveXY(prop, m, n, board_size)) {
+      if (!get_moveXY(prop, m, n, internal_state->board_size)) {
 	if (0)
 	  fprintf(stderr, "Warning: failed to get move coordinates.\n");
 	return 0;
@@ -742,8 +742,8 @@ store_pattern_if_winner(struct invariant_hash *pre,
 	&& compare_situations(&situation_table[winning_moves[k].index],
 			      &s) == 0) {
       /* This is a winner. Record the pattern. */
-      for (i = 0; i < board_size; i++)
-	for (j = 0; j < board_size; j++) {
+      for (i = 0; i < internal_state->board_size; i++)
+	for (j = 0; j < internal_state->board_size; j++) {
 	  if (BOARD(i, j) == EMPTY)
 	    winning_moves[k].pattern[i][j] = '.';
 	  else if (BOARD(i, j) == color) {
@@ -765,8 +765,8 @@ store_pattern_if_winner(struct invariant_hash *pre,
       if (half_board_patterns == 1 && move_number > 3 && board_size == 19)
         region = find_region(m, n);
       if (region != 8) {
-        for (i = 0; i < board_size; i++) {
-          for (j = 0; j < board_size; j++) {
+        for (i = 0; i < internal_state->board_size; i++) {
+          for (j = 0; j < internal_state->board_size; j++) {
             if (region == 0) {
               if (i + j > 23)
      	        winning_moves[k].pattern[i][j] = '?';
@@ -850,7 +850,7 @@ examine_game(SGFNode *sgf, int collect_statistics)
       }
       continue;
     }
-    gg_assert(m >= 0 && m < board_size && n >= 0 && n <= board_size);
+    gg_assert(internal_state, m >= 0 && m < internal_state->board_size && n >= 0 && n <= internal_state->board_size);
     hash_board(&prehash, color);
     hash_board_and_move(&posthash, color, m, n);
     if (collect_statistics != EMPTY)
@@ -943,7 +943,7 @@ check_game(SGFNode *sgf, char *sgfname)
       fprintf(stderr, "Warning: no SZ in sgf file %s , assuming size %d\n",
 	      sgfname, size);
   }
-  if (size != board_size) {
+  if (size != internal_state->board_size) {
     if (WARN)
       fprintf(stderr, "Warning: wrong size of board %d in sgf file %s .\n",
 	      size, sgfname);
@@ -1368,7 +1368,7 @@ print_patterns(void)
   int df = 0;
   unsigned int pre = situation_table[winning_moves[0].index].pre.values[0];
   int first_in_set = 0;
-  gg_assert(winning_moves[0].index != -1);
+  gg_assert(internal_state, winning_moves[0].index != -1);
   l = 1;
   for (k = 0; k < number_of_winning_moves; k++) {
     /* Do not print erroneous patterns. */
@@ -1402,7 +1402,7 @@ print_patterns(void)
       if (expect_losses > 0.0)
 	dchisq  += pow(losses - expect_losses, 2) / expect_losses;
       
-      gg_assert(winning_moves[k].index == -1
+      gg_assert(internal_state, winning_moves[k].index == -1
 		|| (situation_table[winning_moves[k].index].pre.values[0]
 		    == winning_moves[k].pre));
       
@@ -1535,13 +1535,13 @@ print_patterns(void)
 	       dchisq);
 	
 	printf("+");
-	for (n = 0; n < board_size; n++)
+	for (n = 0; n < internal_state->board_size; n++)
 	  printf("-");
 
 	printf("+\n");
-	for (m = 0; m < board_size; m++) {
+	for (m = 0; m < internal_state->board_size; m++) {
 	  printf("|");
-	  for (n = 0; n < board_size; n++) {
+	  for (n = 0; n < internal_state->board_size; n++) {
 	    if (winning_moves[k].pattern[m][n] == '\0') {
 	      fprintf(stderr, "Something wrong in print pattern\n");
 	      printf(".");
@@ -1553,7 +1553,7 @@ print_patterns(void)
 	}
 	
 	printf("+");
-	for (n = 0; n < board_size; n++)
+	for (n = 0; n < internal_state->board_size; n++)
 	  printf("-");
 	printf("+");
 	
@@ -1584,13 +1584,13 @@ main(int argc, char *argv[])
   
   /* Check arguments. */
   board_size = atoi(argv[2]);
-  if (board_size % 2 == 0) {
+  if (internal_state->board_size % 2 == 0) {
     fprintf(stderr, "Fatal error, only odd boardsizes supported: %d.\n",
 	    board_size);
     exit(EXIT_FAILURE);
   }
-  if (board_size < 9 || board_size > 19)
-    fprintf(stderr, "Warning: strange boardsize: %d.\n", board_size);
+  if (internal_state->board_size < 9 || internal_state->board_size > 19)
+    fprintf(stderr, "Warning: strange boardsize: %d.\n", internal_state->board_size);
   
   moves_per_game = atoi(argv[3]);
   if (moves_per_game < 1 || moves_per_game > 20)

@@ -107,10 +107,11 @@ int  tt_get(Transposition_table *table, enum routine_id routine,
 	    int target1, int target2, int remaining_depth,
 	    Hash_data *extra_hash,
 	    int *value1, int *value2, int *move);
-void tt_update(Transposition_table *table, enum routine_id routine,
-	       int target, int target2, int remaining_depth,
-	       Hash_data *extra_hash,
-	       int value1, int value2, int move);
+void tt_update(struct board_lib_state_struct *internal_state,
+               Transposition_table *table, enum routine_id routine,
+               int target, int target2, int remaining_depth,
+               Hash_data *extra_hash,
+               int value1, int value2, int move);
 
 
 /* ================================================================ */
@@ -159,14 +160,17 @@ void tt_update(Transposition_table *table, enum routine_id routine,
 #endif
 
 /* Trace messages in decidestring/decidedragon sgf file. */
-void sgf_trace(const char *func, int str, int move, int result,
-	       const char *message);
+void sgf_trace(struct board_lib_state_struct *internal_state,
+               const char *func, int str, int move, int result,
+               const char *message);
 /* Trace messages in decideconnection sgf file. */
-void sgf_trace2(const char *func, int str1, int str2, int move, 
-	        const char *result, const char *message);
+void sgf_trace2(struct board_lib_state_struct *internal_state,
+                const char *func, int str1, int str2, int move,
+                const char *result, const char *message);
 /* Trace messages in decidesemeai sgf file. */
-void sgf_trace_semeai(const char *func, int str1, int str2, int move, 
-		      int result1, int result2, const char *message);
+void sgf_trace_semeai(struct board_lib_state_struct *internal_state,
+                      const char *func, int str1, int str2, int move,
+                      int result1, int result2, const char *message);
 
 /* Macro to hide the call to sgf_trace(). Notice that a little black
  * magic is going on here. Before using this macro, SETUP_TRACE_INFO

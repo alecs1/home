@@ -29,19 +29,22 @@
 #include <string.h>
 #include "liberty.h"
 
-static int find_backfilling_move(int move, int color, int *backfill_move,
-				 int forbidden_moves[BOARDMAX]);
-static int filllib_confirm_safety(int move, int color, int *defense_point);
+static int find_backfilling_move(struct board_lib_state_struct *internal_state,
+                 int move, int color, int *backfill_move,
+                 int forbidden_moves[BOARDMAX]);
+static int filllib_confirm_safety(struct board_lib_state_struct *internal_state,
+                                  int move, int color, int *defense_point);
 
 /* Determine whether a point is adjacent to at least one own string which
  * isn't dead.
  */
 static int
-living_neighbor(int pos, int color)
+living_neighbor(struct board_lib_state_struct *internal_state,
+                int pos, int color)
 {
   int k;
   for (k = 0; k < 4; k++) {
-    if (board[pos + delta[k]] == color
+    if (internal_state->board[pos + delta[k]] == color
 	&& dragon[pos + delta[k]].status != DEAD)
       return 1;
   }
@@ -55,17 +58,18 @@ living_neighbor(int pos, int color)
  * around a killing nakade string.
  */
 static void
-analyze_neighbor(int pos, int *found_black, int *found_white)
+analyze_neighbor(struct board_lib_state_struct *internal_state,
+                 int pos, int *found_black, int *found_white)
 {
-  switch (board[pos]) {
+  switch (internal_state->board[pos]) {
     case EMPTY:
       if (!(*found_black)
-	  && living_neighbor(pos, BLACK)
+      && living_neighbor(internal_state, pos, BLACK)
 	  && safe_move(pos, WHITE) != WIN)
 	*found_black = 1;
       
       if (!(*found_white)
-	  && living_neighbor(pos, WHITE)
+      && living_neighbor(internal_state, pos, WHITE)
 	  && safe_move(pos, BLACK) != WIN)
 	*found_white = 1;
       
@@ -104,7 +108,8 @@ analyze_neighbor(int pos, int *found_black, int *found_white)
  */
 
 int 
-fill_liberty(int *move, int color)
+fill_liberty(struct board_lib_state_struct *internal_state,
+             int *move, int color)
 {
   int k;
   int pos;
@@ -120,7 +125,7 @@ fill_liberty(int *move, int color)
    */
   memset(potential_color, 0, sizeof(potential_color));
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!IS_STONE(board[pos]))
+    if (!IS_STONE(internal_state->board[pos]))
       continue;
 
     if (worm[pos].inessential || DRAGON2(pos).safety == INESSENTIAL)
@@ -129,8 +134,8 @@ fill_liberty(int *move, int color)
     if (dragon[pos].status != ALIVE) {
       for (k = 0; k < 4; k++) {
 	int pos2 = pos + delta[k];
-	if (board[pos2] == EMPTY)
-	  potential_color[pos2] |= OTHER_COLOR(board[pos]);
+	if (internal_state->board[pos2] == EMPTY)
+	  potential_color[pos2] |= OTHER_COLOR(internal_state->board[pos]);
       }
     }
     
@@ -139,12 +144,12 @@ fill_liberty(int *move, int color)
 	int d = delta[k%8];
 	
 	if (k >= 8) {
-	  if (board[pos + d] != EMPTY)
+	  if (internal_state->board[pos + d] != EMPTY)
 	    continue;
 	  d *= 2;
 	}
-	if (board[pos + d] == EMPTY)
-	  potential_color[pos + d] |= board[pos];
+	if (internal_state->board[pos + d] == EMPTY)
+      potential_color[pos + d] |= internal_state->board[pos];
       }
     }
   }
@@ -160,7 +165,7 @@ fill_liberty(int *move, int color)
     int found_white = 0;
     int found_black = 0;
     
-    if (board[pos] != EMPTY)
+    if (internal_state->board[pos] != EMPTY)
       continue;
 
     /* Quick rejection based on preliminary test above. */
@@ -170,8 +175,8 @@ fill_liberty(int *move, int color)
     /* Loop over the neighbors. */
     for (k = 0; k < 4; k++) {
       int d = delta[k];
-      if (ON_BOARD(pos + d))
-	analyze_neighbor(pos + d, &found_black, &found_white);
+      if (ON_BOARD(internal_state, pos + d))
+    analyze_neighbor(internal_state, pos + d, &found_black, &found_white);
     }
     
     /* Do we have neighbors of both colors? */
@@ -196,13 +201,13 @@ fill_liberty(int *move, int color)
      */
     if (safe_move(pos, color) == WIN) {
       DEBUG(DEBUG_FILLLIB, "Filllib: Tactically safe.\n");
-      if (filllib_confirm_safety(pos, color, &defense_point)) {
+      if (filllib_confirm_safety(internal_state, pos, color, &defense_point)) {
 	/* Safety confirmed. */
 	DEBUG(DEBUG_FILLLIB, "Filllib: Safety confirmed.\n");
 	*move = pos;
 	return 1;
       }
-      else if (defense_point != NO_MOVE && is_legal(defense_point, color)) {
+      else if (defense_point != NO_MOVE && is_legal(internal_state, defense_point, color)) {
 	/* Safety not confirmed because the move at (pos) would set
 	 * up a double threat. (defense_point) is assumed to defend
 	 * against this threat.
@@ -221,21 +226,21 @@ fill_liberty(int *move, int color)
 	 * should not happen at this time.
 	 */
 	DEBUG(DEBUG_FILLLIB, "Filllib: Safety not confirmed, discarded.\n");
-	TRACE("Warning: Blunder detected in fill_liberty().\n");
+	TRACE(internal_state, "Warning: Blunder detected in fill_liberty().\n");
 	continue;
       }
     }
     
     /* Try to play the move. */
-    if (trymove(pos, color, "fill_liberty", NO_MOVE)) {
+    if (trymove(internal_state, pos, color, "fill_liberty", NO_MOVE)) {
       int forbidden_moves[BOARDMAX];
-      popgo();
+      popgo(internal_state);
       /* Legal, but not safe. Look for backfilling move. */
       DEBUG(DEBUG_FILLLIB,
 	    "Filllib: Legal but not safe, looking for backfilling move.\n");
 
       memset(forbidden_moves, 0, sizeof(forbidden_moves));
-      while (find_backfilling_move(pos, color, move, forbidden_moves)) {
+      while (find_backfilling_move(internal_state, pos, color, move, forbidden_moves)) {
 	/* Mark as forbidden in case we need another turn in the loop. */
 	forbidden_moves[*move] = 1;
 	
@@ -245,7 +250,7 @@ fill_liberty(int *move, int color)
 	 * a move inside a lost semeai. Anyway we should discard the
 	 * move.
 	 */
-	if (!is_legal(*move, color)) {
+    if (!is_legal(internal_state, *move, color)) {
 	  DEBUG(DEBUG_FILLLIB, "Filllib: Was illegal, discarded.\n");
 	  *move = NO_MOVE;
 	  continue;
@@ -254,7 +259,7 @@ fill_liberty(int *move, int color)
 	/* If the move turns out to be strategically unsafe, or
 	 * setting up a double threat elsewhere, also discard it.
 	 */
-	if (!filllib_confirm_safety(*move, color, &defense_point)) {
+    if (!filllib_confirm_safety(internal_state, *move, color, &defense_point)) {
 	  DEBUG(DEBUG_FILLLIB,
 		"Filllib: Safety not confirmed, discarded.\n");
 	  *move = NO_MOVE;
@@ -268,10 +273,10 @@ fill_liberty(int *move, int color)
       /* No acceptable backfilling move found.
        * If we captured some stones, this move should be ok anyway.
        */
-      if (does_capture_something(pos, color)) {
+      if (does_capture_something(internal_state, pos, color)) {
 	DEBUG(DEBUG_FILLLIB,
 	      "Filllib: Not tactically safe, but captures stones.\n");
-	if (!filllib_confirm_safety(pos, color, &defense_point)) {
+    if (!filllib_confirm_safety(internal_state, pos, color, &defense_point)) {
 	  DEBUG(DEBUG_FILLLIB,
 		"Filllib: Safety not confirmed, discarded.\n");
 	  continue;
@@ -287,7 +292,7 @@ fill_liberty(int *move, int color)
       DEBUG(DEBUG_FILLLIB, "Filllib: Illegal, looking for back-capture.\n");
       for (k = 0; k < 4; k++) {
 	int d = delta[k];
-	if (board[pos + d] == other
+	if (internal_state->board[pos + d] == other
 	    && worm[pos + d].attack_codes[0] == WIN) {
 	  *move = worm[pos + d].attack_points[0];
 	  DEBUG(DEBUG_FILLLIB, "Filllib: Found at %1m.\n", *move);
@@ -299,9 +304,9 @@ fill_liberty(int *move, int color)
 	    "Filllib: Nothing found, looking for ko back-capture.\n");
       for (k = 0; k < 4; k++) {
 	int d = delta[k];
-	if (board[pos + d] == other
+	if (internal_state->board[pos + d] == other
 	    && worm[pos + d].attack_codes[0] != 0
-	    && is_legal(worm[pos + d].attack_points[0], color)) {
+        && is_legal(internal_state, worm[pos + d].attack_points[0], color)) {
 	  *move = worm[pos + d].attack_points[0];
 	  DEBUG(DEBUG_FILLLIB, "Filllib: Found at %1m.\n", *move);
 	  return 1;
@@ -312,15 +317,15 @@ fill_liberty(int *move, int color)
 	    "Filllib: Nothing found, looking for threat to back-capture.\n");
       for (k = 0; k < 4; k++) {
 	int d = delta[k];
-	if (board[pos + d] == other
+	if (internal_state->board[pos + d] == other
 	    && worm[pos + d].attack_codes[0] != 0) {
 	  /* Just pick some other liberty. */
 	  /* FIXME: Something is odd about this code. */
 	  int libs[2];
-	  if (findlib(pos + d, 2, libs) > 1) {
-	    if (is_legal(libs[0], color))
+	  if (findlib(internal_state, pos + d, 2, libs) > 1) {
+        if (is_legal(internal_state, libs[0], color))
 	      *move = libs[0];
-	    else if (is_legal(libs[1], color))
+        else if (is_legal(internal_state, libs[1], color))
 	      *move = libs[1];
 	    else
 	      continue;
@@ -367,7 +372,8 @@ static int adjs[MAXCHAIN];
 static int libs[MAXLIBS];
 
 static int
-find_backfilling_move(int move, int color, int *backfill_move,
+find_backfilling_move(struct board_lib_state_struct *internal_state,
+              int move, int color, int *backfill_move,
 		      int forbidden_moves[BOARDMAX])
 {
   int k;
@@ -384,26 +390,26 @@ find_backfilling_move(int move, int color, int *backfill_move,
   
   DEBUG(DEBUG_FILLLIB, "find_backfilling_move for %C %1m\n", color, move);
   if (debug & DEBUG_FILLLIB)
-    dump_stack();
+    dump_stack(internal_state);
   
   /* Play (move) and identify all liberties and adjacent strings. */
-  if (!trymove(move, color, "find_backfilling_move", move))
+  if (!trymove(internal_state, move, color, "find_backfilling_move", move))
     return 0; /* This shouldn't happen, I believe. */
 
   /* The move wasn't safe, so there must be an attack for the
    * opponent. Save it for later use.
    */
   acode = attack(move, &apos);
-  gg_assert(acode != 0 && apos != NO_MOVE);
+  gg_assert(internal_state, acode != 0 && apos != NO_MOVE);
   
   /* Find liberties. */
-  liberties = findlib(move, MAXLIBS, libs);
+  liberties = findlib(internal_state, move, MAXLIBS, libs);
 
   /* Find neighbors. */
-  neighbors = chainlinks(move, adjs);
+  neighbors = chainlinks(internal_state, move, adjs);
 
   /* Remove (move) again. */
-  popgo();
+  popgo(internal_state);
   
   /* It's most fun to capture stones. Start by trying to take some
    * neighbor off the board. If the attacking move does not directly
@@ -431,12 +437,12 @@ find_backfilling_move(int move, int color, int *backfill_move,
    */
   for (opponent_libs = 1; opponent_libs <= 1; opponent_libs++) {
     for (k = 0; k < neighbors; k++) {
-      if (opponent_libs < 5 && countlib(adjs[k]) != opponent_libs)
+      if (opponent_libs < 5 && countlib(internal_state, adjs[k]) != opponent_libs)
 	continue;
       if (attack(adjs[k], &bpos) == WIN) {
 	if (forbidden_moves[bpos])
 	  continue;
-	if (liberty_of_string(bpos, adjs[k])) {
+    if (liberty_of_string(internal_state, bpos, adjs[k])) {
 	  *backfill_move = bpos;
 	  return 1;
 	}
@@ -460,12 +466,12 @@ find_backfilling_move(int move, int color, int *backfill_move,
   if (!found_one) {
     for (opponent_libs = 2; opponent_libs <= 5; opponent_libs++) {
       for (k = 0; k < neighbors; k++) {
-	if (opponent_libs < 5 && countlib(adjs[k]) != opponent_libs)
+    if (opponent_libs < 5 && countlib(internal_state, adjs[k]) != opponent_libs)
 	  continue;
 	if (attack(adjs[k], &bpos) == WIN) {
 	  if (forbidden_moves[bpos])
 	    continue;
-	  if (liberty_of_string(bpos, adjs[k])) {
+      if (liberty_of_string(internal_state, bpos, adjs[k])) {
 	    *backfill_move = bpos;
 	    return 1;
 	  }
@@ -478,9 +484,9 @@ find_backfilling_move(int move, int color, int *backfill_move,
   
   /* If no luck so far, try with superstring liberties. */
   if (!found_one) {
-    trymove(move, color, "find_backfilling_move", move);
+    trymove(internal_state, move, color, "find_backfilling_move", move);
     find_proper_superstring_liberties(move, &liberties, libs, 0);
-    popgo();
+    popgo(internal_state);
     for (k = 0; k < liberties; k++) {
       if (!forbidden_moves[libs[k]] && safe_move(libs[k], color) == WIN) {
 	*backfill_move = libs[k];
@@ -492,12 +498,12 @@ find_backfilling_move(int move, int color, int *backfill_move,
 
   /* If no luck so far, try attacking superstring neighbors. */
   if (!found_one) {
-    trymove(move, color, "find_backfilling_move", move);
-    superstring_chainlinks(move, &neighbors, adjs, 4);
-    popgo();
+    trymove(internal_state, move, color, "find_backfilling_move", move);
+    superstring_chainlinks(internal_state, move, &neighbors, adjs, 4);
+    popgo(internal_state);
     for (k = 0; k < neighbors; k++) {
       if (attack(adjs[k], &bpos) == WIN) {
-	if (!forbidden_moves[bpos] && liberty_of_string(bpos, adjs[k])) {
+    if (!forbidden_moves[bpos] && liberty_of_string(internal_state, bpos, adjs[k])) {
 	  *backfill_move = bpos;
 	  return 1;
 	}
@@ -506,30 +512,30 @@ find_backfilling_move(int move, int color, int *backfill_move,
   }
 
   if (found_one) {
-    ASSERT1(!forbidden_moves[*backfill_move], *backfill_move);
+    ASSERT1(internal_state, !forbidden_moves[*backfill_move], *backfill_move);
   
-    if (!trymove(*backfill_move, color, "find_backfilling_move", move))
+    if (!trymove(internal_state, *backfill_move, color, "find_backfilling_move", move))
       return 0; /* This really shouldn't happen. */
     
     /* Allow opponent to get a move in here. */
-    if (trymove(apos, OTHER_COLOR(color), "find_backfilling_move", move))
+    if (trymove(internal_state, apos, OTHER_COLOR(color), "find_backfilling_move", move))
       extra_pop = 1;
     
     /* If still not safe, recurse to find a new backfilling move. */
     if (safe_move(move, color) == WIN)
       success = 1;
     else
-      success = find_backfilling_move(move, color, backfill_move,
+      success = find_backfilling_move(internal_state, move, color, backfill_move,
 				      forbidden_moves);
 
     /* Pop move(s) and return. */
     if (extra_pop)
-      popgo();
-    popgo();
+      popgo(internal_state);
+    popgo(internal_state);
   }
 
   if (!success && saved_move != NO_MOVE) {
-    ASSERT1(!forbidden_moves[saved_move], saved_move);
+    ASSERT1(internal_state, !forbidden_moves[saved_move], saved_move);
     *backfill_move = saved_move;
     success = 1;
   }
@@ -546,21 +552,22 @@ find_backfilling_move(int move, int color, int *backfill_move,
  * owl code to verify the strategical viability of the move.
  */
 static int
-filllib_confirm_safety(int move, int color, int *defense_point)
+filllib_confirm_safety(struct board_lib_state_struct *internal_state,
+                       int move, int color, int *defense_point)
 {
   int k;
   int apos = NO_MOVE;
   int save_verbose;
 
-  gg_assert(stackp == 0);
-  gg_assert(defense_point != NULL);
+  gg_assert(internal_state, internal_state->stackp == 0);
+  gg_assert(internal_state, defense_point != NULL);
   *defense_point = NO_MOVE;
 
   /* Before we can call the owl code, we need to find a neighbor of
    * our color.
    */
   for (k = 0; k < 4; k++)
-    if (board[move + delta[k]] == color) {
+    if (internal_state->board[move + delta[k]] == color) {
       apos = move + delta[k];
       break;
     }
@@ -569,10 +576,10 @@ filllib_confirm_safety(int move, int color, int *defense_point)
   if (apos == NO_MOVE)
     for (k = 0; k < 4; k++) {
       int pos2 = move + delta[k];
-      if (board[pos2] == OTHER_COLOR(color)
+      if (internal_state->board[pos2] == OTHER_COLOR(color)
 	  && !play_attack_defend_n(color, 0, 1, move, pos2)) {
 	int adj;
-	adj = chainlinks(pos2, adjs);
+    adj = chainlinks(internal_state, pos2, adjs);
 	/* It seems unlikely that we would ever get no adjacent strings
          * here, but if it should happen we simply give up and say the
          * move is unsafe.
@@ -588,7 +595,7 @@ filllib_confirm_safety(int move, int color, int *defense_point)
   /* Next attempt are diagonal neighbors. */
   if (apos == NO_MOVE) {
     for (k = 4; k < 8; k++)
-      if (board[move + delta[k]] == color) {
+      if (internal_state->board[move + delta[k]] == color) {
 	apos = move + delta[k];
 	break;
       }
@@ -597,7 +604,7 @@ filllib_confirm_safety(int move, int color, int *defense_point)
   /* And two steps away. */
   if (apos == NO_MOVE) {
     for (k = 0; k < 4; k++)
-      if (board[move + 2 * delta[k]] == color) {
+      if (internal_state->board[move + 2 * delta[k]] == color) {
 	apos = move + 2 * delta[k];
 	break;
       }

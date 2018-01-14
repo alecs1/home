@@ -61,14 +61,15 @@ static int diagonally_symmetric;   /* with respect to diagonal from UR to LL */
 /* check if region from i1, j1 to i2, j2 is open */
 
 static int 
-openregion(int i1, int i2, int j1, int j2)
+openregion(struct board_lib_state_struct *internal_state,
+           int i1, int i2, int j1, int j2)
 {
   int x, y;
 
   if (i1 > i2)
-    return openregion(i2, i1, j1, j2);
+    return openregion(internal_state, i2, i1, j1, j2);
   if (j1 > j2)
-    return openregion(i1, i2, j2, j1);
+    return openregion(internal_state, i1, i2, j2, j1);
 
   /* Disregard parts of the region off the board. This is convenient
    * in order not to have to special-case tiny boards. It also secures
@@ -78,10 +79,10 @@ openregion(int i1, int i2, int j1, int j2)
     i1 = 0;
   if (j1 < 0)
     j1 = 0;
-  if (i2 >= board_size)
-    i2 = board_size - 1;
-  if (j2 >= board_size)
-    j2 = board_size - 1;
+  if (i2 >= internal_state->board_size)
+    i2 = internal_state->board_size - 1;
+  if (j2 >= internal_state->board_size)
+    j2 = internal_state->board_size - 1;
     
   for (x = i1; x <= i2; x++)
     for (y = j1; y <= j2; y++)
@@ -94,22 +95,22 @@ openregion(int i1, int i2, int j1, int j2)
  * position. (Important for etiquette.)
  */
 static void
-set_symmetries(void)
+set_symmetries(struct board_lib_state_struct *internal_state)
 {
   int i, j;
   horizontally_symmetric = 1;
   vertically_symmetric = 1; 
   diagonally_symmetric = 1;
-  for (i = 0; i < board_size
+  for (i = 0; i < internal_state->board_size
               && (vertically_symmetric || horizontally_symmetric
 		  || diagonally_symmetric); i++)
-    for (j = 0; j < board_size; j++) {
-      if (board[POS(i, j)] != board[POS(i, board_size - 1 - j)])
+    for (j = 0; j < internal_state->board_size; j++) {
+      if (internal_state->board[POS(i, j)] != internal_state->board[POS(i, internal_state->board_size - 1 - j)])
 	horizontally_symmetric = 0;
-      if (board[POS(i, j)] != board[POS(board_size - 1 - i, j)])
+      if (internal_state->board[POS(i, j)] != internal_state->board[POS(internal_state->board_size - 1 - i, j)])
 	vertically_symmetric = 0;
-      if (board[POS(i, j)]
-	  != board[POS(board_size - 1 - j, board_size - 1 - i)])
+      if (internal_state->board[POS(i, j)]
+      != internal_state->board[POS(internal_state->board_size - 1 - j, internal_state->board_size - 1 - i)])
 	diagonally_symmetric = 0;
     }
 }
@@ -171,16 +172,17 @@ static int large_board[] =
 };
 
 static void
-choose_corner_move(int corner, int *m, int *n)
+choose_corner_move(struct board_lib_state_struct *internal_state,
+                   int corner, int *m, int *n)
 {
   int *table = 0;
   int sum_of_weights = 0;
   int i;
   int q;
   
-  if (board_size <= 11)
+  if (internal_state->board_size <= 11)
     table = small_board;
-  else if (board_size <= 15)
+  else if (internal_state->board_size <= 15)
     table = medium_board;
   else 
     table = large_board;
@@ -205,15 +207,15 @@ choose_corner_move(int corner, int *m, int *n)
     break;
   case UPPER_RIGHT:
     *m = *m - 1;
-    *n = board_size - *n;
+    *n = internal_state->board_size - *n;
     break;
   case LOWER_LEFT:
-    *m = board_size - *m;
+    *m = internal_state->board_size - *m;
     *n = *n - 1;
     break;
   case LOWER_RIGHT:
-    *m = board_size - *m;
-    *n = board_size - *n;
+    *m = internal_state->board_size - *m;
+    *n = internal_state->board_size - *n;
     break;
   }
 }
@@ -221,11 +223,12 @@ choose_corner_move(int corner, int *m, int *n)
 
 /* Announce move, but check for politeness first. */
 static void
-announce_move(int move, int value, int color)
+announce_move(struct board_lib_state_struct *internal_state,
+              int move, int value, int color)
 {
   int i, j;
   /* This shouldn't happen. */
-  if (board[move] != EMPTY)
+  if (internal_state->board[move] != EMPTY)
     return;
   
   /* Politeness: Black plays in lower right half of upper right corner first.
@@ -236,24 +239,24 @@ announce_move(int move, int value, int color)
   if (horizontally_symmetric) {
     i = I(move);
     j = J(move);
-    if ((2 * j < board_size - 1) ^ (color == WHITE))
-      move = POS(i, board_size - 1 - j);
+    if ((2 * j < internal_state->board_size - 1) ^ (color == WHITE))
+      move = POS(i, internal_state->board_size - 1 - j);
   }
   if (vertically_symmetric) {
     i = I(move);
     j = J(move);
-    if ((2 * i > board_size - 1) ^ (color == WHITE))
-      move = POS(board_size - 1 - i, j);
+    if ((2 * i > internal_state->board_size - 1) ^ (color == WHITE))
+      move = POS(internal_state->board_size - 1 - i, j);
   }
   if (diagonally_symmetric) {
     i = I(move);
     j = J(move);
-    if ((board_size - 1 - j > i) ^ (color == WHITE))
-      move = POS(board_size - 1 - j, board_size - 1 - i);
+    if ((internal_state->board_size - 1 - j > i) ^ (color == WHITE))
+      move = POS(internal_state->board_size - 1 - j, internal_state->board_size - 1 - i);
   }
   
   if (set_minimum_move_value(move, value))
-    TRACE("Fuseki Player suggests %1m with value %d\n", move, value);
+    TRACE(internal_state, "Fuseki Player suggests %1m with value %d\n", move, value);
 }
 
 
@@ -265,9 +268,10 @@ static int fuseki_total_value;
 
 /* Callback for fuseki database pattern matching. */
 static void
-fuseki_callback(int move, struct fullboard_pattern *pattern, int ll)
+fuseki_callback(struct board_lib_state_struct *internal_state,
+                int move, struct fullboard_pattern *pattern, int ll)
 {
-  TRACE("Fuseki database move at %1m with relative weight %d, pattern %s+%d\n",
+  TRACE(internal_state, "Fuseki database move at %1m with relative weight %d, pattern %s+%d\n",
 	move, pattern->value, pattern->name, ll);
 
   /* Store coordinates and relative weight for the found move. */
@@ -281,7 +285,8 @@ fuseki_callback(int move, struct fullboard_pattern *pattern, int ll)
  * pattern found.
  */
 static int
-search_fuseki_database(int color)
+search_fuseki_database(struct board_lib_state_struct *internal_state,
+                       int color)
 {
   struct fullboard_pattern *database;
   int q;
@@ -290,15 +295,15 @@ search_fuseki_database(int color)
   /* Disable matching after a certain number of stones are placed on
    * the board.
    */
-  if (stones_on_board(BLACK | WHITE) > MAX_FUSEKI_DATABASE_STONES)
+  if (stones_on_board(internal_state, BLACK | WHITE) > MAX_FUSEKI_DATABASE_STONES)
     return 0;
 
   /* We only have databases for 9x9, 13x13 and 19x19. */
-  if (board_size == 9)
+  if (internal_state->board_size == 9)
     database = fuseki9;
-  else if (board_size == 13)
+  else if (internal_state->board_size == 13)
     database = fuseki13;
-  else if (board_size == 19)
+  else if (internal_state->board_size == 19)
     database = fuseki19;
   else
     return 0;
@@ -321,12 +326,12 @@ search_fuseki_database(int color)
       break;
   }
 
-  gg_assert(k < num_fuseki_moves);
+  gg_assert(internal_state, k < num_fuseki_moves);
   /* Give this move an arbitrary value of 75. The actual value doesn't
    * matter much since the intention is that we should play this move
    * whatever the rest of the analysis thinks.
    */
-  announce_move(fuseki_moves[k], 75, color);
+  announce_move(internal_state, fuseki_moves[k], 75, color);
 
   /* Also make sure the other considered moves can be seen in the
    * traces and in the output file.
@@ -339,65 +344,66 @@ search_fuseki_database(int color)
 
 /* Generate move in empty corner or in middle of small board.*/
 void
-fuseki(int color)
+fuseki(struct board_lib_state_struct *internal_state,
+       int color)
 {
   int i = -1;
   int j = -1;
   int width;  /* Side of the open region required in the corner. */
-  int empty_corner_value = EMPTY_CORNER_VALUE * board_size/19;
+  int empty_corner_value = EMPTY_CORNER_VALUE * internal_state->board_size/19;
 
   /* Return immediately if --disable_fuseki option used. */
   if (disable_fuseki)
     return;
   
-  set_symmetries();
+  set_symmetries(internal_state);
 
   /* Search in fuseki database unless disabled by --nofusekidb option. */
-  if (fusekidb && search_fuseki_database(color))
+  if (fusekidb && search_fuseki_database(internal_state, color))
     return;
 
   /* On 9x9, only play open corners after the first move if nothing
    * else useful is found.
    */
-  if (board_size == 9 && stones_on_board(color) > 0)
+  if (internal_state->board_size == 9 && stones_on_board(internal_state, color) > 0)
     empty_corner_value = 5;
   
-  if (board_size <= 11) {
+  if (internal_state->board_size <= 11) {
     /* For boards of size 11x11 or smaller we first go for the center point. */
-    int middle = board_size/2;
-    if (openregion(middle-2, middle+2, middle-2, middle+2)) {
-      announce_move(POS(middle, middle), 45, color);
+    int middle = internal_state->board_size/2;
+    if (openregion(internal_state, middle-2, middle+2, middle-2, middle+2)) {
+      announce_move(internal_state, POS(middle, middle), 45, color);
     }
   }
 
-  if (board_size < 9)
+  if (internal_state->board_size < 9)
     return;
 
-  if (board_size >= 18)
+  if (internal_state->board_size >= 18)
     width = 8;
-  else if (board_size == 9)
+  else if (internal_state->board_size == 9)
     width = 5;
   else
-    width = board_size/2;
+    width = internal_state->board_size/2;
   
-  if (openregion(0, width-1, board_size-width, board_size-1)) {
-    choose_corner_move(UPPER_RIGHT, &i, &j);
-    announce_move(POS(i, j), empty_corner_value, color);
+  if (openregion(internal_state, 0, width-1, internal_state->board_size-width, internal_state->board_size-1)) {
+    choose_corner_move(internal_state, UPPER_RIGHT, &i, &j);
+    announce_move(internal_state, POS(i, j), empty_corner_value, color);
   }
   
-  if (openregion(board_size-width, board_size-1, 0, width-1)) {
-    choose_corner_move(LOWER_LEFT, &i, &j);
-    announce_move(POS(i, j), empty_corner_value, color);
+  if (openregion(internal_state, internal_state->board_size-width, internal_state->board_size-1, 0, width-1)) {
+    choose_corner_move(internal_state, LOWER_LEFT, &i, &j);
+    announce_move(internal_state, POS(i, j), empty_corner_value, color);
   }
-  if (openregion(board_size-width, board_size-1,
-		 board_size-width, board_size-1)) {
-    choose_corner_move(LOWER_RIGHT, &i, &j);
-    announce_move(POS(i, j), empty_corner_value, color);
+  if (openregion(internal_state, internal_state->board_size-width, internal_state->board_size-1,
+         internal_state->board_size-width, internal_state->board_size-1)) {
+    choose_corner_move(internal_state, LOWER_RIGHT, &i, &j);
+    announce_move(internal_state, POS(i, j), empty_corner_value, color);
   }
   
-  if (openregion(0, width-1, 0, width-1)) {
-    choose_corner_move(UPPER_LEFT, &i, &j);
-    announce_move(POS(i, j), empty_corner_value, color);
+  if (openregion(internal_state, 0, width-1, 0, width-1)) {
+    choose_corner_move(internal_state, UPPER_LEFT, &i, &j);
+    announce_move(internal_state, POS(i, j), empty_corner_value, color);
   }
 }
 

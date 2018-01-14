@@ -34,7 +34,7 @@ disconnect_helper(int apos, int bpos)
 {
   int color = board[apos];
   int move;
-  ASSERT1(color == board[bpos] && IS_STONE(color), apos);
+  ASSERT1(color == internal_state->board[bpos] && IS_STONE(color), apos);
 
   if (disconnect(apos, bpos, &move)) {
     add_cut(apos, bpos, move);
@@ -173,7 +173,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 	/* A second dragon found, we amalgamate them at once. */
 	/* Want this output if verbose or DEBUG_DRAGONS is on. */
 	if (verbose || (debug & DEBUG_DRAGONS))
-	  gprintf("Pattern %s joins %C dragons %1m, %1m\n",
+	  gprintf(internal_state, "Pattern %s joins %C dragons %1m, %1m\n",
 		  pattern->name, color, first_dragon, second_dragon);
 	join_dragons(second_dragon, first_dragon);
 	/* Now look for another second dragon. */

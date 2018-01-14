@@ -196,10 +196,10 @@ ascii_showboard(void)
   int last_pos_was_move;
   int pos_is_move;
   int dead;
-  int last_move = get_last_move();
+  int last_move = get_last_move(internal_state);
   
-  make_letterbar(board_size, letterbar);
-  set_handicap_spots(board_size);
+  make_letterbar(internal_state->board_size, letterbar);
+  set_handicap_spots(internal_state->board_size);
 
   printf("\n");
   printf("    White (O) has captured %d stone%s\n", black_captured,
@@ -233,10 +233,10 @@ ascii_showboard(void)
   printf("\n");
   fflush(stdout);
   
-  for (i = 0; i < board_size; i++) {
-    printf(" %2d", board_size - i);
+  for (i = 0; i < internal_state->board_size; i++) {
+    printf(" %2d", internal_state->board_size - i);
     last_pos_was_move = 0;
-    for (j = 0; j < board_size; j++) {
+    for (j = 0; j < internal_state->board_size; j++) {
       if (POS(i, j) == last_move)
 	pos_is_move = 128;
       else
@@ -284,16 +284,16 @@ ascii_showboard(void)
     }
     
     if (last_pos_was_move == 0) {
-      if (board_size > 10)
-	printf(" %2d", board_size - i);
+      if (internal_state->board_size > 10)
+	printf(" %2d", internal_state->board_size - i);
       else
-	printf(" %1d", board_size - i);
+	printf(" %1d", internal_state->board_size - i);
     }
     else {
-      if (board_size > 10)
-	printf("%2d", board_size - i);
+      if (internal_state->board_size > 10)
+	printf("%2d", internal_state->board_size - i);
       else
-	printf("%1d", board_size - i);
+	printf("%1d", internal_state->board_size - i);
     }
     printf("\n");
   }
@@ -516,20 +516,20 @@ computer_move(Gameinfo *gameinfo, int *passes)
 static int
 do_move(Gameinfo *gameinfo, char *command, int *passes, int force)
 {
-  int move = string_to_location(board_size, command);
+  int move = string_to_location(internal_state->board_size, command);
 
   if (move == NO_MOVE) {
     printf("\nInvalid move: %s\n", command);
     return 0;
   }
   
-  if (!is_allowed_move(move, gameinfo->to_move)) {
+  if (!is_allowed_move(internal_state, move, gameinfo->to_move)) {
     printf("\nIllegal move: %s", command);
     return 0;
   }
 
   *passes = 0;
-  TRACE("\nyour move: %1m\n\n", move);
+  TRACE(internal_state, "\nyour move: %1m\n\n", move);
   init_sgf(gameinfo);
   gnugo_play_move(move, gameinfo->to_move);
   sgffile_add_debuginfo(sgftree.lastnode, 0.0);
@@ -724,7 +724,7 @@ do_play_ascii(Gameinfo *gameinfo)
 	  clear_board();
 	  /* In case max handicap changes on smaller board. */
 	  gameinfo->handicap = place_fixed_handicap(gameinfo->handicap);
-	  sgfOverwritePropertyInt(sgftree.root, "SZ", board_size);
+	  sgfOverwritePropertyInt(sgftree.root, "SZ", internal_state->board_size);
 	  sgfOverwritePropertyInt(sgftree.root, "HA", gameinfo->handicap);
 	  break;
 
@@ -920,26 +920,26 @@ do_play_ascii(Gameinfo *gameinfo)
 	case CMD_SHOWMOYO:
 	  tmp = printmoyo;
 	  printmoyo = PRINTMOYO_MOYO;
-	  silent_examine_position(EXAMINE_DRAGONS);
+	  silent_examine_position(internal_state, EXAMINE_DRAGONS);
 	  printmoyo = tmp;
 	  break;
 
 	case CMD_SHOWTERRI:
 	  tmp = printmoyo;
 	  printmoyo = PRINTMOYO_TERRITORY;
-	  silent_examine_position(EXAMINE_DRAGONS);
+	  silent_examine_position(internal_state, EXAMINE_DRAGONS);
 	  printmoyo = tmp;
 	  break;
 
 	case CMD_SHOWAREA:
 	  tmp = printmoyo;
 	  printmoyo = PRINTMOYO_AREA;
-	  silent_examine_position(EXAMINE_DRAGONS);
+	  silent_examine_position(internal_state, EXAMINE_DRAGONS);
 	  printmoyo = tmp;
 	  break;
 
 	case CMD_SHOWDRAGONS:
-	  silent_examine_position(EXAMINE_DRAGONS);
+	  silent_examine_position(internal_state, EXAMINE_DRAGONS);
 	  showboard(1);
 	  break;
 
@@ -988,8 +988,8 @@ do_play_ascii(Gameinfo *gameinfo)
 	  break;
 
 	case CMD_LISTDRAGONS:
-	  silent_examine_position(EXAMINE_DRAGONS);
-	  show_dragons();
+	  silent_examine_position(internal_state, EXAMINE_DRAGONS);
+	  show_dragons(internal_state);
 	  break;
 
 	default:
@@ -1014,7 +1014,7 @@ do_play_ascii(Gameinfo *gameinfo)
     /* Free the sgf tree and prepare for a new game. */
     sgfFreeNode(sgftree.root);
     sgftree_clear(&sgftree);
-    sgftreeCreateHeaderNode(&sgftree, board_size, komi, gameinfo->handicap);
+    sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, gameinfo->handicap);
     sgf_initialized = 0;
 
     gameinfo_clear(gameinfo);
@@ -1157,7 +1157,7 @@ ascii_count(Gameinfo *gameinfo)
       ascii_showboard();
     }
     else {
-      int pos = string_to_location(board_size, line);
+      int pos = string_to_location(internal_state->board_size, line);
       if (pos == NO_MOVE || board[pos] == EMPTY)
 	printf("\ninvalid!\n");
       else {
@@ -1179,7 +1179,7 @@ showcapture(char *line)
   int move;
 
   gg_assert(line);
-  str = string_to_location(board_size, line);
+  str = string_to_location(internal_state->board_size, line);
   if (str == NO_MOVE || board[str] == EMPTY) {
     printf("\ninvalid point!\n");
     return;
@@ -1199,7 +1199,7 @@ showdefense(char *line)
   int move;
   
   gg_assert(line);
-  str = string_to_location(board_size, line);
+  str = string_to_location(internal_state->board_size, line);
   if (str == NO_MOVE || board[str] == EMPTY) {
     printf("\ninvalid point!\n");
     return;
@@ -1275,7 +1275,7 @@ ascii_free_handicap(Gameinfo *gameinfo, char *handicap_string)
 	  printf("\nNothing to undo.\n");
 	else {
 	  remove_stone(stones[--handi]);
-	  gprintf("\nRemoved the stone at %m.\n", I(stones[handi]),
+	  gprintf(internal_state, "\nRemoved the stone at %m.\n", I(stones[handi]),
 		  J(stones[handi]));
 	}
       }
@@ -1291,12 +1291,12 @@ ascii_free_handicap(Gameinfo *gameinfo, char *handicap_string)
 	  break;
       }
       else {
-	int pos = string_to_location(board_size, line);
+	int pos = string_to_location(internal_state->board_size, line);
 	if (pos != NO_MOVE) {
-	  if (board[pos] != EMPTY)
+	  if (internal_state->board[pos] != EMPTY)
 	    printf("\nThere's already a stone there.\n");
 	  else {
-	    add_stone(pos, BLACK);
+	    add_stone(internal_state, pos, BLACK);
 	    stones[handi++] = pos;
 	  }
 	}

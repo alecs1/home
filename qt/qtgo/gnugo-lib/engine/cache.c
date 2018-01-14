@@ -195,7 +195,8 @@ tt_get(Transposition_table *table,
  */
 
 void
-tt_update(Transposition_table *table,
+tt_update(struct board_lib_state_struct *internal_state,
+          Transposition_table *table,
 	  enum routine_id routine, int target1, int target2,
 	  int remaining_depth, Hash_data *extra_hash, 
 	  int value1, int value2, int move)
@@ -207,7 +208,7 @@ tt_update(Transposition_table *table,
   unsigned int data;
   /* Get routine costs definitions from liberty.h. */
   static const int routine_costs[] = { ROUTINE_COSTS };
-  gg_assert(routine_costs[NUM_CACHE_ROUTINES] == -1);
+  gg_assert(internal_state, routine_costs[NUM_CACHE_ROUTINES] == -1);
 
   /* Sanity check. */
   if (remaining_depth < 0 || remaining_depth > HN_MAX_REMAINING_DEPTH)
@@ -309,20 +310,21 @@ reading_cache_default_size()
  */
 
 void
-sgf_trace(const char *func, int str, int move, int result,
+sgf_trace(struct board_lib_state_struct *internal_state,
+          const char *func, int str, int move, int result,
 	  const char *message)
 {
   char buf[100];
 
   sprintf(buf, "%s %c%d: ", func, J(str) + 'A' + (J(str) >= 8),
-	  board_size - I(str));
+      internal_state->board_size - I(str));
   
   if (result == 0)
     sprintf(buf + strlen(buf), "0");
-  else if (ON_BOARD(move))
+  else if (ON_BOARD(internal_state, move))
     sprintf(buf + strlen(buf), "%s %c%d", result_to_string(result), 
 	    J(move) + 'A' + (J(move) >= 8),
-	    board_size - I(move));
+        internal_state->board_size - I(move));
   else if (is_pass(move))
     sprintf(buf + strlen(buf), "%s PASS", result_to_string(result));
   else
@@ -331,7 +333,7 @@ sgf_trace(const char *func, int str, int move, int result,
   if (message)
     sprintf(buf + strlen(buf), " (%s)", message);
   
-  sgftreeAddComment(sgf_dumptree, buf);
+  sgftreeAddComment(internal_state->sgf_dumptree, buf);
 }
 
 /* Write two group reading (connection) trace data to an SGF file.
@@ -339,19 +341,20 @@ sgf_trace(const char *func, int str, int move, int result,
  */
 
 void
-sgf_trace2(const char *func, int str1, int str2, int move, 
+sgf_trace2(struct board_lib_state_struct *internal_state,
+           const char *func, int str1, int str2, int move,
            const char *result, const char *message)
 {
   char buf[100];
 
   sprintf(buf, "%s %c%d %c%d: ", func,
-	  J(str1) + 'A' + (J(str1) >= 8), board_size - I(str1),
-	  J(str2) + 'A' + (J(str2) >= 8), board_size - I(str2));
+      J(str1) + 'A' + (J(str1) >= 8), internal_state->board_size - I(str1),
+      J(str2) + 'A' + (J(str2) >= 8), internal_state->board_size - I(str2));
   
-  if (ON_BOARD(move))
+  if (ON_BOARD(internal_state, move))
     sprintf(buf + strlen(buf), "%s %c%d", result,
 	    J(move) + 'A' + (J(move) >= 8),
-	    board_size - I(move));
+        internal_state->board_size - I(move));
   else if (is_pass(move))
     sprintf(buf + strlen(buf), "%s PASS", result);
   else
@@ -360,7 +363,7 @@ sgf_trace2(const char *func, int str1, int str2, int move,
   if (message)
     sprintf(buf + strlen(buf), " (%s)", message);
   
-  sgftreeAddComment(sgf_dumptree, buf);
+  sgftreeAddComment(internal_state->sgf_dumptree, buf);
 }
 
 /* Write semeai reading trace data to an SGF file. Normally called
@@ -368,19 +371,20 @@ sgf_trace2(const char *func, int str1, int str2, int move,
  */
 
 void
-sgf_trace_semeai(const char *func, int str1, int str2, int move, 
+sgf_trace_semeai(struct board_lib_state_struct *internal_state,
+                 const char *func, int str1, int str2, int move,
 		 int result1, int result2, const char *message)
 {
   char buf[100];
 
   sprintf(buf, "%s %c%d %c%d: ", func,
-	  J(str1) + 'A' + (J(str1) >= 8), board_size - I(str1),
-	  J(str2) + 'A' + (J(str2) >= 8), board_size - I(str2));
+      J(str1) + 'A' + (J(str1) >= 8), internal_state->board_size - I(str1),
+      J(str2) + 'A' + (J(str2) >= 8), internal_state->board_size - I(str2));
   
-  if (ON_BOARD(move))
+  if (ON_BOARD(internal_state, move))
     sprintf(buf + strlen(buf), "%s %s %c%d",
 	    result_to_string(result1), result_to_string(result2),
-	    J(move) + 'A' + (J(move) >= 8), board_size - I(move));
+        J(move) + 'A' + (J(move) >= 8), internal_state->board_size - I(move));
   else if (is_pass(move))
     sprintf(buf + strlen(buf), "%s %s PASS",
 	    result_to_string(result1), result_to_string(result2));
@@ -392,7 +396,7 @@ sgf_trace_semeai(const char *func, int str1, int str2, int move,
   if (message)
     sprintf(buf + strlen(buf), " (%s)", message);
   
-  sgftreeAddComment(sgf_dumptree, buf);
+  sgftreeAddComment(internal_state->sgf_dumptree, buf);
 }
 
 /*

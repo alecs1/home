@@ -346,7 +346,7 @@ analyze_node(struct board_lib_state_struct *internal_state, SGFNode *node, const
     case SGFLB: /* Label, with value like "mh:A" */
       get_moveXY(prop, &i, &j, boardsize);
       j = boardsize - 1 - j;
-      gg_assert(prop->value[2] == ':');
+      gg_assert(internal_state, prop->value[2] == ':');
       if (ON_BOARD2(internal_state, i, j)) {
 	labels[i][j] = prop->value[3];
 	label_found = 1;
@@ -360,17 +360,17 @@ analyze_node(struct board_lib_state_struct *internal_state, SGFNode *node, const
   }
 
   /* If we have a move and a square mark, produce a pattern. */
-  if (SAFE_ON_BOARD(movei, movej) && ON_BOARD2(internal_state, marki, markj))
+  if (SAFE_ON_BOARD(internal_state, movei, movej) && ON_BOARD2(internal_state, marki, markj))
     make_pattern(movei, movej, color, marki, markj, multiple_marks,
 		 (label_found ? labels : NULL), comment, prefix);
 
   /* Traverse child, if any. */
   if (node->child) {
-    if (SAFE_ON_BOARD(movei, movej))
+    if (SAFE_ON_BOARD(internal_state, movei, movej))
       tryko(POS(movei, movej), color, NULL);
     analyze_node(node->child, prefix);
-    if (SAFE_ON_BOARD(movei, movej))
-      popgo();
+    if (SAFE_ON_BOARD(internal_state, movei, movej))
+      popgo(internal_state);
   }
 
   /* Traverse sibling, if any. */

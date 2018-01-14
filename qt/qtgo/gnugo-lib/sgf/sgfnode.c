@@ -1138,7 +1138,7 @@ gametreefuseki(SGFNode **p, SGFNode *parent, int mode,
 }
 
 SGFNode *
-readsgffilefuseki(const char *filename, int moves_per_game)
+readsgffilefuseki(internal_state, const char *filename, int moves_per_game)
 {
   SGFNode *root;
   int tmpi = 0;

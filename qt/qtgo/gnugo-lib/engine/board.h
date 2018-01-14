@@ -174,10 +174,10 @@ const char *color_to_string(struct board_lib_state_struct *internal_state, int c
    || (pos1) == NE(pos2)			\
    || (pos1) == SE(pos2))
 
-#define BOARD(i, j)   board[POS(i, j)]
+#define BOARD(i, j)   internal_state->board[POS(i, j)]
 
 
-#define MIRROR_MOVE(pos) POS(board_size - 1 - I(pos), board_size - 1 - J(pos))
+#define MIRROR_MOVE(internal_state, pos) POS(internal_state->board_size - 1 - I(pos), internal_state->board_size - 1 - J(pos))
 
 /* ================================================================ */
 /*                         global variables                         */
@@ -427,9 +427,12 @@ void vgprintf(struct board_lib_state_struct *internal_state, FILE *outputfile, c
 void mprintf(struct board_lib_state_struct *internal_state, const char *fmt, ...);
 void gfprintf(struct board_lib_state_struct *internal_state, FILE *outfile, const char *fmt, ...);
 
-const char *color_to_string(struct board_lib_state_struct *internal_state, int color);
-const char *location_to_string(struct board_lib_state_struct *internal_state, int pos);
-void location_to_buffer(struct board_lib_state_struct *internal_state, int pos, char *buf);
+const char *color_to_string(struct board_lib_state_struct *internal_state,
+                            int color);
+const char *location_to_string(struct board_lib_state_struct *internal_state,
+                               int pos);
+void location_to_buffer(struct board_lib_state_struct *internal_state,
+                        int pos, char *buf);
 
 int string_to_location(int boardsize, const char *str);
 
@@ -437,7 +440,7 @@ int is_hoshi_point(struct board_lib_state_struct *internal_state, int m, int n);
 void draw_letter_coordinates(struct board_lib_state_struct *internal_state, FILE *outfile);
 void simple_showboard(struct board_lib_state_struct *internal_state, FILE *outfile);
 
-void mark_goal_in_sgf(signed char goal[BOARDMAX]);
+void mark_goal_in_sgf(struct board_lib_state_struct *internal_state, signed char goal[BOARDMAX]);
 
 /* ================================================================ */
 /*                         assertions                               */

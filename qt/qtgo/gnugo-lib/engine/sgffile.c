@@ -56,10 +56,10 @@ sgffile_add_debuginfo(SGFNode *node, float value)
     return;
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
     
-    if (IS_STONE(board[pos]) && (output_flags & OUTPUT_MARKDRAGONS)) {
+    if (IS_STONE(internal_state->board[pos]) && (output_flags & OUTPUT_MARKDRAGONS)) {
       if (dragon[pos].crude_status == DEAD)
 	sgfLabel(node, "X", I(pos), J(pos));
       else if (dragon[pos].crude_status == CRITICAL)
@@ -121,7 +121,7 @@ sgffile_begindump(SGFTree *tree)
     sgf_dumptree = tree;
   
   sgftree_clear(sgf_dumptree);
-  sgftreeCreateHeaderNode(sgf_dumptree, board_size, komi, handicap);
+  sgftreeCreateHeaderNode(sgf_dumptree, internal_state->board_size, komi, handicap);
   sgffile_printboard(sgf_dumptree);
 }
 
@@ -161,10 +161,10 @@ sgffile_printsgf(int color_to_play, const char *filename)
   char str[128];
   float relative_komi;
 
-  relative_komi = komi + black_captured - white_captured;
+  relative_komi = komi + black_captured - internal_state->white_captured;
   
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, board_size, relative_komi, handicap);
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, relative_komi, handicap);
   sgf_write_header(sgftree.root, 1, get_random_seed(), relative_komi,
 		   handicap, get_level(), chinese_rules);
   gg_snprintf(str, 128, "GNU Go %s load and print", gg_version());
@@ -176,8 +176,8 @@ sgffile_printsgf(int color_to_play, const char *filename)
     sgfAddProperty(sgftree.lastnode, "PL",
 		   (color_to_play == WHITE ? "W" : "B"));
 
-    for (m = 0; m < board_size; ++m)
-      for (n = 0; n < board_size; ++n)
+    for (m = 0; m < internal_state->board_size; ++m)
+      for (n = 0; n < internal_state->board_size; ++n)
         if (BOARD(m, n) == EMPTY && !is_legal(POS(m, n), color_to_play)) {
 	  gg_snprintf(pos, 3, "%c%c", 'a' + n, 'a' + m);
 	  sgfAddProperty(sgftree.lastnode, "IL", pos);
@@ -198,20 +198,20 @@ sgffile_printboard(SGFTree *tree)
   int i, j;
   SGFNode *node;
   
-  gg_assert(tree);
+  gg_assert(internal_state, tree);
   node = tree->lastnode;
   
   /* Write the white stones to the file. */
-  for (i = 0; i < board_size; i++) {
-    for (j = 0; j < board_size; j++) {
+  for (i = 0; i < internal_state->board_size; i++) {
+    for (j = 0; j < internal_state->board_size; j++) {
       if (BOARD(i, j) == WHITE)
 	sgfAddStone(node, WHITE, i, j);
     }
   }
 
   /* Write the black stones to the file. */
-  for (i = 0; i < board_size; i++) {
-    for (j = 0; j < board_size; j++) {
+  for (i = 0; i < internal_state->board_size; i++) {
+    for (j = 0; j < internal_state->board_size; j++) {
       if (BOARD(i, j) == BLACK)
 	sgfAddStone(node, BLACK, i, j);
     }
@@ -227,8 +227,8 @@ sgffile_recordboard(SGFNode *node)
   int i, j;
 
   if (node)
-    for (i = 0; i < board_size; i++)
-      for (j = 0; j < board_size; j++)
+    for (i = 0; i < internal_state->board_size; i++)
+      for (j = 0; j < internal_state->board_size; j++)
         if (BOARD(i, j) == BLACK)
           sgfAddStone(node, BLACK, i, j);
 }
@@ -237,7 +237,7 @@ sgffile_recordboard(SGFNode *node)
 int
 get_sgfmove(SGFProperty *property)
 {
-  return POS(get_moveX(property, board_size), get_moveY(property, board_size));
+  return POS(get_moveX(property, internal_state->board_size), get_moveY(property, internal_state->board_size));
 }
 
 

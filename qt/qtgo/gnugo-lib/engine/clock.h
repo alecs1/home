@@ -31,12 +31,12 @@ void clock_settings(int maintime, int byotime, int byostones);
 void init_timers(void);
  
 /* main access */
-void clock_push_button(int color);
-void update_time_left(int color, int time_left, int stones);
-void clock_print(int color);
+void clock_push_button(struct board_lib_state_struct *internal_state, int color);
+void update_time_left(struct board_lib_state_struct *internal_state, int color, int time_left, int stones);
+void clock_print(struct board_lib_state_struct *internal_state, int color);
 int have_time_settings(void);
 
-void adjust_level_offset(int color);
+void adjust_level_offset(struct board_lib_state_struct *internal_state, int color);
 
 /* Access to level settings. */
 int get_level(void);

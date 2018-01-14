@@ -25,7 +25,7 @@
 /* The functions in this file implement a mechanism whereby
  * GNU Go can fork a second gnugo process, called the oracle.
  * The two processes communicate by means of the GTP.
- * The functions oracle_trymove() and oracle_popgo() call
+ * The functions oracle_trymove() and oracle_popgo(internal_state) call
  * trymove and popgo in the primary gnugo processes but
  * actually play and undo the move in the oracle. This
  * the oracle can be queried for information which is
@@ -173,7 +173,7 @@ static int
 oracle_trymove(int pos, int color, const char *message, int str,
 	       int komaster, int kom_pos)
 {
-  if (!trymove(pos, color, message, str))
+  if (!trymove(internal_state, pos, color, message, str))
     return 0;
   if (debug & DEBUG_ORACLE_STREAM)
     gfprintf(stderr, "%o%s %1m\n", 
@@ -190,7 +190,7 @@ oracle_trymove(int pos, int color, const char *message, int str,
 static void
 oracle_popgo(void)
 {
-  popgo();
+  popgo(internal_state);
   TELL_ORACLE("undo\n");
   ASK_ORACLE;
 }
@@ -291,7 +291,7 @@ do_consult_oracle(int color)
       oracle_trymove(oracle_moves[k].pos, color, oracle_moves[k].reason,
 		     0, 0, NO_MOVE);
       do_consult_oracle(OTHER_COLOR(color));
-      oracle_popgo();
+      oracle_popgo(internal_state);
     }
 }
 
@@ -307,7 +307,7 @@ oracle_callback(int anchor, int color, struct pattern *pattern,
   if (within_search_area(this_move))
     oracle_add_move(moves, this_move, pattern->value, pattern->name);
   else
-    gprintf("outside the area\n");
+    gprintf(internal_state, "outside the area\n");
 }
 
 /* Add a move to a list */
@@ -393,17 +393,17 @@ do_metamachine_genmove(int color, int width, float *value)
   }
   moves_considered = width;
   if (verbose)
-    dump_stack();
+    dump_stack(internal_state);
   for (k = 0; k < moves_considered; k++) {
     token = strtok(NULL, delimiters);
     if (!token)
       break;
-    moves[k] = string_to_location(board_size, token);
+    moves[k] = string_to_location(internal_state->board_size, token);
     token = strtok(NULL, delimiters);
     if (!token)
       break;
     sscanf(token, "%f", move_value + k);
-    TRACE("move %d: %1m valued %f\n", k, moves[k], move_value[k]);
+    TRACE(internal_state, "move %d: %1m valued %f\n", k, moves[k], move_value[k]);
   }
   /* if we left the loop early, k is the number of valid moves */
   moves_considered = k;
@@ -416,7 +416,7 @@ do_metamachine_genmove(int color, int width, float *value)
     return moves[k];
   }
   for (k = 0; k < moves_considered; k++) {
-    if (oracle_trymove(moves[k], color, "", 0, 0, NO_MOVE)) {
+    if (oracle_trymove(internal_state, moves[k], color, "", 0, 0, NO_MOVE)) {
       int new_width = search_width();
 
       if (new_width == 0) {
@@ -429,12 +429,12 @@ do_metamachine_genmove(int color, int width, float *value)
 	do_metamachine_genmove(OTHER_COLOR(color), new_width, &score[k]);
       }
       if (verbose)
-	dump_stack();
-      TRACE("score: %f\n", color == WHITE ? score[k] : -score[k]);
+	dump_stack(internal_state);
+      TRACE(internal_state, "score: %f\n", color == WHITE ? score[k] : -score[k]);
       sprintf(buf, "value %.2f", color == WHITE ? score[k] : -score[k]);
       if (sgf_dumptree)
 	sgftreeAddComment(sgf_dumptree, buf);
-      oracle_popgo();
+      oracle_popgo(internal_state);
     }
     if (best_move == -1
 	|| (color == WHITE && score[k] > best_score) 
@@ -443,7 +443,7 @@ do_metamachine_genmove(int color, int width, float *value)
       best_score = score[k];
     }
   }
-  TRACE("best: %f at %1m\n", best_score, moves[best_move]);
+  TRACE(internal_state, "best: %f at %1m\n", best_score, moves[best_move]);
   *value = score[best_move];
   return moves[best_move];
 }
@@ -453,9 +453,9 @@ do_metamachine_genmove(int color, int width, float *value)
 static int
 search_width(void)
 {
-  if (stackp == 0)
+  if (internal_state->stackp == 0)
     return 3;
-  else if (stackp == 1)
+  else if (internal_state->stackp == 1)
     return 2;
   else
     return 0;

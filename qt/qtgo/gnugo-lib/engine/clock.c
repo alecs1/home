@@ -94,13 +94,13 @@ timeval_print(FILE *outfile, double tv)
 
 /* Print the clock status for one side. */
 void
-clock_print(int color)
+clock_print(struct board_lib_state_struct *internal_state, int color)
 {
   struct timer_data *const td
     = (color == BLACK) ? &black_time_data : &white_time_data;
 
   fprintf(stderr, "clock: "); 
-  fprintf(stderr, "%s ", color_to_string(color));
+  fprintf(stderr, "%s ", color_to_string(internal_state, color));
 
   if (td->time_out)
     fprintf(stderr, "TIME OUT! ");
@@ -179,7 +179,7 @@ init_timers()
 
 
 void
-update_time_left(int color, int time_left, int stones)
+update_time_left(struct board_lib_state_struct *internal_state, int color, int time_left, int stones)
 {
   struct timer_data *const td
     = ((color == BLACK) ? &black_time_data : &white_time_data);
@@ -195,7 +195,7 @@ update_time_left(int color, int time_left, int stones)
       && gg_abs(time_used - td->estimated.time_for_last_move) >= 1.0)
     td->estimated.time_for_last_move = time_used;
   td->estimated.stones = stones;
-  td->estimated.movenum = movenum;
+  td->estimated.movenum = internal_state->movenum;
   /* Did our clock go wrong? */
   if (gg_abs(td->estimated.time_left - time_left) >= 1.0)
     td->estimated.time_left = time_left;
@@ -205,7 +205,7 @@ update_time_left(int color, int time_left, int stones)
     td->estimated.in_byoyomi = 0;
 
   td->official.stones = stones;
-  td->official.movenum = movenum;
+  td->official.movenum = internal_state->movenum;
   td->official.time_for_last_move = td->official.time_for_last_move - time_left;
   td->official.time_left = time_left;
   td->official.in_byoyomi = td->estimated.in_byoyomi;
@@ -215,7 +215,7 @@ update_time_left(int color, int time_left, int stones)
  * Update the estimated timer after a move has been made.
  */
 void
-clock_push_button(int color)
+clock_push_button(struct board_lib_state_struct *internal_state, int color)
 {
   static double last_time = -1.0;
   static int last_movenum = -1;
@@ -227,22 +227,22 @@ clock_push_button(int color)
     return;
 
   if (last_movenum >= 0
-      && movenum == last_movenum + 1
-      && movenum > td->estimated.movenum) {
+      && internal_state->movenum == last_movenum + 1
+      && internal_state->movenum > td->estimated.movenum) {
     double time_used = now - last_time;
     td->estimated.time_left -= time_used;
-    td->estimated.movenum = movenum;
+    td->estimated.movenum = internal_state->movenum;
     td->estimated.time_for_last_move = time_used;
     if (td->estimated.time_left < 0) {
       if (td->estimated.in_byoyomi || byoyomi_stones == 0) {
-	DEBUG(DEBUG_TIME, "%s ran out of time.\n", color_to_string(color));
+    DEBUG(DEBUG_TIME, "%s ran out of time.\n", color_to_string(internal_state, color));
 	if (debug & DEBUG_TIME)
-	  clock_print(color);
+      clock_print(internal_state, color);
 	td->time_out = 1;
       }
       else {
 	/* Entering byoyomi. */
-	gg_assert(!(td->estimated.in_byoyomi));
+    gg_assert(internal_state, !(td->estimated.in_byoyomi));
 	td->estimated.in_byoyomi = 1;
 	td->estimated.stones = byoyomi_stones - 1;
 	td->estimated.time_left += byoyomi_time;
@@ -251,7 +251,7 @@ clock_push_button(int color)
       }
     }
     else if (td->estimated.stones > 0) {
-      gg_assert(td->estimated.in_byoyomi);
+      gg_assert(internal_state, td->estimated.in_byoyomi);
       td->estimated.stones = td->estimated.stones - 1;
       if (td->estimated.stones == 0) {
 	td->estimated.time_left = byoyomi_time;
@@ -260,12 +260,12 @@ clock_push_button(int color)
     }
   }
 
-  last_movenum = movenum;
+  last_movenum = internal_state->movenum;
   last_time = now;
 
   /* Update main timer. */
   if (debug & DEBUG_TIME)
-    clock_print(color);
+    clock_print(internal_state, color);
 }
 
 
@@ -279,7 +279,8 @@ clock_push_button(int color)
  * the (effective) remaining time.
  */
 static int
-analyze_time_data(int color, double *time_for_last_move, double *time_left,
+analyze_time_data(struct board_lib_state_struct *internal_state,
+                  int color, double *time_for_last_move, double *time_left,
 		  int *stones_left)
 {
   struct remaining_time_data *const timer
@@ -312,8 +313,8 @@ analyze_time_data(int color, double *time_for_last_move, double *time_left,
        * influence_evaluate_position() here to guess how many moves
        * are remaining.
        */
-      int nominal_moves = board_size * board_size / 3;
-      *stones_left = gg_max(nominal_moves - movenum / 2,
+      int nominal_moves = internal_state->board_size * internal_state->board_size / 3;
+      *stones_left = gg_max(nominal_moves - internal_state->movenum / 2,
 			    2 * nominal_moves / 5);
     }
   }
@@ -329,13 +330,13 @@ analyze_time_data(int color, double *time_for_last_move, double *time_left,
  * and remaining time and stones.
  */
 void
-adjust_level_offset(int color)
+adjust_level_offset(struct board_lib_state_struct *internal_state, int color)
 {
   double time_for_last_move;
   double time_left;
   int stones_left;
 
-  if (!analyze_time_data(color, &time_for_last_move, &time_left, &stones_left))
+  if (!analyze_time_data(internal_state, color, &time_for_last_move, &time_left, &stones_left))
     return;
 
 
@@ -368,7 +369,7 @@ adjust_level_offset(int color)
     level_offset = max_level - level;
 
   DEBUG(DEBUG_TIME, "New level %d (%d %C %f %f %d)\n", level + level_offset,
-	movenum / 2, color, time_for_last_move, time_left, stones_left);
+    internal_state->movenum / 2, color, time_for_last_move, time_left, stones_left);
 }
 
 

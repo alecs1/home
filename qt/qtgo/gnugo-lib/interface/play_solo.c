@@ -60,16 +60,16 @@ play_solo(Gameinfo *gameinfo, int moves)
   komi = 5.5;
 
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, board_size, komi, handicap);
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, handicap);
   sgf_write_header(sgftree.root, 1, get_random_seed(), 5.5, handicap,
                    get_level(), chinese_rules);
  
   /* Generate some random moves. */
-  if (board_size > 6) {
+  if (internal_state->board_size > 6) {
     do {
       do {
-	i = (gg_rand() % 4) + (gg_rand() % (board_size - 4));
-	j = (gg_rand() % 4) + (gg_rand() % (board_size - 4));
+	i = (gg_rand() % 4) + (gg_rand() % (internal_state->board_size - 4));
+	j = (gg_rand() % 4) + (gg_rand() % (internal_state->board_size - 4));
       } while (!is_allowed_move(POS(i, j), gameinfo->to_move));
 
       gnugo_play_move(POS(i, j), gameinfo->to_move);
@@ -99,7 +99,7 @@ play_solo(Gameinfo *gameinfo, int moves)
     }
     else {
       passes = 0;
-      gprintf("%s(%d): %1m\n", gameinfo->to_move == BLACK ? "Black" : "White",
+      gprintf(internal_state, "%s(%d): %1m\n", gameinfo->to_move == BLACK ? "Black" : "White",
 	      movenum, move);
     }
 
@@ -156,7 +156,7 @@ load_and_analyze_sgf_file(Gameinfo *gameinfo)
 
   move = genmove(next, &move_value, NULL);
 
-  gprintf("%s move %1m\n", next == WHITE ? "white (O)" : "black (X)", move);
+  gprintf(internal_state, "%s move %1m\n", next == WHITE ? "white (O)" : "black (X)", move);
 
   if (metamachine)
     sgffile_enddump(outfilename);
@@ -219,8 +219,8 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
      * tell the number of captured stones, a modified komi is the best
      * available solution.
      */
-    sgftreeCreateHeaderNode(&local_tree, board_size,
-			    komi + black_captured - white_captured, handicap);
+    sgftreeCreateHeaderNode(&local_tree, internal_state->board_size,
+			    komi + black_captured - internal_state->white_captured, handicap);
     sgffile_printboard(&local_tree);
     sgfAddProperty(local_tree.lastnode, "PL",
 		   gameinfo->to_move == WHITE ? "W" : "B");
@@ -228,7 +228,7 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
   }
   
   next = gameinfo->to_move;
-  reset_engine();
+  reset_engine(internal_state);
   
   /* Complete the game by selfplay for the finish and aftermath methods. */
   if (method != ESTIMATE) {
@@ -237,12 +237,12 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
       move = genmove_conservative(next, &move_value);
       if (move != PASS_MOVE) {
 	pass = 0;
-	gprintf("%d %s move %1m\n", movenum,
+	gprintf(internal_state, "%d %s move %1m\n", movenum,
 		next == WHITE ? "white (O)" : "black (X)", move);
       }
       else {
 	pass++;
-	gprintf("%d %s move PASS\n", movenum, 
+	gprintf(internal_state, "%d %s move PASS\n", movenum, 
 		next == WHITE ? "white (O)" : "black (X)");
       }
       play_move(move, next);

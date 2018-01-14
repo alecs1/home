@@ -59,7 +59,7 @@ semeai()
   int num_dragons = number_of_dragons;
 
   if (num_dragons > MAX_DRAGONS) {
-    TRACE("Too many dragons!!! Semeai analysis disabled.");
+    TRACE(internal_state, "Too many dragons!!! Semeai analysis disabled.");
     return;
   }
 
@@ -192,7 +192,7 @@ semeai()
 	best_defense = semeai_results_first[d1][d2];
 	defense_move = semeai_move[d1][d2];
 	defense_certain = semeai_certain[d1][d2];
-	gg_assert(board[dragon2[d2].origin] == OTHER_COLOR(board[dragon2[d1].origin]));
+	gg_assert(internal_state->board[dragon2[d2].origin] == OTHER_COLOR(internal_state->board[dragon2[d1].origin]));
 	semeai_defense_target = dragon2[d2].origin;
       }
       if (best_attack < semeai_results_second[d2][d1]
@@ -214,8 +214,8 @@ semeai()
       dragon2[d1].semeai_defense_code = best_defense;
       dragon2[d1].semeai_defense_point = defense_move;
       dragon2[d1].semeai_defense_certain = defense_certain;
-      ASSERT1(board[semeai_defense_target]
-	      == OTHER_COLOR(board[dragon2[d1].origin]),
+      ASSERT1(internal_state, internal_state->board[semeai_defense_target]
+	      == OTHER_COLOR(internal_state->board[dragon2[d1].origin]),
 	      dragon2[d1].origin);
       dragon2[d1].semeai_defense_target = semeai_defense_target;
       dragon2[d1].semeai_attack_code = best_attack;
@@ -246,7 +246,7 @@ find_moves_to_make_seki()
   int resulta, resultb;
   
   for (str = BOARDMIN; str < BOARDMAX; str++) {
-    if (IS_STONE(board[str]) && is_worm_origin(str, str)
+    if (IS_STONE(internal_state->board[str]) && is_worm_origin(str, str)
 	&& attack_and_defend(str, NULL, NULL, NULL, &defend_move)
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
@@ -258,7 +258,7 @@ find_moves_to_make_seki()
 
       for (k = 0; k < DRAGON2(str).neighbors; k++) {
 	opponent = dragon2[DRAGON2(str).adjacent[k]].origin;
-	if (board[opponent] != color)
+	if (internal_state->board[opponent] != color)
 	  break;
       }
 
@@ -304,7 +304,7 @@ find_moves_to_make_seki()
 	dragon2[d].semeai_defense_code = REVERSE_RESULT(resultb);
 	dragon2[d].semeai_defense_point = defend_move;
 	dragon2[d].semeai_defense_certain = certain;
-	gg_assert(board[opponent] == OTHER_COLOR(board[dragon2[d].origin]));
+	gg_assert(internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
 	dragon2[d].semeai_defense_target = opponent;
 
 	/* We need to determine a proper attack move (the one that
@@ -321,7 +321,7 @@ find_moves_to_make_seki()
 	else {
 	  int k;
 	  int libs[MAXLIBS];
-	  int liberties = findlib(str, MAXLIBS, libs);
+	  int liberties = findlib(internal_state, str, MAXLIBS, libs);
 
 	  for (k = 0; k < liberties; k++) {
 	    owl_analyze_semeai_after_move(libs[k], OTHER_COLOR(color),
@@ -361,7 +361,7 @@ find_moves_to_make_seki()
    *        seki can be found.
    */
   for (str = BOARDMIN; str < BOARDMAX; str++) {
-    if (IS_STONE(board[str]) && is_worm_origin(str, str)
+    if (IS_STONE(internal_state->board[str]) && is_worm_origin(str, str)
 	&& !find_defense(str, NULL)
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
@@ -373,7 +373,7 @@ find_moves_to_make_seki()
 
       for (k = 0; k < DRAGON2(str).neighbors; k++) {
 	opponent = dragon2[DRAGON2(str).adjacent[k]].origin;
-	if (board[opponent] != color)
+	if (internal_state->board[opponent] != color)
 	  break;
       }
 
@@ -407,7 +407,7 @@ find_moves_to_make_seki()
 	dragon2[d].semeai_defense_code = resulta;
 	dragon2[d].semeai_defense_point = defend_move;
 	dragon2[d].semeai_defense_certain = certain;
-	gg_assert(board[opponent] == OTHER_COLOR(board[dragon2[d].origin]));
+	gg_assert(internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
 	dragon2[d].semeai_defense_target = opponent;
 
 	/* We need to determine a proper attack move (the one that
@@ -424,7 +424,7 @@ find_moves_to_make_seki()
 	else {
 	  int k;
 	  int libs[MAXLIBS];
-	  int liberties = findlib(str, MAXLIBS, libs);
+	  int liberties = findlib(internal_state, str, MAXLIBS, libs);
 
 	  for (k = 0; k < liberties; k++) {
 	    owl_analyze_semeai_after_move(libs[k], OTHER_COLOR(color),
@@ -469,7 +469,7 @@ neighbor_of_dragon(int pos, int origin)
     return 0;
 
   for (k = 0; k < 4; k++)
-    if (ON_BOARD(pos + delta[k]) && dragon[pos + delta[k]].origin == origin)
+    if (ON_BOARD(internal_state, pos + delta[k]) && dragon[pos + delta[k]].origin == origin)
       return 1;
 
   return 0;
@@ -483,14 +483,14 @@ close_enough_for_proper_semeai(int apos, int bpos)
 {
   int pos;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == EMPTY
+    if (internal_state->board[pos] == EMPTY
 	&& neighbor_of_dragon(pos, apos)
 	&& neighbor_of_dragon(pos, bpos))
       return 1;
-    else if (IS_STONE(board[pos])) {
-      if (is_same_dragon(pos, apos) && neighbor_of_dragon(pos, bpos))
+    else if (IS_STONE(internal_state->board[pos])) {
+      if (is_same_dragon(internal_state, pos, apos) && neighbor_of_dragon(pos, bpos))
 	return 1;
-      if (is_same_dragon(pos, bpos) && neighbor_of_dragon(pos, apos))
+      if (is_same_dragon(internal_state, pos, bpos) && neighbor_of_dragon(pos, apos))
 	return 1;
     }
   }
@@ -539,7 +539,7 @@ semeai_move_reasons(int color)
 
           for (r = 0; r < liberties; r++) {
             if (!neighbor_of_dragon(libs[r], dragon2[d].origin)
-		&& !is_self_atari(libs[r], color)
+		&& !is_self_atari(internal_state, libs[r], color)
 		&& libs[r] != dragon2[d].semeai_defense_point)
 	      add_potential_semeai_defense(libs[r], dragon2[d].origin,
 					   dragon2[d].semeai_defense_target);
@@ -566,7 +566,7 @@ semeai_move_reasons(int color)
 
           for (r = 0; r < liberties; r++) {
             if (!neighbor_of_dragon(libs[r], dragon2[d].semeai_attack_target)
-		&& !is_self_atari(libs[r], color)
+		&& !is_self_atari(internal_state, libs[r], color)
 		&& libs[r] != dragon2[d].semeai_attack_point)
 	      add_potential_semeai_attack(libs[r], dragon2[d].origin,
 					  dragon2[d].semeai_attack_target);
@@ -593,7 +593,7 @@ update_status(int dr, enum dragon_status new_status,
 	  status_to_string(dragon[dr].status),
 	  status_to_string(new_status));
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-      if (IS_STONE(board[pos]) && is_same_dragon(dr, pos)) {
+      if (IS_STONE(internal_state->board[pos]) && is_same_dragon(internal_state, dr, pos)) {
 	dragon[pos].status = new_status;
 	if (new_status != DEAD)
 	  worm[pos].inessential = 0;

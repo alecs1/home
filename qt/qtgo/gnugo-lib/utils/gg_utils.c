@@ -362,7 +362,7 @@ gg_normalize_float2int(float x, float a)
  */
 void
 gg_sort(void *base, size_t nel, size_t width,
-	int (*cmp)(const void *, const void *))
+    int (*cmp)(struct board_lib_state_struct *internal_state, const void *, const void *))
 {
   int gap = nel;
   int swap_made;

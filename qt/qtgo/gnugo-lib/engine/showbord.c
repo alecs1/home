@@ -82,8 +82,8 @@ static const int domain_colors[4] = {5, 1, 2, 3}; /* gray, black, white, both */
  * typical use would be along the following lines:
  *
  * start_draw_board();
- * for (m = 0; m < board_size; m++)
- *   for (n = 0; n < board_size; n++) {
+ * for (m = 0; m < internal_state->board_size; m++)
+ *   for (n = 0; n < internal_state->board_size; n++) {
  *     int color = ...;
  *     int c = ...;
  *     draw_color_char(m, n, c, color);
@@ -114,7 +114,7 @@ draw_color_char(int m, int n, int c, int color)
 {
   /* Is this the first column? */
   if (n == 0)
-    fprintf(stderr, "\n%2d", board_size - m);
+    fprintf(stderr, "\n%2d", internal_state->board_size - m);
 
   /* Do we see a hoshi point? */
   if (c == EMPTY) {
@@ -133,8 +133,8 @@ draw_color_char(int m, int n, int c, int color)
     write_color_char(color, c);
   
   /* Is this the last column? */
-  if (n == board_size - 1)
-    fprintf(stderr, " %-2d", board_size - m);
+  if (n == internal_state->board_size - 1)
+    fprintf(stderr, " %-2d", internal_state->board_size - m);
 }
 
 /* Draw a black character as specified above. */
@@ -276,33 +276,33 @@ showboard(int xo)
   
   start_draw_board();
   
-  for (i = 0; i < board_size; i++) {
-    ii = board_size - i;
+  for (i = 0; i < internal_state->board_size; i++) {
+    ii = internal_state->board_size - i;
     fprintf(stderr, "\n%2d", ii);
     
-    for (j = 0; j < board_size; j++)
+    for (j = 0; j < internal_state->board_size; j++)
       showchar(i, j, is_hoshi_point(i, j) ? '+' : '.', xo);
     
     fprintf(stderr, " %d", ii);
     
-    if (xo == 0 && ((board_size < 10 && i == board_size-2)
-		    || (board_size >= 10 && i == 8)))
+    if (xo == 0 && ((internal_state->board_size < 10 && i == internal_state->board_size-2)
+            || (internal_state->board_size >= 10 && i == 8)))
       fprintf(stderr, "     WHITE (O) has captured %d stones", black_captured);
     
-    if (xo == 0 && ((board_size < 10 && i == board_size-1)
-		    || (board_size >= 10 && i == 9)))
+    if (xo == 0 && ((internal_state->board_size < 10 && i == internal_state->board_size-1)
+            || (internal_state->board_size >= 10 && i == 9)))
       fprintf(stderr, "     BLACK (X) has captured %d stones", white_captured);
     
     if (xo == 3) {
-      if (i == board_size-5)
+      if (i == internal_state->board_size-5)
 	write_color_string(GG_COLOR_GREEN, "    green=alive");
-      if (i == board_size-4)
+      if (i == internal_state->board_size-4)
 	write_color_string(GG_COLOR_CYAN, "    cyan=dead");
-      if (i == board_size-3)
+      if (i == internal_state->board_size-3)
 	write_color_string(GG_COLOR_RED, "    red=critical");
-      if (i == board_size-2)
+      if (i == internal_state->board_size-2)
 	write_color_string(GG_COLOR_YELLOW, "    yellow=unknown");
-      if (i == board_size-1)
+      if (i == internal_state->board_size-1)
 	write_color_string(GG_COLOR_MAGENTA, "    magenta=unchecked");
     }
   }

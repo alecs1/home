@@ -325,9 +325,11 @@ int DEBUG_func(int level, const char *fmt, ...);
 
 #define EXAMINE_ALL                 99
 
-void reset_engine(void);
-void examine_position(int how_much, int aftermath_play);
-void silent_examine_position(int how_much);
+void reset_engine(struct board_lib_state_struct *internal_state);
+void examine_position(struct board_lib_state_struct *internal_state,
+                      int how_much, int aftermath_play);
+void silent_examine_position(struct board_lib_state_struct *internal_state,
+                             int how_much);
 
 
 /* ================================================================ */
@@ -353,11 +355,13 @@ int get_connection_node_counter(void);
 void who_wins(int color, FILE *outfile);
 
 /* high-level routine to generate the best move for the given color */
-int genmove(int color, float *value, int *resign);
-int genmove_conservative(int color, float *value);
+int genmove(struct board_lib_state_struct *internal_state,
+            int color, float *value, int *resign);
+int genmove_conservative(struct board_lib_state_struct *internal_state, int color, float *value);
 
 /* Play through the aftermath. */
-float aftermath_compute_score(int color, SGFTree *tree);
+float aftermath_compute_score(struct board_lib_state_struct *internal_state,
+                              int color, SGFTree *tree);
 
 /* Basic information gathering. */
 /* worm.c */
@@ -365,9 +369,10 @@ void make_worms(void);
 void compute_worm_influence(void);
 
 /* dragon.c */
-void make_dragons(int stop_before_owl);
-void initialize_dragon_data(void);
-void show_dragons(void);
+void make_dragons(struct board_lib_state_struct *internal_state,
+                  int stop_before_owl);
+void initialize_dragon_data(struct board_lib_state_struct *internal_state);
+void show_dragons(struct board_lib_state_struct *internal_state);
 enum dragon_status crude_status(int pos);
 enum dragon_status dragon_status(int pos);
 int same_dragon(int dr1, int dr2);

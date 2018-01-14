@@ -139,10 +139,10 @@
       int ko_move;							\
       int dpos = moves.pos[k];						\
 									\
-      if (komaster_trymove(dpos, color, moves.message[k], str, &ko_move,\
+      if (komaster_trymove(internal_state, dpos, color, moves.message[k], str, &ko_move,\
 			   stackp <= ko_depth && savecode == 0)) {	\
 	int acode = do_attack(str, (attack_hint));			\
-	popgo();							\
+    popgo(internal_state);							\
 									\
 	if (!ko_move) {							\
 	  CHECK_RESULT(savecode, savemove, acode, dpos, move,		\
@@ -177,7 +177,7 @@
       int apos = moves.pos[k];						\
 									\
       if ((board_ko_pos != NO_MOVE || !send_two_return_one(apos, other))\
-	  && komaster_trymove(apos, other, moves.message[k],            \
+      && komaster_trymove(internal_state, apos, other, moves.message[k],            \
                               str, &ko_move,                            \
 			      stackp <= ko_depth && savecode == 0)) {	\
 	int dcode = do_find_defense(str, (defense_hint));		\
@@ -186,7 +186,7 @@
 	    && do_attack(str, NULL)) {	\
 	  if (!ko_move) {						\
 	    if (dcode == 0) {						\
-	      popgo();							\
+          popgo(internal_state);							\
 	      RETURN_RESULT(WIN, apos, move, "attack effective");	\
 	    }								\
 									\
@@ -199,7 +199,7 @@
 	  }								\
 	}								\
 									\
-	popgo();							\
+    popgo(internal_state);							\
       }									\
 									\
       if ((no_deep_branching) && stackp >= branch_depth)		\
@@ -350,7 +350,7 @@ attack(int str, int *move)
   int nodes;
   int origin;
   int the_move = NO_MOVE;
-  int liberties = countlib(str);
+  int liberties = countlib(internal_state, str);
 
   nodes_when_called = reading_node_counter;
   /* Don't even spend time looking in the cache if there are more than
@@ -362,7 +362,7 @@ attack(int str, int *move)
       || (liberties == 3 && stackp > depth))
     return 0;
 
-  origin = find_origin(str);
+  origin = find_origin(internal_state, str);
   if (search_persistent_reading_cache(ATTACK, origin, &result, &the_move)) {
     if (move)
       *move = the_move;
@@ -377,12 +377,12 @@ attack(int str, int *move)
     if (reading_node_counter - nodes_when_called
 	>= MIN_READING_NODES_TO_REPORT) {
       if (result != 0)
-	gprintf("%oattack %1m(%1m) = %d %1M, %d nodes ", str, origin, result,
+    gprintf(internal_state, "%oattack %1m(%1m) = %d %1M, %d nodes ", str, origin, result,
 		the_move, nodes);
       else
-	gprintf("%oattack %1m(%1m) = %d, %d nodes ", str, origin, result,
+    gprintf(internal_state, "%oattack %1m(%1m) = %d, %d nodes ", str, origin, result,
 		nodes);
-      dump_stack();
+      dump_stack(internal_state);
     }
   }
 
@@ -392,8 +392,8 @@ attack(int str, int *move)
     *move = the_move;
 
 #if DUMP_ALL_RESULTS
-  do_dump_stack();
-  gprintf("%oattack %1m (%d)=%d %1m\n", str, depth, result, the_move);
+  do_dump_stack(internal_state);
+  gprintf(internal_state, "%oattack %1m (%d)=%d %1m\n", str, depth, result, the_move);
 #endif
 
   return result;
@@ -419,7 +419,7 @@ find_defense(int str, int *move)
   int nodes;
   int origin;
   int the_move = NO_MOVE;
-  int liberties = countlib(str);
+  int liberties = countlib(internal_state, str);
 
   nodes_when_called = reading_node_counter;
   /* Don't even spend time looking in the cache if there are more than
@@ -432,7 +432,7 @@ find_defense(int str, int *move)
     return WIN;
   }
 
-  origin = find_origin(str);
+  origin = find_origin(internal_state, str);
   if (search_persistent_reading_cache(FIND_DEFENSE, origin, 
 				      &result, &the_move)) {
     if (move)
@@ -448,12 +448,12 @@ find_defense(int str, int *move)
     if (reading_node_counter - nodes_when_called
 	>= MIN_READING_NODES_TO_REPORT) {
       if (result != 0)
-	gprintf("%odefend %1m(%1m) = %d %1M, %d nodes ", str, origin, result,
+    gprintf(internal_state, "%odefend %1m(%1m) = %d %1M, %d nodes ", str, origin, result,
 		the_move, nodes);
       else
-	gprintf("%odefend %1m(%1m) = %d, %d nodes ", str, origin, result,
+    gprintf(internal_state, "%odefend %1m(%1m) = %d, %d nodes ", str, origin, result,
 		nodes);
-      dump_stack();
+      dump_stack(internal_state);
     }
   }
 
@@ -464,8 +464,8 @@ find_defense(int str, int *move)
     *move = the_move;
 
 #if DUMP_ALL_RESULTS
-  do_dump_stack();
-  gprintf("%odefend %1m (%d)=%d %1m\n", str, depth, result, the_move);
+  do_dump_stack(internal_state);
+  gprintf(internal_state, "%odefend %1m (%d)=%d %1m\n", str, depth, result, the_move);
 #endif
 
   return result;
@@ -503,7 +503,7 @@ attack_and_defend(int str,
   if (acode != 0)
     dcode = find_defense(str, &dpos);
 
-  ASSERT1(!(acode != 0 && dcode == WIN && dpos == NO_MOVE), str);
+  ASSERT1(internal_state, !(acode != 0 && dcode == WIN && dpos == NO_MOVE), str);
 
   if (attack_code)
     *attack_code = acode;
@@ -545,7 +545,7 @@ attack_either(int astr, int bstr)
   int bsuccess = 0;
   int color = board[astr];
   ASSERT1(internal_state, IS_STONE(color) , astr);
-  ASSERT1(color == board[bstr], bstr);
+  ASSERT1(color == internal_state->board[bstr], bstr);
 
   /* If the two strings are in fact the same, revert to ordinary attack. */
   if (same_string(astr, bstr))
@@ -554,7 +554,7 @@ attack_either(int astr, int bstr)
   /* Start by attacking the string with the fewest liberties. On
    * average this seems to be slightly more efficient.
    */
-  if (countlib(astr) > countlib(bstr)) {
+  if (countlib(internal_state, astr) > countlib(bstr)) {
     int t = astr;
     astr = bstr;
     bstr = t;
@@ -581,14 +581,14 @@ attack_either(int astr, int bstr)
      * has only 2, and try each atari in turn.
      */
     if (alib == 2) {
-      if (trymove(alibs[0], other, "attack_either-A", astr)) {
+      if (trymove(internal_state, alibs[0], other, "attack_either-A", astr)) {
 	defended0 = defend_both(astr, bstr);
-	popgo();
+    popgo(internal_state);
       }
       if (defended0 
-	  && trymove(alibs[1], other, "attack_either-B", astr)) {
+      && trymove(internal_state, alibs[1], other, "attack_either-B", astr)) {
 	defended1 = defend_both(astr, bstr);
-	popgo();
+    popgo(internal_state);
       }
     }
     /* The second string is possibly also short in liberties.
@@ -610,14 +610,14 @@ attack_either(int astr, int bstr)
 	  && trymove(blibs[0], other, "attack_either-C", bstr)) {
 	int defended = defend_both(astr, bstr);
 	defended0 = gg_min(defended0, defended);
-	popgo();
+    popgo(internal_state);
       }
       if (defended0 
 	  && blibs[1] != alibs[0] && blibs[1] != alibs[1]
 	  && trymove(blibs[1], other, "attack_either-D", bstr)) {
 	int defended = defend_both(astr, bstr);
 	defended1 = gg_min(defended1, defended);
-	popgo();
+    popgo(internal_state);
       }
     }
     return REVERSE_RESULT(gg_min(defended0, defended1));
@@ -649,7 +649,7 @@ defend_both(int astr, int bstr)
   
   int color = board[astr];
   ASSERT1(internal_state, IS_STONE(color) , astr);
-  ASSERT1(color == board[bstr], bstr);
+  ASSERT1(color == internal_state->board[bstr], bstr);
 
   /* If the two strings are in fact the same, revert to ordinary defense. */
   if (same_string(astr, bstr))
@@ -658,7 +658,7 @@ defend_both(int astr, int bstr)
   /* This probably helps here too...
    * (see attack_either)
    */
-  if (countlib(astr) > countlib(bstr)) {
+  if (countlib(internal_state, astr) > countlib(bstr)) {
     int t = astr;
     astr = bstr;
     bstr = t;
@@ -701,20 +701,20 @@ defend_both(int astr, int bstr)
    * somewhat pessimistic estimation.
    */
 
-  if (trymove(a_savepos, color, "defend_both-A", astr)) {
-    if (board[bstr] && !attack(bstr, NULL)) {
-      popgo();
+  if (trymove(internal_state, a_savepos, color, "defend_both-A", astr)) {
+    if (internal_state->board[bstr] && !attack(bstr, NULL)) {
+      popgo(internal_state);
       return WIN;
     }
-    popgo();
+    popgo(internal_state);
   }
   
   if (trymove(b_savepos, color, "defend_both-B", bstr)) {
-    if (board[astr] && !attack(astr, NULL)) {
-      popgo();
+    if (internal_state->board[astr] && !attack(astr, NULL)) {
+      popgo(internal_state);
       return WIN;
     }
-    popgo();
+    popgo(internal_state);
   }
 
   /* The next improvement is to try to attack a common adjacent string. */
@@ -746,13 +746,13 @@ defend_both(int astr, int bstr)
 
 	if (attack(epos, &fpos)) {
 	  if (trymove(fpos, color, "defend_both-C", astr)) {
-	    if (board[astr] && board[bstr]
+        if (internal_state->board[astr] && board[bstr]
 		&& !attack(astr, NULL) 
 		&& !attack(bstr, NULL)) {
-	      popgo();
+          popgo(internal_state);
 	      return WIN;
 	    }
-	    popgo();
+        popgo(internal_state);
 	  }
 	}
       }
@@ -806,8 +806,8 @@ break_through(int apos, int bpos, int cpos)
   
   /* Basic sanity checking. */
   ASSERT1(internal_state, IS_STONE(color) , apos);
-  ASSERT1(color == board[bpos], bpos);
-  ASSERT1(color == board[cpos], cpos);
+  ASSERT1(color == internal_state->board[bpos], bpos);
+  ASSERT1(color == internal_state->board[cpos], cpos);
 
   /* Construct the rest of the points in the pattern. */
   Fpos = (apos + cpos) / 2;      /* F midpoint between a and c. */
@@ -815,16 +815,16 @@ break_through(int apos, int bpos, int cpos)
   epos = bpos + cpos - Fpos;     /* Use diagonal relation b+c = e+F. */
 
   /* More sanity checking. */
-  ASSERT1(board[dpos] == EMPTY , dpos);
-  ASSERT1(board[epos] == EMPTY , epos);
+  ASSERT1(internal_state->board[dpos] == EMPTY , dpos);
+  ASSERT1(internal_state->board[epos] == EMPTY , epos);
 
   /* F might already have been captured. (play_break_through_n() can't
    * detect this.
    */
-  if (board[Fpos] == EMPTY)
+  if (internal_state->board[Fpos] == EMPTY)
     return 0;
   
-  ASSERT1(board[Fpos] == other, Fpos);
+  ASSERT1(internal_state->board[Fpos] == other, Fpos);
 
   /* First X tries to play at d. */
   success = break_through_helper(apos, bpos, cpos, dpos, epos, Fpos,
@@ -854,28 +854,28 @@ break_through(int apos, int bpos, int cpos)
       /* Now we let O defend his position by playing either d or e.
        * FIXME: There may be other plausible moves too.
        */
-      if (trymove(dpos, color, "break_through-B", Fpos)) {
+      if (trymove(internal_state, dpos, color, "break_through-B", Fpos)) {
 	/* O connects at d, so X cuts at e. */
 	if (safe_move(epos, other)) {
 	  success2 = CUT;
 	  if (!board[cpos] || attack(cpos, NULL))
 	    success2 = WIN;
 	}
-	popgo();
+    popgo(internal_state);
       }
 
       if (success2 > 0 && trymove(epos, color, "break_through-C", Fpos)) {
 	/* O connects at e, so X cuts at d. */
 	if (safe_move(dpos, other)) {
 	  /* success2 is already WIN or CUT. */
-	  if (board[apos] && !attack(apos, NULL))
+      if (internal_state->board[apos] && !attack(apos, NULL))
 	    success2 = CUT;
 	}
 	else
 	  success2 = 0;
-	popgo();
+    popgo(internal_state);
       }
-      popgo();
+      popgo(internal_state);
     }
   }
     
@@ -897,7 +897,7 @@ break_through_helper(int apos, int bpos, int cpos,
   int success = 0;
   int gpos;
 
-  if (trymove(dpos, other, "break_through_helper-A", Fpos)) {
+  if (trymove(internal_state, dpos, other, "break_through_helper-A", Fpos)) {
     /* If F can be attacked we can't start in this way. */
     if (!attack(Fpos, NULL)) {
       /* If d is safe too, we have at least managed to break through. */
@@ -911,15 +911,15 @@ break_through_helper(int apos, int bpos, int cpos,
       else {
 	if (trymove(epos, color, "break_through_helper-E", Fpos)) {
 	  if (!board[dpos] || !find_defense(dpos, NULL)) {
-	    popgo();
-	    popgo();
+        popgo(internal_state);
+        popgo(internal_state);
 	    return 0;
 	  }
-	  popgo();
+      popgo(internal_state);
 	}
 	
 	if (gpos == epos) {
-	  popgo();
+      popgo(internal_state);
 	  return 0;
 	}
 	
@@ -929,32 +929,32 @@ break_through_helper(int apos, int bpos, int cpos,
 	      success = CUT;
      	      /* Make sure b and c are safe.  If not, back up & let O try 
 	       * to defend in a different way. */
-	      if (board[bpos] 
+          if (internal_state->board[bpos]
 		  && board[cpos] 
 		  && defend_both(bpos, cpos)) {
 		/* Can't do better than CUT. */
-		popgo();  
-		popgo();
-		popgo();
+        popgo(internal_state);
+        popgo(internal_state);
+        popgo(internal_state);
 		return CUT;
 	      }
 	    }
 	    else {
 	      /* Lost everything. (Note we ignore ko at the moment.) */
-	      popgo();
-	      popgo();
-	      popgo();
+          popgo(internal_state);
+          popgo(internal_state);
+          popgo(internal_state);
 	      return 0;
 	    }
-	    popgo();
+        popgo(internal_state);
 	  }
 	  else {
 	    /* Failed to cut at all. */
-	    popgo();
-	    popgo();
+        popgo(internal_state);
+        popgo(internal_state);
 	    return 0;
 	  }
-	  popgo();
+      popgo(internal_state);
 	}
       }
       
@@ -975,7 +975,7 @@ break_through_helper(int apos, int bpos, int cpos,
 	    attack_on_b = 1;
 	  else if (attack(apos, NULL))
 	    attack_on_a = 1;
-	  popgo();
+      popgo(internal_state);
 	}
 	
 	/* Let O find a defense and play it. */
@@ -994,9 +994,9 @@ break_through_helper(int apos, int bpos, int cpos,
 		  || !board[cpos] 
 		  || !defend_both(bpos, cpos))
 		success = WIN;
-	      popgo();
+          popgo(internal_state);
 	    }
-	    popgo();
+        popgo(internal_state);
 	  }
 	  else
 	    success = WIN; /* This should have been covered by
@@ -1004,7 +1004,7 @@ break_through_helper(int apos, int bpos, int cpos,
 	}
       }
     }
-    popgo();
+    popgo(internal_state);
   }
 
   return success;
@@ -1042,8 +1042,8 @@ attack_threats(int str, int max_points, int moves[], int codes[])
   int l;
   int r;
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  other = OTHER_COLOR(board[str]);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  other = OTHER_COLOR(internal_state->board[str]);
 
   /* Only handle strings with no way to capture immediately.
    * For now, we treat ko the same as unconditionally. */
@@ -1057,17 +1057,17 @@ attack_threats(int str, int max_points, int moves[], int codes[])
    *
    * The test against 6 liberties is just an optimization.
    */
-  liberties = findlib(str, MAXLIBS, libs);
+  liberties = findlib(internal_state, str, MAXLIBS, libs);
   if (liberties > 1 && liberties < 6) {
     for (k = 0; k < liberties; k++) {
       int aa = libs[k];
 
       /* Try to threaten on the liberty. */
-      if (trymove(aa, other, "attack_threats-A", str)) {
+      if (trymove(internal_state, aa, other, "attack_threats-A", str)) {
        int acode = attack(str, NULL);
        if (acode != 0)
 	 movelist_change_point(aa, acode, max_points, moves, codes);
-       popgo();
+       popgo(internal_state);
       }
 
       /* Try to threaten on second order liberties. */
@@ -1075,22 +1075,22 @@ attack_threats(int str, int max_points, int moves[], int codes[])
        int bb = libs[k] + delta[l];
 
        if (!ON_BOARD(bb)
-           || IS_STONE(board[bb])
-           || liberty_of_string(bb, str))
+           || IS_STONE(internal_state->board[bb])
+           || liberty_of_string(internal_state, bb, str))
          continue;
 
        if (trymove(bb, other, "attack_threats-B", str)) {
          int acode = attack(str, NULL);
          if (acode != 0)
 	   movelist_change_point(bb, acode, max_points, moves, codes);
-         popgo();
+         popgo(internal_state);
        }
       }
     }
   }
 
   /* Threaten to attack by saving weak neighbors. */
-  num_adj = chainlinks(str, adjs);
+  num_adj = chainlinks(internal_state, str, adjs);
   for (k = 0; k < num_adj; k++) {
     int bb;
     int dd;  /* Defense point of weak neighbor. */
@@ -1107,7 +1107,7 @@ attack_threats(int str, int max_points, int moves[], int codes[])
      * attack_and_defend above. Otherwise step through all defense points.
      */
     for (r = -1; r < max_points; r++) {
-      if (stackp == 0) {
+      if (internal_state->stackp == 0) {
 	if (r == -1)
 	  continue;
 	if (worm[adjs[k]].defense_codes[r] == 0)
@@ -1123,13 +1123,13 @@ attack_threats(int str, int max_points, int moves[], int codes[])
 
       /* Test the move and see if it is a threat. */
       if (trymove(bb, other, "attack_threats-C", str)) {
-	if (board[str] == EMPTY)
+    if (internal_state->board[str] == EMPTY)
 	  acode = WIN;
 	else
 	  acode = attack(str, NULL);
 	if (acode != 0)
 	  movelist_change_point(bb, acode, max_points, moves, codes);
-	popgo();
+    popgo(internal_state);
       }
     }
   }
@@ -1169,8 +1169,8 @@ do_find_defense(int str, int *move)
    * storing the position in the hash table, we must do this test
    * before we look for cached results.
    */
-  str = find_origin(str);
-  liberties = countlib(str);
+  str = find_origin(internal_state, str);
+  liberties = countlib(internal_state, str);
   
   if (liberties > 4
       || (liberties == 4 && stackp > fourlib_depth)
@@ -1191,7 +1191,7 @@ do_find_defense(int str, int *move)
   if (liberties > 2 && move)
     xpos = *move;
 
-  if (stackp <= depth
+  if (internal_state->stackp <= depth
       && tt_get(&ttable, FIND_DEFENSE, str, NO_MOVE, depth - stackp, NULL, 
 		&retval, NULL, &xpos) == 2) {
     /* Note that if return value is 1 (too small depth), the move will
@@ -1249,23 +1249,23 @@ allows_under_the_stones_tesuji(int move, int color)
   if (accuratelib(move, color, 3, NULL) != 2)
     return 0;
 
-  save_sgf_dumptree     = sgf_dumptree;
-  save_count_variations = count_variations;
+  save_sgf_dumptree     = internal_state->sgf_dumptree;
+  save_count_variations = internal_state->count_variations;
 
   sgf_dumptree	   = NULL;
   count_variations = 0;
 
-  if (trymove(move, color, "allows_under_the_stones_tesuji", NO_MOVE)) {
+  if (trymove(internal_state, move, color, "allows_under_the_stones_tesuji", NO_MOVE)) {
     int libs[2];
 
-    findlib(move, 2, libs);
-    if ((!is_self_atari(libs[0], color)
+    findlib(internal_state, move, 2, libs);
+    if ((!is_self_atari(internal_state, libs[0], color)
 	 && accuratelib(libs[1], OTHER_COLOR(color), 3, NULL) <= 2)
-	|| (!is_self_atari(libs[1], color)
+    || (!is_self_atari(internal_state, libs[1], color)
 	    && accuratelib(libs[0], OTHER_COLOR(color), 3, NULL) <= 2))
       result = 1;
 
-    popgo();
+    popgo(internal_state);
   }
 
   sgf_dumptree	   = save_sgf_dumptree;
@@ -1283,7 +1283,7 @@ fast_defense(int str, int liberties, int *libs, int *move)
 {
   int color = board[str];
   int j, k, l;
-  int goal_liberties = (stackp < fourlib_depth ? 5 : 4);
+  int goal_liberties = (internal_state->stackp < fourlib_depth ? 5 : 4);
   int adj, adjs[MAXCHAIN];
 
   /* We would like to initialize liberty_mark to -1, but some
@@ -1318,7 +1318,7 @@ fast_defense(int str, int liberties, int *libs, int *move)
     int alib, alibs[MAXLIBS];
     int num_adjacent_stones;
 
-    findlib(adjs[j], 1, &lib);
+    findlib(internal_state, adjs[j], 1, &lib);
     /* We aren't interested in ko (at this stage). And playing
      * our own last liberty to capture is prone to snapbacks,
      * so better let the 'normal' reading routines do the job.
@@ -1351,7 +1351,7 @@ fast_defense(int str, int liberties, int *libs, int *move)
     adj2 = chainlinks(adjs[j], adjs2);
     for (k = 0; k < adj2; k++) {
       /* Loop over all liberties of the neighbor. */
-      alib = findlib(adjs2[k], MAXLIBS, alibs);
+      alib = findlib(internal_state, adjs2[k], MAXLIBS, alibs);
       for (l = 0; l < alib; l++) {
 	if (lm[alibs[l]] != liberty_mark) {
 	  lm[alibs[l]] = liberty_mark;
@@ -1407,7 +1407,7 @@ fast_defense(int str, int liberties, int *libs, int *move)
  *
  * The pair defend1-attack2 call each other recursively to
  * read situations such as ladders. They read all ladders to the end.
- * If the reading ply (stackp) is deeper than the deep-reading cutoff
+ * If the reading ply (internal_state->stackp) is deeper than the deep-reading cutoff
  * parameter depth, whose default value DEPTH is defined in gnugo.h, then a
  * string is assumed alive if it can get 3 liberties. When
  * fourlib_depth < stackp < depth, a string is considered alive if it can get
@@ -1431,11 +1431,11 @@ defend1(int str, int *move)
   SETUP_TRACE_INFO("defend1", str);
   reading_node_counter++;
   
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 1, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 1, str);
 
   /* lib will be the liberty of the string. */
-  liberties = findlib(str, 1, &lib);
+  liberties = findlib(internal_state, str, 1, &lib);
   ASSERT1(liberties == 1, str);
 
   if (fast_defense(str, liberties, &lib, &xpos))
@@ -1464,7 +1464,7 @@ defend1(int str, int *move)
    * FIXME: What is an example of this? Is it correct that the
    *           return value is WIN and not KO_A or KO_B?
    */
-  if (stackp <= backfill_depth
+  if (internal_state->stackp <= backfill_depth
       && countstones(str) == 1
       && is_ko(lib, other, NULL)) {
     int libs2[6];
@@ -1472,10 +1472,10 @@ defend1(int str, int *move)
     if (liberties <= 5) {
       for (k = 0; k < liberties; k++) {
 	int apos = libs2[k];
-	if ((liberties == 1 || !is_self_atari(apos, other))
-	    && trymove(apos, color, "defend1-C", str)) {
+    if ((liberties == 1 || !is_self_atari(internal_state, apos, other))
+        && trymove(internal_state, apos, color, "defend1-C", str)) {
 	  int acode = do_attack(str, NULL);
-	  popgo();
+      popgo(internal_state);
 	  CHECK_RESULT(savecode, savemove, acode, apos, move, "backfilling");
 	}
       }
@@ -1522,10 +1522,10 @@ defend2(int str, int *move)
   color = board[str];
   other = OTHER_COLOR(color);
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 2, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
-  liberties = findlib(str, 2, libs);
+  liberties = findlib(internal_state, str, 2, libs);
 
   if (fast_defense(str, liberties, libs, &xpos))
     RETURN_RESULT(WIN, xpos, move, "fast defense");
@@ -1544,9 +1544,9 @@ defend2(int str, int *move)
    * might be good moves, but not in tactical reading.
    */
   string_size = countstones(str);
-  if (string_size == 1 || !is_self_atari(libs[0], color))
+  if (string_size == 1 || !is_self_atari(internal_state, libs[0], color))
     ADD_CANDIDATE_MOVE(libs[0], 0, moves, "liberty");
-  if (string_size == 1 || !is_self_atari(libs[1], color))
+  if (string_size == 1 || !is_self_atari(internal_state, libs[1], color))
     ADD_CANDIDATE_MOVE(libs[1], 0, moves, "liberty");
 
   break_chain_moves(str, &moves);
@@ -1554,13 +1554,13 @@ defend2(int str, int *move)
   propose_edge_moves(str, libs, liberties, &moves, color);
   edge_clamp_moves(str, &moves);
 
-  if (stackp <= depth) {
+  if (internal_state->stackp <= depth) {
     for (k = 0; k < liberties; k++)
       special_rescue_moves(str, libs[k], &moves);
     bamboo_rescue_moves(str, liberties, libs, &moves);
   }
 
-  if (stackp <= backfill_depth)
+  if (internal_state->stackp <= backfill_depth)
     special_rescue2_moves(str, libs, &moves);
 
   order_moves(str, &moves, color, read_function_name, *move);
@@ -1568,7 +1568,7 @@ defend2(int str, int *move)
 
   /* Look for backfilling moves. */
   for (k = 0; k < liberties; k++) {
-    if (is_self_atari(libs[k], other)) {
+    if (is_self_atari(internal_state, libs[k], other)) {
       liberties2 = approxlib(libs[k], color, 6, libs2);
       /* Note: liberties2 must be smaller than 5, otherwise libs[k] had been
        * a direct defense.
@@ -1605,23 +1605,23 @@ defend2(int str, int *move)
    */
   be_aggressive = (moves.num == 0);
 
-  if (stackp <= superstring_depth)
+  if (internal_state->stackp <= superstring_depth)
     superstring_break_chain_moves(str, 4, &moves);
 
   /* If nothing else works, we try playing a liberty of the
    * super_string.
    */
-  if (stackp <= superstring_depth) {
+  if (internal_state->stackp <= superstring_depth) {
     superstring_moves(str, &moves, 3, 0);
     squeeze_moves(str, &moves);
   }
 
   break_chain2_defense_moves(str, &moves, be_aggressive);
 
-  if (stackp <= backfill_depth)
+  if (internal_state->stackp <= backfill_depth)
     special_rescue5_moves(str, libs, &moves);
 
-  if (stackp <= break_chain_depth
+  if (internal_state->stackp <= break_chain_depth
       || (be_aggressive && stackp <= backfill_depth))
     break_chain3_moves(str, &moves, be_aggressive);
 
@@ -1659,10 +1659,10 @@ defend3(int str, int *move)
 
   color = board[str];
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 3, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 3, str);
 
-  liberties = findlib(str, 3, libs);
+  liberties = findlib(internal_state, str, 3, libs);
 
   if (fast_defense(str, liberties, libs, &xpos))
     RETURN_RESULT(WIN, xpos, move, "fast defense");
@@ -1687,7 +1687,7 @@ defend3(int str, int *move)
   propose_edge_moves(str, libs, liberties, &moves, color);
   edge_clamp_moves(str, &moves);
 
-  if (stackp <= backfill2_depth)
+  if (internal_state->stackp <= backfill2_depth)
     hane_rescue_moves(str, libs, &moves);
 
   order_moves(str, &moves, color, read_function_name, *move);
@@ -1696,14 +1696,14 @@ defend3(int str, int *move)
   /* This looks a little too expensive. */
 #if 0
   /* Look for backfilling moves. */
-  if (stackp <= backfill_depth) {
+  if (internal_state->stackp <= backfill_depth) {
     int other = OTHER_COLOR(color);
     int liberties2;
     int libs2[6];
     int r;
     int s;
     for (k = 0; k < liberties; k++) {
-      if (is_self_atari(libs[k], other)) {
+      if (is_self_atari(internal_state, libs[k], other)) {
 	liberties2 = approxlib(libs[k], color, 6, libs2);
 	for (r = 0; r < liberties2; r++) {
 	  xpos = libs2[r];
@@ -1724,7 +1724,7 @@ defend3(int str, int *move)
 	    else
 	      acode = do_attack(str, NULL);
 
-	    popgo();
+        popgo(internal_state);
 	    CHECK_RESULT(savecode, savemove, acode, xpos, move,
 	      		 "backfill effective");
 	  }
@@ -1745,7 +1745,7 @@ defend3(int str, int *move)
 	    if (!is_self_atari(xpos, color)
 		&& trymove(xpos, color, "defend2-G", str)) {
 	      int acode = do_attack(str, NULL);
-	      popgo();
+          popgo(internal_state);
 	      CHECK_RESULT(savecode, savemove, acode, xpos, move
 			   "backfill effective");
 	    }
@@ -1758,10 +1758,10 @@ defend3(int str, int *move)
   
   /* If nothing else works, try to defend with second order liberties. */
 
-  if (stackp <= backfill_depth)
+  if (internal_state->stackp <= backfill_depth)
     special_rescue3_moves(str, libs, &moves);
 
-  if (stackp <= depth) {
+  if (internal_state->stackp <= depth) {
     for (k = 0; k < liberties; k++)
       special_rescue_moves(str, libs[k], &moves);
     bamboo_rescue_moves(str, liberties, libs, &moves);
@@ -1770,10 +1770,10 @@ defend3(int str, int *move)
   if (get_level() >= 8 && stackp <= backfill2_depth)
     superstring_break_chain_moves(str, 4, &moves);
 
-  if (stackp <= break_chain_depth)
+  if (internal_state->stackp <= break_chain_depth)
     break_chain2_defense_moves(str, &moves, 0);
 
-  if (stackp <= backfill_depth) {
+  if (internal_state->stackp <= backfill_depth) {
     special_rescue5_moves(str, libs, &moves);
     special_rescue6_moves(str, libs, &moves);
   }
@@ -1790,7 +1790,7 @@ defend3(int str, int *move)
     squeeze_moves(str, &moves);
   }
 
-  if (stackp <= break_chain_depth)
+  if (internal_state->stackp <= break_chain_depth)
     break_chain3_moves(str, &moves, 0);
 
   /* Only order and test the new set of moves. */
@@ -1825,10 +1825,10 @@ defend4(int str, int *move)
 
   color = board[str];
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 4, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 4, str);
 
-  liberties = findlib(str, 4, libs);
+  liberties = findlib(internal_state, str, 4, libs);
 
   if (fast_defense(str, liberties, libs, &xpos))
     RETURN_RESULT(WIN, xpos, move, "fast defense");
@@ -1849,14 +1849,14 @@ defend4(int str, int *move)
   break_chain_moves(str, &moves);
   break_chain2_efficient_moves(str, &moves);
 
-  if (stackp <= backfill_depth) {
+  if (internal_state->stackp <= backfill_depth) {
     break_chain2_defense_moves(str, &moves, 0);
     break_chain3_moves(str, &moves, 0);
     break_chain4_moves(str, &moves, 0);
 #if 0 
     hane_rescue_moves(str, libs, &moves);
 #endif
-  if (stackp <= superstring_depth)
+  if (internal_state->stackp <= superstring_depth)
     superstring_moves(str, &moves, 4, 0);
     squeeze_moves(str, &moves);
   }
@@ -1864,7 +1864,7 @@ defend4(int str, int *move)
   order_moves(str, &moves, color, read_function_name, *move);
   DEFEND_TRY_MOVES(1, &suggest_move);
 
-  if (stackp <= depth) {
+  if (internal_state->stackp <= depth) {
     for (k = 0; k < liberties; k++)
       special_rescue_moves(str, libs[k], &moves);
     bamboo_rescue_moves(str, liberties, libs, &moves);
@@ -1911,7 +1911,7 @@ special_rescue_moves(int str, int lib, struct reading_moves *moves)
   /* Loop over the four neighbours of the liberty, (lib + d). */
   for (k = 0; k < 4; k++) {
     int d = delta[k];
-    if (board[lib + d] == EMPTY) {
+    if (internal_state->board[lib + d] == EMPTY) {
 
       /* Don't play into a self atari unless we have a potential snapback. */
       if (is_self_atari(lib + d, color) && otherlib > 1)
@@ -1926,12 +1926,12 @@ special_rescue_moves(int str, int lib, struct reading_moves *moves)
        * attack4() then lacks move generators to stop black from
        * continuing towards the top left corner.
        */
-      if (countlib(str) > 3) {
+      if (countlib(internal_state, str) > 3) {
 	int r;
 	int number_protected = 0;
 	
 	for (r = 0; r < 4; r++) {
-	  if (board[lib + d + delta[r]] == EMPTY
+      if (internal_state->board[lib + d + delta[r]] == EMPTY
 	      && approxlib(lib + d + delta[r], other, 3, NULL) < 3)
 	    number_protected++;
 	  if (number_protected == 2)
@@ -1972,21 +1972,21 @@ bamboo_rescue_moves(int str, int num_libs, int libs[],
 	continue;
 
       if (libs[l1] == WEST(libs[l2]) || libs[l1] == EAST(libs[l2])) {
-	if (board[SOUTH(libs[l1])] == EMPTY 
+    if (internal_state->board[SOUTH(libs[l1])] == EMPTY
 	    && board[SOUTH(libs[l2])] == color
 	    && !is_self_atari(SOUTH(libs[l1]), color))
 	  ADD_CANDIDATE_MOVE(SOUTH(libs[l1]), 0, *moves, "bamboo_rescue");
-	if (board[NORTH(libs[l1])] == EMPTY 
+    if (internal_state->board[NORTH(libs[l1])] == EMPTY
 	    && board[NORTH(libs[l2])] == color
 	    && !is_self_atari(NORTH(libs[l1]), color))
 	  ADD_CANDIDATE_MOVE(NORTH(libs[l1]), 0, *moves, "bamboo_rescue");
       } 
       else if (libs[l1] == NORTH(libs[l2]) || libs[l1] == SOUTH(libs[l2])) {
-	if (board[WEST(libs[l1])] == EMPTY 
+    if (internal_state->board[WEST(libs[l1])] == EMPTY
 	    && board[WEST(libs[l2])] == color
 	    && !is_self_atari(WEST(libs[l1]), color))
 	  ADD_CANDIDATE_MOVE(WEST(libs[l1]), 0, *moves, "bamboo_rescue");
-	if (board[EAST(libs[l1])] == EMPTY 
+    if (internal_state->board[EAST(libs[l1])] == EMPTY
 	    && board[EAST(libs[l2])] == color
 	    && !is_self_atari(EAST(libs[l1]), color))
 	  ADD_CANDIDATE_MOVE(EAST(libs[l1]), 0, *moves, "bamboo_rescue");
@@ -2028,7 +2028,7 @@ special_rescue2_moves(int str, int libs[2], struct reading_moves *moves)
       continue;
 
     for (k = 0; k < 4; k++) {
-      if (board[alib + delta[k]] == color
+      if (internal_state->board[alib + delta[k]] == color
 	  && !same_string(alib + delta[k], str)) {
 	newstr = alib + delta[k];
 	liberties = findlib(newstr, 4, newlibs);
@@ -2066,7 +2066,7 @@ special_rescue3_moves(int str, int libs[3], struct reading_moves *moves)
   int apos, bpos, cpos, dpos, epos, fpos, gpos;
   int k, l, r;
 
-  ASSERT1(countlib(str) == 3, str);
+  ASSERT1(countlib(internal_state, str) == 3, str);
   
   for (r = 0; r < 3; r++) {
     /* Let (apos) be one of the three liberties. */
@@ -2078,7 +2078,7 @@ special_rescue3_moves(int str, int libs[3], struct reading_moves *moves)
 	continue;
 
       cpos = apos - delta[k];
-      if (board[cpos] != color)
+      if (internal_state->board[cpos] != color)
 	continue;
       
       if (!same_string(cpos, str))
@@ -2090,19 +2090,19 @@ special_rescue3_moves(int str, int libs[3], struct reading_moves *moves)
 	  normal = -normal;
 	
 	dpos = cpos + normal;
-	if (board[dpos] != other)
+    if (internal_state->board[dpos] != other)
 	  continue;
 
 	epos = dpos + normal;
-	if (board[epos] != color)
+    if (internal_state->board[epos] != color)
 	  continue;
 
 	fpos = apos + normal;
-	if (board[fpos] != EMPTY)
+    if (internal_state->board[fpos] != EMPTY)
 	  continue;
 
 	gpos = fpos + normal;
-	if (board[gpos] != EMPTY)	
+    if (internal_state->board[gpos] != EMPTY)
 	  continue;
 
 	/* Configuration found. Now require an X move at 'a' not
@@ -2142,24 +2142,24 @@ special_rescue4_moves(int str, int libs[2], struct reading_moves *moves)
   int k;
   int r;
 
-  ASSERT1(countlib(str) == 2, str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   for (k = 0; k < 2; k++) {
     apos = libs[k];
     bpos = libs[1-k];
     
     if (apos == SOUTH(bpos) || apos == NORTH(bpos)) {
-      if (board[WEST(apos)] == other)
+      if (internal_state->board[WEST(apos)] == other)
 	xpos = WEST(apos);
-      else if (board[EAST(apos)] == other)
+      else if (internal_state->board[EAST(apos)] == other)
 	xpos = EAST(apos);
       else
 	continue;
     }
     else if (apos == WEST(bpos) || apos == EAST(bpos)) {
-      if (board[SOUTH(apos)] == other)
+      if (internal_state->board[SOUTH(apos)] == other)
 	xpos = SOUTH(apos);
-      else if (board[NORTH(apos)] == other)
+      else if (internal_state->board[NORTH(apos)] == other)
 	xpos = NORTH(apos);
       else
 	continue;
@@ -2170,7 +2170,7 @@ special_rescue4_moves(int str, int libs[2], struct reading_moves *moves)
     if (findlib(xpos, 2, libs2) == 2) {
       for (r = 0; r < 2; r++)
 	if (libs2[r] != apos && libs2[r] != bpos
-	    && !is_self_atari(libs2[r], color))
+        && !is_self_atari(internal_state, libs2[r], color))
 	  ADD_CANDIDATE_MOVE(libs2[r], 0, *moves, "special_rescue4");
     }
   }
@@ -2196,7 +2196,7 @@ hane_rescue_moves(int str, int libs[4], struct reading_moves *moves)
   int color = board[str];
   int other = OTHER_COLOR(color);
   int apos, bpos, cpos, dpos;
-  int num_libs = countlib(str);
+  int num_libs = countlib(internal_state, str);
   int k, l, r;
 
   ASSERT1(num_libs <= 4, str);
@@ -2207,7 +2207,7 @@ hane_rescue_moves(int str, int libs[4], struct reading_moves *moves)
     /* Try to find the configuration above. */
     for (k = 0; k < 4; k++) {
       bpos = apos + delta[k];
-      if (board[bpos] != color)
+      if (internal_state->board[bpos] != color)
 	continue;
 
       if (!same_string(bpos, str))
@@ -2219,11 +2219,11 @@ hane_rescue_moves(int str, int libs[4], struct reading_moves *moves)
 	  normal = -normal;
 
 	cpos = apos + normal;
-	if (board[cpos] != EMPTY)
+    if (internal_state->board[cpos] != EMPTY)
 	  continue;
 
 	dpos = bpos + normal;
-	if (board[dpos] != other)
+    if (internal_state->board[dpos] != other)
 	  continue;
 
 	/* Configuration found. Now check liberty constraint. */
@@ -2235,8 +2235,8 @@ hane_rescue_moves(int str, int libs[4], struct reading_moves *moves)
 	}
 	
 	if (0 && !in_list(cpos, moves->num, moves->pos)) {
-	  gprintf("hane_rescue_move added for %1m at %1m\n", str, cpos);
-	  dump_stack();
+      gprintf(internal_state, "hane_rescue_move added for %1m at %1m\n", str, cpos);
+      dump_stack(internal_state);
 	  showboard(0);
 	}
 	ADD_CANDIDATE_MOVE(cpos, 0, *moves, "hane_rescue");
@@ -2272,7 +2272,7 @@ special_rescue5_moves(int str, int libs[3],
   int other = OTHER_COLOR(color);
   int apos, bpos;
   int k, r, s;
-  int liberties = countlib(str);
+  int liberties = countlib(internal_state, str);
   int libs2[4];
   int liberties2;
 
@@ -2283,7 +2283,7 @@ special_rescue5_moves(int str, int libs[3],
     
     for (k = 0; k < 4; k++) {
       bpos = apos + delta[k];
-      if (board[bpos] != other)
+      if (internal_state->board[bpos] != other)
 	continue;
 
       /* Don't bother if it has too many liberties. */
@@ -2296,7 +2296,7 @@ special_rescue5_moves(int str, int libs[3],
       liberties2 = findlib(bpos, 4, libs2);
       for (s = 0; s < liberties2; s++)
 	if (!liberty_of_string(libs2[s], str)
-	    && !is_self_atari(libs2[s], color))
+        && !is_self_atari(internal_state, libs2[s], color))
 	  ADD_CANDIDATE_MOVE(libs2[s], 0, *moves, "special_rescue5-A");
 
       /* Reinforce the second order chain. */
@@ -2309,7 +2309,7 @@ special_rescue5_moves(int str, int libs[3],
 	  int cpos;
 	  break_chain_moves(adjs[t], moves);
 	  
-	  findlib(adjs[t], 1, &cpos);
+      findlib(internal_state, adjs[t], 1, &cpos);
 	  if (!is_self_atari(cpos, color))
 	    ADD_CANDIDATE_MOVE(cpos, 0, *moves, "special_rescue5-B");
 	}
@@ -2358,7 +2358,7 @@ special_rescue6_moves(int str, int libs[3], struct reading_moves *moves)
   int apos, bpos, cpos;
   int right, up;
   int k, l, r;
-  int liberties = countlib(str);
+  int liberties = countlib(internal_state, str);
 
   ASSERT1(liberties == 3 || liberties == 4, str);
   
@@ -2372,7 +2372,7 @@ special_rescue6_moves(int str, int libs[3], struct reading_moves *moves)
 	continue;
       
       bpos = apos + right;
-      if (board[bpos] != color || !same_string(str, bpos))
+      if (internal_state->board[bpos] != color || !same_string(str, bpos))
 	continue;
 
       for (l = 0; l < 2; l++) {
@@ -2381,24 +2381,24 @@ special_rescue6_moves(int str, int libs[3], struct reading_moves *moves)
 	  up = -up;
 
 	cpos = bpos + up;
-	if (board[cpos] != other)
+    if (internal_state->board[cpos] != other)
 	  continue;
 
-	if (board[apos + up] != EMPTY)
+    if (internal_state->board[apos + up] != EMPTY)
 	  continue;
 
-	if (board[cpos + right] != EMPTY)
+    if (internal_state->board[cpos + right] != EMPTY)
 	  continue;
 
-	if (board[apos + up + up] == EMPTY
+    if (internal_state->board[apos + up + up] == EMPTY
 	    && board[cpos + up] == EMPTY
 	    && board[cpos + up + right] == color) {
 	  ADD_CANDIDATE_MOVE(cpos + right, 0, *moves, "special_rescue6-A");
 	  ADD_CANDIDATE_MOVE(cpos + up, 0, *moves, "special_rescue6-B");
 	}
 	else if (countlib(cpos) <= 3
-		 && (board[bpos + right] == EMPTY
-		     || (board[bpos + right] == other
+         && (internal_state->board[bpos + right] == EMPTY
+             || (internal_state->board[bpos + right] == other
 			 && countlib(bpos + right) <= 4))
 		 && !is_self_atari(cpos + right, color)) {
 	  ADD_CANDIDATE_MOVE(cpos + right, 0, *moves, "special_rescue6-C");
@@ -2440,15 +2440,15 @@ set_up_snapback_moves(int str, int lib, struct reading_moves *moves)
   int other = OTHER_COLOR(color);
   int libs2[2];
 
-  ASSERT1(countlib(str) == 1, str);
+  ASSERT1(countlib(internal_state, str) == 1, str);
 
   /* This can only work if our string is a single stone and the
    * opponent is short of liberties.
    */
-  if (stackp <= backfill_depth
+  if (internal_state->stackp <= backfill_depth
       && countstones(str) == 1
       && approxlib(lib, other, 2, libs2) == 1
-      && (!is_self_atari(libs2[0], color)
+      && (!is_self_atari(internal_state, libs2[0], color)
 	  || is_ko(libs2[0], color, NULL)))
     ADD_CANDIDATE_MOVE(libs2[0], 0, *moves, "set_up_snapback");
 }
@@ -2478,7 +2478,7 @@ superstring_moves(int str, struct reading_moves *moves,
     for (k = 0; k < ss_liberties; k++) {
       int apos = ss_libs[k];
       int alibs[2];
-      int alib = accuratelib(apos, other, 2, alibs);
+      int alib = accuratelib(internal_state, apos, other, 2, alibs);
 
       if (liberty_of_string(apos, str))
 	continue;
@@ -2520,7 +2520,7 @@ squeeze_moves(int str, struct reading_moves *moves)
   int potential_move = NO_MOVE;
   int previous_liberty;
 
-  num_libs = findlib(str, 4, libs);
+  num_libs = findlib(internal_state, str, 4, libs);
   gg_assert(num_libs <= 4);
 
   for (k = 0; k < num_libs; k++) {
@@ -2624,7 +2624,7 @@ edge_clamp_moves(int str, struct reading_moves *moves)
     apos = adjs[r];
     /* Find a liberty at the edge. */
     bpos = NO_MOVE;
-    findlib(apos, 3, libs);
+    findlib(internal_state, apos, 3, libs);
     for (k = 0; k < 3; k++) {
       if (is_edge_vertex(libs[k])) {
 	bpos = libs[k];
@@ -2639,7 +2639,7 @@ edge_clamp_moves(int str, struct reading_moves *moves)
       int up = delta[k];
       if (ON_BOARD(bpos - up))
 	continue;
-      if (board[bpos + up] != other)
+      if (internal_state->board[bpos + up] != other)
 	continue;
        
       for (l = 0; l < 2; l++) {
@@ -2650,15 +2650,15 @@ edge_clamp_moves(int str, struct reading_moves *moves)
 	cpos = bpos + up - right;
 	dpos = bpos + up + right;
 
-	if (board[cpos] != color || !same_string(cpos, str))
+    if (internal_state->board[cpos] != color || !same_string(cpos, str))
 	  continue;
 
-	if (board[dpos] != EMPTY || !liberty_of_string(dpos, apos))
+    if (internal_state->board[dpos] != EMPTY || !liberty_of_string(dpos, apos))
 	  continue;
 
 	epos = dpos + up;
 
-	if (board[epos] != EMPTY || !liberty_of_string(epos, apos))
+    if (internal_state->board[epos] != EMPTY || !liberty_of_string(epos, apos))
 	  continue;
 
 	if (approxlib(dpos, color, 3, NULL) < 3)
@@ -2733,15 +2733,15 @@ propose_edge_moves(int str, int *libs, int liberties,
 	if (l == 1)
 	  right = -right;
        
-	if (board[apos + up] == other	   /* other on top of liberty */
-	    && countlib(apos + up) > 4     /* blocking group must be secure */
+    if (internal_state->board[apos + up] == other	   /* other on top of liberty */
+        && countlib(internal_state, apos + up) > 4     /* blocking group must be secure */
 	    && color == to_move) {         /* only applicable as defense */
 
 	  /* Case 1: other above the liberty (crawl along the edge). */
 	  int xpos = apos;
 	
 	  while (ON_BOARD(xpos)) {
-	    if (board[xpos] == color
+        if (internal_state->board[xpos] == color
 		|| board[xpos + up] == color)
 	      break;
 
@@ -2755,7 +2755,7 @@ propose_edge_moves(int str, int *libs, int liberties,
 	    REMOVE_CANDIDATE_MOVE(apos, *moves);
 	  }
 	}
-	else if (board[apos + up] == EMPTY  /* empty above the liberty */
+    else if (internal_state->board[apos + up] == EMPTY  /* empty above the liberty */
 		 && board[apos - right + up] == other
 		 && board[apos + right] == EMPTY) { /* empty to the right */
 
@@ -2765,13 +2765,13 @@ propose_edge_moves(int str, int *libs, int liberties,
 	   * If adjacent X stone in atari, boost the initial score of this
 	   * move.
 	   */
-	  if (countlib(apos + up - right) == 1)
+      if (countlib(internal_state, apos + up - right) == 1)
 	    ADD_CANDIDATE_MOVE(apos + up, 10, *moves, "propose_edge-A");
 	  else {
 	    ADD_CANDIDATE_MOVE(apos + up, 0, *moves, "propose_edge-B");
 	    
 	    /* Add c if empty */
-	    if (board[apos + right + up] == EMPTY
+        if (internal_state->board[apos + right + up] == EMPTY
 		&& (liberties != 2 || color != to_move))
 	      ADD_CANDIDATE_MOVE(apos + right + up, 0, *moves,
 				 "propose_edge-C");
@@ -2807,8 +2807,8 @@ do_attack(int str, int *move)
   if (color == 0)      /* if assertions are turned off, silently fails */
     return 0;
 
-  str = find_origin(str);
-  liberties = countlib(str);
+  str = find_origin(internal_state, str);
+  liberties = countlib(internal_state, str);
 
   if (liberties > 4
       || (liberties == 4 && stackp > fourlib_depth)
@@ -2816,7 +2816,7 @@ do_attack(int str, int *move)
     /* No need to cache the result in these cases. */
     if (sgf_dumptree) {
       char buf[100];
-      sprintf(buf, "got 4 liberties (stackp:%d>%d)", 
+      sprintf(buf, "got 4 liberties (internal_state->stackp:%d>%d)",
               stackp, fourlib_depth);
       SGFTRACE(0, 0, buf);
     }
@@ -2834,7 +2834,7 @@ do_attack(int str, int *move)
   /* Note that if return value is 1 (too small depth), the move will
    * still be used for move ordering.
    */
-  if (stackp <= depth
+  if (internal_state->stackp <= depth
       && tt_get(&ttable, ATTACK, str, NO_MOVE, depth - stackp, NULL, 
 		&retval, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT(retval, xpos);
@@ -2849,7 +2849,7 @@ do_attack(int str, int *move)
   if (liberties == 1)
     result = attack1(str, &xpos);
   else if (liberties == 2) {
-    if (stackp > depth + 10)
+    if (internal_state->stackp > depth + 10)
       result = simple_ladder(str, &xpos);
     else
       result = attack2(str, &xpos);
@@ -2938,7 +2938,7 @@ attack1(int str, int *move)
   reading_node_counter++;
   
   /* Pick up the position of the liberty. */
-  findlib(str, 1, &xpos);
+  findlib(internal_state, str, 1, &xpos);
 
   /* If the attacked string consists of more than one stone, the
    * attack never fails. (This assumes simple ko rule. With superko
@@ -2954,7 +2954,7 @@ attack1(int str, int *move)
   if (trymove(xpos, other, "attack1-A", str)) {
     /* Is the attacker in atari? If not the attack was successful. */
     if (countlib(xpos) > 1) {
-      popgo();
+      popgo(internal_state);
       RETURN_RESULT(WIN, xpos, move, "last liberty");
     }
 
@@ -2970,7 +2970,7 @@ attack1(int str, int *move)
       }
       else {
 	/* But if the attacker is the attack was successful. */
-	popgo();
+    popgo(internal_state);
 	RETURN_RESULT(WIN, xpos, move, "last liberty");
       }
     }
@@ -2983,17 +2983,17 @@ attack1(int str, int *move)
       /* If this was a proper snapback, (str) will now have more
        * than one liberty.
        */
-      if (countlib(str) > 1) {
+      if (countlib(internal_state, str) > 1) {
 	/* Proper snapback, attack fails. */
-	popgo();
+    popgo(internal_state);
       }
       else {
-	popgo();
-	popgo();
+    popgo(internal_state);
+    popgo(internal_state);
 	RETURN_RESULT(WIN, xpos, move, "last liberty");
       }
     }
-    popgo();
+    popgo(internal_state);
   }
   else {/* Illegal ko capture. */
     if (get_komaster() != color) {
@@ -3010,17 +3010,17 @@ attack1(int str, int *move)
   if (liberties <= 5)
     for (k = 0; k < liberties; k++) {
       apos = libs[k];
-      if (!is_self_atari(apos, other)
-	  && trymove(apos, other, "attack1-C", str)) {
+      if (!is_self_atari(internal_state, apos, other)
+      && trymove(internal_state, apos, other, "attack1-C", str)) {
 	int dcode = do_find_defense(str, NULL);
 	if (dcode != WIN && do_attack(str, NULL)) {
 	  if (dcode == 0) {
-	    popgo();
+        popgo(internal_state);
 	    RETURN_RESULT(WIN, apos, move, "backfilling");
 	  }
 	  UPDATE_SAVED_KO_RESULT(savecode, savemove, dcode, apos);
 	}
-	popgo();
+    popgo(internal_state);
       }
     }
 
@@ -3034,19 +3034,19 @@ attack1(int str, int *move)
 	int ko_move;
 	if (adjs2[k] == str)
 	  continue;
-	findlib(adjs2[k], 1, &apos);
-	if (komaster_trymove(apos, other, "attack1-D", str,
+    findlib(internal_state, adjs2[k], 1, &apos);
+    if (komaster_trymove(internal_state, apos, other, "attack1-D", str,
 			     &ko_move, stackp <= ko_depth && savecode == 0)) {
 	  if (!ko_move) {
 	    int dcode = do_find_defense(str, NULL);
 	    if (dcode != WIN
 		&& do_attack(str, NULL)) {
-	      popgo();
+          popgo(internal_state);
 	      CHECK_RESULT(savecode, savemove, dcode, apos, move,
 			   "attack effective");
 	    }
 	    else
-	      popgo();
+          popgo(internal_state);
 	  }
 	  else {
 	    if (do_find_defense(str, NULL) != WIN
@@ -3054,7 +3054,7 @@ attack1(int str, int *move)
 	      savemove = apos;
 	      savecode = KO_B;
 	    }
-	    popgo();
+        popgo(internal_state);
 	  }
 	}
       }
@@ -3110,9 +3110,9 @@ attack2(int str, int *move)
   moves.num = 0;
   moves.num_tried = 0;
 
-  str = find_origin(str);
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 2, str);
+  str = find_origin(internal_state, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   for (pass = 0; pass < 4; pass++) {
     
@@ -3133,22 +3133,22 @@ attack2(int str, int *move)
 	 * attacked string, drawing it out may enable the ladder to
 	 * continue.
          */
-        if (stackp > depth
+        if (internal_state->stackp > depth
 	    && countstones(adjs[r]) > 1
 	    && !have_common_lib(str, adjs[r], NULL)) {
           RETURN_RESULT(0, 0, move, "boundary in atari");
         }
 
         /* Pick up moves breaking the second order chain. */
-        if (stackp <= depth)
+        if (internal_state->stackp <= depth)
           break_chain_moves(adjs[r], &moves);
 
-        findlib(adjs[r], 1, &hpos);
+        findlib(internal_state, adjs[r], 1, &hpos);
         ADD_CANDIDATE_MOVE(hpos, 0, moves, "save_boundary");
       }
 
       /* Get the two liberties of (str). */
-      liberties = findlib(str, 2, libs);
+      liberties = findlib(internal_state, str, 2, libs);
       ASSERT1(liberties == 2, str);
 
       if (DIRECT_NEIGHBORS(libs[0], libs[1]))
@@ -3156,27 +3156,27 @@ attack2(int str, int *move)
 
       for (k = 0; k < 2; k++) {
         int apos = libs[k];
-        if (!is_self_atari(apos, other))
+        if (!is_self_atari(internal_state, apos, other))
           atari_possible = 1;
 	/* We only want to consider the move at (apos) if:
          * stackp <= backfill_depth
          * -or-  stackp <= depth and it is an isolated stone
          * -or-  it is not in immediate atari
          */
-        if (stackp <= backfill_depth
-	    || ((stackp <= depth || adjacent_liberties)
+        if (internal_state->stackp <= backfill_depth
+        || ((internal_state->stackp <= depth || adjacent_liberties)
 		&& !has_neighbor(apos, other))
-	    || !is_self_atari(apos, other))
+        || !is_self_atari(internal_state, apos, other))
           ADD_CANDIDATE_MOVE(apos, 0, moves, "liberty");
 
         /* Try backfilling if atari is impossible. */
-        if (stackp <= backfill_depth
+        if (internal_state->stackp <= backfill_depth
 	    && approxlib(apos, other, 2, libs2) == 1) {
           ADD_CANDIDATE_MOVE(libs2[0], 0, moves, "backfill");
           /* If there is a neighbor in atari, we also try back-capturing. */
           for (r = 0; r < 4; r++) {
 	    int bpos = libs2[0] + delta[r];
-	    if (board[bpos] == other && chainlinks2(bpos, adjs, 1) > 0) {
+        if (internal_state->board[bpos] == other && chainlinks2(bpos, adjs, 1) > 0) {
 	      /* FIXME: If there is more than one neighbor in atari, we
                * currently just take one randomly. This is maybe not good
                * enough. We might also want to check against snapback.
@@ -3186,7 +3186,7 @@ attack2(int str, int *move)
 	       * with many liberties and adjs[0] is somewhere else on the
 	       * board).
 	       */
-	      findlib(adjs[0], 1, &xpos);
+          findlib(internal_state, adjs[0], 1, &xpos);
 	      ADD_CANDIDATE_MOVE(xpos, 0, moves, "back-capture");
 	    }
           }
@@ -3217,7 +3217,7 @@ attack2(int str, int *move)
       break;
 
     case 1:
-      if (stackp <= backfill_depth) {
+      if (internal_state->stackp <= backfill_depth) {
         special_attack2_moves(str, libs, &moves);
         special_attack3_moves(str, libs, &moves);
 	special_attack4_moves(str, libs, &moves);
@@ -3234,9 +3234,9 @@ attack2(int str, int *move)
        */
       if (get_level() >= 8
           && stackp <= backfill_depth
-          && (stackp <= superstring_depth || !atari_possible)) {
+          && (internal_state->stackp <= superstring_depth || !atari_possible)) {
 	int liberty_cap = 2;
-	if (stackp <= backfill2_depth)
+    if (internal_state->stackp <= backfill2_depth)
 	  liberty_cap = 3;
 	superstring_moves(str, &moves, liberty_cap, 1);
 	squeeze_moves(str, &moves);
@@ -3290,9 +3290,9 @@ attack3(int str, int *move)
   moves.num = 0;
   moves.num_tried = 0;
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
   
-  ASSERT1(stackp <= depth, str);
+  ASSERT1(internal_state->stackp <= depth, str);
   
   for (pass = 0; pass < 4; pass++) {
 
@@ -3303,7 +3303,7 @@ attack3(int str, int *move)
         int hpos;
         break_chain_moves(adjs[r], &moves);
     
-        findlib(adjs[r], 1, &hpos);
+        findlib(internal_state, adjs[r], 1, &hpos);
         ADD_CANDIDATE_MOVE(hpos, 0, moves, "save_boundary");
       }
   
@@ -3311,7 +3311,7 @@ attack3(int str, int *move)
       double_atari_chain2_moves(str, &moves, stackp <= superstring_depth);
   
       /* Get the three liberties of (str). */
-      liberties = findlib(str, 3, libs);
+      liberties = findlib(internal_state, str, 3, libs);
       ASSERT1(liberties == 3, str);
   
       for (k = 0; k < 3; k++) {
@@ -3324,17 +3324,17 @@ attack3(int str, int *move)
          * -or-  stackp <= depth and it is an isolated stone
          * -or-  it is not in immediate atari
          */
-        if (stackp <= backfill_depth
-	    || (stackp <= depth
+        if (internal_state->stackp <= backfill_depth
+        || (internal_state->stackp <= depth
 		&& !has_neighbor(apos, other))
-	    || !is_self_atari(apos, other))
+        || !is_self_atari(internal_state, apos, other))
           ADD_CANDIDATE_MOVE(apos, 0, moves, "liberty");
 
         edge_closing_backfill_moves(str, apos, &moves);
 
 #if 0
         /* Try backfilling if atari is impossible. */
-        if (stackp <= backfill_depth
+        if (internal_state->stackp <= backfill_depth
 	    && approxlib(apos, other, 2, libs2) == 1) {
           ADD_CANDIDATE_MOVE(libs2[0], 0, moves, "backfill");
         }
@@ -3350,21 +3350,21 @@ attack3(int str, int *move)
 
     case 1:
       /* The simple ataris didn't work. Try something more fancy. */
-      if (stackp <= backfill_depth)
+      if (internal_state->stackp <= backfill_depth)
         find_cap_moves(str, &moves);
 
-      if (stackp <= fourlib_depth)
+      if (internal_state->stackp <= fourlib_depth)
         draw_back_moves(str, &moves);
 
       break;
 
     case 2:
       /* Try to defend chain links with two liberties. */
-      if (stackp <= backfill2_depth) {
+      if (internal_state->stackp <= backfill2_depth) {
         adj = chainlinks2(str, adjs, 2);
         for (r = 0; r < adj; r++) {
           int libs2[2];
-          findlib(adjs[r], 2, libs2);
+          findlib(internal_state, adjs[r], 2, libs2);
           if (approxlib(libs2[0], other, 4, NULL) > 3
 	      && approxlib(libs2[1], other, 4, NULL) > 3)
 	    continue;
@@ -3418,12 +3418,12 @@ attack4(int str, int *move)
 
   SETUP_TRACE_INFO("attack4", str);
   
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
   reading_node_counter++;
   moves.num = 0;
   moves.num_tried = 0;
 
-  if (stackp > depth) {
+  if (internal_state->stackp > depth) {
     SGFTRACE(0, 0, "stackp > depth");
     return 0;
   }
@@ -3437,7 +3437,7 @@ attack4(int str, int *move)
         int hpos;
         break_chain_moves(adjs[r], &moves);
 
-        findlib(adjs[r], 1, &hpos);
+        findlib(internal_state, adjs[r], 1, &hpos);
         ADD_CANDIDATE_MOVE(hpos, 0, moves, "save_boundary");
       }
 
@@ -3449,7 +3449,7 @@ attack4(int str, int *move)
         moves.score[k] += 5;
 
       /* Get the four liberties of (str). */
-      liberties = findlib(str, 4, libs);
+      liberties = findlib(internal_state, str, 4, libs);
       ASSERT1(liberties == 4, str);
 
       for (k = 0; k < 4; k++) {
@@ -3459,10 +3459,10 @@ attack4(int str, int *move)
          * -or-  stackp <= depth and it is an isolated stone
          * -or-  it is not in immediate atari
          */
-        if (stackp <= backfill_depth
-	    || (stackp <= depth
+        if (internal_state->stackp <= backfill_depth
+        || (internal_state->stackp <= depth
 		&& !has_neighbor(apos, other))
-	    || !is_self_atari(apos, other))
+        || !is_self_atari(internal_state, apos, other))
           ADD_CANDIDATE_MOVE(apos, 0, moves, "liberty");
 
         edge_closing_backfill_moves(str, apos, &moves);
@@ -3476,7 +3476,7 @@ attack4(int str, int *move)
       break;
 
     case 1:
-      if (stackp <= backfill_depth)
+      if (internal_state->stackp <= backfill_depth)
         find_cap_moves(str, &moves);
       break;
 
@@ -3523,7 +3523,7 @@ find_cap_moves(int str, struct reading_moves *moves)
   int ai, aj;
   int bi, bj;
 
-  numlibs = findlib(str, 4, libs);
+  numlibs = findlib(internal_state, str, 4, libs);
   if (numlibs > 4 || numlibs < 2)
     return;
 
@@ -3614,24 +3614,24 @@ special_attack3_moves(int str, int libs[2], struct reading_moves *moves)
   int bpos;
   int k;
 
-  ASSERT1(countlib(str) == 2, str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   for (k = 0; k < 2; k++) {
     apos = libs[k];
     bpos = libs[1-k];
     
     if (apos == SOUTH(bpos) || apos == NORTH(bpos)) {
-      if (board[WEST(apos)] == EMPTY)
+      if (internal_state->board[WEST(apos)] == EMPTY)
 	xpos = WEST(apos);
-      else if (board[EAST(apos)] == EMPTY)
+      else if (internal_state->board[EAST(apos)] == EMPTY)
 	xpos = EAST(apos);
       else
 	continue;
     }
     else if (apos == WEST(bpos) || apos == EAST(bpos)) {
-      if (board[SOUTH(apos)] == EMPTY)
+      if (internal_state->board[SOUTH(apos)] == EMPTY)
 	xpos = SOUTH(apos);
-      else if (board[NORTH(apos)] == EMPTY)
+      else if (internal_state->board[NORTH(apos)] == EMPTY)
 	xpos = NORTH(apos);
       else
 	continue;
@@ -3679,13 +3679,13 @@ special_attack4_moves(int str, int libs[2], struct reading_moves *moves)
   int bc_common_lib;
   int k, s, t, u;
 
-  ASSERT1(countlib(str) == 2, str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   /* To avoid making this too general, we require that both
    * liberties are self ataris for X.
    */
-  if (!is_self_atari(libs[0], other) 
-      || !is_self_atari(libs[1], other))
+  if (!is_self_atari(internal_state, libs[0], other)
+      || !is_self_atari(internal_state, libs[1], other))
     return;
 
   /* Pick up chain links with 2 liberties. */
@@ -3788,7 +3788,7 @@ draw_back_moves(int str, struct reading_moves *moves)
 
   adj = chainlinks2(str, adjs, 2);
   for (r = 0; r < adj; r++) {
-    findlib(adjs[r], 2, libs);
+    findlib(internal_state, adjs[r], 2, libs);
     for (k = 0; k < 2; k++) {
       if (!liberty_of_string(libs[k], str)
          && ((ON_BOARD1(internal_state, SOUTH(libs[k]))
@@ -3840,13 +3840,13 @@ edge_closing_backfill_moves(int str, int apos, struct reading_moves *moves)
     int right = delta[(k+1)%4];
     if (ON_BOARD(apos - up))
       continue;
-    if (board[apos + up] != color)
+    if (internal_state->board[apos + up] != color)
       return;
-    if (board[apos + right] == EMPTY
+    if (internal_state->board[apos + right] == EMPTY
 	&& (!ON_BOARD(apos - right) 
 	    || board[apos - right] == color))
       ; /* Everything ok so far. */
-    else if (board[apos - right] == EMPTY
+    else if (internal_state->board[apos - right] == EMPTY
 	     && (!ON_BOARD(apos + right) 
 		 || board[apos + right] == color)) {
       /* Negate right direction. */
@@ -3855,7 +3855,7 @@ edge_closing_backfill_moves(int str, int apos, struct reading_moves *moves)
     else
       return;
     
-    if (board[apos + up + right] != other)
+    if (internal_state->board[apos + up + right] != other)
       return;
 
     bpos = apos + up + 2 * right;
@@ -3866,14 +3866,14 @@ edge_closing_backfill_moves(int str, int apos, struct reading_moves *moves)
 
     number_x = 0;
     number_o = 0;
-    if (board[bpos] == color)
+    if (internal_state->board[bpos] == color)
       number_x++;
-    else if (board[bpos] == other)
+    else if (internal_state->board[bpos] == other)
       number_o++;
 
-    if (board[cpos] == color)
+    if (internal_state->board[cpos] == color)
       number_x++;
-    else if (board[cpos] == other)
+    else if (internal_state->board[cpos] == other)
       number_o++;
 
     if (number_o > number_x)
@@ -3938,7 +3938,7 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
     int up = delta[k];
     if (ON_BOARD(apos - up))
       continue;
-    if (board[apos + up] != color || !same_string(apos + up, str))
+    if (internal_state->board[apos + up] != color || !same_string(apos + up, str))
       return;
     
     for (l = 0; l < 2; l++) {
@@ -3949,7 +3949,7 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
       cpos = apos + right;
       dpos = apos + right + up;
 
-      if (board[cpos] != color || board[dpos] != other)
+      if (internal_state->board[cpos] != color || board[dpos] != other)
 	continue;
 
       epos = cpos + right;
@@ -3960,14 +3960,14 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
       if (!ON_BOARD(epos))
 	continue;
       
-      if (board[epos] == EMPTY && board[fpos] == EMPTY 
-	  && (board[gpos] != color)) {
+      if (internal_state->board[epos] == EMPTY && board[fpos] == EMPTY
+      && (internal_state->board[gpos] != color)) {
 	/* Everything is set up, suggest moves at e and f. */
 	if (!ON_BOARD(hpos) || board[hpos] == color)
 	  score = 0;
 	else
 	  score = -5;
-	if (countlib(str) == 2)
+    if (countlib(internal_state, str) == 2)
 	  score -= 10;
 	ADD_CANDIDATE_MOVE(epos, score, *moves, "edge_block-A");
 
@@ -3975,7 +3975,7 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
 	  score = 25;
 	else
 	  score = 0;
-	if (countlib(str) == 2)
+    if (countlib(internal_state, str) == 2)
 	  score -= 10;
 	ADD_CANDIDATE_MOVE(fpos, score, *moves, "edge_block-B");
       }
@@ -3987,7 +3987,7 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
 	  move = libs[1];
 	else
 	  move = libs[0];
-	if (!is_self_atari(move, other))
+    if (!is_self_atari(internal_state, move, other))
 	  ADD_CANDIDATE_MOVE(move, 0, *moves, "edge_block-C");
       }
     }
@@ -4039,7 +4039,7 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
 
     if (ON_BOARD(apos - up))
       continue;
-    if (board[apos + up] != color || !same_string(apos + up, str))
+    if (internal_state->board[apos + up] != color || !same_string(apos + up, str))
       return;
     
     for (l = 0; l < 2; l++) {
@@ -4057,13 +4057,13 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
       epos = cpos + right;
       fpos = dpos + right;
 
-      if (board[cpos] == color && board[dpos] == other
+      if (internal_state->board[cpos] == color && board[dpos] == other
 	  && board[epos] == EMPTY && board[fpos] == EMPTY) {
 	if (countlib(dpos) == 1) {
 	  int gpos = epos + right;
 
 	  /* Check if we have the first situation. */
-	  if (board[gpos] != color)
+      if (internal_state->board[gpos] != color)
 	    ADD_CANDIDATE_MOVE(fpos, 30, *moves, "edge_block-A");
 	}
 	else {
@@ -4073,12 +4073,12 @@ edge_block_moves(int str, int apos, struct reading_moves *moves)
 	   * run away to a friend.
 	   */
 	  for (edge_scan = epos; ; edge_scan += right) {
-	    if (board[edge_scan] == color || board[edge_scan + up] == color) {
+        if (internal_state->board[edge_scan] == color || board[edge_scan + up] == color) {
 	      ADD_CANDIDATE_MOVE(epos, 10, *moves, "edge_block-B");
 	      break;
 	    }
 
-	    if (board[edge_scan] != EMPTY || board[edge_scan + up] != EMPTY)
+        if (internal_state->board[edge_scan] != EMPTY || board[edge_scan + up] != EMPTY)
 	      break;
 	  }
 	}
@@ -4107,7 +4107,7 @@ break_chain_moves(int str, struct reading_moves *moves)
   adj = chainlinks2(str, adjs, 1);
   
   for (r = 0; r < adj; r++) {
-    findlib(adjs[r], 1, &xpos);
+    findlib(internal_state, adjs[r], 1, &xpos);
     ADD_CANDIDATE_MOVE(xpos, 1, *moves, "break_chain");
   }
 }
@@ -4130,7 +4130,7 @@ defend_secondary_chain1_moves(int str, struct reading_moves *moves,
 			      int min_liberties)
 {
   int r, s;
-  int color = OTHER_COLOR(board[str]);
+  int color = OTHER_COLOR(internal_state->board[str]);
   int xpos;
   int adj;
   int adj2;
@@ -4142,7 +4142,7 @@ defend_secondary_chain1_moves(int str, struct reading_moves *moves,
 
   for (r = 0; r < adj; r++) {
     /* Stretch out. */
-    findlib(adjs[r], 1, &xpos);
+    findlib(internal_state, adjs[r], 1, &xpos);
     if (approxlib(xpos, color, min_liberties, NULL)
 	+ neighbor_of_string(xpos, str) >= min_liberties)
       ADD_CANDIDATE_MOVE(xpos, 0, *moves, "defend_secondary_chain1-A");
@@ -4150,7 +4150,7 @@ defend_secondary_chain1_moves(int str, struct reading_moves *moves,
     /* Capture adjacent stones in atari, if any. */
     adj2 = chainlinks2(adjs[r], adjs2, 1);
     for (s = 0; s < adj2; s++) {
-      findlib(adjs2[s], 1, &xpos);
+      findlib(internal_state, adjs2[s], 1, &xpos);
       if (!is_self_atari(xpos, color))
 	ADD_CANDIDATE_MOVE(xpos, 0, *moves, "defend_secondary_chain1-B");
     }
@@ -4176,7 +4176,7 @@ defend_secondary_chain2_moves(int str, struct reading_moves *moves,
     int min_liberties)
 {
   int r, s, t;
-  int color = OTHER_COLOR(board[str]);
+  int color = OTHER_COLOR(internal_state->board[str]);
   int xpos;
   int adj;
   int adj2;
@@ -4192,7 +4192,7 @@ defend_secondary_chain2_moves(int str, struct reading_moves *moves,
       continue;
 
     /* Stretch out. */
-    findlib(adjs[r], 2, libs);
+    findlib(internal_state, adjs[r], 2, libs);
     for (t = 0; t < 2; t++) {
       xpos = libs[t];
       if (approxlib(xpos, color, min_liberties, NULL)
@@ -4203,7 +4203,7 @@ defend_secondary_chain2_moves(int str, struct reading_moves *moves,
     /* Capture adjacent stones in atari, if any. */
     adj2 = chainlinks2(adjs[r], adjs2, 1);
     for (s = 0; s < adj2; s++) {
-      findlib(adjs2[s], 1, &xpos);
+      findlib(internal_state, adjs2[s], 1, &xpos);
       if (!is_self_atari(xpos, color))
 	ADD_CANDIDATE_MOVE(xpos, 0, *moves, "defend_secondary_chain2-B");
     }
@@ -4211,11 +4211,11 @@ defend_secondary_chain2_moves(int str, struct reading_moves *moves,
     /* Look for neighbours we can atari. */
     adj2 = chainlinks2(adjs[r], adjs2, 2);
     for (s = 0; s < adj2; s++) {
-      findlib(adjs2[s], 2, libs);
+      findlib(internal_state, adjs2[s], 2, libs);
       for (t = 0; t < 2; t++) {
 	/* Only atari if target has no easy escape with his other liberty. */
 	if (approxlib(libs[1-t], OTHER_COLOR(color), 3, NULL) < 3 
-	    &&  !is_self_atari(libs[t], color)) {
+        &&  !is_self_atari(internal_state, libs[t], color)) {
 	  ADD_CANDIDATE_MOVE(libs[t], 0, *moves, "defend_secondary_chain2-C");
 	}
       }
@@ -4258,14 +4258,14 @@ do_find_break_chain2_efficient_moves(int str, int adj,
   int libs[2];
   int pos1;
   int pos2;
-  ASSERT1(countlib(adj) == 2, adj);
+  ASSERT1(countlib(internal_state, adj) == 2, adj);
   
   adj2 = chainlinks2(adj, adjs2, 1);
-  if (adj2 == 1 && countlib(str) > 2) {
+  if (adj2 == 1 && countlib(internal_state, str) > 2) {
     int apos;
     break_chain_moves(adjs2[0], moves);
-    findlib(adjs2[0], 1, &apos);
-    if (!is_self_atari(apos, color))
+    findlib(internal_state, adjs2[0], 1, &apos);
+    if (!is_self_atari(internal_state, apos, color))
       ADD_CANDIDATE_MOVE(apos, 0, *moves, "break_chain2_efficient-A");
     return;
   }
@@ -4273,10 +4273,10 @@ do_find_break_chain2_efficient_moves(int str, int adj,
   if (adj2 > 1)
     return;
     
-  findlib(adj, 2, libs);
+  findlib(internal_state, adj, 2, libs);
   for (k = 0; k < 2; k++)
     if (approxlib(libs[k], other, 3, NULL) <= 2
-	&& !is_self_atari(libs[1 - k], color))
+    && !is_self_atari(internal_state, libs[1 - k], color))
       ADD_CANDIDATE_MOVE(libs[1 - k], 0, *moves, "break_chain2_efficient-B");
   
   /* A common special case is this kind of edge position
@@ -4308,18 +4308,18 @@ do_find_break_chain2_efficient_moves(int str, int adj,
    */
   pos1 = NORTH(gg_max(libs[0], libs[1]));
   pos2 = SOUTH(gg_min(libs[0], libs[1]));
-  if ((board[pos1] != other
+  if ((internal_state->board[pos1] != other
        || !is_edge_vertex(pos2)
        || !same_string(pos1, adj))
-      && (board[pos2] != other
+      && (internal_state->board[pos2] != other
 	  || !is_edge_vertex(pos1)
 	  || !same_string(pos2, adj)))
     return;
 
-  if (is_edge_vertex(libs[0]) && !is_self_atari(libs[1], color))
+  if (is_edge_vertex(libs[0]) && !is_self_atari(internal_state, libs[1], color))
     ADD_CANDIDATE_MOVE(libs[1], 1, *moves, "break_chain2_efficient-C");
 
-  if (is_edge_vertex(libs[1]) && !is_self_atari(libs[0], color))
+  if (is_edge_vertex(libs[1]) && !is_self_atari(internal_state, libs[0], color))
     ADD_CANDIDATE_MOVE(libs[0], 1, *moves, "break_chain2_efficient-C");
 }
 
@@ -4351,19 +4351,19 @@ break_chain2_moves(int str, struct reading_moves *moves, int require_safe,
     int unsafe[2];
     int dummy_adjs[MAXCHAIN];
 
-    findlib(apos, 2, libs);
+    findlib(internal_state, apos, 2, libs);
 
     /* If stackp > backfill_depth, don't bother playing liberties of
      * 2-liberty strings if those also have at least one neighbor in
      * atari. This is intended to solve reading:171 and generally reduce
      * the number of nodes.
      */
-    if (stackp > backfill_depth
+    if (internal_state->stackp > backfill_depth
 	&& chainlinks2(apos, dummy_adjs, 1) > 0)
       continue;
 
     for (k = 0; k < 2; k++) {
-      unsafe[k] = is_self_atari(libs[k], color);
+      unsafe[k] = is_self_atari(internal_state, libs[k], color);
       if (!unsafe[k]
 	  || is_ko(libs[k], color, NULL)
 	  || (!require_safe
@@ -4371,7 +4371,7 @@ break_chain2_moves(int str, struct reading_moves *moves, int require_safe,
 	ADD_CANDIDATE_MOVE(libs[k], 0, *moves, "break_chain2-A");
     }
 
-    if (stackp <= break_chain_depth
+    if (internal_state->stackp <= break_chain_depth
 	|| (be_aggressive && stackp <= backfill_depth)) {
       /* If the chain link cannot escape easily, try to defend all adjacent
        * friendly stones in atari (if any). If there are none, defend 
@@ -4385,16 +4385,16 @@ break_chain2_moves(int str, struct reading_moves *moves, int require_safe,
     }
 
     if (unsafe[0] && unsafe[1]
-	&& (stackp <= backfill2_depth || have_common_lib(str, apos, NULL))) {
+    && (internal_state->stackp <= backfill2_depth || have_common_lib(str, apos, NULL))) {
       int lib;
 
       /* Find backfilling moves. */
       for (k = 0; k < 2; k++) {
 	int libs2[3];
 	if (approxlib(libs[k], other, 3, libs2) == 2) {
-	  if (!is_self_atari(libs2[0], color))
+      if (!is_self_atari(internal_state, libs2[0], color))
 	    ADD_CANDIDATE_MOVE(libs2[0], 0, *moves, "break_chain2-B");
-	  if (!is_self_atari(libs2[1], color))
+      if (!is_self_atari(internal_state, libs2[1], color))
 	    ADD_CANDIDATE_MOVE(libs2[1], 0, *moves, "break_chain2-B");
 	}
       }
@@ -4443,7 +4443,7 @@ break_chain2_defense_moves(int str, struct reading_moves *moves,
   int saved_num_moves = moves->num;
   int k;
 
-  break_chain2_moves(str, moves, !(stackp <= backfill_depth), be_aggressive);
+  break_chain2_moves(str, moves, !(internal_state->stackp <= backfill_depth), be_aggressive);
   for (k = saved_num_moves; k < moves->num; k++)
     moves->score[k] = -2;
 }
@@ -4529,7 +4529,7 @@ do_find_break_chain3_moves(int *chain_links, int num_chain_links,
       }
     }
 
-    if (stackp <= backfill2_depth
+    if (internal_state->stackp <= backfill2_depth
 	|| (be_aggressive && stackp <= backfill_depth))
       defend_secondary_chain1_moves(chain_links[r], moves, 3);
   }
@@ -4543,9 +4543,9 @@ do_find_break_chain3_moves(int *chain_links, int num_chain_links,
      */
     int move = possible_moves[k];
 
-    if (stackp <= break_chain_depth
+    if (internal_state->stackp <= break_chain_depth
 	|| (be_aggressive && stackp <= backfill_depth)
-	|| approxlib(move, color, 2, NULL) > 1)
+    || approxlib(internal_state, move, color, 2, NULL) > 1)
       /* We use a negative initial score here as we prefer to find
        * direct defense moves.
        */
@@ -4610,7 +4610,7 @@ break_chain4_moves(int str, struct reading_moves *moves, int be_aggressive)
      * each liberty in the mw array so that we do not list any
      * more than once.
      */
-    findlib(apos, 4, libs);
+    findlib(internal_state, apos, 4, libs);
 
     /* If the 4 liberty chain easily can run away through one of the
      * liberties, we don't play on any of the other liberties.
@@ -4660,7 +4660,7 @@ break_chain4_moves(int str, struct reading_moves *moves, int be_aggressive)
       }
     }
 
-    if (stackp <= backfill2_depth
+    if (internal_state->stackp <= backfill2_depth
 	|| (be_aggressive && stackp <= backfill_depth))
       defend_secondary_chain1_moves(adjs[r], moves, 4);
   }
@@ -4673,7 +4673,7 @@ break_chain4_moves(int str, struct reading_moves *moves, int be_aggressive)
      * (This currently only makes a difference at stackp == backfill2_depth.)
      */
     int xpos = possible_moves[v];
-    if (stackp <= break_chain_depth
+    if (internal_state->stackp <= break_chain_depth
 	|| (be_aggressive && stackp <= backfill_depth)
 	|| approxlib(xpos, color, 2, NULL) > 1)
       /* We use a negative initial score here as we prefer to find
@@ -4700,11 +4700,11 @@ superstring_break_chain_moves(int str, int liberty_cap,
   int k;
   int apos;
 
-  proper_superstring_chainlinks(str, &adj, adjs, liberty_cap);
+  proper_superstring_chainlinks(internal_state, str, &adj, adjs, liberty_cap);
   for (k = 0; k < adj; k++) {
-    int liberties = countlib(adjs[k]);
+    int liberties = countlib(internal_state, adjs[k]);
     if (liberties == 1) {
-      findlib(adjs[k], 1, &apos);
+      findlib(internal_state, adjs[k], 1, &apos);
       ADD_CANDIDATE_MOVE(apos, 0, *moves, "superstring_break_chain");
     }
     else if (liberties == 2)
@@ -4742,14 +4742,14 @@ double_atari_chain2_moves(int str, struct reading_moves *moves,
 
   adj = chainlinks2(str, adjs, 2);
   for (r = 0; r < adj; r++) {
-    findlib(adjs[r], 2, libs);
+    findlib(internal_state, adjs[r], 2, libs);
     for (k = 0; k < 2; k++) {
       mw[libs[k]]++;
       if (mw[libs[k]] == 2) {
 	/* Found a double atari, but don't play there unless the move
          * is safe for the defender.
 	 */
-	if (!is_self_atari(libs[k], board[str]))
+    if (!is_self_atari(internal_state, libs[k], board[str]))
 	  ADD_CANDIDATE_MOVE(libs[k], 1, *moves, "double_atari_chain2-A");
       }
     }
@@ -4761,11 +4761,11 @@ double_atari_chain2_moves(int str, struct reading_moves *moves,
 
     adj3 = chainlinks2(str, adjs3, 3);
     for (r = 0; r < adj3; r++) {
-      findlib(adjs3[r], 3, libs);
+      findlib(internal_state, adjs3[r], 3, libs);
       for (k = 0; k < 3; k++) {
 	if (mw[libs[k]] == 1) {
 	  mw[libs[k]] = 2;
-	  if (!is_self_atari(libs[k], board[str]))
+      if (!is_self_atari(internal_state, libs[k], board[str]))
 	    ADD_CANDIDATE_MOVE(libs[k], -3, *moves, "double_atari_chain2-B");
 	}
       }
@@ -4820,11 +4820,11 @@ restricted_defend1(int str, int *move,
   reading_node_counter++;
   moves.num = 0;
   
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 1, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 1, str);
 
   /* (lib) will be the liberty of the string. */
-  liberties = findlib(str, 1, &lib);
+  liberties = findlib(internal_state, str, 1, &lib);
   ASSERT1(liberties == 1, str);
 
   /* Collect moves to try in the first batch.
@@ -4858,9 +4858,9 @@ restricted_defend1(int str, int *move,
 
     if ((get_komaster() != other || !ko_capture)
 	&& trymove(xpos, color, moves.message[k], str)) {
-      int libs = countlib(str);
+      int libs = countlib(internal_state, str);
       if (libs > 2) {
-	popgo();
+    popgo(internal_state);
 	SGFTRACE(xpos, WIN, "defense effective");
 	if (move)
 	  *move = xpos;
@@ -4875,7 +4875,7 @@ restricted_defend1(int str, int *move,
 	else
 	  acode = restricted_attack2(str, NULL,
 				     num_forbidden_moves, forbidden_moves);
-	popgo();
+    popgo(internal_state);
 	if (acode == 0) {
 	  SGFTRACE(xpos, WIN, "defense effective");
 	  if (move)
@@ -4888,31 +4888,31 @@ restricted_defend1(int str, int *move,
 	UPDATE_SAVED_KO_RESULT(savecode, savemove, acode, xpos);
       }
       else
-	popgo();
+    popgo(internal_state);
     }
     else {
       int ko_pos;
-      if (stackp <= ko_depth
+      if (internal_state->stackp <= ko_depth
 	  && savecode == 0 
 	  && (get_komaster() == EMPTY
 	      || (get_komaster() == color
 		  && get_kom_pos() == xpos))
 	  && is_ko(xpos, color, &ko_pos)
 	  && tryko(xpos, color, "restricted_defend1-B")) {
-	int libs = countlib(str);
+    int libs = countlib(internal_state, str);
 	if (libs > 2) {
-	  popgo();
+      popgo(internal_state);
 	  UPDATE_SAVED_KO_RESULT(savecode, savemove, 2, xpos);
 	}
 	else if (libs == 2) {
 	  int acode;
 	  acode = restricted_attack2(str, NULL,
 				     num_forbidden_moves, forbidden_moves);
-	  popgo();
+      popgo(internal_state);
 	  UPDATE_SAVED_KO_RESULT(savecode, savemove, acode, xpos);
 	}
 	else
-	  popgo();
+      popgo(internal_state);
       }
     }
   }
@@ -4949,15 +4949,15 @@ restricted_attack2(int str, int *move,
   SETUP_TRACE_INFO("restricted_attack2", str);
   reading_node_counter++;
 
-  str = find_origin(str);
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 2, str);
+  str = find_origin(internal_state, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   /* The attack may fail if a boundary string is in atari and cannot 
    * be defended.  First we must try defending such a string. 
    */
   /* Get the two liberties of (str). */
-  liberties = findlib(str, 2, libs);
+  liberties = findlib(internal_state, str, 2, libs);
   ASSERT1(liberties == 2, str);
 
   for (k = 0; k < 2; k++) {
@@ -4976,20 +4976,20 @@ restricted_attack2(int str, int *move,
       ko_capture = 0;
 
     if ((get_komaster() != color || !ko_capture)
-	&& trymove(apos, other, "restricted_attack2", str)) {
+    && trymove(internal_state, apos, other, "restricted_attack2", str)) {
       if ((!ko_capture 
 	   && !restricted_defend1(str, NULL,
 				  num_forbidden_moves, forbidden_moves))
 	  || (ko_capture
 	      && !restricted_defend1(str, NULL,
 				     num_forbidden_moves, forbidden_moves))) {
-	popgo();
+    popgo(internal_state);
 	SGFTRACE(apos, WIN, "attack effective");
 	if (move)
 	  *move = apos;
 	return WIN;
       }
-      popgo();
+      popgo(internal_state);
     }
     else if (savecode == 0
 	     && (get_komaster() == EMPTY
@@ -4998,12 +4998,12 @@ restricted_attack2(int str, int *move,
 	     && tryko(apos, other, "restricted_attack2")) {
       if (!restricted_defend1(str, NULL,
 			      num_forbidden_moves, forbidden_moves)) {
-	popgo();
+    popgo(internal_state);
 	savecode = KO_B;
 	savemove = apos;
       }
       else
-	popgo();
+    popgo(internal_state);
     }
   }
 
@@ -5104,7 +5104,7 @@ order_moves(int str, struct reading_moves *moves, int color,
 	    const char *funcname, int killer)
 {
   int string_color = board[str];
-  int string_libs = countlib(str);
+  int string_libs = countlib(internal_state, str);
   int r;
   int i, j;
 
@@ -5140,7 +5140,7 @@ order_moves(int str, struct reading_moves *moves, int color,
 			    &threatened_stones, &saved_stones, &number_open);
 
     if (0)
-      gprintf("%o %1m values: %d %d %d %d %d %d %d %d\n", move, number_edges,
+      gprintf(internal_state, "%o %1m values: %d %d %d %d %d %d %d %d\n", move, number_edges,
 	      number_same_string, number_own, number_opponent, captured_stones,
 	      threatened_stones, saved_stones, number_open);
     
@@ -5155,7 +5155,7 @@ order_moves(int str, struct reading_moves *moves, int color,
        *    Only applicable if the move is adjacent to the group.
        */
       
-      int libs = approxlib(move, color, 10, NULL);
+      int libs = approxlib(internal_state, move, color, 10, NULL);
       if (number_same_string > 0) {
 	if (libs > 5 || (libs == 4 && stackp > fourlib_depth))
 	  moves->score[r] += defend_lib_score[5] + (libs - 4);
@@ -5209,7 +5209,7 @@ order_moves(int str, struct reading_moves *moves, int color,
        * 1) Add the number of liberties the attacker gets when playing
        *    there, but never more than four.
        */
-      int libs = approxlib(move, color, 4, NULL);
+      int libs = approxlib(internal_state, move, color, 4, NULL);
       if (libs > 4)
 	libs = 4;
       moves->score[r] += attack_own_lib_score[libs];
@@ -5226,7 +5226,7 @@ order_moves(int str, struct reading_moves *moves, int color,
       if ((libs + captured_stones > 1 || (string_libs <= 2 && number_own == 0))
 	  && number_same_string > 0) {
 	int safe_atari;
-	int liberties = approxlib(move, string_color, 5, NULL);
+    int liberties = approxlib(internal_state, move, string_color, 5, NULL);
 	if (liberties > 5 || (liberties == 4 && stackp > fourlib_depth))
 	  liberties = 5;
 	moves->score[r] += attack_string_lib_score[liberties];
@@ -5306,9 +5306,9 @@ order_moves(int str, struct reading_moves *moves, int color,
 
 
   if (0) {
-    gprintf("%oVariation %d:\n", count_variations);
+    gprintf(internal_state, "%oVariation %d:\n", count_variations);
     for (i = moves->num_tried; i < moves->num; i++)
-      gprintf("%o  %1M %d\n", moves->pos[i], moves->score[i]);
+      gprintf(internal_state, "%o  %1M %d\n", moves->pos[i], moves->score[i]);
   }
 
   if (sgf_dumptree)
@@ -5345,55 +5345,55 @@ tune_move_ordering(int params[MOVE_ORDERING_PARAMETERS])
   safe_atari_score                     = params[66];
 
   if (verbose) {
-    gprintf("static int defend_lib_score[6]              = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_lib_score[6]              = {%d, %d, %d, %d, %d, %d};\n",
 	    defend_lib_score[0], defend_lib_score[1],
 	    defend_lib_score[2], defend_lib_score[3],
 	    defend_lib_score[4], defend_lib_score[5]);
-    gprintf("static int defend_not_adjacent_lib_score[5] = {%d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_not_adjacent_lib_score[5] = {%d, %d, %d, %d, %d};\n",
 	    defend_not_adjacent_lib_score[0], defend_not_adjacent_lib_score[1],
 	    defend_not_adjacent_lib_score[2], defend_not_adjacent_lib_score[3],
 	    defend_not_adjacent_lib_score[4]);
-    gprintf("static int defend_capture_score[6]          = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_capture_score[6]          = {%d, %d, %d, %d, %d, %d};\n",
 	    defend_capture_score[0], defend_capture_score[1],
 	    defend_capture_score[2], defend_capture_score[3],
 	    defend_capture_score[4], defend_capture_score[5]);
-    gprintf("static int defend_atari_score[6]            = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_atari_score[6]            = {%d, %d, %d, %d, %d, %d};\n",
 	    defend_atari_score[0], defend_atari_score[1],
 	    defend_atari_score[2], defend_atari_score[3],
 	    defend_atari_score[4], defend_atari_score[5]);
-    gprintf("static int defend_save_score[6]             = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_save_score[6]             = {%d, %d, %d, %d, %d, %d};\n",
 	    defend_save_score[0], defend_save_score[1],
 	    defend_save_score[2], defend_save_score[3],
 	    defend_save_score[4], defend_save_score[5]);
-    gprintf("static int defend_open_score[5]             = {%d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int defend_open_score[5]             = {%d, %d, %d, %d, %d};\n",
 	    defend_open_score[0], defend_open_score[1],
 	    defend_open_score[2], defend_open_score[3],
 	    defend_open_score[4]);
-    gprintf("static int attack_own_lib_score[5]          = {%d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int attack_own_lib_score[5]          = {%d, %d, %d, %d, %d};\n",
 	    attack_own_lib_score[0], attack_own_lib_score[1],
 	    attack_own_lib_score[2], attack_own_lib_score[3],
 	    attack_own_lib_score[4]);
-    gprintf("static int attack_string_lib_score[6]       = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int attack_string_lib_score[6]       = {%d, %d, %d, %d, %d, %d};\n",
 	    attack_string_lib_score[0], attack_string_lib_score[1],
 	    attack_string_lib_score[2], attack_string_lib_score[3],
 	    attack_string_lib_score[4], attack_string_lib_score[5]);
-    gprintf("static int attack_capture_score[6]          = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int attack_capture_score[6]          = {%d, %d, %d, %d, %d, %d};\n",
 	    attack_capture_score[0], attack_capture_score[1],
 	    attack_capture_score[2], attack_capture_score[3],
 	    attack_capture_score[4], attack_capture_score[5]);
-    gprintf("static int attack_save_score[6]             = {%d, %d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int attack_save_score[6]             = {%d, %d, %d, %d, %d, %d};\n",
 	    attack_save_score[0], attack_save_score[1],
 	    attack_save_score[2], attack_save_score[3],
 	    attack_save_score[4], attack_save_score[5]);
-    gprintf("static int attack_open_score[5]             = {%d, %d, %d, %d, %d};\n",
+    gprintf(internal_state, "static int attack_open_score[5]             = {%d, %d, %d, %d, %d};\n",
 	    attack_open_score[0], attack_open_score[1],
 	    attack_open_score[2], attack_open_score[3],
 	    attack_open_score[4]);
-    gprintf("static int defend_not_edge_score            = %d;\n", defend_not_edge_score);
-    gprintf("static int attack_not_edge_score            = %d;\n", attack_not_edge_score);
-    gprintf("static int attack_ko_score                  = %d;\n", attack_ko_score);
-    gprintf("static int cannot_defend_penalty            = %d;\n", cannot_defend_penalty);
-    gprintf("static int safe_atari_score                 = %d;\n", safe_atari_score);
+    gprintf(internal_state, "static int defend_not_edge_score            = %d;\n", defend_not_edge_score);
+    gprintf(internal_state, "static int attack_not_edge_score            = %d;\n", attack_not_edge_score);
+    gprintf(internal_state, "static int attack_ko_score                  = %d;\n", attack_ko_score);
+    gprintf(internal_state, "static int cannot_defend_penalty            = %d;\n", cannot_defend_penalty);
+    gprintf(internal_state, "static int safe_atari_score                 = %d;\n", safe_atari_score);
   }
 }
 
@@ -5443,17 +5443,17 @@ safe_move(int move, int color)
    * Only use cached values when stackp is 0 and reading is not being done
    * at a modified depth.
    */
-  if (stackp == 0
+  if (internal_state->stackp == 0
       && depth_offset == 0
       && safe_move_cache_when[move][color == BLACK] == position_number)
     return safe_move_cache[move][color == BLACK];
 
   /* Otherwise calculate the value... */
-  if (komaster_trymove(move, color, "safe_move", 0, &ko_move, 1)) {
+  if (komaster_trymove(internal_state, move, color, "safe_move", 0, &ko_move, 1)) {
     safe = REVERSE_RESULT(attack(move, NULL));
     if (ko_move && safe != 0)
       safe = KO_B;
-    popgo();
+    popgo(internal_state);
   }
 
   /* ...and store it in the cache.
@@ -5463,10 +5463,10 @@ safe_move(int move, int color)
    * Comment: This is currently not a problem since no reduced depth
    * reading is performed.
    */
-  if (stackp == 0 && depth_offset == 0) {
+  if (internal_state->stackp == 0 && depth_offset == 0) {
     if (0)
-      gprintf("Safe move at %1m for %s cached when depth=%d, position number=%d\n",
-	      move, color_to_string(color), depth, position_number);
+      gprintf(internal_state, "Safe move at %1m for %s cached when depth=%d, position number=%d\n",
+          move, color_to_string(internal_state, color), depth, position_number);
     safe_move_cache_when[move][color == BLACK] = position_number;
     safe_move_cache[move][color == BLACK] = safe;
   }
@@ -5481,10 +5481,10 @@ int
 does_secure(int color, int move, int pos)
 {
   int result = 0;
-  if (trymove(move, color, NULL, NO_MOVE)) {
-    if (is_self_atari(pos, OTHER_COLOR(color)))
+  if (trymove(internal_state, move, color, NULL, NO_MOVE)) {
+    if (is_self_atari(internal_state, pos, OTHER_COLOR(color)))
       result = 1;
-    popgo();
+    popgo(internal_state);
   }
   
   return result;
@@ -5522,10 +5522,10 @@ draw_reading_shadow()
 
   start_draw_board();
   
-  for (i = 0; i < board_size; i++) {
-    fprintf(stderr, "\n%2d", board_size - i);
+  for (i = 0; i < internal_state->board_size; i++) {
+    fprintf(stderr, "\n%2d", internal_state->board_size - i);
     
-    for (j = 0; j < board_size; j++) {
+    for (j = 0; j < internal_state->board_size; j++) {
       pos = POS(i, j);
       if (!shadow[pos] && board[pos] == EMPTY)
 	c = '.';
@@ -5543,7 +5543,7 @@ draw_reading_shadow()
       fprintf(stderr, " %c", c);
     }
     
-    fprintf(stderr, " %d", board_size - i);
+    fprintf(stderr, " %d", internal_state->board_size - i);
   }
 
   end_draw_board();
@@ -5618,12 +5618,12 @@ simple_ladder(int str, int *move)
   moves.num = 0;
   moves.num_tried = 0;
 
-  str = find_origin(str);
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 2, str);
+  str = find_origin(internal_state, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 2, str);
 
   /* Give up if we attacked depending on ko for too long. */
-  if (stackp > depth + 20 && get_komaster() == OTHER_COLOR(board[str])) {
+  if (internal_state->stackp > depth + 20 && get_komaster() == OTHER_COLOR(internal_state->board[str])) {
     SGFTRACE(0, 0, NULL);
     if (move)
       *move = PASS_MOVE;
@@ -5631,7 +5631,7 @@ simple_ladder(int str, int *move)
   }
 
   /* Get the two liberties of (str). */
-  findlib(str, 2, libs);
+  findlib(internal_state, str, 2, libs);
 
   /* If the defender can get enough liberties by playing one of these 
    * two, then we have no choice but to block there and consequently, 
@@ -5649,13 +5649,13 @@ simple_ladder(int str, int *move)
     int ko_move;
 
     apos = moves.pos[k];
-    if (komaster_trymove(apos, other, moves.message[k], str,
+    if (komaster_trymove(internal_state, apos, other, moves.message[k], str,
 			 &ko_move, savecode == 0)) {
       if (!ko_move) {
 	dcode = simple_ladder_defend(str, NULL);
 	if (dcode != WIN) {
 	  if (dcode == 0) {
-	    popgo();
+        popgo(internal_state);
 	    SGFTRACE(apos, WIN, "attack effective");
 	    if (move)
 	      *move = apos;
@@ -5670,7 +5670,7 @@ simple_ladder(int str, int *move)
 	  savecode = KO_B;
 	}
       }
-      popgo();
+      popgo(internal_state);
     }
   }
   
@@ -5692,11 +5692,11 @@ simple_ladder_defend(int str, int *move)
   SETUP_TRACE_INFO("simple_ladder_defend", str);
   reading_node_counter++;
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
-  ASSERT1(countlib(str) == 1, str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
+  ASSERT1(countlib(internal_state, str) == 1, str);
 
   /* lib will be the liberty of the string. */
-  findlib(str, 1, &lib);
+  findlib(internal_state, str, 1, &lib);
 
   moves.pos[0] = lib;
   moves.score[0] = 0;
@@ -5714,14 +5714,14 @@ simple_ladder_defend(int str, int *move)
     if (komaster_trymove(xpos, color, moves.message[k], str,
 			 &ko_move, savecode == 0)) {
       int acode;
-      int new_libs = countlib(str);
+      int new_libs = countlib(internal_state, str);
       if (new_libs > 2)
 	acode = 0;
       else if (new_libs < 2)
 	acode = WIN;
       else
 	acode = simple_ladder(str, NULL);
-      popgo();
+      popgo(internal_state);
       
       if (!ko_move)
 	CHECK_RESULT(savecode, savemove, acode, xpos, move,

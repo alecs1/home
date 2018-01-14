@@ -44,8 +44,9 @@
 static int limit_search = 0;
 static int search_mask[BOARDMAX];
 
-int do_genmove(int color, float pure_threat_value,
-		      int allowed_moves[BOARDMAX], float *value, int *resign);
+int do_genmove(struct board_lib_state_struct *internal_state,
+               int color, float pure_threat_value,
+              int allowed_moves[BOARDMAX], float *value, int *resign);
 
 /* Position numbers for which various examinations were last made. */
 static int worms_examined = -1;
@@ -55,14 +56,20 @@ static int dragons_examined = -1;
 static int initial_influence2_examined = -1;
 static int dragons_refinedly_examined = -1;
 
-static int revise_semeai(int color);
-static int revise_thrashing_dragon(int color, float our_score,
-    			 	   float advantage);
+static int revise_semeai(struct board_lib_state_struct *internal_state,
+                         int color);
+static int revise_thrashing_dragon(struct board_lib_state_struct *internal_state,
+                                   int color, float our_score,
+                       float advantage);
 
-static void break_mirror_go(int color);
-static int find_mirror_move(int *move, int color);
-static int should_resign(int color, float optimistic_score, int move);
-void compute_scores(int use_chinese_rules);
+static void break_mirror_go(struct board_lib_state_struct *internal_state,
+                            int color);
+static int find_mirror_move(struct board_lib_state_struct *internal_state,
+                            int *move, int color);
+static int should_resign(struct board_lib_state_struct *internal_state,
+                         int color, float optimistic_score, int move);
+void compute_scores(struct board_lib_state_struct *internal_state,
+                    int use_chinese_rules);
 
 
 /* Reset some things in the engine. 
@@ -72,7 +79,7 @@ void compute_scores(int use_chinese_rules);
  */
 
 void
-reset_engine()
+reset_engine(struct board_lib_state_struct *internal_state)
 {
   /* To improve the reproducability of games, we restart the random
    * number generator with the same seed for each move. Thus we don't
@@ -85,7 +92,7 @@ reset_engine()
   /* Initialize things for hashing of positions. */
   reading_cache_clear();
 
-  hashdata_recalc(&board_hash, board, board_ko_pos);
+  hashdata_recalc(&board_hash, internal_state->board, internal_state->board_ko_pos);
 
   worms_examined = -1;
   initial_influence_examined = -1;
@@ -121,7 +128,8 @@ reset_engine()
  */
 
 void
-examine_position(int how_much, int aftermath_play)
+examine_position(struct board_lib_state_struct *internal_state,
+                 int how_much, int aftermath_play)
 {
   int save_verbose = verbose;
 
@@ -141,70 +149,70 @@ examine_position(int how_much, int aftermath_play)
 
   if (how_much == EXAMINE_WORMS) {
     verbose = save_verbose;
-    gg_assert(test_gray_border() < 0);
+    gg_assert(internal_state, test_gray_border(internal_state) < 0);
     return;
   }
 
-  if (stones_on_board(BLACK | WHITE) != 0) {
+  if (stones_on_board(internal_state, BLACK | WHITE) != 0) {
     if (NEEDS_UPDATE(initial_influence_examined))
       compute_worm_influence();
     if (how_much == EXAMINE_INITIAL_INFLUENCE) {
       verbose = save_verbose;
-      gg_assert(test_gray_border() < 0);
+      gg_assert(internal_state, test_gray_border(internal_state) < 0);
       return;
     }
 
     if (how_much == EXAMINE_DRAGONS_WITHOUT_OWL) {
       if (NEEDS_UPDATE(dragons_examined_without_owl))
-	make_dragons(1);
+    make_dragons(internal_state, 1);
       verbose = save_verbose;
-      gg_assert(test_gray_border() < 0);
+      gg_assert(internal_state, test_gray_border(internal_state) < 0);
       return;
     }
     
     if (NEEDS_UPDATE(dragons_examined)) {
-      make_dragons(0);
-      compute_scores(chinese_rules || aftermath_play);
+      make_dragons(internal_state, 0);
+      compute_scores(internal_state, chinese_rules || aftermath_play);
       /* We have automatically done a partial dragon analysis as well. */
       dragons_examined_without_owl = position_number;
     }
     if (how_much == EXAMINE_DRAGONS) {
       verbose = save_verbose;
-      gg_assert(test_gray_border() < 0);
+      gg_assert(internal_state, test_gray_border(internal_state) < 0);
       return;
     }
   }
   else if (how_much == EXAMINE_INITIAL_INFLUENCE
 	   || how_much == EXAMINE_DRAGONS
 	   || how_much == EXAMINE_ALL) {
-    initialize_dragon_data();
-    compute_scores(chinese_rules || aftermath_play);
+    initialize_dragon_data(internal_state);
+    compute_scores(internal_state, chinese_rules || aftermath_play);
     verbose = save_verbose;
-    gg_assert(test_gray_border() < 0);
+    gg_assert(internal_state, test_gray_border(internal_state) < 0);
     return;
   }
   
   verbose = save_verbose;
 
   if (NEEDS_UPDATE(initial_influence2_examined)) {
-    compute_dragon_influence();
+    compute_dragon_influence(internal_state);
   }
   if (how_much == EXAMINE_INITIAL_INFLUENCE2) {
-    gg_assert(test_gray_border() < 0);
+    gg_assert(internal_state, test_gray_border(internal_state) < 0);
     return;
   }
 
   if (NEEDS_UPDATE(dragons_refinedly_examined)) {
-    compute_refined_dragon_weaknesses();
-    compute_strategic_sizes();
+    compute_refined_dragon_weaknesses(internal_state);
+    compute_strategic_sizes(internal_state);
   }
   if (how_much == FULL_EXAMINE_DRAGONS) {
-    gg_assert(test_gray_border() < 0);
+    gg_assert(internal_state, test_gray_border(internal_state) < 0);
     return;
   }
 
   if (printworms)
-    show_dragons();
+    show_dragons(internal_state);
 }
 
 
@@ -212,25 +220,26 @@ examine_position(int how_much, int aftermath_play)
  * output, and sgf traces are turned off.
  */
 void
-silent_examine_position(int how_much)
+silent_examine_position(struct board_lib_state_struct *internal_state,
+                        int how_much)
 {
   int save_verbose = verbose;
-  SGFTree *save_sgf_dumptree = sgf_dumptree;
-  int save_count_variations = count_variations;
+  SGFTree *save_sgf_dumptree = internal_state->sgf_dumptree;
+  int save_count_variations = internal_state->count_variations;
   int save_debug = debug;
   int save_printmoyo = printmoyo;
   
   verbose = 0;
-  sgf_dumptree = NULL;
-  count_variations = 0;
+  internal_state->sgf_dumptree = NULL;
+  internal_state->count_variations = 0;
   debug = 0;
   printmoyo = 0;
   
-  examine_position(how_much, 0);
+  examine_position(internal_state, how_much, 0);
 
   verbose = save_verbose;
-  sgf_dumptree = save_sgf_dumptree;
-  count_variations = save_count_variations;
+  internal_state->sgf_dumptree = save_sgf_dumptree;
+  internal_state->count_variations = save_count_variations;
   debug = save_debug;
   printmoyo = save_printmoyo;
 }
@@ -243,7 +252,8 @@ silent_examine_position(int how_much)
  */
 
 int
-genmove(int color, float *value, int *resign)
+genmove(struct board_lib_state_struct *internal_state,
+        int color, float *value, int *resign)
 {
   int move = PASS_MOVE;
   if (resign)
@@ -252,17 +262,17 @@ genmove(int color, float *value, int *resign)
 #if ORACLE
   if (metamachine) {
     move = metamachine_genmove(color, value, limit_search);
-    gg_assert(stackp == 0);
+    gg_assert(internal_state, internal_state->stackp == 0);
     if (move != PASS_MOVE)
       return move;
   }
 #endif
 
   if (limit_search)
-    move = do_genmove(color, 0.4, search_mask, value, resign);
+    move = do_genmove(internal_state, color, 0.4, search_mask, value, resign);
   else
-    move = do_genmove(color, 0.4, NULL, value, resign);
-  gg_assert(move == PASS_MOVE || ON_BOARD(move));
+    move = do_genmove(internal_state, color, 0.4, NULL, value, resign);
+  gg_assert(internal_state, move == PASS_MOVE || ON_BOARD(internal_state, move));
 
   return move;
 }
@@ -274,35 +284,39 @@ genmove(int color, float *value, int *resign)
  */
 
 int
-genmove_conservative(int color, float *value)
+genmove_conservative(struct board_lib_state_struct *internal_state,
+                     int color, float *value)
 {
-  return do_genmove(color, 0.0, NULL, value, NULL);
+  return do_genmove(internal_state, color, 0.0, NULL, value, NULL);
 }
 
 
 int
-genmove_restricted(int color, int allowed_moves[BOARDMAX])
+genmove_restricted(struct board_lib_state_struct *internal_state,
+                   int color, int allowed_moves[BOARDMAX])
 {
-  return do_genmove(color, 0.0, allowed_moves, NULL, NULL);
+  return do_genmove(internal_state, color, 0.0, allowed_moves, NULL, NULL);
 }
 
 /* This function collects move reasons can be generated immediately from
  * the data gathered in the examine_position() phase.
  */
 void
-collect_move_reasons(int color)
+collect_move_reasons(struct board_lib_state_struct *internal_state,
+                     int color)
 {
   worm_reasons(color);
   semeai_move_reasons(color);
   owl_reasons(color);
-  cut_reasons(color);
-  break_in_move_reasons(color);
+  cut_reasons(internal_state, color);
+  break_in_move_reasons(internal_state, color);
   unconditional_move_reasons(color);
 }
 
 /* Call Monte Carlo module to generate a move. */
 static int
-monte_carlo_genmove(int color, int allowed_moves[BOARDMAX],
+monte_carlo_genmove(struct board_lib_state_struct *internal_state,
+                    int color, int allowed_moves[BOARDMAX],
 		    float *value, int *resign)
 {
   int pos;
@@ -322,8 +336,8 @@ monte_carlo_genmove(int color, int allowed_moves[BOARDMAX],
   memset(move_frequencies, 0, sizeof(move_frequencies));
   
   if (0) {
-    simple_showboard(stderr);
-    gprintf("\n");
+    simple_showboard(internal_state, stderr);
+    gprintf(internal_state, "\n");
   }
 
   if (resign)
@@ -333,7 +347,7 @@ monte_carlo_genmove(int color, int allowed_moves[BOARDMAX],
   unconditional_life(unconditional_territory_white, WHITE);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
     else if (unconditional_territory_black[pos])
       forbidden_move[pos] = BLACK;
@@ -352,7 +366,7 @@ monte_carlo_genmove(int color, int allowed_moves[BOARDMAX],
   frequency_cutoff = move_frequencies[best_uct_move] / 2;
   frequency_cutoff2 = move_frequencies[best_uct_move] / 10;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos)
+    if (ON_BOARD(internal_state, pos)
 	&& (move_frequencies[pos] > frequency_cutoff
 	    || (move_values[pos] > 0.9
 		&& move_frequencies[pos] > frequency_cutoff2)
@@ -382,7 +396,8 @@ monte_carlo_genmove(int color, int allowed_moves[BOARDMAX],
  */
   
 int
-do_genmove(int color, float pure_threat_value,
+do_genmove(struct board_lib_state_struct *internal_state,
+           int color, float pure_threat_value,
 	   int allowed_moves[BOARDMAX], float *value, int *resign)
 {
   float average_score, pessimistic_score, optimistic_score;
@@ -410,7 +425,7 @@ do_genmove(int color, float pure_threat_value,
   *value = 0.0; 
   
   /* Prepare pattern matcher and reading code. */
-  reset_engine();
+  reset_engine(internal_state);
 
   /* Store the depth value so we can check that it hasn't changed when
    * we leave this function.
@@ -420,16 +435,16 @@ do_genmove(int color, float pure_threat_value,
   /* If in mirror mode, try to find a mirror move. */
   if (play_mirror_go
       && (mirror_stones_limit < 0
-	  || stones_on_board(WHITE | BLACK) <= mirror_stones_limit)
-      && find_mirror_move(&move, color)) {
-    TRACE("genmove() recommends mirror move at %1m\n", move);
+      || stones_on_board(internal_state, WHITE | BLACK) <= mirror_stones_limit)
+      && find_mirror_move(internal_state, &move, color)) {
+    TRACE(internal_state, "genmove() recommends mirror move at %1m\n", move);
     *value = 1.0;
     return move;
   }
 
   /* Find out information about the worms and dragons. */
   start_timer(1);
-  examine_position(EXAMINE_ALL, 0);
+  examine_position(internal_state, EXAMINE_ALL, 0);
   time_report(1, "examine position", NO_MOVE, 1.0);
 
 
@@ -468,7 +483,7 @@ do_genmove(int color, float pure_threat_value,
     }
   }
   
-  gg_assert(stackp == 0);
+  gg_assert(internal_state, internal_state->stackp == 0);
   
   /*
    * Ok, information gathering is complete. Now start to find some moves!
@@ -479,16 +494,16 @@ do_genmove(int color, float pure_threat_value,
   save_verbose = verbose;
   if (verbose > 0)
     verbose--;
-  collect_move_reasons(color);
+  collect_move_reasons(internal_state, color);
   verbose = save_verbose;
   time_report(1, "generate move reasons", NO_MOVE, 1.0);
   
   /* Try to find empty corner moves. */
-  fuseki(color);
-  gg_assert(stackp == 0);
+  fuseki(internal_state, color);
+  gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Look for moves to break mirror play by the opponent. */
-  break_mirror_go(color);
+  break_mirror_go(internal_state, color);
 
   /* If we are ahead by 5 points or more, consider a thrashing
    * dragon dangerous and change its status from DEAD to
@@ -496,37 +511,37 @@ do_genmove(int color, float pure_threat_value,
    */
   if (!doing_scoring)
     use_thrashing_dragon_heuristics
-      = revise_thrashing_dragon(color, pessimistic_score, 5.0);
+      = revise_thrashing_dragon(internal_state, color, pessimistic_score, 5.0);
   
   /* The general pattern database. */
   shapes(color);
   time_report(1, "shapes", NO_MOVE, 1.0);
-  gg_assert(stackp == 0);
+  gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Look for combination attacks and defenses against them. */
-  combinations(color);
+  combinations(internal_state, color);
   time_report(1, "combinations", NO_MOVE, 1.0);
-  gg_assert(stackp == 0);
+  gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Review the move reasons and estimate move values. */
   if (review_move_reasons(&move, value, color, 
 			  pure_threat_value, pessimistic_score, allowed_moves,
 			  use_thrashing_dragon_heuristics))
-    TRACE("Move generation likes %1m with value %f\n", move, *value);
-  gg_assert(stackp == 0);
+    TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
+  gg_assert(internal_state, internal_state->stackp == 0);
   time_report(1, "review move reasons", NO_MOVE, 1.0);
 
 
   /* If the move value is 6 or lower, we look for endgame patterns too. */
   if (*value <= 6.0 && !disable_endgame_patterns) {
     endgame_shapes(color);
-    endgame(color);
-    gg_assert(stackp == 0);
+    endgame(internal_state, color);
+    gg_assert(internal_state, internal_state->stackp == 0);
     if (review_move_reasons(&move, value, color, pure_threat_value,
 	  		    pessimistic_score, allowed_moves,
 			    use_thrashing_dragon_heuristics))
-      TRACE("Move generation likes %1m with value %f\n", move, *value);
-    gg_assert(stackp == 0);
+      TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
+    gg_assert(internal_state, internal_state->stackp == 0);
     time_report(1, "endgame", NO_MOVE, 1.0);
   }
   
@@ -535,13 +550,13 @@ do_genmove(int color, float pure_threat_value,
    * run shapes and endgame_shapes again. This may turn up a move.
    */
   if (move == PASS_MOVE) {
-    if (revise_semeai(color)) {
+    if (revise_semeai(internal_state, color)) {
       shapes(color);
       endgame_shapes(color);
       if (review_move_reasons(&move, value, color, pure_threat_value,
 			      pessimistic_score, allowed_moves,
 			      use_thrashing_dragon_heuristics)) {
-	TRACE("Upon reconsideration move generation likes %1m with value %f\n",
+	TRACE(internal_state, "Upon reconsideration move generation likes %1m with value %f\n",
 	      move, *value); 
       }
     }
@@ -561,9 +576,9 @@ do_genmove(int color, float pure_threat_value,
     int num_allowed_moves2 = 0;
     int pos;
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-      if (ON_BOARD(pos)
+      if (ON_BOARD(internal_state, pos)
 	  && (!allowed_moves || allowed_moves[pos])
-	  && is_allowed_move(pos, color)) {
+      && is_allowed_move(internal_state, pos, color)) {
 	allowed_moves2[pos] = 1;
 	num_allowed_moves2++;
       }
@@ -571,17 +586,17 @@ do_genmove(int color, float pure_threat_value,
 	allowed_moves2[pos] = 0;
     
     if (num_allowed_moves2 > 1)
-      move = monte_carlo_genmove(color, allowed_moves2, value, resign);
+      move = monte_carlo_genmove(internal_state, color, allowed_moves2, value, resign);
   }
   
   /* If still no move, fill a remaining liberty. This should pick up
    * all missing dame points.
    */
   if (move == PASS_MOVE
-      && fill_liberty(&move, color)) {
+      && fill_liberty(internal_state, &move, color)) {
     if (!allowed_moves || allowed_moves[move]) {
       *value = 1.0;
-      TRACE("Filling a liberty at %1m\n", move);
+      TRACE(internal_state, "Filling a liberty at %1m\n", move);
       record_top_move(move, *value);
       move_considered(move, *value);
       time_report(1, "fill liberty", NO_MOVE, 1.0);
@@ -598,12 +613,12 @@ do_genmove(int color, float pure_threat_value,
     if (play_out_aftermath 
 	|| capture_all_dead 
 	|| (!doing_scoring && thrashing_dragon && pessimistic_score > 15.0))
-      move = aftermath_genmove(color, capture_all_dead, allowed_moves);
+      move = aftermath_genmove(internal_state, color, capture_all_dead, allowed_moves);
 
     if (move != PASS_MOVE) {
-      ASSERT1(is_legal(move, color), move);
+      ASSERT1(internal_state, is_legal(internal_state, move, color), move);
       *value = 1.0;
-      TRACE("Aftermath move at %1m\n", move);
+      TRACE(internal_state, "Aftermath move at %1m\n", move);
       record_top_move(move, *value);
       move_considered(move, *value);
       time_report(1, "aftermath_genmove", NO_MOVE, 1.0);
@@ -611,25 +626,25 @@ do_genmove(int color, float pure_threat_value,
   }
 
   /* If we somehow have managed to generate an illegal move, pass instead. */
-  if (!is_allowed_move(move, color)) {
-    TRACE("ILLEGAL MOVE GENERATED. Passing instead.\n");
+  if (!is_allowed_move(internal_state, move, color)) {
+    TRACE(internal_state, "ILLEGAL MOVE GENERATED. Passing instead.\n");
     move = PASS_MOVE;
     *value = -1.0;
   }
   
   /* If no move is found then pass. */
   if (move == PASS_MOVE) {
-    TRACE("I pass.\n");
+    TRACE(internal_state, "I pass.\n");
   }
   else {
-    TRACE("genmove() recommends %1m with value %f\n", move, *value);
+    TRACE(internal_state, "genmove() recommends %1m with value %f\n", move, *value);
   }
   
   /* Maybe time to resign...
    */
   if (resign && resign_allowed
-      && *value < 10.0 && should_resign(color, optimistic_score, move)) {
-    TRACE("... though, genmove() thinks the position is hopeless\n");
+      && *value < 10.0 && should_resign(internal_state, color, optimistic_score, move)) {
+    TRACE(internal_state, "... though, genmove() thinks the position is hopeless\n");
     *resign = 1;
   }
   
@@ -643,16 +658,16 @@ do_genmove(int color, float pure_threat_value,
     if (spent > slowest_time) {
       slowest_time = spent;
       slowest_move = move;
-      slowest_movenum = movenum + 1;
+      slowest_movenum = internal_state->movenum + 1;
     }
   }
 
   /* Some consistency checks to verify that things are properly
    * restored and/or have not been corrupted.
    */
-  gg_assert(stackp == 0);
-  gg_assert(test_gray_border() < 0);
-  gg_assert(depth == save_depth);
+  gg_assert(internal_state, internal_state->stackp == 0);
+  gg_assert(internal_state, test_gray_border(internal_state) < 0);
+  gg_assert(internal_state, depth == save_depth);
 
   return move;
 }
@@ -672,35 +687,36 @@ move_considered(int move, float value)
 }
 
 
-/* revise_semeai(color) changes the status of any DEAD dragon of
+/* revise_semeai(internal_state, color) changes the status of any DEAD dragon of
  * OPPOSITE_COLOR(color) which occurs in a semeai to UNKNOWN.
  * It returns true if such a dragon is found.
  */
 
 static int
-revise_semeai(int color)
+revise_semeai(struct board_lib_state_struct *internal_state,
+              int color)
 {
   int pos;
   int found_one = 0;
   int other = OTHER_COLOR(color);
 
-  if (stones_on_board(BLACK | WHITE) == 0)
+  if (stones_on_board(internal_state, BLACK | WHITE) == 0)
     return 0;
 
   if (doing_scoring)
     return 0;
   
-  gg_assert(dragon2 != NULL);
+  gg_assert(internal_state, dragon2 != NULL);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos)
+    if (ON_BOARD(internal_state, pos)
 	&& dragon[pos].color == other
 	&& DRAGON2(pos).semeais
 	&& dragon[pos].status == DEAD) {
       found_one = 1;
       dragon[pos].status = UNKNOWN;
       if (dragon[pos].origin == pos)
-	TRACE("revise_semeai: changed status of dragon %1m from DEAD to UNKNOWN\n",
+	TRACE(internal_state, "revise_semeai: changed status of dragon %1m from DEAD to UNKNOWN\n",
 	      pos);
     }
   }
@@ -716,7 +732,8 @@ revise_semeai(int color)
  */
 
 static int
-revise_thrashing_dragon(int color, float our_score, float advantage)
+revise_thrashing_dragon(struct board_lib_state_struct *internal_state,
+                        int color, float our_score, float advantage)
 {
   int pos;
   signed char safe_stones[BOARDMAX];
@@ -732,17 +749,17 @@ revise_thrashing_dragon(int color, float our_score, float advantage)
     return 0;
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos) && thrashing_stone[pos]
+    if (ON_BOARD(internal_state, pos) && thrashing_stone[pos]
 	&& worm[pos].unconditional_status != DEAD) {
       dragon[pos].status = UNKNOWN;
       DRAGON2(pos).safety = ALIVE;
     }
 
-  set_strength_data(OTHER_COLOR(color), safe_stones, strength);
+  set_strength_data(internal_state, OTHER_COLOR(color), safe_stones, strength);
   compute_influence(OTHER_COLOR(color), safe_stones, strength,
       		    OPPOSITE_INFLUENCE(color),
 		    NO_MOVE, "revised thrashing dragon");
-  compute_refined_dragon_weaknesses();
+  compute_refined_dragon_weaknesses(internal_state);
   
   return 1;
 }
@@ -757,12 +774,13 @@ revise_thrashing_dragon(int color, float our_score, float advantage)
  */
 
 static int
-find_mirror_move(int *move, int color)
+find_mirror_move(struct board_lib_state_struct *internal_state,
+                 int *move, int color)
 {
-  int last_move = get_last_move();
+  int last_move = get_last_move(internal_state);
   int mirror_move;
   if (last_move != NO_MOVE) {
-    mirror_move = MIRROR_MOVE(last_move);
+    mirror_move = MIRROR_MOVE(internal_state, last_move);
     if (test_symmetry_after_move(mirror_move, color, 0)) {
       *move = mirror_move;
       return 1;
@@ -770,7 +788,7 @@ find_mirror_move(int *move, int color)
   }
   else {
     for (mirror_move = BOARDMIN; mirror_move < BOARDMAX; mirror_move++) {
-      if (ON_BOARD(mirror_move)
+      if (ON_BOARD(internal_state, mirror_move)
 	  && test_symmetry_after_move(mirror_move, color, 0)) {
 	*move = mirror_move;
 	return 1;
@@ -786,26 +804,27 @@ find_mirror_move(int *move, int color)
  * black.
  */
 void
-compute_scores(int use_chinese_rules)
+compute_scores(struct board_lib_state_struct *internal_state,
+               int use_chinese_rules)
 {
   signed char safe_stones[BOARDMAX];
   float strength[BOARDMAX];
 
-  set_strength_data(WHITE, safe_stones, strength);
+  set_strength_data(internal_state, WHITE, safe_stones, strength);
   compute_influence(EMPTY, safe_stones, strength, &move_influence,
       		    NO_MOVE, "White territory estimate");
   white_score = influence_score(&move_influence, use_chinese_rules);
-  set_strength_data(BLACK, safe_stones, strength);
+  set_strength_data(internal_state, BLACK, safe_stones, strength);
   compute_influence(EMPTY, safe_stones, strength, &move_influence,
       		    NO_MOVE, "White territory estimate");
   black_score = influence_score(&move_influence, use_chinese_rules);
 
   if (verbose || showscore) {
     if (white_score == black_score)
-      gprintf("Score estimate: %s %f\n",
+      gprintf(internal_state, "Score estimate: %s %f\n",
 	      black_score > 0 ? "W " : "B ", gg_abs(black_score));
     else
-      gprintf("Score estimate: %s %f to %s %f\n",
+      gprintf(internal_state, "Score estimate: %s %f to %s %f\n",
 	      black_score > 0 ? "W " : "B ", gg_abs(black_score),
 	      white_score > 0 ? "W " : "B ", gg_abs(white_score));
     fflush(stderr);
@@ -820,15 +839,16 @@ compute_scores(int use_chinese_rules)
  * in patterns.db.
  */
 static void
-break_mirror_go(int color)
+break_mirror_go(struct board_lib_state_struct *internal_state,
+                int color)
 {
-  int tengen = POS((board_size - 1) / 2, (board_size - 1) / 2);
-  if (board[tengen] == EMPTY
+  int tengen = POS((internal_state->board_size - 1) / 2, (internal_state->board_size - 1) / 2);
+  if (internal_state->board[tengen] == EMPTY
       && color == BLACK
-      && stones_on_board(BLACK | WHITE) > 10
+      && stones_on_board(internal_state, BLACK | WHITE) > 10
       && test_symmetry_after_move(tengen, color, 1)) {
     set_minimum_move_value(tengen, 30.0);
-    TRACE("Play %1m to break mirror go, value 30.\n", tengen);
+    TRACE(internal_state, "Play %1m to break mirror go, value 30.\n", tengen);
   }
 }
 
@@ -836,7 +856,8 @@ break_mirror_go(int color)
 /* Helper to decide whether GG should resign a game
  */
 static int
-should_resign(int color, float optimistic_score, int move)
+should_resign(struct board_lib_state_struct *internal_state,
+              int color, float optimistic_score, int move)
 {
   float status;
   int d;
@@ -848,11 +869,11 @@ should_resign(int color, float optimistic_score, int move)
    * it looks like all our dragons are dead and the generated move
    * is a pass.
    */
-  if (board_size > 2 && move == PASS_MOVE && !lively_dragon_exists(color))
+  if (internal_state->board_size > 2 && move == PASS_MOVE && !lively_dragon_exists(color))
     return 1;
   
   if (move == PASS_MOVE
-      || board_size < 19
+      || internal_state->board_size < 19
       || optimistic_score > -45.0)
     return 0;
   /* Check dragon statuses. If a friendly dragon is critical, we are
@@ -862,14 +883,14 @@ should_resign(int color, float optimistic_score, int move)
    */
   for (d = 0; d < number_of_dragons; d++) {
     /* any friendly critical dragon ? */
-    if (board[dragon2[d].origin] == color
+    if (internal_state->board[dragon2[d].origin] == color
 	&& DRAGON(d).status == CRITICAL)
       return 0;
     /* any weak opponent dragon ? */
-    if (board[dragon2[d].origin] == OTHER_COLOR(color)
+    if (internal_state->board[dragon2[d].origin] == OTHER_COLOR(color)
 	&& DRAGON(d).status != DEAD
 	&& DRAGON(d).effective_size >= 10
-	&& dragon_weak(dragon2[d].origin))
+    && dragon_weak(internal_state, dragon2[d].origin))
       return 0;
   }
   /* Is it already too late to try something ? */
@@ -900,14 +921,15 @@ set_limit_search(int value)
 /* The following function marks a diamond of radius 6 with center pos.  */
 
 void
-set_search_diamond(int pos)
+set_search_diamond(struct board_lib_state_struct *internal_state,
+                   int pos)
 {
   int i = I(pos);
   int j = J(pos);
   int m, n;
   
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       if (gg_abs(m - i) + gg_abs(n - j) <= 6)
 	search_mask[POS(m, n)] = 1;
       else
@@ -915,7 +937,7 @@ set_search_diamond(int pos)
     }
   limit_search = pos;
   if (0)
-    draw_search_area();
+    draw_search_area(internal_state);
 }
 
 /* unmarks the entire board */
@@ -937,13 +959,13 @@ set_search_mask(int pos, int value)
 /* displays the search area */
 
 void
-draw_search_area(void)
+draw_search_area(struct board_lib_state_struct *internal_state)
 {
   int m, n;
 
   start_draw_board();
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       int col, c;
 	
       if (search_mask[POS(m, n)])
@@ -951,9 +973,9 @@ draw_search_area(void)
       else
 	col = GG_COLOR_BLACK;
       
-      if (board[POS(m, n)] == BLACK)
+      if (internal_state->board[POS(m, n)] == BLACK)
 	c = 'X';
-      else if (board[POS(m, n)] == WHITE)
+      else if (internal_state->board[POS(m, n)] == WHITE)
 	c = 'O';
       else if (search_mask[POS(m, n)])
 	c = '*';

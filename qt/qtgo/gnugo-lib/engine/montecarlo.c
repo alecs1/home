@@ -155,7 +155,7 @@ struct mc_board {
     }					\
   } while (0)
 
-#define MC_ON_BOARD(pos) (mc->board[pos] != GRAY)
+#define MC_ON_BOARD(internal_state, pos) (mc->board[pos] != GRAY)
 
 /* Add a liberty edge for a string at pos with liberty at lib and
  * direction dir.
@@ -268,7 +268,7 @@ mc_queue_max_two_liberties(struct mc_board *mc, int str)
   int liberty_edge = mc->next_liberty_edge[first_liberty_edge];
   int second_liberty;
 #if !TURN_OFF_ASSERTIONS
-  ASSERT1(internal_state, IS_STONE(mc->board[str]), str);
+  ASSERT1(internal_state, internal_state, IS_STONE(mc->board[str]), str);
 #endif
   if (first_liberty == NO_MOVE)
     return;
@@ -357,25 +357,25 @@ mc_init_board_from_global_board(struct mc_board *mc)
 		    | (mc->board[WEST(pos)] << 2)
 		    | mc->board[SOUTH(pos)]);
     mc->local_context[pos] = geometry;
-    if (board[pos] == EMPTY) {
+    if (internal_state->board[pos] == EMPTY) {
       int s;
       int captured_black_stones = 0;
       int captured_white_stones = 0;
-      if (is_self_atari(pos, WHITE))
+      if (is_self_atari(internal_state, pos, WHITE))
 	mc->local_context[pos] |= 1 << 20;
-      if (is_self_atari(pos, BLACK))
+      if (is_self_atari(internal_state, pos, BLACK))
 	mc->local_context[pos] |= 1 << 21;
-      if (is_suicide(pos, WHITE))
+      if (is_suicide(internal_state, pos, WHITE))
 	mc->local_context[pos] |= 1 << 22;
-      if (is_suicide(pos, BLACK))
+      if (is_suicide(internal_state, pos, BLACK))
 	mc->local_context[pos] |= 1 << 23;
       for (s = 0; s < 4; s++) {
-	if (board[pos + delta[s]] == BLACK
-	    && countlib(pos + delta[s]) == 1)
-	  captured_black_stones += countstones(pos + delta[s]);
-	else if (board[pos + delta[s]] == WHITE
-		 && countlib(pos + delta[s]) == 1)
-	  captured_white_stones += countstones(pos + delta[s]);
+	if (internal_state->board[pos + delta[s]] == BLACK
+	    && countlib(internal_state, pos + delta[s]) == 1)
+	  captured_black_stones += countstones(internal_state, pos + delta[s]);
+	else if (internal_state->board[pos + delta[s]] == WHITE
+		 && countlib(internal_state, pos + delta[s]) == 1)
+	  captured_white_stones += countstones(internal_state, pos + delta[s]);
       }
       if (captured_black_stones > 3)
 	captured_black_stones = 3;
@@ -385,14 +385,14 @@ mc_init_board_from_global_board(struct mc_board *mc)
       mc->local_context[pos] |= captured_white_stones << 18;
     }
     
-    if (IS_STONE(board[pos]) && mc->next_stone[pos] == 0) {
-      num_stones = findstones(pos, BOARDMAX, stones);
+    if (IS_STONE(internal_state->board[pos]) && mc->next_stone[pos] == 0) {
+      num_stones = findstones(internal_state, pos, BOARDMAX, stones);
       mc->first_liberty_edge[pos] = 0;
       for (r = 0; r < num_stones; r++) {
 	mc->next_stone[stones[r]] = stones[(r + 1) % num_stones];
 	mc->reference_stone[stones[r]] = pos;
 	for (k = 0; k < 4; k++) {
-	  if (board[stones[r] + delta[k]] == EMPTY)
+	  if (internal_state->board[stones[r] + delta[k]] == EMPTY)
 	    mc_add_liberty_edge(mc, stones[r], stones[r] + delta[k],
 				(k + 2) % 4);
 	}
@@ -411,10 +411,10 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 
   ASSERT1(board_ko_pos == mc->board_ko_pos, mc->board_ko_pos);
   for (pos = 0; pos < BOARDSIZE; pos++) {
-    ASSERT1(board[pos] == mc->board[pos], pos);
-    if (IS_STONE(board[pos])) {
+    ASSERT1(internal_state, internal_state->board[pos] == mc->board[pos], pos);
+    if (IS_STONE(internal_state->board[pos])) {
       ASSERT1(same_string(pos, mc->reference_stone[pos]), pos);
-      if (find_origin(pos) == pos) {
+      if (find_origin(internal_state, pos) == pos) {
 	int reference = mc->reference_stone[pos];
 	int pos2 = pos;
 	int num_stones = 0;
@@ -427,16 +427,16 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	
 	do {
 	  ASSERT1(mc->reference_stone[pos2] == reference, pos2);
-	  ASSERT1(num_stones < countstones(pos), pos);
+	  ASSERT1(num_stones < countstones(internal_state, pos), pos);
 	  num_stones++;
 	  for (k = 0; k < 4; k++)
-	    if (board[pos2 + delta[k]] == EMPTY) {
+	    if (internal_state->board[pos2 + delta[k]] == EMPTY) {
 	      ml[(pos2 + delta[k]) << 2 | (k + 2) % 4] = 1;
 	      num_liberty_edges++;
 	    }
 	  pos2 = mc->next_stone[pos2];
 	} while (pos2 != pos);
-	ASSERT1(num_stones == countstones(pos), pos);
+	ASSERT1(num_stones == countstones(internal_state, pos), pos);
 
 	first_liberty_edge = mc->first_liberty_edge[reference];
 	liberty_edge = first_liberty_edge;
@@ -467,10 +467,10 @@ mc_showboard(struct mc_board *mc, FILE *outfile)
 
   draw_letter_coordinates(outfile);
   
-  for (i = 0; i < board_size; i++) {
-    fprintf(outfile, "\n%2d", board_size - i);
+  for (i = 0; i < internal_state->board_size; i++) {
+    fprintf(outfile, "\n%2d", internal_state->board_size - i);
     
-    for (j = 0; j < board_size; j++) {
+    for (j = 0; j < internal_state->board_size; j++) {
       if (mc->board[POS(i, j)] == EMPTY)
 	fprintf(outfile, " %c", is_hoshi_point(i, j) ? '+' : '.');
       else
@@ -539,7 +539,7 @@ mc_is_in_atari(struct mc_board *mc, int str, int *lib)
   int liberty = first_liberty_edge >> 2;
   int liberty_edge = mc->next_liberty_edge[first_liberty_edge];
 #if !TURN_OFF_ASSERTIONS
-  ASSERT1(internal_state, IS_STONE(mc->board[str]), str);
+  ASSERT1(internal_state, internal_state, IS_STONE(mc->board[str]), str);
 #endif
   if (lib)
     *lib = liberty;
@@ -787,7 +787,7 @@ mc_update_local_context(struct mc_board *mc, int pos)
     black_captured_stones = mc_stones_in_atari(mc, pos, WHITE, 3);
 
   mc->local_context[pos] &= 0xffff;
-  mc->local_context[pos] |= black_captured_stones << 16;
+  mc->local_context[pos] |= internal_state->black_captured_stones << 16;
   mc->local_context[pos] |= white_captured_stones << 18;
   mc->local_context[pos] |= white_self_atari << 20;
   mc->local_context[pos] |= black_self_atari << 21;
@@ -1270,7 +1270,7 @@ mc_load_patterns_from_db(const char *filename, unsigned int *values)
   
   pattern_file = fopen(filename, "r");
   if (!pattern_file) {
-    gprintf("Failed to open %s file.\n", filename);
+    gprintf(internal_state, "Failed to open %s file.\n", filename);
     return 0;
   }
 
@@ -1564,11 +1564,11 @@ mc_generate_random_move(struct mc_game *game)
       fprintf(stderr, "Reached 600 iterations.\n");
       mc_showboard(mc, stderr);
       for (k = 0; k < game->depth; k++)
-	gprintf("%1m ", game->move_history[k]);
-      gprintf("\n");
+	gprintf(internal_state, "%1m ", game->move_history[k]);
+      gprintf(internal_state, "\n");
       for (pos = BOARDMIN; pos < BOARDMAX; pos++)
 	if (mc->board[pos] == EMPTY) {
-	  gprintf("%1m ", pos);
+	  gprintf(internal_state, "%1m ", pos);
 	  fprintf(stderr, "white %7d black %7d white near %7d black near %7d\n",
 		  (int) mc->move_values_white[pos],
 		  (int) mc->move_values_black[pos],
@@ -1652,7 +1652,7 @@ mc_generate_random_move(struct mc_game *game)
 #if !TURN_OFF_ASSERTIONS
     ASSERT1(move == PASS_MOVE || move_values[move] > 0, move);
     ASSERT1(move == PASS_MOVE || mc->board[move] == EMPTY, move);
-    ASSERT1(mc_is_legal(mc, move, color), move);
+    ASSERT1(mc_is_legal(internal_state, mc, move, color), move);
 #endif
   }
 
@@ -1725,7 +1725,7 @@ static int mc_play_random_game(struct mc_game *game)
   }
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (MC_ON_BOARD(pos)) {
+    if (MC_ON_BOARD(internal_state, pos)) {
       if (game->settled[pos] == WHITE)
 	score++;
       else if (game->settled[pos] == BLACK)
@@ -1846,7 +1846,7 @@ uct_find_node(struct uct_tree *tree, struct uct_node *parent, int move)
   /* Add the node as the first of the siblings. */
   if (parent) {
     struct uct_arc *arc = &tree->arcs[tree->num_used_arcs++];
-    gg_assert(tree->num_used_arcs < tree->num_arcs);
+    gg_assert(internal_state, tree->num_used_arcs < tree->num_arcs);
     arc->move = move;
     arc->node = node;
     if (parent->child)
@@ -1890,7 +1890,7 @@ uct_init_move_ordering(struct uct_tree *tree)
   /* FIXME: Exclude forbidden moves. */
   memset(tree->move_score, 0, sizeof(tree->move_score));
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos)) {
+    if (ON_BOARD(internal_state, pos)) {
       tree->move_ordering[k] = pos;
       tree->inverse_move_ordering[pos] = k;
       k++;
@@ -1900,7 +1900,7 @@ uct_init_move_ordering(struct uct_tree *tree)
 
   /* FIXME: Quick and dirty experiment. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos)) {
+    if (ON_BOARD(internal_state, pos)) {
       tree->move_score[pos] = (int) (10 * potential_moves[pos]) - 1;
       uct_update_move_ordering(tree, pos);
     }
@@ -1978,7 +1978,7 @@ uct_play_move(struct uct_tree *tree, struct uct_node *node, float alpha,
 	  int diagonal_value = 0;
 	  for (r = 4; r < 8; r++) {
 	    int pos2 = pos + delta[r];
-	    if (!MC_ON_BOARD(pos2))
+	    if (!MC_ON_BOARD(internal_state, pos2))
 	      diagonal_value++;
 	    else if (mc->board[pos2] == OTHER_COLOR(tree->game.color_to_move))
 	      diagonal_value += 2;
@@ -2101,7 +2101,7 @@ uct_dump_tree(struct uct_tree *tree, const char *filename, int color,
 {
   SGFTree sgf_tree;
   sgftree_clear(&sgf_tree);
-  sgftreeCreateHeaderNode(&sgf_tree, board_size, komi, 0);
+  sgftreeCreateHeaderNode(&sgf_tree, internal_state->board_size, komi, 0);
   sgffile_printboard(&sgf_tree);
 
   uct_dump_tree_recursive(&tree->nodes[0], &sgf_tree, color, cutoff, 0);
@@ -2131,7 +2131,7 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
   /* FIXME: Fill in correct information. */
   starting_position.consecutive_passes = 0;
   starting_position.consecutive_ko_captures = 0;
-  starting_position.last_move = get_last_move();
+  starting_position.last_move = get_last_move(internal_state);
   starting_position.depth = 0;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
     starting_position.settled[pos] = forbidden_moves[pos];
@@ -2139,16 +2139,16 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
   tree.game = starting_position;
   /* FIXME: Don't reallocate between moves. */
   tree.nodes = malloc(nodes * sizeof(*tree.nodes));
-  gg_assert(tree.nodes);
+  gg_assert(internal_state, tree.nodes);
   tree.arcs = malloc(nodes * sizeof(*tree.arcs));
-  gg_assert(tree.arcs);
+  gg_assert(internal_state, tree.arcs);
   tree.hashtable_size = nodes;
   tree.hashtable_odd = calloc(tree.hashtable_size,
 			      sizeof(*tree.hashtable_odd));
   tree.hashtable_even = calloc(tree.hashtable_size,
 			       sizeof(*tree.hashtable_even));
-  gg_assert(tree.hashtable_odd);
-  gg_assert(tree.hashtable_even);
+  gg_assert(internal_state, tree.hashtable_odd);
+  gg_assert(internal_state, tree.hashtable_even);
   tree.num_nodes = nodes;
   tree.num_arcs = nodes;
   tree.num_used_nodes = 0;
@@ -2210,7 +2210,7 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
       
       mean = most_games_node->sum_scores / most_games_node->games;
       std = sqrt((most_games_node->sum_scores2 - most_games_node->sum_scores * mean) / (most_games_node->games - 1));
-      gprintf("%1m ", most_games_arc->move);
+      gprintf(internal_state, "%1m ", most_games_arc->move);
       fprintf(stderr, "%6d %6d %5.3f %5.3f %5.3f %5.3f\n",
 	      most_games_node->wins, most_games_node->games,
 	      (float) most_games_node->wins / most_games_node->games,
@@ -2225,25 +2225,25 @@ uct_genmove(int color, int *move, int *forbidden_moves, int *allowed_moves,
       struct uct_arc *arcs[7];
       int depth = 0;
       n = uct_find_best_children(&tree.nodes[0], arcs, 7);
-      gprintf("Principal variation:\n");
+      gprintf(internal_state, "Principal variation:\n");
       while (n > 0 && depth < 80) {
 	int k;
-	gprintf("%C ", color);
+	gprintf(internal_state, "%C ", color);
 	for (k = 0; k < n; k++) {
 	  node = arcs[k]->node;
-	  gprintf("%1m ", arcs[k]->move);
+	  gprintf(internal_state, "%1m ", arcs[k]->move);
 	  fprintf(stderr, "%5.3f", (float) node->wins / node->games);
 	  if (k == 0)
-	    gprintf(" (%d games)", node->games);
+	    gprintf(internal_state, " (%d games)", node->games);
 	  if (k < n - 1)
-	    gprintf(", ");
+	    gprintf(internal_state, ", ");
 	}
-	gprintf("\n");
+	gprintf(internal_state, "\n");
 	color = OTHER_COLOR(color);
 	n = uct_find_best_children(arcs[0]->node, arcs, 7);
 	depth++;
       }
-      gprintf("\n");
+      gprintf(internal_state, "\n");
     }
   }
   

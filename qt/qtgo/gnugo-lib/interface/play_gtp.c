@@ -338,7 +338,7 @@ play_gtp(FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
   setbuf(gtp_output, NULL);
 
   /* Inform the GTP utility functions about the board size. */
-  gtp_internal_set_boardsize(board_size);
+  gtp_internal_set_boardsize(internal_state->board_size);
   gtp_orientation = gtp_initial_orientation;
   gtp_set_vertex_transform_hooks(rotate_on_input, rotate_on_output);
 
@@ -346,7 +346,7 @@ play_gtp(FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
   init_timers();
   
   /* Prepare pattern matcher and reading code. */
-  reset_engine();
+  reset_engine(internal_state);
   clearstats();
   gtp_main_loop(commands, gtp_input, gtp_output, gtp_dump_commands);
   if (showstatistics)
@@ -454,13 +454,13 @@ gtp_set_boardsize(char *s)
   /* If this is called with a non-empty board, we assume that a new
    * game will be started, for which we want a new random seed.
    */
-  if (stones_on_board(BLACK | WHITE) > 0)
+  if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     update_random_seed();
 
   board_size = boardsize;
   clear_board();
   gtp_internal_set_boardsize(boardsize);
-  reset_engine();
+  reset_engine(internal_state);
   return gtp_success("");
 }
 
@@ -474,7 +474,7 @@ gtp_query_boardsize(char *s)
 {
   UNUSED(s);
 
-  return gtp_success("%d", board_size);
+  return gtp_success("%d", internal_state->board_size);
 }
 
 /***********************
@@ -496,7 +496,7 @@ gtp_clear_board(char *s)
   /* If this is called with a non-empty board, we assume that a new
    * game will be started, for which we want a new random seed.
    */
-  if (stones_on_board(BLACK | WHITE) > 0)
+  if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     update_random_seed();
 
   clear_board();
@@ -687,7 +687,7 @@ gtp_fixed_handicap(char *s)
 
   if (gtp_version == 1)
     clear_board();
-  else if (stones_on_board(BLACK | WHITE) > 0)
+  else if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     return gtp_failure("board not empty");
 
   if (sscanf(s, "%d", &this_handicap) < 1)
@@ -705,8 +705,8 @@ gtp_fixed_handicap(char *s)
 
   gtp_start_response(GTP_SUCCESS);
 
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++)
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++)
       if (BOARD(m, n) != EMPTY) {
 	if (!first)
 	  gtp_printf(" ");
@@ -735,7 +735,7 @@ gtp_place_free_handicap(char *s)
   if (sscanf(s, "%d", &this_handicap) < 1)
     return gtp_failure("handicap not an integer");
   
-  if (stones_on_board(BLACK | WHITE) > 0)
+  if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     return gtp_failure("board not empty");
 
   if (this_handicap < 2)
@@ -745,8 +745,8 @@ gtp_place_free_handicap(char *s)
 
   gtp_start_response(GTP_SUCCESS);
 
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++)
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++)
       if (BOARD(m, n) != EMPTY) {
 	if (!first)
 	  gtp_printf(" ");
@@ -773,17 +773,17 @@ gtp_set_free_handicap(char *s)
   int i, j;
   int k;
   
-  if (stones_on_board(BLACK | WHITE) > 0)
+  if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     return gtp_failure("board not empty");
 
   for (k = 0; k < MAX_BOARD * MAX_BOARD; k++) {
     n = gtp_decode_coord(s, &i, &j);
     if (n > 0) {
-      if (board[POS(i, j)] != EMPTY) {
+      if (internal_state->board[POS(i, j)] != EMPTY) {
 	clear_board();
 	return gtp_failure("repeated vertex");
       }
-      add_stone(POS(i, j), BLACK);
+      add_stone(internal_state, POS(i, j), BLACK);
       s += n;
     }
     else if (sscanf(s, "%*s") != EOF)
@@ -852,8 +852,8 @@ gtp_loadsgf(char *s)
   if (color_to_move == EMPTY)
     return gtp_failure("cannot load '%s'", filename);
   
-  gtp_internal_set_boardsize(board_size);
-  reset_engine();
+  gtp_internal_set_boardsize(internal_state->board_size);
+  reset_engine(internal_state);
   init_timers();
 
   sgfFreeNode(sgftree.root);
@@ -901,8 +901,8 @@ gtp_list_stones(char *s)
   if (!gtp_decode_color(s, &color))
     return gtp_failure("invalid color");
 
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++)
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++)
       if (BOARD(i, j) == color) {
 	vertexi[vertices] = i;
 	vertexj[vertices++] = j;
@@ -1052,8 +1052,8 @@ gtp_all_legal(char *s)
   if (!gtp_decode_color(s, &color))
     return gtp_failure("invalid color");
 
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++)
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++)
       if (BOARD(i, j) == EMPTY && is_allowed_move(POS(i, j), color)) {
 	movei[moves] = i;
 	movej[moves++] = j;
@@ -1171,11 +1171,11 @@ gtp_invariant_hash_for_moves(char *s)
   gtp_start_response(GTP_SUCCESS);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == EMPTY
-	&& trymove(pos, color, "gtp_invariant_hash_for_moves", NO_MOVE)) {
+    if (internal_state->board[pos] == EMPTY
+    && trymove(internal_state, pos, color, "gtp_invariant_hash_for_moves", NO_MOVE)) {
       hashdata_calc_orientation_invariant(&hash, board, board_ko_pos);
       gtp_mprintf("%m %s\n", I(pos), J(pos), hashdata_to_string(&hash));
-      popgo();
+      popgo(internal_state);
       move_found = 1;
     }
   }
@@ -1243,10 +1243,10 @@ gtp_popgo(char *s)
 {
   UNUSED(s);
 
-  if (stackp == 0)
+  if (internal_state->stackp == 0)
     return gtp_failure("Stack empty.");
 
-  popgo();
+  popgo(internal_state);
   return gtp_success("");
 }
 
@@ -1528,7 +1528,7 @@ gtp_owl_attack(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   attack_code = owl_attack(POS(i, j), &attack_point, &result_certain, &kworm);
   gtp_start_response(GTP_SUCCESS);
@@ -1563,7 +1563,7 @@ gtp_owl_defend(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   defend_code = owl_defend(POS(i, j), &defense_point, &result_certain, &kworm);
   gtp_start_response(GTP_SUCCESS);
@@ -1597,7 +1597,7 @@ gtp_owl_threaten_attack(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   attack_code = owl_threaten_attack(POS(i, j), &attack_point1, &attack_point2);
   gtp_start_response(GTP_SUCCESS);
@@ -1632,7 +1632,7 @@ gtp_owl_threaten_defense(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   defend_code = owl_threaten_defense(POS(i, j), &defense_point1,
 				     &defense_point2);
@@ -1676,7 +1676,7 @@ gtp_owl_does_attack(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("dragon vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   attack_code = owl_does_attack(POS(ti, tj), POS(i, j), &kworm);
   gtp_start_response(GTP_SUCCESS);
@@ -1713,7 +1713,7 @@ gtp_owl_does_defend(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("dragon vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   defense_code = owl_does_defend(POS(ti, tj), POS(i, j), &kworm);
   gtp_start_response(GTP_SUCCESS);
@@ -1759,7 +1759,7 @@ gtp_owl_connection_defends(char *s)
   if (BOARD(ai, aj) != BOARD(bi, bj))
     return gtp_failure("dragon vertices must have the same color");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   defense_code = owl_connection_defends(POS(ti, tj), POS(ai, aj), POS(bi, bj));
   gtp_start_response(GTP_SUCCESS);
@@ -1823,7 +1823,7 @@ gtp_owl_substantial(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   result = owl_substantial(POS(i, j));
   return gtp_success("%d", result);
@@ -1857,7 +1857,7 @@ gtp_analyze_semeai(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
   owl_analyze_semeai(dragona, dragonb, &resulta, &resultb, &move,
   		     &result_certain);
@@ -1892,7 +1892,7 @@ gtp_analyze_semeai_after_move(char *s)
   move = POS(i, j);
   if (k == 0 || move == NO_MOVE)
     return gtp_failure("invalid color or coordinate");
-  if (board[move] != EMPTY)
+  if (internal_state->board[move] != EMPTY)
     return gtp_failure("move vertex is not empty");
   s += k;
   
@@ -1900,17 +1900,17 @@ gtp_analyze_semeai_after_move(char *s)
   if (k == 0)
     return gtp_failure("invalid coordinate");
   dragona = POS(i, j);
-  if (board[dragona] == EMPTY)
+  if (internal_state->board[dragona] == EMPTY)
     return gtp_failure("dragon vertex must not be empty");
   s += k;
 
   if (!gtp_decode_coord(s, &i, &j))
     return gtp_failure("invalid coordinate");
   dragonb = POS(i, j);
-  if (board[dragonb] == EMPTY)
+  if (internal_state->board[dragonb] == EMPTY)
     return gtp_failure("dragon vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
   owl_analyze_semeai_after_move(move, color, dragona, dragonb,
 				&resulta, &resultb, &semeai_move,
@@ -2126,7 +2126,7 @@ gtp_eval_eye(char *s)
   if (!gtp_decode_coord(s, &m, &n))
     return gtp_failure("invalid coordinate");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   if (black_eye[POS(m, n)].color == BLACK) {
     pos = black_eye[POS(m, n)].origin;
@@ -2181,18 +2181,18 @@ gtp_dragon_status(char *s)
 
   if (gtp_decode_coord(s, &i, &j)) {
     str = POS(i, j);
-    if (board[str] == EMPTY)
+    if (internal_state->board[str] == EMPTY)
       return gtp_failure("vertex must not be empty");
   }
   else if (sscanf(s, "%*s") != EOF)
     return gtp_failure("invalid coordinate");
 
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
   
   gtp_start_response(GTP_SUCCESS);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos)
+    if (ON_BOARD(internal_state, pos)
 	&& (pos == str
 	    || (str == NO_MOVE
 		&& board[pos] != EMPTY
@@ -2251,7 +2251,7 @@ gtp_same_dragon(char *s)
   if (BOARD(ai, aj) == EMPTY || BOARD(bi, bj) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
   return gtp_success("%d", dragon[POS(ai, aj)].id == dragon[POS(bi, bj)].id);
 }
@@ -2279,7 +2279,7 @@ gtp_unconditional_status(char *s)
   if (!gtp_decode_coord(s, &i, &j))
     return gtp_failure("invalid coordinate");
 
-  silent_examine_position(EXAMINE_WORMS);
+  silent_examine_position(internal_state, EXAMINE_WORMS);
   
   status = worm[POS(i, j)].unconditional_status;
   if (status == UNKNOWN)
@@ -2310,9 +2310,9 @@ gtp_combination_attack(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  silent_examine_position(EXAMINE_ALL);
+  silent_examine_position(internal_state, EXAMINE_ALL);
 
-  if (!atari_atari(color, &attack_point, NULL, verbose))
+  if (!atari_atari(internal_state, color, &attack_point, NULL, verbose))
     attack_point = NO_MOVE;
   
   gtp_start_response(GTP_SUCCESS);
@@ -2341,15 +2341,15 @@ gtp_combination_defend(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  silent_examine_position(EXAMINE_ALL);
+  silent_examine_position(internal_state, EXAMINE_ALL);
 
   memset(defense_points, 0, sizeof(defense_points));
-  if (!atari_atari(color, NULL, defense_points, verbose))
+  if (!atari_atari(internal_state, color, NULL, defense_points, verbose))
     return gtp_success("PASS");
   
   gtp_start_response(GTP_SUCCESS);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos) && defense_points[pos]) {
+    if (ON_BOARD(internal_state, pos) && defense_points[pos]) {
       if (!first)
 	gtp_printf(" ");
       else
@@ -2390,7 +2390,7 @@ gtp_aa_confirm_safety(char *s)
   
   if (!tryko(POS(i, j), color, NULL))
     return gtp_failure("invalid move");
-  popgo();
+  popgo(internal_state);
 
   result = atari_atari_confirm_safety(color, POS(i, j),
 				      &defense_point, minsize,
@@ -2422,7 +2422,7 @@ gtp_genmove_black(char *s)
   int move;
   UNUSED(s);
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   move = genmove(BLACK, NULL, NULL);
@@ -2447,7 +2447,7 @@ gtp_genmove_white(char *s)
   int move;
   UNUSED(s);
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   move = genmove(WHITE, NULL, NULL);
@@ -2478,7 +2478,7 @@ gtp_genmove(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   adjust_level_offset(color);
@@ -2514,7 +2514,7 @@ gtp_reg_genmove(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   /* This is intended for regression purposes and should therefore be
@@ -2552,7 +2552,7 @@ gtp_gg_genmove(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   /* This is intended for regression purposes and should therefore be
@@ -2612,7 +2612,7 @@ gtp_restricted_genmove(char *s)
   if (number_allowed_moves == 0)
     return gtp_failure("no allowed vertex");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
   /* This is intended for regression purposes and should therefore be
@@ -2653,7 +2653,7 @@ gtp_kgs_genmove_cleanup(char *s)
   if (!n)
     return gtp_failure("invalid color");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("kgs-genmove_cleanup cannot be called when stackp > 0");
 
   /* Turn on the capture_all_dead option to force removal of dead
@@ -2814,10 +2814,10 @@ gtp_undo(char *s)
 {
   UNUSED(s);
 
-  if (stackp > 0 || !undo_move(1))
+  if (internal_state->stackp > 0 || !undo_move(1))
     return gtp_failure("cannot undo");
 
-  reset_engine();
+  reset_engine(internal_state);
   
   return gtp_success("");
 }
@@ -2839,10 +2839,10 @@ gtp_gg_undo(char *s)
   if (number_moves < 0)
     return gtp_failure("can't undo a negative number of moves");
 
-  if (stackp > 0 || !undo_move(number_moves))
+  if (internal_state->stackp > 0 || !undo_move(number_moves))
     return gtp_failure("cannot undo");
 
-  reset_engine();
+  reset_engine(internal_state);
   
   return gtp_success("");
 }
@@ -2935,8 +2935,8 @@ finish_and_score_game(int seed)
     cached_board = 0;
   }
 
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++)
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++)
       if (BOARD(i, j) != current_board[i][j]) {
 	current_board[i][j] = BOARD(i, j);
 	cached_board = 0;
@@ -2970,11 +2970,11 @@ finish_and_score_game(int seed)
       pass++;
 
     next = OTHER_COLOR(next);
-  } while (pass < 2 && moves < board_size * board_size);
+  } while (pass < 2 && moves < internal_state->board_size * internal_state->board_size);
 
   final_score = aftermath_compute_score(next, NULL);
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++) {
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++) {
       final_status[i][j] = aftermath_final_status(next, POS(i, j));
       saved_board[i][j] = BOARD(i, j);
     }
@@ -2985,8 +2985,8 @@ finish_and_score_game(int seed)
   /* Update the status for vertices which were changed while finishing
    * the game, up to filling dame.
    */
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++) {
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++) {
       if (BOARD(i, j) == saved_board[i][j])
 	continue;
 
@@ -3159,8 +3159,8 @@ gtp_final_status_list(char *s)
   gtp_start_response(GTP_SUCCESS);
 
   first = 1;
-  for (i = 0; i < board_size; i++)
-    for (j = 0; j < board_size; j++) {
+  for (i = 0; i < internal_state->board_size; i++)
+    for (j = 0; j < internal_state->board_size; j++) {
       if (final_status[i][j] != status)
 	continue;
       if (BOARD(i, j) == EMPTY) {
@@ -3179,7 +3179,7 @@ gtp_final_status_list(char *s)
 	  gtp_printf("\n");
 	else
 	  first = 0;
-	num_stones = findstones(POS(i, j), board_size * board_size, stones);
+    num_stones = findstones(POS(i, j), internal_state->board_size * internal_state->board_size, stones);
 	gtp_print_vertices2(num_stones, stones);
       }
     }
@@ -3506,7 +3506,7 @@ static int
 gtp_dump_stack(char *s)
 {
   UNUSED(s);
-  dump_stack();
+  dump_stack(internal_state);
   return gtp_success("");
 }
 
@@ -3571,8 +3571,8 @@ print_influence_data(struct influence_data *q, char *what_data)
     return gtp_failure("unknown influence data");
   
   gtp_start_response(GTP_SUCCESS);
-  for (m = 0; m < board_size; m++) {
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++) {
+    for (n = 0; n < internal_state->board_size; n++) {
       if (float_pointer)
 	gtp_printf("%6.2f ", float_pointer[POS(m, n)]);
       else
@@ -3636,7 +3636,7 @@ gtp_initial_influence(char *s)
 
   q = INITIAL_INFLUENCE(color);
   
-  silent_examine_position(EXAMINE_ALL);
+  silent_examine_position(internal_state, EXAMINE_ALL);
 
   return print_influence_data(q, s + n);
 }
@@ -3684,7 +3684,7 @@ gtp_move_probabilities(char *s)
 
   gtp_start_response(GTP_SUCCESS);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos) && probabilities[pos] != 0.0) {
+    if (ON_BOARD(internal_state, pos) && probabilities[pos] != 0.0) {
       gtp_mprintf("%m ", I(pos), J(pos));
       gtp_printf("%.4f\n", probabilities[pos]);
       any_moves_printed = 1;
@@ -3719,7 +3719,7 @@ gtp_move_uncertainty(char *s)
 
   gtp_start_response(GTP_SUCCESS);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (ON_BOARD(pos) && probabilities[pos] > 0.0) {
+    if (ON_BOARD(internal_state, pos) && probabilities[pos] > 0.0) {
       /* Shannon's formula */
       uncertainty += -1 * ((double)probabilities[pos]) *
 	log((double)probabilities[pos]) / log(2.0);
@@ -3799,12 +3799,12 @@ gtp_worm_data(char *s)
   if (sscanf(s, "%*c") >= 0 && !gtp_decode_coord(s, &i, &j))
     return gtp_failure("invalid color or coordinate");
 
-  silent_examine_position(EXAMINE_WORMS);
+  silent_examine_position(internal_state, EXAMINE_WORMS);
 
   gtp_start_response(GTP_SUCCESS);
   
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++)
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++)
       if (i == -1 || (m == i && n == j)) {
 	struct worm_data *w = &worm[POS(m, n)];
 	gtp_print_vertex(m, n);
@@ -3864,8 +3864,8 @@ gtp_worm_stones(struct board_lib_state_struct *internal_state, char *s)
 
   gtp_start_response(GTP_SUCCESS);
   
-  for (u = 0; u < board_size; u++)
-    for (v = 0; v < board_size; v++) {
+  for (u = 0; u < internal_state->board_size; u++)
+    for (v = 0; v < internal_state->board_size; v++) {
       if (BOARD(u, v) == EMPTY
 	  || (color != EMPTY && BOARD(u, v) != color))
 	continue;
@@ -3875,8 +3875,8 @@ gtp_worm_stones(struct board_lib_state_struct *internal_state, char *s)
       if (ON_BOARD2(internal_state, i, j)
 	  && !same_string(POS(u, v), POS(i, j)))
 	continue;
-      for (m = 0; m < board_size; m++)
-	for (n = 0; n < board_size; n++)
+      for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++)
 	  if (BOARD(m, n) != EMPTY
 	      && same_string(POS(m, n), POS(u, v)))
 	    gtp_mprintf("%m ", m, n);
@@ -3907,7 +3907,7 @@ gtp_worm_cutstone(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  silent_examine_position(EXAMINE_WORMS);
+  silent_examine_position(internal_state, EXAMINE_WORMS);
 
   return gtp_success(" %d", worm[POS(i, j)].cutstone);
 }
@@ -3928,7 +3928,7 @@ gtp_dragon_data(char *s)
   if (sscanf(s, "%*c") >= 0 && !gtp_decode_coord(s, &i, &j))
     return gtp_failure("invalid coordinate");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("dragon data unavailable when stackp > 0");
 
   silent_examine_position(FULL_EXAMINE_DRAGONS);
@@ -3939,8 +3939,8 @@ gtp_dragon_data(char *s)
     gtp_mprintf("%m empty\n", i, j);
   else {
     newline_needed = 1;
-    for (m = 0; m < board_size; m++)
-      for (n = 0; n < board_size; n++)
+    for (m = 0; m < internal_state->board_size; m++)
+      for (n = 0; n < internal_state->board_size; n++)
 	if ((m == i && n == j)
 	    || (i == -1
 		&& BOARD(m, n) != EMPTY
@@ -3980,13 +3980,13 @@ gtp_dragon_stones(struct board_lib_state_struct *internal_state, char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("dragon_stones called on an empty vertex");
 
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
 
   gtp_start_response(GTP_SUCCESS);
 
   
-  for (u = 0; u < board_size; u++)
-    for (v = 0; v < board_size; v++) {
+  for (u = 0; u < internal_state->board_size; u++)
+    for (v = 0; v < internal_state->board_size; v++) {
       if (BOARD(u, v) == EMPTY
 	  || (color != EMPTY && BOARD(u, v) != color))
 	continue;
@@ -3994,8 +3994,8 @@ gtp_dragon_stones(struct board_lib_state_struct *internal_state, char *s)
 	continue;
       if (ON_BOARD2(internal_state, i, j) && dragon[POS(i, j)].origin != POS(u, v))
 	continue;
-      for (m = 0; m < board_size; m++)
-	for (n = 0; n < board_size; n++)
+      for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++)
 	  if (dragon[POS(m, n)].origin == POS(u, v))
 	    gtp_mprintf("%m ", m, n);
       gtp_printf("\n");
@@ -4021,10 +4021,10 @@ gtp_eye_data(char *s)
   if (!gtp_decode_move(s, &color, &i, &j))
     return gtp_failure("invalid color or coordinate");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("eye data unavailable when stackp > 0");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
   gtp_start_response(GTP_SUCCESS);
 
@@ -4063,10 +4063,10 @@ gtp_half_eye_data(char *s)
   if (!gtp_decode_coord(s, &i, &j))
     return gtp_failure("invalid coordinate");
 
-  if (stackp > 0)
+  if (internal_state->stackp > 0)
     return gtp_failure("half eye data unavailable when stackp > 0");
 
-  silent_examine_position(EXAMINE_DRAGONS_WITHOUT_OWL);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
   gtp_start_response(GTP_SUCCESS);
 
@@ -4329,13 +4329,13 @@ gtp_print_vertices2(int n, int *moves)
 static void
 rotate_on_input(int ai, int aj, int *bi, int *bj)
 {
-  rotate(ai, aj, bi, bj, board_size, gtp_orientation);
+  rotate(ai, aj, bi, bj, internal_state->board_size, gtp_orientation);
 }
 
 static void
 rotate_on_output(int ai, int aj, int *bi, int *bj)
 {
-  inv_rotate(ai, aj, bi, bj, board_size, gtp_orientation);
+  inv_rotate(ai, aj, bi, bj, internal_state->board_size, gtp_orientation);
 }
 
 
@@ -4414,7 +4414,7 @@ gtp_is_surrounded(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("dragon vertex must be nonempty");
 
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
   return gtp_success("%d", DRAGON2(POS(i, j)).surround_status);
 }
 
@@ -4443,7 +4443,7 @@ gtp_does_surround(char *s)
   if (BOARD(di, dj) == EMPTY)
     return gtp_failure("dragon vertex must be nonempty");
 
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
   return gtp_success("%d", does_surround(POS(si, sj), POS(di, dj)));
 }
 
@@ -4471,7 +4471,7 @@ gtp_surround_map(char *s)
   if (n == 0)
     return gtp_failure("invalid coordinate");
 
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
   return gtp_success("%d", surround_map(POS(di, dj), POS(mi, mj)));
 }
 
@@ -4554,7 +4554,7 @@ gtp_draw_search_area(char *s)
 
   gtp_start_response(GTP_SUCCESS);
   gtp_printf("\n");
-  draw_search_area();
+  draw_search_area(internal_state);
   return gtp_finish_response();
 }
 

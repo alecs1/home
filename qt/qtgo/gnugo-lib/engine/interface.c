@@ -174,7 +174,7 @@ gnugo_sethand(int desired_handicap, SGFNode *node)
 {
   place_fixed_handicap(desired_handicap);
   sgffile_recordboard(node);
-  return handicap;
+  return internal_state->handicap;
 }
 
 
@@ -187,7 +187,7 @@ gnugo_sethand(int desired_handicap, SGFNode *node)
 float
 gnugo_estimate_score(float *upper, float *lower)
 {
-  silent_examine_position(EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, EXAMINE_DRAGONS);
   if (upper != NULL)
     *upper = white_score;
   if (lower != NULL)
@@ -208,7 +208,7 @@ gnugo_estimate_score(float *upper, float *lower)
 void
 gameinfo_clear(Gameinfo *gameinfo)
 {
-  gnugo_clear_board(board_size);
+  gnugo_clear_board(internal_state->board_size);
   gameinfo->handicap = 0;
   gameinfo->to_move = BLACK;
   sgftree_clear(&gameinfo->game_record);
@@ -225,7 +225,7 @@ gameinfo_clear(Gameinfo *gameinfo)
 void
 gameinfo_print(Gameinfo *gameinfo)
 {
-  printf("Board Size:   %d\n", board_size);
+  printf("Board Size:   %d\n", internal_state->board_size);
   printf("Handicap      %d\n", gameinfo->handicap);
   printf("Komi:         %.1f\n", komi);
   printf("Move Number:  %d\n", movenum);
@@ -273,10 +273,10 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
   handicap = 0;
   if (sgfGetIntProperty(tree->root, "HA", &handicap) && handicap > 1)
     next = WHITE;
-  gameinfo->handicap = handicap;
+  gameinfo->handicap = internal_state->handicap;
   
   if (handicap > bs * bs - 1 || handicap < 0) {
-    gprintf(" Handicap HA[%d] is unreasonable.\n Modify SGF file.\n",
+    gprintf(internal_state, " Handicap HA[%d] is unreasonable.\n Modify SGF file.\n",
 	    handicap);
     return EMPTY;
   }
@@ -297,7 +297,7 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
       DEBUG(DEBUG_LOADSGF, "Loading until move %d\n", until);
     }
     else {
-      untilmove = string_to_location(board_size, untilstr);
+      untilmove = string_to_location(internal_state->board_size, untilstr);
       DEBUG(DEBUG_LOADSGF, "Loading until move at %1m\n", untilmove);
     }
   }
@@ -325,11 +325,11 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	 * placed on the board.
 	 */
 	move = rotate1(get_sgfmove(prop), orientation);
-	if (board[move] != EMPTY)
-	  gprintf("Illegal SGF! attempt to add a stone at occupied point %1m\n",
+    if (internal_state->board[move] != EMPTY)
+      gprintf(internal_state, "Illegal SGF! attempt to add a stone at occupied point %1m\n",
 		  move);
 	else
-	  add_stone(move, prop->name == SGFAB ? BLACK : WHITE);
+	  add_stone(internal_state, move, prop->name == SGFAB ? BLACK : WHITE);
 	break;
 	      
       case SGFPL:
@@ -374,8 +374,8 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	  next = OTHER_COLOR(next);
 	}
 	else {
-	  gprintf("WARNING: Move off board or on occupied position found in sgf-file.\n");
-	  gprintf("Move at %1m ignored, trying to proceed.\n", move);
+      gprintf(internal_state, "WARNING: Move off board or on occupied position found in sgf-file.\n");
+      gprintf(internal_state, "Move at %1m ignored, trying to proceed.\n", move);
 	  gameinfo->to_move = next;
 	  return next;
 	}
@@ -392,14 +392,14 @@ gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 	 */
 	move = rotate1(get_sgfmove(prop), orientation);
 
-	if (board_size > 1)
+	if (internal_state->board_size > 1)
 	{
 	  int move_color;
 
-	  if (ON_BOARD(NORTH(move)))
-	    move_color = OTHER_COLOR(board[NORTH(move)]);
+	  if (ON_BOARD(internal_state, NORTH(move)))
+        move_color = OTHER_COLOR(internal_state->board[NORTH(move)]);
 	  else 
-	    move_color = OTHER_COLOR(board[SOUTH(move)]);
+        move_color = OTHER_COLOR(internal_state->board[SOUTH(move)]);
 	  if (is_ko(move, move_color, NULL))
 	    board_ko_pos = move;
 	}

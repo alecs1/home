@@ -493,7 +493,7 @@ static Hash_data board_hash_stack[MAXSTACK];
  *
  *   if (trymove(...)) {
  *      ...
- *      popgo();
+ *      popgo(internal_state);
  *   }   
  *
  * The message can be written as a comment to an sgf file using 
@@ -691,7 +691,7 @@ do_trymove(struct board_lib_state_struct *internal_state, int pos, int color, in
 #if 0
     if (verbose > 0) {
       showboard(0);
-      dump_stack();
+      dump_stack(internal_state);
     }
 #endif
     fflush(stderr);
@@ -703,7 +703,7 @@ do_trymove(struct board_lib_state_struct *internal_state, int pos, int color, in
   trymove_counter++;
   
   /* So far, so good. Now push the move on the move stack. These are
-   * needed for dump_stack().
+   * needed for dump_stack(internal_state).
    */
   stack[internal_state->stackp] = pos;
   move_color[internal_state->stackp] = color;
@@ -752,7 +752,7 @@ popgo(struct board_lib_state_struct *internal_state)
  * board hash is restored from stack.
  *
  * This undoes the effects of do_trymove() or really_do_trymove() and
- * is appropriate to call instead of popgo() if you have not passed
+ * is appropriate to call instead of popgo(internal_state) if you have not passed
  * through trymove() or tryko().
  */
 
@@ -776,7 +776,7 @@ undo_trymove(struct board_lib_state_struct *internal_state)
 
 
 /*
- * dump_stack() for use under gdb prints the move stack. 
+ * dump_stack(internal_state) for use under gdb prints the move stack.
  */
 
 void
@@ -795,7 +795,7 @@ dump_stack(struct board_lib_state_struct *internal_state)
   fflush(stderr);
 }
 
-/* Bare bones of dump_stack(). */
+/* Bare bones of dump_stack(internal_state). */
 void
 do_dump_stack(struct board_lib_state_struct *internal_state)
 {
@@ -1124,7 +1124,7 @@ is_legal(struct board_lib_state_struct *internal_state, int pos, int color)
 
 
 /*
- * is_suicide(pos, color) determines whether the move (color) at
+ * is_suicide(internal_state, pos, color) determines whether the move (color) at
  * (pos) would be a suicide.
  *
  * This is the case if
@@ -1859,7 +1859,7 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
 
 #else /* not USE_BOARD_CACHES */
 
-  ASSERT1(board[pos] == EMPTY, pos);
+  ASSERT1(internal_state->board[pos] == EMPTY, pos);
   ASSERT1(internal_state, IS_STONE(color), pos);
 
   if (!libs) {
@@ -1869,9 +1869,9 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
   }
 
   if (maxlib <= MAX_LIBERTIES)
-    liberties = do_approxlib(pos, color, maxlib, libs);
+    liberties = do_approxlib(internal_state, pos, color, maxlib, libs);
   else
-    liberties = slow_approxlib(pos, color, maxlib, libs);
+    liberties = slow_approxlib(internal_state, pos, color, maxlib, libs);
 
 #endif /* not USE_BOARD_CACHES */
 
@@ -2101,7 +2101,7 @@ clear_accuratelib_cache(void)
  * This function guarantees that liberties which are not results of
  * captures come first in libs[] array. To find whether all the 
  * liberties starting from a given one are results of captures, one
- * may use  if (board[libs[k]] != EMPTY)  construction.
+ * may use  if (internal_state->board[libs[k]] != EMPTY)  construction.
  *
  * If you want the number or the locations of all liberties, however
  * many they are, you should pass MAXLIBS as the value for maxlib and
@@ -2152,7 +2152,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
 
 #else /* not USE_BOARD_CACHES */
 
-  ASSERT1(board[pos] == EMPTY, pos);
+  ASSERT1(internal_state->board[pos] == EMPTY, pos);
   ASSERT1(internal_state, IS_STONE(color), pos);
 
   if (!libs) {
@@ -3227,7 +3227,7 @@ get_move_from_stack(struct board_lib_state_struct *internal_state, int k, int *m
 
 /* Return the number of stones of the indicated color(s) on the board.
  * This only counts stones in the permanent position, not stones placed
- * by trymove() or tryko(). Use stones_on_board(BLACK | WHITE) to get
+ * by trymove() or tryko(). Use stones_on_board(internal_state, BLACK | WHITE) to get
  * the total number of stones on the board.
  *
  * FIXME: This seems wrong, it uses the modified board, not the permanent
@@ -3358,9 +3358,9 @@ dump_incremental_board(void)
   int i;
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
-    if (board[pos] == EMPTY)
+    if (internal_state->board[pos] == EMPTY)
       fprintf(stderr, " . ");
     else
       fprintf(stderr, "%2d ", string_number[pos]);
@@ -3368,30 +3368,30 @@ dump_incremental_board(void)
   }
 
   for (s = 0; s < next_string; s++) {
-    if (board[string[s].origin] == EMPTY)
+    if (internal_state->board[string[s].origin] == EMPTY)
       continue;
     
-    gprintf("%o%d %s %1m size %d, %d liberties, %d neighbors\n", s,
+    gprintf(internal_state, "%o%d %s %1m size %d, %d liberties, %d neighbors\n", s,
 	    color_to_string(string[s].color),
 	    string[s].origin, string[s].size,
 	    string[s].liberties, string[s].neighbors);
-    gprintf("%ostones:");
+    gprintf(internal_state, "%ostones:");
 
     pos = FIRST_STONE(s);
     do {
-      gprintf("%o %1m", pos);
+      gprintf(internal_state, "%o %1m", pos);
       pos = NEXT_STONE(pos);
     } while (!BACK_TO_FIRST_STONE(s, pos));
     
-    gprintf("%o\nliberties:");
+    gprintf(internal_state, "%o\nliberties:");
     for (i = 0; i < string[s].liberties; i++)
-      gprintf("%o %1m", string[s].libs[i]);
+      gprintf(internal_state, "%o %1m", string[s].libs[i]);
     
-    gprintf("%o\nneighbors:");
+    gprintf(internal_state, "%o\nneighbors:");
     for (i = 0; i < string[s].neighbors; i++)
-      gprintf("%o %d(%1m)", string[s].neighborlist[i],
+      gprintf(internal_state, "%o %d(%1m)", string[s].neighborlist[i],
 	      string[string[s].neighborlist[i]].origin);
-    gprintf("%o\n\n");
+    gprintf(internal_state, "%o\n\n");
   }
 }
 #endif
@@ -4031,7 +4031,7 @@ assimilate_neighbor_strings(struct board_lib_state_struct *internal_state, int p
   if (UNMARKED_LIBERTY(internal_state, NORTH(pos))) {
     ADD_AND_MARK_LIBERTY(s, NORTH(pos));
   }
-  else if (internal_state, UNMARKED_COLOR_STRING(internal_state, NORTH(pos), other)) {
+  else if (UNMARKED_COLOR_STRING(internal_state, NORTH(pos), other)) {
     ADD_NEIGHBOR(s, NORTH(pos));
     PUSH_VALUE(string[string_number[NORTH(pos)]].neighbors);
     ADD_NEIGHBOR(string_number[NORTH(pos)], pos);
@@ -4237,16 +4237,16 @@ incremental_order_moves(struct board_lib_state_struct *internal_state,
 
   for (k = 0; k < 4; k++) {
     pos = move + delta[k];
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       (*number_edges)++;
-    else if (board[pos] == EMPTY)
+    else if (internal_state->board[pos] == EMPTY)
       (*number_open)++;
     else {
       int s = string_number[pos];
       if (string_number[str] == s)
 	(*number_same_string)++;
       
-      if (board[pos] == color) {
+      if (internal_state->board[pos] == color) {
 	(*number_own)++;
 	if (string[s].liberties == 1)
 	  (*saved_stones) += string[s].size;

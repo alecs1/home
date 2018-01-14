@@ -52,9 +52,12 @@ void clearstats(void);
 void transformation_init(void);
 
 void ascii_report_worm(char *string);
-void report_dragon(FILE *outfile, int pos);
-void ascii_report_dragon(char *string);
-struct dragon_data2 *dragon2_func(int pos);
+void report_dragon(struct board_lib_state_struct *internal_state,
+                   FILE *outfile, int pos);
+void ascii_report_dragon(struct board_lib_state_struct *internal_state,
+                         char *string);
+struct dragon_data2 *dragon2_func(struct board_lib_state_struct *internal_state,
+                                  int pos);
 
 /* Routine names used by persistent and non-persistent caching schemes. */
 enum routine_id {
@@ -175,10 +178,12 @@ struct movelist;
  * Try to match a pattern in the database to the board. Callbacks for
  * each match.
  */
-typedef void (*matchpat_callback_fn_ptr)(int anchor, int color,
+typedef void (*matchpat_callback_fn_ptr)(struct board_lib_state_struct *internal_state,
+                                         int anchor, int color,
                                          struct pattern *, int rotation,
                                          void *data);
-typedef void (*fullboard_matchpat_callback_fn_ptr)(int move,
+typedef void (*fullboard_matchpat_callback_fn_ptr)(struct board_lib_state_struct *internal_state,
+                                                   int move,
                                                    struct fullboard_pattern *,
                                                    int rotation);
 typedef void (*corner_matchpat_callback_fn_ptr)(int move, int color,
@@ -290,9 +295,10 @@ int owl_topological_eye(int pos, int color);
 int vital_chain(int pos);
 int confirm_safety(int move, int color, int *defense_point,
 		   signed char safe_stones[BOARDMAX]);
-int dragon_weak(int pos);
+int dragon_weak(struct board_lib_state_struct *internal_state,
+                int pos);
 float dragon_weakness(int pos, int ignore_dead_dragons);
-int size_of_biggest_critical_dragon(void);
+int size_of_biggest_critical_dragon(struct board_lib_state_struct *internal_state);
 void change_dragon_status(int dr, enum dragon_status status);
 float blunder_size(int move, int color, int *defense_point,
 		   signed char safe_stones[BOARDMAX]);
@@ -305,31 +311,43 @@ int get_depth_modification(void);
 int safe_move(int move, int color);
 int does_secure(int color, int move, int pos);
 
-void compute_new_dragons(int dragon_origins[BOARDMAX]);
-void join_dragons(int d1, int d2);
-int dragon_escape(signed char goal[BOARDMAX], int color,
-		  signed char escape_value[BOARDMAX]);
-void compute_refined_dragon_weaknesses(void);
-void compute_strategic_sizes(void);
+void compute_new_dragons(struct board_lib_state_struct *internal_state,
+                         int dragon_origins[BOARDMAX]);
+void join_dragons(struct board_lib_state_struct *internal_state,
+                  int d1, int d2);
+int dragon_escape(struct board_lib_state_struct *internal_state,
+                  signed char goal[BOARDMAX], int color,
+                  signed char escape_value[BOARDMAX]);
+void compute_refined_dragon_weaknesses(struct board_lib_state_struct *internal_state);
+void compute_strategic_sizes(struct board_lib_state_struct *internal_state);
 
 struct eyevalue;
-void compute_dragon_genus(int d, struct eyevalue *genus, int eye_to_exclude);
-float crude_dragon_weakness(int safety, struct eyevalue *genus, int has_lunch,
-			    float moyo_value, float escape_route);
+void compute_dragon_genus(struct board_lib_state_struct *internal_state,
+                          int d, struct eyevalue *genus, int eye_to_exclude);
+float crude_dragon_weakness(struct board_lib_state_struct *internal_state,
+                            int safety, struct eyevalue *genus, int has_lunch,
+                            float moyo_value, float escape_route);
 
-int is_same_dragon(int d1, int d2);
+int is_same_dragon(struct board_lib_state_struct *internal_state,
+                   int d1, int d2);
 int are_neighbor_dragons(int d1, int d2);
-void mark_dragon(int pos, signed char mx[BOARDMAX], signed char mark);
+void mark_dragon(struct board_lib_state_struct *internal_state,
+                 int pos, signed char mx[BOARDMAX], signed char mark);
 int first_worm_in_dragon(int d);
-int next_worm_in_dragon(int w);
+int next_worm_in_dragon(struct board_lib_state_struct *internal_state,
+                        int w);
 int lively_dragon_exists(int color);
-void compute_dragon_influence(void);
-void set_strength_data(int color, signed char safe_stones[BOARDMAX],
-		       float strength[BOARDMAX]);
-void mark_inessential_stones(int color, signed char safe_stones[BOARDMAX]);
+void compute_dragon_influence(struct board_lib_state_struct *internal_state);
+void set_strength_data(struct board_lib_state_struct *internal_state,
+                       int color, signed char safe_stones[BOARDMAX],
+                       float strength[BOARDMAX]);
+void mark_inessential_stones(struct board_lib_state_struct *internal_state,
+                             int color, signed char safe_stones[BOARDMAX]);
 
-void add_cut(int apos, int bpos, int move);
-void cut_reasons(int color);
+void add_cut(struct board_lib_state_struct *internal_state,
+             int apos, int bpos, int move);
+void cut_reasons(struct board_lib_state_struct *internal_state,
+                 int color);
 
 void get_lively_stones(int color, signed char safe_stones[BOARDMAX]);
 int is_same_worm(int w1, int w2);
@@ -353,7 +371,8 @@ void reset_surround_data(void);
 int surround_map(int dr, int pos);
 
 /* functions to add (or remove) move reasons */
-void collect_move_reasons(int color);
+void collect_move_reasons(struct board_lib_state_struct *internal_state,
+                          int color);
 
 void clear_move_reasons(void);
 void add_lunch(int eater, int food);
@@ -459,46 +478,55 @@ void find_proper_superstring_liberties(int str, int *liberties, int *libs,
 void find_superstring_stones_and_liberties(int str, int *num_stones,
 					   int *stones, int *liberties,
 					   int *libs, int liberty_cap);
-void superstring_chainlinks(int str, int *num_adj, int adj[MAXCHAIN],
+void superstring_chainlinks(struct board_lib_state_struct *internal_state,
+                            int str, int *num_adj, int adj[MAXCHAIN],
                             int liberty_cap);
 void proper_superstring_chainlinks(int str, int *num_adj, 
                                    int adj[MAXCHAIN], int liberty_cap);
 
-int place_fixed_handicap(int handicap); /* place stones on board only */
-int place_free_handicap(int handicap); /* place stones on board only */
-int free_handicap_remaining_stones(void);
-int free_handicap_total_stones(void);
+int place_fixed_handicap(struct board_lib_state_struct *internal_state,
+                         int handicap); /* place stones on board only */
+int place_free_handicap(struct board_lib_state_struct *internal_state,
+                        int handicap); /* place stones on board only */
+int free_handicap_remaining_stones(struct board_lib_state_struct *internal_state);
+int free_handicap_total_stones(struct board_lib_state_struct *internal_state);
 
 
 /* Various different strategies for finding a move */
-void fuseki(int color);
+void fuseki(struct board_lib_state_struct *internal_state,
+            int color);
 void semeai(void);
 void semeai_move_reasons(int color);
 void shapes(int color);
-void endgame(int color);
+void endgame(struct board_lib_state_struct *internal_state,
+             int color);
 void endgame_shapes(int color);
 
-void combinations(int color);
-int atari_atari(int color, int *attack_move,
-		signed char defense_moves[BOARDMAX],
-		int save_verbose);
-int atari_atari_confirm_safety(int color, int tpos, int *move, int minsize,
-			       const signed char saved_dragons[BOARDMAX],
-			       const signed char saved_worms[BOARDMAX]);
+void combinations(struct board_lib_state_struct *internal_state, int color);
+int atari_atari(struct board_lib_state_struct *internal_state,
+                int color, int *attack_move,
+                signed char defense_moves[BOARDMAX],
+                int save_verbose);
+int atari_atari_confirm_safety(struct board_lib_state_struct *internal_state,
+                               int color, int tpos, int *move, int minsize,
+                               const signed char saved_dragons[BOARDMAX],
+                               const signed char saved_worms[BOARDMAX]);
 
-int atari_atari_blunder_size(int color, int tpos,
-			     signed char defense_moves[BOARDMAX],
-			     const signed char safe_stones[BOARDMAX]);
+int atari_atari_blunder_size(struct board_lib_state_struct *internal_state,
+                             int color, int tpos,
+                             signed char defense_moves[BOARDMAX],
+                             const signed char safe_stones[BOARDMAX]);
 
 int review_move_reasons(int *move, float *value, int color,
 			float pure_threat_value, float our_score,
 			int allowed_moves[BOARDMAX],
 			int use_thrashing_dragon_heuristics);
 void prepare_move_influence_debugging(int pos, int color);
-int fill_liberty(int *move, int color);
-int aftermath_genmove(int color, int do_capture_dead_stones,
+int fill_liberty(struct board_lib_state_struct *internal_state,
+                 int *move, int color);
+int aftermath_genmove(struct board_lib_state_struct *internal_state, int color, int do_capture_dead_stones,
 		      int allowed_moves[BOARDMAX]);
-enum dragon_status aftermath_final_status(int color, int pos);
+enum dragon_status aftermath_final_status(struct board_lib_state_struct *internal_state, int color, int pos);
 
 int mc_get_size_of_pattern_values_table(void);
 int mc_load_patterns_from_db(const char *filename, unsigned int *values);
@@ -529,7 +557,8 @@ void owl_analyze_semeai_after_move(int move, int color, int apos, int bpos,
 				   int recompute_dragons);
 
 void set_limit_search(int value);
-void set_search_diamond(int pos);
+void set_search_diamond(struct board_lib_state_struct *internal_state,
+                        int pos);
 void reset_search_mask(void);
 void set_search_mask(int pos, int value);
 int oracle_play_move(int pos, int color);
@@ -539,9 +568,9 @@ void oracle_loadsgf(char *infilename, char *untilstring);
 int oracle_threatens(int move, int target);
 int within_search_area(int pos);
 int metamachine_genmove(int color, float *value);
-void draw_search_area(void);
+void draw_search_area(struct board_lib_state_struct *internal_state);
 
-int genmove_restricted(int color, int allowed_moves[BOARDMAX]);
+int genmove_restricted(struct board_lib_state_struct *internal_state, int color, int allowed_moves[BOARDMAX]);
 
 void change_attack(int str, int move, int acode);
 void change_defense(int str, int move, int dcode);
@@ -675,12 +704,14 @@ float influence_score(const struct influence_data *q, int chinese_rules);
 float game_status(int color);
 void influence_mark_non_territory(int pos, int color);
 int influence_considered_lively(const struct influence_data *q, int pos);
-void influence_erase_territory(struct influence_data *q, int pos, int color);
+void influence_erase_territory(struct board_lib_state_struct *internal_state,
+                               struct influence_data *q, int pos, int color);
 
-void break_territories(int color_to_move, struct influence_data *q,
-		       int store, int pos);
+void break_territories(struct board_lib_state_struct *internal_state,
+                       int color_to_move, struct influence_data *q,
+                       int store, int pos);
 void clear_break_in_list(void);
-void break_in_move_reasons(int color);
+void break_in_move_reasons(struct board_lib_state_struct *internal_state, int color);
 
 void choose_strategy(int color, float our_score, float game_status);
 

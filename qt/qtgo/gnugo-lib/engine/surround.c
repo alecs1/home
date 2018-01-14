@@ -130,9 +130,9 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   for (k = 0; k < DRAGON2(pos).neighbors; k++) {
     int nd = DRAGON(DRAGON2(pos).adjacent[k]).origin;
     
-    if (board[nd] != color) {
+    if (internal_state->board[nd] != color) {
       if (0)
-	gprintf("neighbor: %1m\n", nd);
+	gprintf(internal_state, "neighbor: %1m\n", nd);
       mark_dragon(nd, mn, 1);
     }
   }
@@ -146,11 +146,11 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
         if (!ON_BOARD(dpos + d))
           continue;
         if (!ON_BOARD(dpos + 2*d)) {
-          if (board[dpos + d] == EMPTY)
+          if (internal_state->board[dpos + d] == EMPTY)
             mn[dpos + d] = 1;
         }
         else if (!ON_BOARD(dpos + 3*d)) {
-          if (board[dpos + d] == EMPTY
+          if (internal_state->board[dpos + d] == EMPTY
               && board[dpos + 2*d] == EMPTY)
             mn[dpos + 2*d] = 1;
         }
@@ -230,10 +230,10 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* find top row of surrounding polyhedron */
   
   top_row = -1;
-  for (m = 0; m < board_size; m++) {
+  for (m = 0; m < internal_state->board_size; m++) {
     if (top_row != -1)
       break;
-    for (n = 0; n < board_size; n++)
+    for (n = 0; n < internal_state->board_size; n++)
       if (mn[POS(m, n)]) {
 	left_corner[0] = POS(m, n);
 	top_row = m;
@@ -244,10 +244,10 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   /* find bottom row */
   
   bottom_row = -1;
-  for (m = board_size - 1; m >= 0; m--) {
+  for (m = internal_state->board_size - 1; m >= 0; m--) {
     if (bottom_row != -1)
       break;
-    for (n = 0; n < board_size; n++)
+    for (n = 0; n < internal_state->board_size; n++)
       if (mn[POS(m, n)]) {
 	bottom_row = m;
 	break;
@@ -264,11 +264,11 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
     int n = J(left_corner[left_corners-1]);
     
     for (i = m + 1; i <= bottom_row; i++)
-      for (j = 0; j < board_size; j++)
+      for (j = 0; j < internal_state->board_size; j++)
 	if (mn[POS(i, j)]) {
 	  float slope = ((float) (j - n))/((float) (i - m));
 	  if (0)
-	    gprintf("(left) at %m, last %m, slope=%f\n", i, j, m, n, slope);
+	    gprintf(internal_state, "(left) at %m, last %m, slope=%f\n", i, j, m, n, slope);
 	  
 	  if (!best_found || slope < best_slope) {
 	    best_found = POS(i, j);
@@ -279,7 +279,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
     left_corner[left_corners] = best_found;
   }
   
-  for (n = board_size-1; n >= 0; n--)
+  for (n = internal_state->board_size-1; n >= 0; n--)
     if (mn[POS(top_row, n)]) {
       right_corner[0] = POS(top_row, n);
       break;
@@ -295,11 +295,11 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
     int n = J(right_corner[right_corners-1]);
     
     for (i = m + 1; i <= bottom_row; i++) {
-      for (j = board_size - 1; j >= 0; j--) {
+      for (j = internal_state->board_size - 1; j >= 0; j--) {
 	if (mn[POS(i, j)]) {
 	  float slope = ((float) (j - n))/((float) (i - m));
 	  if (0)
-	    gprintf("(right) at %m, last %m, slope=%f\n", i, j, m, n, slope);
+	    gprintf(internal_state, "(right) at %m, last %m, slope=%f\n", i, j, m, n, slope);
 	  if (!best_found || slope > best_slope) {
 	    best_found = POS(i, j);
 	    best_slope = slope;
@@ -313,10 +313,10 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   
   if (0) {
     for (k = 0; k < left_corners; k++)
-      gprintf("left corner %d: %1m\n", k, left_corner[k]);
+      gprintf(internal_state, "left corner %d: %1m\n", k, left_corner[k]);
     
     for (k = 0; k < right_corners; k++)
-      gprintf("right corner %d: %1m\n", k, right_corner[k]);
+      gprintf(internal_state, "right corner %d: %1m\n", k, right_corner[k]);
   }
 
   /* Now mark the interior of the convex hull */
@@ -338,7 +338,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	float bj = J(left_corner[k]);
 	
 	if (0)
-	  gprintf("(left) %d: %1m %1m\n", 
+	  gprintf(internal_state, "(left) %d: %1m %1m\n", 
 		  m, left_corner[k-1], left_corner[k]);
 	/* left edge in this row is on segment (ti,tj) -> (bi, bj) */
 	
@@ -356,7 +356,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	float bj = J(right_corner[k]);
 	
 	if (0)
-	  gprintf("(right) %d: %1m %1m\n", 
+	  gprintf(internal_state, "(right) %d: %1m %1m\n", 
 		  m, right_corner[k-1], right_corner[k]);
 
 	/* FIXME: Rewrite this to avoid floating point arithmetic */
@@ -394,7 +394,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	&& !mf[dpos]) {
 
       for (mpos = BOARDMIN; mpos < BOARDMAX; mpos++)
-	if (ON_BOARD(mpos) && is_same_dragon(mpos, dpos))
+	if (ON_BOARD(internal_state, mpos) && is_same_dragon(mpos, dpos))
 	  mf[mpos] = 2;
     }
     /* A special case
@@ -421,7 +421,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	    && board[dpos + delta[k-4]] == EMPTY
 	    && board[dpos + delta[(k-3)%4]] == EMPTY) {
 	  for (mpos = BOARDMIN; mpos < BOARDMAX; mpos++)
-	    if (ON_BOARD(mpos) && is_same_dragon(mpos, dpos))
+	    if (ON_BOARD(internal_state, mpos) && is_same_dragon(mpos, dpos))
 	      mf[mpos] = 2;
 	}
     }
@@ -486,7 +486,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
       for (k = 0; k < 4; k++) {
 	int up = delta[k];
 	int right = delta[(k + 1) % 4];
-	if (board[dpos + up] == EMPTY
+	if (internal_state->board[dpos + up] == EMPTY
 	    && board[dpos + 2*up] == color
 	    && mn[dpos + 2*up] != 1
 	    && ON_BOARD(dpos + up + right)
@@ -515,7 +515,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 
     *surround_size = 0;
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-      if (ON_BOARD(pos) && mn[pos] == 1)
+      if (ON_BOARD(internal_state, pos) && mn[pos] == 1)
 	(*surround_size)++;
   }
 
@@ -533,7 +533,7 @@ goal_dist(int pos, signed char goal[BOARDMAX])
   int ii;
 
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
-    if (ON_BOARD(ii) && goal[ii])
+    if (ON_BOARD(internal_state, ii) && goal[ii])
       dist = gg_min(dist, square_dist(ii, pos));
 
   return dist;
@@ -609,8 +609,8 @@ show_surround_map(signed char mf[BOARDMAX], signed char mn[BOARDMAX])
   int m, n;
 
   start_draw_board();
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       int col, c;
       
       if (mf[POS(m, n)]) {
@@ -627,9 +627,9 @@ show_surround_map(signed char mf[BOARDMAX], signed char mn[BOARDMAX])
 	col = GG_COLOR_CYAN;
       else
 	col = GG_COLOR_BLACK;
-      if (board[POS(m, n)] == BLACK)
+      if (internal_state->board[POS(m, n)] == BLACK)
 	c = 'X';
-      else if (board[POS(m, n)] == WHITE)
+      else if (internal_state->board[POS(m, n)] == WHITE)
 	c = 'O';
       else if (mn[POS(m, n)])
 	c = '*';

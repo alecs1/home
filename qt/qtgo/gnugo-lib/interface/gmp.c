@@ -752,7 +752,7 @@ void  gmp_startGame(Gmp *ge, int size, int handicap, float komi,
   ge->boardSize = size;
   ge->sizeVerified = simplified;
 
-  ge->handicap = handicap;
+  ge->handicap = internal_state->handicap;
   ge->handicapVerified = 0;
 
   ge->komi = komi;

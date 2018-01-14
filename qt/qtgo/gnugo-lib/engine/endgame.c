@@ -26,14 +26,17 @@
 #include "liberty.h"
 
 
-static void endgame_analyze_worm_liberties(int pos, int color);
-static void endgame_find_backfilling_dame(int str, int color);
-static int endgame_find_liberties(int str, int *essential_liberties,
-				  int essential_libs[MAXLIBS],
-				  int *inessential_liberties,
-				  int inessential_libs[MAXLIBS],
-				  int *false_eye_liberties,
-				  int false_eye_libs[MAXLIBS]);
+static void endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
+                                           int pos, int color);
+static void endgame_find_backfilling_dame(struct board_lib_state_struct *internal_state,
+                                          int str, int color);
+static int endgame_find_liberties(struct board_lib_state_struct *internal_state,
+                  int str, int *essential_liberties,
+                  int essential_libs[MAXLIBS],
+                  int *inessential_liberties,
+                  int inessential_libs[MAXLIBS],
+                  int *false_eye_liberties,
+                  int false_eye_libs[MAXLIBS]);
   
 
 /* Generate endgame moves. These are typically moves in settled positions,
@@ -42,11 +45,12 @@ static int endgame_find_liberties(int str, int *essential_liberties,
  * called when no move of value higher than 6.0 has been found on board.
  */
 void
-endgame(int color)
+endgame(struct board_lib_state_struct *internal_state,
+        int color)
 {
   int pos;
 
-  TRACE("\nEndgame move generator tries to look for additional moves...\n");
+  TRACE(internal_state, "\nEndgame move generator tries to look for additional moves...\n");
 
   /* Try to generate some moves using endgame_analyze_worm_liberties(). See
    * the description of that function to find what moves it generates.
@@ -55,14 +59,14 @@ endgame(int color)
     /* We are only interested in alive, but not invincible worms which are
      * parts of alive dragons. That is, the position must be stable.
      */
-    if (IS_STONE(board[pos])
+    if (IS_STONE(internal_state->board[pos])
 	&& worm[pos].origin == pos
 	&& dragon[pos].status == ALIVE
 	&& !worm[pos].invincible
 	&& !worm[pos].inessential
 	&& worm[pos].attack_codes[0] == 0) {
-      endgame_analyze_worm_liberties(pos, color);
-      endgame_find_backfilling_dame(pos, color);
+      endgame_analyze_worm_liberties(internal_state, pos, color);
+      endgame_find_backfilling_dame(internal_state, pos, color);
     }
   }
 }
@@ -106,10 +110,11 @@ endgame(int color)
  * FIXME: This function can probably be improved to handle more cases.
  */
 static void
-endgame_analyze_worm_liberties(int pos, int color)
+endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
+                               int pos, int color)
 {
   int k;
-  int worm_color = board[pos];
+  int worm_color = internal_state->board[pos];
   int other = OTHER_COLOR(worm_color);
   int essential_liberties;
   int essential_libs[MAXLIBS];
@@ -124,7 +129,7 @@ endgame_analyze_worm_liberties(int pos, int color)
   int apos;
   int value;
 
-  if (!endgame_find_liberties(pos, &essential_liberties, essential_libs,
+  if (!endgame_find_liberties(internal_state, pos, &essential_liberties, essential_libs,
 			      &inessential_liberties, inessential_libs,
 			      &false_eye_liberties, false_eye_libs))
     return;
@@ -138,24 +143,24 @@ endgame_analyze_worm_liberties(int pos, int color)
    */
   for (k = 0; k < inessential_liberties; k++) {
     if (!safe_move(inessential_libs[k], other)
-	|| !trymove(inessential_libs[k], other, "endgame", pos))
+    || !trymove(internal_state, inessential_libs[k], other, "endgame", pos))
       break;
   }
 
   /* If we haven't eaten the worm accidentally, look if any attacks on the
    * worm have appeared.
    */
-  if (k == inessential_liberties && board[pos] != EMPTY) {
+  if (k == inessential_liberties && internal_state->board[pos] != EMPTY) {
     /* Try to look for moves as in position 1. If the worm still has
      * more than one liberty, try to play on every essential liberty
      * and see if an attack appears.
      */
-    if (countlib(pos) > 1) {
+    if (countlib(internal_state, pos) > 1) {
       for (k = 0; k < essential_liberties; k++) {
 	int lib = essential_libs[k];
 
 	if (safe_move(lib, worm_color) && safe_move(lib, other)
-	    && trymove(lib, other, "endgame", pos)) {
+        && trymove(internal_state, lib, other, "endgame", pos)) {
 	  if (attack(pos, NULL) != 0) {
 	    int dpos;
 
@@ -183,10 +188,10 @@ endgame_analyze_worm_liberties(int pos, int color)
 		  int adj[MAXCHAIN];
 		  int adjs;
 
-		  adjs = chainlinks2(pos, adj, 1);
+          adjs = chainlinks2(internal_state, pos, adj, 1);
 		  for (i = 0; i < adjs; i++) {
 		    int lib2;
-		    findlib(adj[i], 1, &lib2);
+            findlib(internal_state, adj[i], 1, &lib2);
 		    if (lib2 != dpos && !is_proper_eye_space(lib2)
 			&& does_defend(lib2, pos))
 		      break;
@@ -202,7 +207,7 @@ endgame_analyze_worm_liberties(int pos, int color)
 	    }
 	  }
 
-	  popgo();
+	  popgo(internal_state);
 	}
       }
     }
@@ -244,8 +249,8 @@ endgame_analyze_worm_liberties(int pos, int color)
 
   /* Undo all the moves made to fill inessential liberties. */
   for (k = 0; k < inessential_liberties; k++)
-    popgo();
-  ASSERT1(stackp == 0, pos);
+    popgo(internal_state);
+  ASSERT1(internal_state, internal_state->stackp == 0, pos);
 
   num_attacks2 = 0;
   for (k = 0; k < num_attacks; k++) {
@@ -273,7 +278,7 @@ endgame_analyze_worm_liberties(int pos, int color)
 	for (i = 0; i < 4; i++) {
 	  int pos2 = defenses[k] + delta[i];
 
-	  if (board[pos2] == EMPTY) {
+	  if (internal_state->board[pos2] == EMPTY) {
 	    int m;
 
 	    if (!is_proper_eye_space(pos2) && safe_move(pos2, other))
@@ -297,7 +302,7 @@ endgame_analyze_worm_liberties(int pos, int color)
 	/* This must be the only attack (filling all inessential liberties
 	 * gives an atari).
 	 */
-	ASSERT1(num_attacks == 1, pos);
+    ASSERT1(internal_state, num_attacks == 1, pos);
 	attacks[num_attacks2++] = attacks[k];
       }
     }
@@ -310,7 +315,7 @@ endgame_analyze_worm_liberties(int pos, int color)
      * function. In some rare cases the value may differ, but this
      * should be a good guess.
      */
-    value = accuratelib(apos, other, MAXLIBS, NULL) - 2;
+    value = accuratelib(internal_state, apos, other, MAXLIBS, NULL) - 2;
   }
 
   /* If we haven't found anything interesting or have already dropped it,
@@ -327,17 +332,17 @@ endgame_analyze_worm_liberties(int pos, int color)
    * trust them.
    */
   for (k = 0; k < inessential_liberties; k++) {
-    if (!trymove(inessential_libs[k], worm_color, "endgame", pos))
+    if (!trymove(internal_state, inessential_libs[k], worm_color, "endgame", pos))
       break;
   }
 
   /* GNU Go currently doesn't allow suicide, but let's assume it does. */
-  if (k == inessential_liberties && board[pos] != EMPTY) {
-    if (countlib(pos) > 1) {
+  if (k == inessential_liberties && internal_state->board[pos] != EMPTY) {
+    if (countlib(internal_state, pos) > 1) {
       for (k = 0; k < num_attacks2; k++) {
-	if (trymove(attacks[k], other, "endgame", pos)) {
+    if (trymove(internal_state, attacks[k], other, "endgame", pos)) {
 	  if (attack(pos, NULL) != 0) {
-	    TRACE("  endgame move with territorial value %d.0 found at %1m\n",
+        TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 		  1, attacks[k]);
 	    add_expand_territory_move(attacks[k]);
 	    /* FIXME: We just guess the value here. Find a way to calculate it
@@ -346,12 +351,12 @@ endgame_analyze_worm_liberties(int pos, int color)
 	    set_minimum_territorial_value(attacks[k], 1.0);
 	  }
 
-	  popgo();
+	  popgo(internal_state);
 	}
       }
     }
     else if (essential_liberties > 0  && essential_libs[0] == attacks[0]) {
-      TRACE("  endgame move with territorial value %d.0 found at %1m\n",
+      TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 	    1, attacks[k]);
       add_expand_territory_move(attacks[0]);
       /* FIXME: We just guess the value here. Find a way to calculate it
@@ -361,7 +366,7 @@ endgame_analyze_worm_liberties(int pos, int color)
     }
 
     if (value > 0 && does_attack(apos, pos)) {
-      TRACE("  endgame move with territorial value %d.0 found at %1m\n",
+      TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 	    value, apos);
       add_expand_territory_move(apos);
       set_minimum_territorial_value(apos, (float) value);
@@ -374,8 +379,8 @@ endgame_analyze_worm_liberties(int pos, int color)
 
   /* Undo all the moves made at the third step. */
   for (k = 0; k < inessential_liberties; k++)
-    popgo();
-  ASSERT1(stackp == 0, pos);
+    popgo(internal_state);
+  ASSERT1(internal_state, internal_state->stackp == 0, pos);
 }
 
 /* A backfilling dame is a defense move, usually within potential own
@@ -387,10 +392,11 @@ endgame_analyze_worm_liberties(int pos, int color)
  * blunders while filling dame.
  */
 static void
-endgame_find_backfilling_dame(int str, int color_to_move)
+endgame_find_backfilling_dame(struct board_lib_state_struct *internal_state,
+                              int str, int color_to_move)
 {
   int k;
-  int color = board[str];
+  int color = internal_state->board[str];
   int other = OTHER_COLOR(color);
   int essential_liberties;
   int essential_libs[MAXLIBS];
@@ -406,16 +412,16 @@ endgame_find_backfilling_dame(int str, int color_to_move)
 
   while (loop_again) {
     loop_again = 0;
-    if (!endgame_find_liberties(str, &essential_liberties, essential_libs,
+    if (!endgame_find_liberties(internal_state, str, &essential_liberties, essential_libs,
 				&inessential_liberties, inessential_libs,
 				&false_eye_liberties, false_eye_libs))
       break;
     for (k = 0; k < inessential_liberties; k++) {
       if (!safe_move(inessential_libs[k], other)
-	  || !trymove(inessential_libs[k], other, "endgame", str))
+      || !trymove(internal_state, inessential_libs[k], other, "endgame", str))
 	continue;
       increase_depth_values();
-      if (board[str] == EMPTY)
+      if (internal_state->board[str] == EMPTY)
 	break;
       if (attack_and_defend(str, NULL, NULL, NULL, &dpos)) {
 	if (worm[dpos].color == EMPTY) {
@@ -423,7 +429,7 @@ endgame_find_backfilling_dame(int str, int color_to_move)
 	  num_potential_moves++;
 	}
 	forced_backfilling_moves[dpos] = 1;
-	if (trymove(dpos, color, "endgame", str))
+    if (trymove(internal_state, dpos, color, "endgame", str))
 	  increase_depth_values();
 	loop_again = 1;
 	break;
@@ -431,15 +437,15 @@ endgame_find_backfilling_dame(int str, int color_to_move)
     }
   }
   
-  while (stackp > 0) {
-    popgo();
+  while (internal_state->stackp > 0) {
+    popgo(internal_state);
     decrease_depth_values();
   }
 
   for (k = num_potential_moves - 1; k >= 0; k--)
     if (safe_move(potential_moves[k], color)) {
       move = potential_moves[k];
-      TRACE("  backfilling dame found at %1m for string %1m\n", move, str);
+      TRACE(internal_state, "  backfilling dame found at %1m for string %1m\n", move, str);
       if (color == color_to_move) {
 	add_expand_territory_move(move);
 	set_minimum_territorial_value(move, 0.1);
@@ -453,7 +459,8 @@ endgame_find_backfilling_dame(int str, int color_to_move)
  * information.
  */
 static int
-endgame_find_liberties(int str,
+endgame_find_liberties(struct board_lib_state_struct *internal_state,
+               int str,
 		       int *essential_liberties, int essential_libs[MAXLIBS],
 		       int *inessential_liberties,
 		       int inessential_libs[MAXLIBS],
@@ -463,14 +470,14 @@ endgame_find_liberties(int str,
   int libs[MAXLIBS];
   int k;
 
-  ASSERT1(internal_state, IS_STONE(board[str]), str);
+  ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
 
   *essential_liberties = 0;
   *inessential_liberties = 0;
   *false_eye_liberties = 0;
   
   /* Find all string liberties. */
-  liberties = findlib(str, MAXLIBS, libs);
+  liberties = findlib(internal_state, str, MAXLIBS, libs);
 
   /* Loop over the liberties and find inessential and essential ones. The
    * latter are defined as those, which are not inside an eye space, but
@@ -489,14 +496,14 @@ endgame_find_liberties(int str,
       for (i = 0; i < 4; i++) {
 	int pos = lib + delta[i];
 
-	if (!IS_STONE(board[pos]) || !IS_STONE(worm[pos].color))
+	if (!IS_STONE(internal_state->board[pos]) || !IS_STONE(worm[pos].color))
 	  continue;
 
 	if (worm[pos].attack_codes[0] != 0 || dragon[pos].status != ALIVE)
 	  return 0;
 
-	if (board[pos] == board[str]) {
-	  if (find_origin(pos) != find_origin(str))
+	if (internal_state->board[pos] == internal_state->board[str]) {
+      if (find_origin(internal_state, pos) != find_origin(internal_state, str))
 	    essential = 1;
 	}
 	else

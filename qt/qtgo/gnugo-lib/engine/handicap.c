@@ -140,26 +140,27 @@ static const int places[][2] = {
  */
 
 int
-place_fixed_handicap(int desired_handicap)
+place_fixed_handicap(struct board_lib_state_struct *internal_state,
+                     int desired_handicap)
 {
   int r;
   int max_handicap;
   int remaining_stones;
-  int three = board_size > 11 ? 3 : 2;
-  int mid = board_size/2;
+  int three = internal_state->board_size > 11 ? 3 : 2;
+  int mid = internal_state->board_size/2;
 
   /* A handicap of 1 just means that B plays first, no komi.
    * Black is not told where to play the first stone so no handicap
    * is set. 
    */
   if (desired_handicap < 2) {
-    handicap = 0;
+    internal_state->handicap = 0;
     return 0;
   }
   
-  if ((board_size % 2 == 1) && (board_size >= 9))
+  if ((internal_state->board_size % 2 == 1) && (internal_state->board_size >= 9))
     max_handicap = 9;
-  else if (board_size >= 7)
+  else if (internal_state->board_size >= 7)
     max_handicap = 4;
   else
     max_handicap = 0;
@@ -168,14 +169,14 @@ place_fixed_handicap(int desired_handicap)
    * was too large for fixed placement and act upon that.
    */
   if (desired_handicap > max_handicap)
-    handicap = max_handicap;
+    internal_state->handicap = max_handicap;
   else
-    handicap = desired_handicap;
+    internal_state->handicap = desired_handicap;
 
-  remaining_stones = handicap;
+  remaining_stones = internal_state->handicap;
   /* special cases: 5 and 7 */
   if (desired_handicap == 5 || desired_handicap == 7) {
-    add_stone(POS(mid, mid), BLACK);
+    add_stone(internal_state, POS(mid, mid), BLACK);
     remaining_stones--;
   }
 
@@ -189,19 +190,19 @@ place_fixed_handicap(int desired_handicap)
     else if (i == 0)
       i = mid;
     else if (i == -2)
-      i = board_size - 1 - three;
+      i = internal_state->board_size - 1 - three;
     
     if (j == 2)
       j = three;
     else if (j == 0)
       j = mid;
     else if (j == -2)
-      j = board_size - 1 - three;
+      j = internal_state->board_size - 1 - three;
     
-    add_stone(POS(i, j), BLACK);
+    add_stone(internal_state, POS(i, j), BLACK);
   }
 
-  return handicap;
+  return internal_state->handicap;
 }
 
 
@@ -215,13 +216,15 @@ place_fixed_handicap(int desired_handicap)
  * placed handicap stones.
  */
 
+//TODO - get rid of this static thing
 static int remaining_handicap_stones = -1;
 static int total_handicap_stones = -1;
 
-static int find_free_handicap_pattern(void);
-static void free_handicap_callback(int anchor, int color,
-				   struct pattern *pattern,
-				   int ll, void *data);
+static int find_free_handicap_pattern(struct board_lib_state_struct *internal_state);
+static void free_handicap_callback(struct board_lib_state_struct *internal_state,
+                                   int anchor, int color,
+                   struct pattern *pattern,
+                   int ll, void *data);
 
 /*
  * Sets up free placement handicap stones, returning the number of
@@ -229,12 +232,13 @@ static void free_handicap_callback(int anchor, int color,
  * handicap to the same value.
  */
 int
-place_free_handicap(int desired_handicap)
+place_free_handicap(struct board_lib_state_struct *internal_state,
+                    int desired_handicap)
 {
-  gg_assert(desired_handicap == 0 || desired_handicap >= 2);
+  gg_assert(internal_state, desired_handicap == 0 || desired_handicap >= 2);
 
   if (desired_handicap == 0) {
-    handicap = 0;
+    internal_state->handicap = 0;
     return 0;
   }
 
@@ -244,22 +248,22 @@ place_free_handicap(int desired_handicap)
   /* First place black stones in the four corners to enable the
    * pattern matching scheme.
    */
-  add_stone(POS(0, 0), BLACK);
-  add_stone(POS(0, board_size - 1), BLACK);
-  add_stone(POS(board_size - 1, 0), BLACK);
-  add_stone(POS(board_size - 1, board_size - 1), BLACK);
+  add_stone(internal_state, POS(0, 0), BLACK);
+  add_stone(internal_state, POS(0, internal_state->board_size - 1), BLACK);
+  add_stone(internal_state, POS(internal_state->board_size - 1, 0), BLACK);
+  add_stone(internal_state, POS(internal_state->board_size - 1, internal_state->board_size - 1), BLACK);
 
   /* Find and place free handicap stones by pattern matching. */
   while (remaining_handicap_stones > 0) {
-    if (!find_free_handicap_pattern())
+    if (!find_free_handicap_pattern(internal_state))
       break;
   }
 
   /* Remove the artificial corner stones. */
-  remove_stone(POS(0, 0));
-  remove_stone(POS(0, board_size - 1));
-  remove_stone(POS(board_size - 1, 0));
-  remove_stone(POS(board_size - 1, board_size - 1));
+  remove_stone(internal_state, POS(0, 0));
+  remove_stone(internal_state, POS(0, internal_state->board_size - 1));
+  remove_stone(internal_state, POS(internal_state->board_size - 1, 0));
+  remove_stone(internal_state, POS(internal_state->board_size - 1, internal_state->board_size - 1));
 
   /* Find and place additional free handicap stones by the aftermath
    * algorithm.
@@ -267,12 +271,12 @@ place_free_handicap(int desired_handicap)
   while (remaining_handicap_stones > 0) {
     int move;
     /* Call genmove_conservative() in order to prepare the engine for
-     * an aftermath_genmove() call. We discard the genmove result.
+     * an aftermath_genmove(internal_state) call. We discard the genmove result.
      */
-    genmove_conservative(BLACK, NULL);
-    move = aftermath_genmove(BLACK, 0, NULL);
+    genmove_conservative(internal_state, BLACK, NULL);
+    move = aftermath_genmove(internal_state, BLACK, 0, NULL);
     if (move != PASS_MOVE) {
-      add_stone(move, BLACK);
+      add_stone(internal_state, move, BLACK);
       remaining_handicap_stones--;
     }
     else
@@ -280,7 +284,7 @@ place_free_handicap(int desired_handicap)
   }
 
   /* Set handicap to the number of actually placed stones. */
-  handicap = desired_handicap - remaining_handicap_stones;
+  internal_state->handicap = desired_handicap - remaining_handicap_stones;
 
   /* Reset these to invalid values, so that improper use of handicap
    * helper functions can be detected.
@@ -288,7 +292,7 @@ place_free_handicap(int desired_handicap)
   total_handicap_stones = -1;
   remaining_handicap_stones = -1;
   
-  return handicap;
+  return internal_state->handicap;
 }
 
 struct handicap_match {
@@ -304,7 +308,7 @@ static struct handicap_match handicap_matches[MAX_HANDICAP_MATCHES];
 static int number_of_matches;
 
 static int
-find_free_handicap_pattern()
+find_free_handicap_pattern(struct board_lib_state_struct *internal_state)
 {
   int k;
   int highest_value = -1;
@@ -358,14 +362,14 @@ find_free_handicap_pattern()
   
   /* Pick up the location of the move */
   move = AFFINE_TRANSFORM(pattern->move_offset, ll, anchor);
-  add_stone(move, BLACK);
+  add_stone(internal_state, move, BLACK);
   remaining_handicap_stones--;
 
   /* Add stones at all '!' in the pattern. */
   for (k = 0; k < pattern->patlen; k++) { 
     if (pattern->patn[k].att == ATT_not) {
       int pos = AFFINE_TRANSFORM(pattern->patn[k].offset, ll, anchor);
-      add_stone(pos, BLACK);
+      add_stone(internal_state, pos, BLACK);
       remaining_handicap_stones--;
     }
   }
@@ -374,7 +378,8 @@ find_free_handicap_pattern()
 }
 
 static void
-free_handicap_callback(int anchor, int color, struct pattern *pattern,
+free_handicap_callback(struct board_lib_state_struct *internal_state,
+                       int anchor, int color, struct pattern *pattern,
 		       int ll, void *data)
 {
   int r = -1;
@@ -417,7 +422,7 @@ free_handicap_callback(int anchor, int color, struct pattern *pattern,
       }
     }
   }
-  gg_assert(r >= 0 && r < MAX_HANDICAP_MATCHES);
+  gg_assert(internal_state, r >= 0 && r < MAX_HANDICAP_MATCHES);
   handicap_matches[r].value   = pattern->value;
   handicap_matches[r].anchor  = anchor;
   handicap_matches[r].pattern = pattern;
@@ -425,16 +430,16 @@ free_handicap_callback(int anchor, int color, struct pattern *pattern,
 }
 
 int
-free_handicap_remaining_stones()
+free_handicap_remaining_stones(struct board_lib_state_struct *internal_state)
 {
-  gg_assert(remaining_handicap_stones >= 0);
+  gg_assert(internal_state, remaining_handicap_stones >= 0);
   return remaining_handicap_stones;
 }
 
 int
-free_handicap_total_stones()
+free_handicap_total_stones(struct board_lib_state_struct *internal_state)
 {
-  gg_assert(total_handicap_stones >= 0);
+  gg_assert(internal_state, total_handicap_stones >= 0);
   return total_handicap_stones;
 }
 

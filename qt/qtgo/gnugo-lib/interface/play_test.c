@@ -57,7 +57,7 @@ play_replay(SGFTree *tree, int color_to_replay)
   clear_board();
  
   if (!quiet) {
-    printf("Board Size:   %d\n", board_size);
+    printf("Board Size:   %d\n", internal_state->board_size);
     if (sgfGetCharProperty(node, "HA", &tmpc))
       printf("Handicap:     %s\n", tmpc);
     printf("Komi:         %.1f\n", komi);
@@ -94,7 +94,7 @@ play_replay(SGFTree *tree, int color_to_replay)
     printf("Global score: %.2f / %.2f\n", replay_score, total_score);
 
   if (showtime) {
-    gprintf("SLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
+    gprintf(internal_state, "SLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
     fprintf(stderr, "(%.2f seconds)\n", slowest_time);
     fprintf(stderr, "AVERAGE TIME: %.2f seconds per move\n",
 	    total_time / movenum);

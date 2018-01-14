@@ -58,10 +58,10 @@ play_gmp(Gameinfo *gameinfo, int simplified)
     mycolor = 0;
 
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, board_size, komi, gameinfo->handicap);
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, gameinfo->handicap);
 
   ge = gmp_create(0, 1);
-  TRACE("board size=%d\n", board_size);
+  TRACE(internal_state, "board size=%d\n", internal_state->board_size);
 
   /* 
    * The specification of the go modem protocol doesn't even discuss
@@ -84,7 +84,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
       gmp_startGame(ge, -1, -1, 5.5, 0, mycolor, 0);
   }
   else {
-    gmp_startGame(ge, board_size, gameinfo->handicap,
+    gmp_startGame(ge, internal_state->board_size, gameinfo->handicap,
 		  komi, chinese_rules, mycolor, 1);
   }
 
@@ -113,12 +113,12 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 
 #if ORACLE
   if (metamachine && oracle_exists)
-    oracle_clear_board(board_size);
+    oracle_clear_board(internal_state->board_size);
 #endif
 
-  sgfOverwritePropertyInt(sgftree.root, "SZ", board_size);
+  sgfOverwritePropertyInt(sgftree.root, "SZ", internal_state->board_size);
 
-  TRACE("size=%d, handicap=%d, komi=%f\n", board_size,
+  TRACE(internal_state, "size=%d, handicap=%d, komi=%f\n", internal_state->board_size,
 	gameinfo->handicap, komi);
 
   if (gameinfo->handicap)
@@ -182,7 +182,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 	move = POS(i, j);
       }
 
-      TRACE("\nyour move: %1m\n\n", move);
+      TRACE(internal_state, "\nyour move: %1m\n\n", move);
       sgftreeAddPlay(&sgftree, to_move, I(move), J(move));
       gnugo_play_move(move, yourcolor);
       sgffile_output(&sgftree);
@@ -209,7 +209,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
         sgftreeAddPlay(&sgftree, to_move, I(move), J(move));
 	gmp_sendMove(ge, J(move), I(move));
 	passes = 0;
-	TRACE("\nmy move: %1m\n\n", move);
+	TRACE(internal_state, "\nmy move: %1m\n\n", move);
       }
       sgffile_add_debuginfo(sgftree.lastnode, 0.0);
       sgffile_output(&sgftree);
@@ -226,7 +226,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
   who_wins(mycolor, stderr);
 
   if (showtime) {
-    gprintf("\nSLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
+    gprintf(internal_state, "\nSLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
     fprintf(stderr, "(%.2f seconds)\n", slowest_time);
     fprintf(stderr, "\nAVERAGE TIME: %.2f seconds per move\n",
 	    total_time / movenum);

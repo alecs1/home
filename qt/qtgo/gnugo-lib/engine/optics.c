@@ -130,7 +130,7 @@ make_domains(struct eye_data b_eye[BOARDMAX],
 
   /* Initialize eye data and compute the lively array. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos))
+    if (ON_BOARD(internal_state, pos))
       lively[pos] = is_lively(owl_call, pos);
 
   /* Compute the domains of influence of each color. */
@@ -142,10 +142,10 @@ make_domains(struct eye_data b_eye[BOARDMAX],
    */
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
     
-    if (board[pos] == EMPTY || !lively[pos]) {
+    if (internal_state->board[pos] == EMPTY || !lively[pos]) {
       if (black_domain[pos] == 0 && white_domain[pos] == 0) {
 	if (w_eye)
 	  w_eye[pos].color = GRAY;
@@ -219,11 +219,11 @@ partition_eyespaces(struct eye_data eye[BOARDMAX], int color)
     return;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos))
+    if (ON_BOARD(internal_state, pos))
       eye[pos].origin = NO_MOVE;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
     if (eye[pos].origin == NO_MOVE && eye[pos].color == color) {
       int esize = 0;
@@ -314,11 +314,11 @@ compute_primary_domains(int color, int domain[BOARDMAX],
    * 2. Fill influence[] and threshold[] arrays with initial values.
    */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos))
+    if (!ON_BOARD(internal_state, pos))
       continue;
    
     if (lively[pos]) {
-      if (board[pos] == color) {
+      if (internal_state->board[pos] == color) {
         domain[pos] = 1; /* Case (1) above. */
         influence[pos] = 1;
       }
@@ -330,8 +330,8 @@ compute_primary_domains(int color, int domain[BOARDMAX],
     own = enemy = 0;
     for (k = 0; k < 4; k++) {
       pos2 = pos + delta[k];
-      if (ON_BOARD(pos2) && lively[pos2]) {
-        if (board[pos2] == color)
+      if (ON_BOARD(internal_state, pos2) && lively[pos2]) {
+        if (internal_state->board[pos2] == color)
           own = 1;
         else
           enemy = 1;
@@ -345,7 +345,7 @@ compute_primary_domains(int color, int domain[BOARDMAX],
        * pass through the loop.
        */
       if (first_time) {
-        if (board[pos] == EMPTY && (false_margin(pos, color, lively)
+        if (internal_state->board[pos] == EMPTY && (false_margin(pos, color, lively)
 				    || false_margin(pos, other, lively)))
           false_margins[pos] = 1;
         else {
@@ -353,7 +353,7 @@ compute_primary_domains(int color, int domain[BOARDMAX],
           influence[pos] = 1;
         }
       }
-      else if (board[pos] != EMPTY || !false_margins[pos]) {
+      else if (internal_state->board[pos] != EMPTY || !false_margins[pos]) {
         domain[pos] = 1;
         influence[pos] = 1;
       }
@@ -406,8 +406,8 @@ compute_primary_domains(int color, int domain[BOARDMAX],
   
   if (0 && (debug & DEBUG_EYES)) {
     start_draw_board();
-    for (i = 0; i < board_size; i++)
-      for (j = 0; j < board_size; j++) {
+    for (i = 0; i < internal_state->board_size; i++)
+      for (j = 0; j < internal_state->board_size; j++) {
 	draw_color_char(i, j, domain[POS(i, j)] ? '1' : '0', GG_COLOR_BLACK);
       }
     end_draw_board();
@@ -422,7 +422,7 @@ count_neighbours(struct eye_data eyedata[BOARDMAX])
   int k;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos) || eyedata[pos].origin == NO_MOVE) 
+    if (!ON_BOARD(internal_state, pos) || eyedata[pos].origin == NO_MOVE)
       continue;
 
     eyedata[pos].esize = eyedata[eyedata[pos].origin].esize;
@@ -432,7 +432,7 @@ count_neighbours(struct eye_data eyedata[BOARDMAX])
     
     for (k = 0; k < 4; k++) {
       int pos2 = pos + delta[k];
-      if (ON_BOARD(pos2) && eyedata[pos2].origin == eyedata[pos].origin) {
+      if (ON_BOARD(internal_state, pos2) && eyedata[pos2].origin == eyedata[pos].origin) {
 	eyedata[pos].neighbors++;
 	if (eyedata[pos2].marginal)
 	  eyedata[pos].marginal_neighbors++;
@@ -445,7 +445,7 @@ count_neighbours(struct eye_data eyedata[BOARDMAX])
 static int
 is_lively(int owl_call, int pos)
 {
-  if (board[pos] == EMPTY)
+  if (internal_state->board[pos] == EMPTY)
     return 0;
 
   if (owl_call)
@@ -496,7 +496,7 @@ false_margin(int pos, int color, int lively[BOARDMAX])
   
   /* Require neighbors of both colors. */
   for (k = 0; k < 4; k++)
-    if (ON_BOARD(pos + delta[k]))
+    if (ON_BOARD(internal_state, pos + delta[k]))
 	neighbors |= board[pos + delta[k]];	
 
   if (neighbors != (WHITE | BLACK))
@@ -505,7 +505,7 @@ false_margin(int pos, int color, int lively[BOARDMAX])
   /* At least one opponent neighbor should be not lively. */
   all_lively = 1;
   for (k = 0; k < 4; k++)
-    if (board[pos + delta[k]] == other && !lively[pos + delta[k]])
+    if (internal_state->board[pos + delta[k]] == other && !lively[pos + delta[k]])
       all_lively = 0;
 
   if (all_lively)
@@ -514,13 +514,13 @@ false_margin(int pos, int color, int lively[BOARDMAX])
   potential_false_margin = 0;
   for (k = 0; k < 4; k++) {
     int apos = pos + delta[k];
-    if (board[apos] != other || !lively[apos])
+    if (internal_state->board[apos] != other || !lively[apos])
       continue;
     
-    if (stackp == 0 && worm[apos].attack_codes[0] == 0)
+    if (internal_state->stackp == 0 && worm[apos].attack_codes[0] == 0)
       potential_false_margin = 1;
     
-    if (stackp > 0 && !attack(apos, NULL))
+    if (internal_state->stackp > 0 && !attack(apos, NULL))
       potential_false_margin = 1;
   }
   
@@ -546,9 +546,9 @@ originate_eye(int origin, int pos,
 {
   int k;
   ASSERT_ON_BOARD1(origin);
-  ASSERT_ON_BOARD1(pos);
+  ASSERT_ON_BOARD1(internal_state, pos);
   gg_assert(esize != NULL);
-  gg_assert(msize != NULL);
+  gg_assert(internal_state, msize != NULL);
   
   eye[pos].origin = origin;
   (*esize)++;
@@ -557,7 +557,7 @@ originate_eye(int origin, int pos,
 
   for (k = 0; k < 4; k++) {
     int pos2 = pos + delta[k];
-    if (ON_BOARD(pos2)
+    if (ON_BOARD(internal_state, pos2)
 	&& eye[pos2].color == eye[pos].color
 	&& eye[pos2].origin == NO_MOVE
 	&& (!eye[pos2].marginal || !eye[pos].marginal))
@@ -577,7 +577,7 @@ propagate_eye(int origin, struct eye_data eye[BOARDMAX])
   int pos;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos) && eye[pos].origin == origin) {
+    if (ON_BOARD(internal_state, pos) && eye[pos].origin == origin) {
       eye[pos].color         = eye[origin].color;
       eye[pos].esize         = eye[origin].esize;
       eye[pos].msize         = eye[origin].msize;
@@ -603,18 +603,18 @@ find_eye_dragons(int origin, struct eye_data eye[BOARDMAX], int eye_color,
   memset(mx, 0, sizeof(mx));
   DEBUG(DEBUG_MISCELLANEOUS, "find_eye_dragons: %1m %C\n", origin, eye_color);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (board[pos] == eye_color
+    if (internal_state->board[pos] == eye_color
 	&& mx[dragon[pos].origin] == 0
-	&& ((ON_BOARD(SOUTH(pos))
+    && ((ON_BOARD(internal_state, SOUTH(pos))
 	     && eye[SOUTH(pos)].origin == origin
 	     && !eye[SOUTH(pos)].marginal)
-	    || (ON_BOARD(WEST(pos))
+        || (ON_BOARD(internal_state, WEST(pos))
 		&& eye[WEST(pos)].origin == origin
 		&& !eye[WEST(pos)].marginal)
-	    || (ON_BOARD(NORTH(pos))
+        || (ON_BOARD(internal_state, NORTH(pos))
 		&& eye[NORTH(pos)].origin == origin
 		&& !eye[NORTH(pos)].marginal)
-	    || (ON_BOARD(EAST(pos))
+        || (ON_BOARD(internal_state, EAST(pos))
 		&& eye[EAST(pos)].origin == origin
 		&& !eye[EAST(pos)].marginal))) {
       DEBUG(DEBUG_MISCELLANEOUS, 
@@ -642,48 +642,48 @@ print_eye(struct eye_data eye[BOARDMAX], struct half_eye_data heye[BOARDMAX],
   int minj, maxj;
   int origin = eye[pos].origin;
 
-  gprintf("Eyespace at %1m: color=%C, esize=%d, msize=%d\n",
+  gprintf(internal_state, "Eyespace at %1m: color=%C, esize=%d, msize=%d\n",
 	  pos, eye[pos].color, eye[pos].esize, eye[pos].msize);
   
   for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-    if (!ON_BOARD(pos2))
+    if (!ON_BOARD(internal_state, pos2))
       continue;
     
     if (eye[pos2].origin != pos) 
       continue;
     
-    if (eye[pos2].marginal && IS_STONE(board[pos2]))
-      gprintf("%1m (X!)\n", pos2);
-    else if (is_halfeye(heye, pos2) && IS_STONE(board[pos2])) {
+    if (eye[pos2].marginal && IS_STONE(internal_state->board[pos2]))
+      gprintf(internal_state, "%1m (X!)\n", pos2);
+    else if (is_halfeye(heye, pos2) && IS_STONE(internal_state->board[pos2])) {
       if (heye[pos2].value == 3.0)
-	gprintf("%1m (XH)\n", pos2);
+    gprintf(internal_state, "%1m (XH)\n", pos2);
       else
-	gprintf("%1m (XH) (topological eye value = %f)\n", pos2,
+    gprintf(internal_state, "%1m (XH) (topological eye value = %f)\n", pos2,
 		heye[pos2].value);
     }
-    else if (!eye[pos2].marginal && IS_STONE(board[pos2]))
-      gprintf("%1m (X)\n", pos2);
+    else if (!eye[pos2].marginal && IS_STONE(internal_state->board[pos2]))
+      gprintf(internal_state, "%1m (X)\n", pos2);
     else if (eye[pos2].marginal && board[pos2] == EMPTY)
-      gprintf("%1m (!)\n", pos2);
+      gprintf(internal_state, "%1m (!)\n", pos2);
     else if (is_halfeye(heye, pos2) && board[pos2] == EMPTY) {
       if (heye[pos2].value == 3.0)
-	gprintf("%1m (H)\n", pos2);
+    gprintf(internal_state, "%1m (H)\n", pos2);
       else
-	gprintf("%1m (H) (topological eye value = %f)\n", pos2,
+    gprintf(internal_state, "%1m (H) (topological eye value = %f)\n", pos2,
 		heye[pos2].value);
     }
     else
-      gprintf("%1m\n", pos2);
+      gprintf(internal_state, "%1m\n", pos2);
   }
-  gprintf("\n");
+  gprintf(internal_state, "\n");
   
   /* Determine the size of the eye. */
-  mini = board_size;
+  mini = internal_state->board_size;
   maxi = -1;
-  minj = board_size;
+  minj = internal_state->board_size;
   maxj = -1;
-  for (m = 0; m < board_size; m++)
-    for (n = 0; n < board_size; n++) {
+  for (m = 0; m < internal_state->board_size; m++)
+    for (n = 0; n < internal_state->board_size; n++) {
       if (eye[POS(m, n)].origin != origin)
 	continue;
 
@@ -700,27 +700,27 @@ print_eye(struct eye_data eye[BOARDMAX], struct half_eye_data heye[BOARDMAX],
    * would be nice, but difficult to implement.
    */
   for (m = mini; m <= maxi; m++) {
-    gprintf(""); /* Get the indentation right. */
+    gprintf(internal_state, ""); /* Get the indentation right. */
     for (n = minj; n <= maxj; n++) {
       int pos2 = POS(m, n);
       if (eye[pos2].origin == origin) {
-	if (board[pos2] == EMPTY) {
+    if (internal_state->board[pos2] == EMPTY) {
 	  if (eye[pos2].marginal)
-	    gprintf("%o!");
+        gprintf(internal_state, "%o!");
 	  else if (is_halfeye(heye, pos2))
-	    gprintf("%oh");
+        gprintf(internal_state, "%oh");
 	  else
-	    gprintf("%o.");
+        gprintf(internal_state, "%o.");
 	}
 	else if (is_halfeye(heye, pos2))
-	  gprintf("%oH");
+      gprintf(internal_state, "%oH");
 	else
-	  gprintf("%oX");
+      gprintf(internal_state, "%oX");
       }
       else
-	gprintf("%o ");
+    gprintf(internal_state, "%o ");
     }
-    gprintf("\n");
+    gprintf(internal_state, "\n");
   }
 }
 
@@ -806,7 +806,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
   for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
     int k;
 
-    if (!ON_BOARD(pos2) || eye[pos2].origin != pos)
+    if (!ON_BOARD(internal_state, pos2) || eye[pos2].origin != pos)
       continue;
 
     if (eye[pos2].marginal || is_halfeye(heye, pos2)) {
@@ -816,7 +816,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
       if (is_halfeye(heye, pos2))
 	halfeyes++;
     }
-    else if (IS_STONE(board[pos2]))
+    else if (IS_STONE(internal_state->board[pos2]))
       interior_stones++;
 
     bulk_score += bulk_coefficients[(int) eye[pos2].neighbors];
@@ -824,7 +824,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
     for (k = 0; k < 4; k++) {
       int neighbor = pos2 + delta[k];
 
-      if (board[neighbor] == eye[pos].color) {
+      if (internal_state->board[neighbor] == eye[pos].color) {
 	if (!chainlinks[neighbor]) {
 	  bulk_score += 4;
 	  mark_string(neighbor, chainlinks, 1);
@@ -899,7 +899,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
 
     /* A single point eye which is part of a ko can't be trusted. */
     if (eye[pos].esize == 1
-	&& is_ko(pos, OTHER_COLOR(eye[pos].color), NULL))
+    && is_ko(internal_state, pos, OTHER_COLOR(eye[pos].color), NULL))
       *pessimistic_min = 0;
 
     DEBUG(DEBUG_EYES, "  graph matching - %s, pessimistic_min=%d\n",
@@ -951,7 +951,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
     float score = 0.0;
     
     for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-      if (ON_BOARD(pos2) && eye[pos2].origin == pos) {
+      if (ON_BOARD(internal_state, pos2) && eye[pos2].origin == pos) {
 	float this_score = 0.0;
 	int this_attack_point = NO_MOVE;
 	int this_defense_point = NO_MOVE;
@@ -960,7 +960,7 @@ compute_eyes_pessimistic(int pos, struct eyevalue *value,
 	  this_attack_point = pos2;
 	  this_defense_point = pos2;
 
-	  if (is_self_atari(pos2, OTHER_COLOR(eye[pos].color)))
+      if (is_self_atari(internal_state, pos2, OTHER_COLOR(eye[pos].color)))
 	    this_score -= 0.5;
 	  
 	  if (is_edge_vertex(pos2))
@@ -1111,7 +1111,7 @@ read_eye(int pos, int *attack_point, int *defense_point,
 
   /* Find ko half eyes and "combination" half eyes if any. */
   for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-    if (ON_BOARD(pos2)
+    if (ON_BOARD(internal_state, pos2)
 	&& eye[pos2].origin == pos
 	&& heye[pos2].type == HALF_EYE) {
       if (combination_halfeye == NO_MOVE) {
@@ -1283,8 +1283,8 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
   int best_score;
   int r;
 
-  gg_assert(attack_point != NULL);
-  gg_assert(defense_point != NULL);
+  gg_assert(internal_state, attack_point != NULL);
+  gg_assert(internal_state, defense_point != NULL);
 
   /* Set `eye_color' to the owner of the eye. */
   eye_color = eye[pos].color;
@@ -1297,7 +1297,7 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 
   /* Create list of eye vertices */
   for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-    if (!ON_BOARD(pos2))
+    if (!ON_BOARD(internal_state, pos2))
       continue;
     if (eye[pos2].origin == pos) {
       vpos[eye_size] = pos2;
@@ -1305,13 +1305,13 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
       if (marginal[eye_size])
 	num_marginals++;
       neighbors[eye_size] = eye[pos2].neighbors;
-      stone[eye_size] = IS_STONE(board[pos2]);
+      stone[eye_size] = IS_STONE(internal_state->board[pos2]);
       if (0) {
 	if (marginal[eye_size])
-	  TRACE("(%1m)", vpos[eye_size]);
+      TRACE(internal_state, "(%1m)", vpos[eye_size]);
 	else
-	  TRACE(" %1m ", vpos[eye_size]);
-	TRACE("\n");
+      TRACE(internal_state, " %1m ", vpos[eye_size]);
+    TRACE(internal_state, "\n");
       }
       
       if (is_corner_vertex(pos2))
@@ -1439,7 +1439,7 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 	  score++;
 	  if (r < 4) {
 	    score++;
-	    if (board[apos + delta[r]] != EMPTY)
+        if (internal_state->board[apos + delta[r]] != EMPTY)
 	      score++;
 	  }
 	}
@@ -1461,7 +1461,7 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 	score += 2;
 
       if (0)
-	gprintf("attack point %1m score %d\n", apos, score);
+    gprintf(internal_state, "attack point %1m score %d\n", apos, score);
 
       if (score > best_score) {
 	*attack_point = apos;
@@ -1480,7 +1480,7 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 	  score++;
 	  if (r < 4) {
 	    score++;
-	    if (board[dpos + delta[r]] != EMPTY)
+        if (internal_state->board[dpos + delta[r]] != EMPTY)
 	      score++;
 	  }
 	}
@@ -1496,7 +1496,7 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 	score += 2;
 
       if (0)
-	gprintf("defense point %1m score %d\n", dpos, score);
+    gprintf(internal_state, "defense point %1m score %d\n", dpos, score);
 
       if (score > best_score) {
 	*defense_point = dpos;
@@ -1590,14 +1590,14 @@ recognize_eye(int pos, int *attack_point, int *defense_point,
 	  int pos = vpos[k];
 	  if (threat[k] == min_threat) {
 	    eyefilling_points[pos] = 1;
-	    TRACE("Eyefilling point at %1m\n", pos);
+        TRACE(internal_state, "Eyefilling point at %1m\n", pos);
 	  }
 	}
       }
     }
   }
 
-  TRACE("eye space at %1m of type %d\n", pos, graph->patnum);
+  TRACE(internal_state, "eye space at %1m of type %d\n", pos, graph->patnum);
   return eye_color;
 }
 
@@ -1632,7 +1632,7 @@ optical_graph_matcher(int *vpos, signed char *marginal, signed char *edge,
       int ok = 1;
 
       if (0)
-	TRACE("q=%d: %d %d %d %d %d %d\n", 
+    TRACE(internal_state, "q=%d: %d %d %d %d %d %d\n",
 	      q, map[0], map[1], map[2], map[3], map[4], map[5]);
 
       if (neighbors[mv] != gv->neighbors
@@ -1685,7 +1685,7 @@ optical_graph_matcher(int *vpos, signed char *marginal, signed char *edge,
 	  break;
 
 	if (0)
-	  gprintf("  q=%d, esize=%d: %d %d %d %d %d\n",
+      gprintf(internal_state, "  q=%d, esize=%d: %d %d %d %d %d\n",
 		  q, eye_size, 
 		  map[0], map[1], map[2], map[3], map[4]);
       }
@@ -1783,7 +1783,7 @@ add_false_eye(int pos, struct eye_data eye[BOARDMAX],
   eye[pos].marginal = 1;
   eye[eye[pos].origin].msize++;
   for (k = 0; k < 4; k++)
-    if (ON_BOARD(pos + delta[k])
+    if (ON_BOARD(internal_state, pos + delta[k])
 	&& eye[pos + delta[k]].origin == eye[pos].origin)
       eye[pos + delta[k]].marginal_neighbors++;
   propagate_eye(eye[pos].origin, eye);
@@ -1861,7 +1861,7 @@ find_half_and_false_eyes(int color, struct eye_data eye[BOARDMAX],
   
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     /* skip eyespaces which owl doesn't want to be searched */
-    if (!ON_BOARD(pos) || (find_mask && find_mask[eye[pos].origin] <= 1))
+    if (!ON_BOARD(internal_state, pos) || (find_mask && find_mask[eye[pos].origin] <= 1))
       continue;
     
     /* skip every vertex which can't be a false or half eye */
@@ -2030,7 +2030,7 @@ topological_eye(int pos, int color,
 	int str;
 	str = pos + delta[r];
 
-	if (board[str] != color)
+    if (internal_state->board[str] != color)
 	  continue;
 
 	ASSERT1(string_count < 3, pos);
@@ -2048,7 +2048,7 @@ topological_eye(int pos, int color,
 	  int adj_eye_count;
 	  int lib_count;
 	  adj_eye_count = 0;
-	  lib_count = findlib(strings[s], MAX_LIBERTIES, libs);
+      lib_count = findlib(internal_state, strings[s], MAX_LIBERTIES, libs);
 	  if (lib_count > MAX_LIBERTIES)
 	    continue;
 
@@ -2072,7 +2072,7 @@ topological_eye(int pos, int color,
        */
       if (attack_point != NO_MOVE && defense_point != NO_MOVE) {
 	ASSERT_ON_BOARD1(attack_point);
-	ASSERT_ON_BOARD1(defense_point);
+    ASSERT_ON_BOARD1(internal_state, defense_point);
 	/* Store these in sorted (descending) order. We remap val
          * differently for attack and defense points according to:
 	 *
@@ -2209,10 +2209,10 @@ evaluate_diagonal_intersection(int m, int n, int color,
    * each board coordinate separately because points "off the corner"
    * are special cases.
    */
-  if (m < 0 || m >= board_size)
+  if (m < 0 || m >= internal_state->board_size)
     off_edge++;
 
-  if (n < 0 || n >= board_size)
+  if (n < 0 || n >= internal_state->board_size)
     off_edge++;
 
   /* Must return 0 if both coordinates out of bounds. */
@@ -2258,10 +2258,10 @@ evaluate_diagonal_intersection(int m, int n, int color,
    if (my_eye[pos].color == color
        && !my_eye[pos].marginal
        && my_eye[pos].marginal_neighbors < 2
-       && !(board[pos] == EMPTY && does_capture_something(pos, other)))
+       && !(internal_state->board[pos] == EMPTY && does_capture_something(internal_state, pos, other)))
     return 0.0;
 
-  if (board[pos] == EMPTY) {
+  if (internal_state->board[pos] == EMPTY) {
     int your_safety = safe_move(pos, other);
 
     apos = pos;
@@ -2310,7 +2310,7 @@ evaluate_diagonal_intersection(int m, int n, int color,
 	  int diagonal = pos + delta[k];
 	  int lib;
 
-	  if (board[diagonal] == other && findlib(diagonal, 1, &lib) == 1) {
+      if (internal_state->board[diagonal] == other && findlib(diagonal, 1, &lib) == 1) {
 	    if (lib != pos && does_secure(color, lib, pos)) {
 	      value = 1.0;
 	      apos = lib;
@@ -2325,14 +2325,14 @@ evaluate_diagonal_intersection(int m, int n, int color,
         value = b;
     }
   }
-  else if (board[pos] == color) {
+  else if (internal_state->board[pos] == color) {
     /* This stone had better be safe, otherwise we wouldn't have an
      * eyespace in the first place.
      */
     value = 0.0;
   }
-  else if (board[pos] == other) {
-    if (stackp == 0) {
+  else if (internal_state->board[pos] == other) {
+    if (internal_state->stackp == 0) {
       acode = worm[pos].attack_codes[0];
       apos  = worm[pos].attack_points[0];
       dcode = worm[pos].defense_codes[0];
@@ -2365,7 +2365,7 @@ evaluate_diagonal_intersection(int m, int n, int color,
      * choice at this point.
      */
     ASSERT_ON_BOARD1(apos);
-    ASSERT_ON_BOARD1(dpos);
+    ASSERT_ON_BOARD1(internal_state, dpos);
     /* Notice:
      * The point to ATTACK the half eye is the point which DEFENDS
      * the stones on the diagonal intersection and vice versa. Thus
@@ -2549,7 +2549,7 @@ test_eyeshape(int eyesize, int *eye_vertices)
 
   /* Clear the board and initialize the engine properly. */
   clear_board();
-  reset_engine();
+  reset_engine(internal_state);
 
   /* Mark the eyespace in the mx array. */
   memset(mx, 0, sizeof(mx));
@@ -2560,10 +2560,10 @@ test_eyeshape(int eyesize, int *eye_vertices)
 
   /* Play white stones surrounding the eyespace, including diagonals. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
-    if (!ON_BOARD(pos) || mx[pos] == 1)
+    if (!ON_BOARD(internal_state, pos) || mx[pos] == 1)
       continue;
     for (k = 0; k < 8; k++) {
-      if (ON_BOARD(pos + delta[k]) && mx[pos + delta[k]] == 1) {
+      if (ON_BOARD(internal_state, pos + delta[k]) && mx[pos + delta[k]] == 1) {
 	play_move(pos, WHITE);
 	str = pos;
 	break;
@@ -2578,7 +2578,7 @@ test_eyeshape(int eyesize, int *eye_vertices)
     if (mx[pos] == 1 || board[pos] != EMPTY || liberty_of_string(pos, str))
       continue;
     for (k = 0; k < 8; k++) {
-      if (ON_BOARD(pos + delta[k])
+      if (ON_BOARD(internal_state, pos + delta[k])
 	  && liberty_of_string(pos + delta[k], str)) {
 	play_move(pos, BLACK);
 	break;
@@ -2630,7 +2630,7 @@ test_eyeshape(int eyesize, int *eye_vertices)
      * done with help from the owl code. First we must prepare for
      * this though.
      */
-    examine_position(EXAMINE_DRAGONS_WITHOUT_OWL, 0);
+    examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL, 0);
 
     attack_code = owl_attack(str, &attack_point, NULL, NULL);
 
@@ -2639,12 +2639,12 @@ test_eyeshape(int eyesize, int *eye_vertices)
        * trying to attack on all empty spaces in the eyeshape.
        */
       for (k = 0; k < eyesize; k++) {
-	if (board[eye_vertices[k]] == EMPTY
+    if (internal_state->board[eye_vertices[k]] == EMPTY
 	    && is_legal(eye_vertices[k], BLACK)
 	    && owl_does_attack(eye_vertices[k], str, NULL)) {
-	  gprintf("%1m alive, but %1m attacks:\n", str, eye_vertices[k]);
+      gprintf(internal_state, "%1m alive, but %1m attacks:\n", str, eye_vertices[k]);
 	  showboard(0);
-	  gprintf("\n");
+      gprintf(internal_state, "\n");
 	}
       }
 
@@ -2654,9 +2654,9 @@ test_eyeshape(int eyesize, int *eye_vertices)
        */
       if (internal_stones == eyesize - 1) {
 	for (k = 0; k < eyesize; k++) {
-	  if (board[eye_vertices[k]] == EMPTY
+      if (internal_state->board[eye_vertices[k]] == EMPTY
 	      && !owl_does_defend(eye_vertices[k], str, NULL)) {
-	    gprintf("%1m alive, but almost filled with nakade:\n", str);
+        gprintf(internal_state, "%1m alive, but almost filled with nakade:\n", str);
 	    showboard(0);
 	  }
 	}
@@ -2669,12 +2669,12 @@ test_eyeshape(int eyesize, int *eye_vertices)
 	 * trying to defend on all empty spaces in the eyeshape.
 	 */
 	for (k = 0; k < eyesize; k++) {
-	  if (board[eye_vertices[k]] == EMPTY
+      if (internal_state->board[eye_vertices[k]] == EMPTY
 	      && is_legal(eye_vertices[k], WHITE)
 	      && owl_does_defend(eye_vertices[k], str, NULL)) {
-	    gprintf("%1m dead, but %1m defends:\n", str, eye_vertices[k]);
+        gprintf(internal_state, "%1m dead, but %1m defends:\n", str, eye_vertices[k]);
 	    showboard(0);
-	    gprintf("\n");
+        gprintf(internal_state, "\n");
 	  }
 	}
       }
@@ -2682,23 +2682,23 @@ test_eyeshape(int eyesize, int *eye_vertices)
 	/* The owl code claims the dragon is critical. Verify the
          * attack and defense points.
 	 */
-	if (board[attack_point] != EMPTY
+    if (internal_state->board[attack_point] != EMPTY
 	    || !is_legal(attack_point, BLACK)) {
-	  gprintf("Bad attack point %1m:\n", attack_point);
+      gprintf(internal_state, "Bad attack point %1m:\n", attack_point);
 	  showboard(0);
 	}
 	else if (!owl_does_attack(attack_point, str, NULL)) {
-	  gprintf("Attack point %1m failed:\n", attack_point);
+      gprintf(internal_state, "Attack point %1m failed:\n", attack_point);
 	  showboard(0);
 	}
 
-	if (board[defense_point] != EMPTY
-	    || !is_legal(defense_point, WHITE)) {
-	  gprintf("Bad defense point %1m:\n", defense_point);
+    if (internal_state->board[defense_point] != EMPTY
+        || !is_legal(internal_state, defense_point, WHITE)) {
+      gprintf(internal_state, "Bad defense point %1m:\n", defense_point);
 	  showboard(0);
 	}
 	else if (!owl_does_defend(defense_point, str, NULL)) {
-	  gprintf("Defense point %1m failed:\n", defense_point);
+      gprintf(internal_state, "Defense point %1m failed:\n", defense_point);
 	  showboard(0);
 	}
       }
@@ -2876,18 +2876,18 @@ eyegraph_trymove(int pos, int color, const char *message, int str,
   
   remembered_board_hashes[stackp] = board_hash;
 
-  if (!trymove(pos, color, message, str)) {
+  if (!trymove(internal_state, pos, color, message, str)) {
     int ko_threat_pos = NO_MOVE;
 
     if (!vertices)
       return 0;
 
     if (color != vertices->komaster
-	|| is_suicide(pos, color))
+    || is_suicide(internal_state, pos, color))
       return 0;
 
     for (k = 0; k < vertices->num_ko_threats; k++)
-      if (board[vertices->ko_threat_pos[k]] == EMPTY) {
+      if (internal_state->board[vertices->ko_threat_pos[k]] == EMPTY) {
 	ko_threat_pos = vertices->ko_threat_pos[k];
 	break;
       }
@@ -2895,7 +2895,7 @@ eyegraph_trymove(int pos, int color, const char *message, int str,
     if (ko_threat_pos != NO_MOVE) {
       trymove(ko_threat_pos, BLACK, "making/answering virtual ko threat", str);
       forced_ko_threat_stackp[num_active_ko_threats++] = stackp;
-      trymove(pos, color, message, str);
+      trymove(internal_state, pos, color, message, str);
     }
     else
       return 0;
@@ -2906,7 +2906,7 @@ eyegraph_trymove(int pos, int color, const char *message, int str,
 
   for (k = 0; k < stackp; k++)
     if (hashdata_is_equal(board_hash, remembered_board_hashes[k])) {
-      popgo();
+      popgo(internal_state);
       return 0;
     }
 
@@ -2916,11 +2916,11 @@ eyegraph_trymove(int pos, int color, const char *message, int str,
 static void
 eyegraph_popgo(void)
 {
-  popgo();
+  popgo(internal_state);
 
   if (num_active_ko_threats > 0
       && forced_ko_threat_stackp[num_active_ko_threats - 1] == stackp) {
-    popgo();
+    popgo(internal_state);
     num_active_ko_threats--;
   }
 }
@@ -2938,7 +2938,7 @@ eyegraph_is_margin_or_outer_liberty(int vertex)
   int eyes;
   
   for (k = 0; k < 4; k++) {
-    if (board[vertex + delta[k]] == BLACK) {
+    if (internal_state->board[vertex + delta[k]] == BLACK) {
       eyes = 0;
       num_libs = findlib(vertex + delta[k], MAXLIBS, libs);
       
@@ -2979,7 +2979,7 @@ eyegraph_order_moves(struct vertex_data *vertices, int color_to_move,
     move = vertices->pos[k];
     score = 0;
 
-    if (board[move] != EMPTY)
+    if (internal_state->board[move] != EMPTY)
       continue;
     
     if (eyegraph_is_margin_or_outer_liberty(move))
@@ -2990,9 +2990,9 @@ eyegraph_order_moves(struct vertex_data *vertices, int color_to_move,
       score -= 3;
     
     for (r = 0; r < 4; r++) {
-      if (board[move + delta[r]] == EMPTY)
+      if (internal_state->board[move + delta[r]] == EMPTY)
 	score += 2;
-      else if (board[move + delta[r]] == BLACK)
+      else if (internal_state->board[move + delta[r]] == BLACK)
 	score += 3;
     }
     
@@ -3044,14 +3044,14 @@ white_area(int mx[BOARDMAX], int pos, int up, int right, int marginpos,
   int edge = is_edge_vertex(marginpos);
 
   for (k = 1; k < distance; k++)
-    if (!ON_BOARD(marginpos + k * up)
+    if (!ON_BOARD(internal_state, marginpos + k * up)
 	|| mx[marginpos + k * up] != WHITE)
       return 0;
 
   for (u = -1; u <= 4; u++)
     for (v = -1; v <= 4; v++) {
       int pos2 = pos + u * up + v * right;
-      if (!ON_BOARD(pos2)) {
+      if (!ON_BOARD(internal_state, pos2)) {
 	if (!edge)
 	  return 0;
 	else if (u >= 0 && u <= 3 && v >= 0 && v <= 3)
@@ -3114,7 +3114,7 @@ tactical_life_attack(int str, struct vertex_data *vertices,
 
   if (0) {
     showboard(0);
-    gprintf("%d %d (%d)\n", hash, cached_result, results[hash]);
+    gprintf(internal_state, "%d %d (%d)\n", hash, cached_result, results[hash]);
   }
   
   if (cached_result == 2)
@@ -3128,21 +3128,21 @@ tactical_life_attack(int str, struct vertex_data *vertices,
   results[hash] |= 1;
 
   /* Try to play on all relevant vertices. */
-  num_moves = eyegraph_order_moves(vertices, OTHER_COLOR(board[str]), moves);
+  num_moves = eyegraph_order_moves(vertices, OTHER_COLOR(internal_state->board[str]), moves);
   for (k = 0; k < num_moves; k++) {
     int move = moves[k];
-    if (eyegraph_trymove(move, OTHER_COLOR(board[str]),
+    if (eyegraph_trymove(internal_state, move, OTHER_COLOR(internal_state->board[str]),
 			 "tactical_life_attack", str,
 			 vertices)) {
       /* We were successful if the white stones were captured or if no
        * defense can be found.
        */
-      if (board[str] == EMPTY)
+      if (internal_state->board[str] == EMPTY)
 	result = 1;
       else
 	result = !tactical_life_defend(str, vertices, results);
       
-      eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 
       if (result == 1) {
 	/* Store the result (success) in the cache. */
@@ -3172,7 +3172,7 @@ tactical_life_defend(int str, struct vertex_data *vertices,
   /* Compute hash value to index the result cache with. */
   for (k = 0; k < vertices->num; k++) {
     hash *= 3;
-    ASSERT1(board[vertices->pos[k]] <= 2, vertices->pos[k]);
+    ASSERT1(internal_state->board[vertices->pos[k]] <= 2, vertices->pos[k]);
     hash += board[vertices->pos[k]];
   }
   hash *= 2;
@@ -3183,7 +3183,7 @@ tactical_life_defend(int str, struct vertex_data *vertices,
 
   if (0) {
     showboard(0);
-    gprintf("%d %d (%d)\n", hash, cached_result, results[hash]);
+    gprintf(internal_state, "%d %d (%d)\n", hash, cached_result, results[hash]);
   }
 
   if (cached_result == 2)
@@ -3200,14 +3200,14 @@ tactical_life_defend(int str, struct vertex_data *vertices,
   num_moves = eyegraph_order_moves(vertices, board[str], moves);
   for (k = 0; k < num_moves; k++) {
     int move = moves[k];
-    if ((!is_suicide(move, OTHER_COLOR(board[str]))
+    if ((!is_suicide(move, OTHER_COLOR(internal_state->board[str]))
 	 || does_capture_something(move, board[str]))
-	&& eyegraph_trymove(move, board[str], "tactical_life_defend", str,
+    && eyegraph_trymove(internal_state, move, board[str], "tactical_life_defend", str,
 			    vertices)) {
       /* We were successful if no attack can be found. */
       result = !tactical_life_attack(str, vertices, results);
       
-      eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 
       if (result == 1) {
 	/* Store the result (success) in the cache. */
@@ -3245,7 +3245,7 @@ tactical_life(int have_eye, struct vertex_data *vertices,
   int num_moves;
   int moves[BOARDMAX];
 
-  gg_assert(attack_code != NULL && defense_code != NULL);
+  gg_assert(internal_state, attack_code != NULL && defense_code != NULL);
 
   /* We know that the large white group includes A18. This is the
    * vertex we test to determine whether the white stones have been
@@ -3253,7 +3253,7 @@ tactical_life(int have_eye, struct vertex_data *vertices,
    */
   str = vertices->string;
 
-  if (board[str] == EMPTY) {
+  if (internal_state->board[str] == EMPTY) {
     /* The stones have already been captured, too late to defend. */
     *attack_code = WIN;
     *defense_code = 0;
@@ -3295,15 +3295,15 @@ tactical_life(int have_eye, struct vertex_data *vertices,
     if (num_attacks != NULL && attack_points != NULL) {
       *num_attacks = 0;
       num_moves = eyegraph_order_moves(vertices,
-				       OTHER_COLOR(board[str]), moves);
+                       OTHER_COLOR(internal_state->board[str]), moves);
       for (k = 0; k < num_moves; k++) {
 	int move = moves[k];
-	if (eyegraph_trymove(move, OTHER_COLOR(board[str]), "tactical_life-B",
+    if (eyegraph_trymove(internal_state, move, OTHER_COLOR(internal_state->board[str]), "tactical_life-B",
 			     str, vertices)) {
-	  if (board[str] == EMPTY
+      if (internal_state->board[str] == EMPTY
 	      || !tactical_life_defend(str, vertices, results))
 	    attack_points[(*num_attacks)++] = move;
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
     }
@@ -3313,11 +3313,11 @@ tactical_life(int have_eye, struct vertex_data *vertices,
       num_moves = eyegraph_order_moves(vertices, board[str], moves);
       for (k = 0; k < num_moves; k++) {
 	int move = moves[k];
-	if (eyegraph_trymove(move, board[str], "tactical_life-C", str,
+    if (eyegraph_trymove(internal_state, move, board[str], "tactical_life-C", str,
 			     vertices)) {
 	  if (!tactical_life_attack(str, vertices, results))
 	    defense_points[(*num_defenses)++] = move;
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
     }
@@ -3325,7 +3325,7 @@ tactical_life(int have_eye, struct vertex_data *vertices,
 
   /* Unfill the extra eye if we didn't use it. */
   if (!have_eye)
-    eyegraph_popgo();
+    eyegraph_popgo(internal_state);
 }
 
 /* Determine the eye value of the eyespace for the big white group on
@@ -3388,7 +3388,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
     for (k = 0; k < num_moves; k++) {
       int acode, dcode;
       int move = moves[k];
-      if (eyegraph_trymove(move, BLACK, "evaluate_eyespace-A", NO_MOVE,
+      if (eyegraph_trymove(internal_state, move, BLACK, "evaluate_eyespace-A", NO_MOVE,
 			   vertices)) {
 	tactical_life(0, vertices, &acode, NULL, NULL,
 		      &dcode, NULL, NULL, tactical_life_results);
@@ -3413,7 +3413,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 	      sgftreeAddComment(sgf_dumptree, "Ko threat to remove one eye.\n");
 	  }
 	}
-	eyegraph_popgo();
+    eyegraph_popgo(internal_state);
       }
     }
     set_eyevalue(result, a, 2, 2, 2);
@@ -3449,7 +3449,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
       int a = 1;
       for (k = 0; k < num_attacks; k++) {
 	int move = attack_points[k];
-	if (eyegraph_trymove(move, BLACK, "evaluate_eyespace-B", NO_MOVE,
+    if (eyegraph_trymove(internal_state, move, BLACK, "evaluate_eyespace-B", NO_MOVE,
 			     vertices)) {
 	  evaluate_eyespace(&result2, vertices,
 			    &num_vital_attacks2, vital_attacks2,
@@ -3468,7 +3468,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 	  }
 	  else if (a == 1)
 	    vital_attacks[(*num_vital_attacks)++] = move;
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
       set_eyevalue(result, a, 1, 2, 2);
@@ -3504,7 +3504,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
       for (k = 0; k < num_moves; k++) {
 	int acode, dcode;
 	int move = moves[k];
-	if (eyegraph_trymove(move, BLACK, "evaluate_eyespace-C", NO_MOVE,
+    if (eyegraph_trymove(internal_state, move, BLACK, "evaluate_eyespace-C", NO_MOVE,
 			     vertices)) {
 	  tactical_life(1, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
@@ -3521,7 +3521,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 		sgftreeAddComment(sgf_dumptree, "Attacking ko threat.\n");
 	    }
 	  }
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
       
@@ -3529,7 +3529,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
       for (k = 0; k < num_moves; k++) {
 	int acode, dcode;
 	int move = moves[k];
-	if (eyegraph_trymove(move, WHITE, "evaluate_eyespace-D", NO_MOVE,
+    if (eyegraph_trymove(internal_state, move, WHITE, "evaluate_eyespace-D", NO_MOVE,
 			     vertices)) {
 	  tactical_life(0, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
@@ -3546,7 +3546,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 		sgftreeAddComment(sgf_dumptree, "Defending ko threat.\n");
 	    }
 	  }
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
       set_eyevalue(result, a, 1, 1, d);
@@ -3572,7 +3572,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 	vital_attacks[(*num_vital_attacks)++] = attack_points[k];
       for (k = 0; k < num_defenses; k++) {
 	int move = defense_points[k];
-	if (eyegraph_trymove(move, WHITE, "evaluate_eyespace-E", NO_MOVE,
+    if (eyegraph_trymove(internal_state, move, WHITE, "evaluate_eyespace-E", NO_MOVE,
 			     vertices)) {
 	  evaluate_eyespace(&result2, vertices,
 			    &num_vital_attacks2, vital_attacks2,
@@ -3591,7 +3591,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 	  }
 	  else if (d == 1)
 	    vital_defenses[(*num_vital_defenses)++] = move;
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
       set_eyevalue(result, 0, 0, 1, d);
@@ -3615,7 +3615,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
       for (k = 0; k < num_moves; k++) {
 	int acode, dcode;
 	int move = moves[k];
-	if (eyegraph_trymove(move, WHITE, "evaluate_eyespace-F", NO_MOVE,
+    if (eyegraph_trymove(internal_state, move, WHITE, "evaluate_eyespace-F", NO_MOVE,
 			     vertices)) {
 	  tactical_life(1, vertices, &acode, NULL, NULL,
 			&dcode, NULL, NULL, tactical_life_results);
@@ -3641,7 +3641,7 @@ evaluate_eyespace(struct eyevalue *result, struct vertex_data *vertices,
 				  "Ko threat to make one eye.\n");
 	    }
 	  }
-	  eyegraph_popgo();
+      eyegraph_popgo(internal_state);
 	}
       }
       set_eyevalue(result, 0, 0, 0, d);
@@ -3680,12 +3680,12 @@ add_margins(int num_margins, int *margins, int mx[BOARDMAX])
     int up = delta[k];
     int right = delta[(k + 1) % 4];
     
-    if (!ON_BOARD(pos + up))
+    if (!ON_BOARD(internal_state, pos + up))
       continue;
     
     if (mx[pos + up] == WHITE
-	&& (!ON_BOARD(pos + up + right) || mx[pos + up + right] == WHITE)
-	&& (!ON_BOARD(pos + up - right) || mx[pos + up - right] == WHITE)) {
+    && (!ON_BOARD(internal_state, pos + up + right) || mx[pos + up + right] == WHITE)
+    && (!ON_BOARD(internal_state, pos + up - right) || mx[pos + up - right] == WHITE)) {
       for (i = -3; i <= 0; i++) {
 	for (j = 2; j < 6; j++) {
 	  if (white_area(mx, pos + j * up + i * right, up, right, pos, j)) {
@@ -3776,10 +3776,10 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   unsigned char *tactical_life_results;
 
   if (0)
-    gprintf("Analyze eyegraph %s\n", coded_eyegraph);
+    gprintf(internal_state, "Analyze eyegraph %s\n", coded_eyegraph);
 
   gg_assert(outer_liberties >= 0 && outer_liberties <= 5);
-  gg_assert(ko_threats >= -4 && ko_threats <= 4);
+  gg_assert(internal_state, ko_threats >= -4 && ko_threats <= 4);
 
   if (ko_threats > 0)
     vertices.komaster = WHITE;
@@ -3794,7 +3794,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
    * the mx array and copy it to the actual board later.
    */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos))
+    if (ON_BOARD(internal_state, pos))
       mx[pos] = WHITE;
 
   /* Find out the size of the eye graph pattern so that we can center
@@ -3836,16 +3836,16 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   if (horizontal_edge == 0)
     mini = -1;
   else if (horizontal_edge > 0)
-    mini = board_size - num_rows + 1;
+    mini = internal_state->board_size - num_rows + 1;
   else
-    mini = (board_size - num_rows) / 2;
+    mini = (internal_state->board_size - num_rows) / 2;
 
   if (vertical_edge == 0)
     minj = -1;
   else if (vertical_edge > 0)
-    minj = board_size - maxwidth + 1;
+    minj = internal_state->board_size - maxwidth + 1;
   else
-    minj = (board_size - maxwidth) / 2;
+    minj = (internal_state->board_size - maxwidth) / 2;
   
   i = mini;
   j = minj;
@@ -3869,7 +3869,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
     if (c == '!' || c == '@' || c == '(' || c == ')' || c == '$')
       margins[num_margins++] = POS(i, j);
     if (c != '|' && c != '-' && c != '+' && c != '%'
-	&& ON_BOARD(POS(i, j)) && mx[POS(i, j)] != WHITE) {
+    && ON_BOARD(internal_state, pos(i, j)) && mx[POS(i, j)] != WHITE) {
       vertices.type[vertices.num] = REGULAR;
       vertices.pos[vertices.num++] = POS(i, j);
     }
@@ -3893,12 +3893,12 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
    * a - up to five outer liberties (empty if active, otherwise O)
    * b - up to four virtual ko threats (always empty)
    */
-  corner = POS(board_size - 1, 0);
+  corner = POS(internal_state->board_size - 1, 0);
   up = DELTA(-1, 0);
   right = DELTA(0, 1);
   if ((vertical_edge == 0 && horizontal_edge != 0)
       || (horizontal_edge > 0 && vertical_edge <= 0)) {
-    corner = POS(0, board_size - 1);
+    corner = POS(0, internal_state->board_size - 1);
     up = DELTA(1, 0);
     right = DELTA(0, -1);
   }
@@ -3950,8 +3950,8 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
     vertices.string = POS(1, 0);
   }
   else {
-    vertices.extra_eye_pos = POS(board_size - 1, board_size - 1);
-    vertices.string = POS(board_size - 2, board_size - 1);
+    vertices.extra_eye_pos = POS(internal_state->board_size - 1, internal_state->board_size - 1);
+    vertices.string = POS(internal_state->board_size - 2, internal_state->board_size - 1);
   }
 
   mx[vertices.extra_eye_pos] = EMPTY;
@@ -3964,11 +3964,11 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   /* Copy the mx array over to the board. */
   clear_board();
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (ON_BOARD(pos)) {
+    if (ON_BOARD(internal_state, pos)) {
       if (mx[pos] == WHITE)
-	add_stone(pos, WHITE);
+    add_stone(internal_state, pos, WHITE);
       else if (mx[pos] == BLACK)
-	add_stone(pos, BLACK);
+    add_stone(internal_state, pos, BLACK);
     }
 
   if (verbose)
@@ -3978,7 +3978,7 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
    * the playable vertices.
    */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
-    if (board[pos] == WHITE && !same_string(pos, vertices.string)) {
+    if (internal_state->board[pos] == WHITE && !same_string(pos, vertices.string)) {
       int k;
       for (k = vertices.num; vertices.type[k - 1] != REGULAR; k--) {
 	vertices.type[k] = vertices.type[k - 1];
@@ -3991,17 +3991,17 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
 
   if (verbose) {
     int k;
-    gprintf("\nPlayable vertices:\n");
+    gprintf(internal_state, "\nPlayable vertices:\n");
     for (k = 0; k < vertices.num; k++)
-      gprintf("%1m(%d) ", vertices.pos[k], vertices.type[k]);
-    gprintf("\n\n");
+      gprintf(internal_state, "%1m(%d) ", vertices.pos[k], vertices.type[k]);
+    gprintf(internal_state, "\n\n");
   }
   
   /* Disable this test if you need to evaluate larger eyespaces, have
    * no shortage of memory, and know what you're doing.
    */
   if (vertices.num > 17) {
-    gprintf("analyze_eyegraph: too large eyespace, %d vertices\n",
+    gprintf(internal_state, "analyze_eyegraph: too large eyespace, %d vertices\n",
 	    vertices.num);
     gg_assert(vertices.num <= 17);
   }
@@ -4014,8 +4014,8 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   /* Allocate memory for the cache. */
   tactical_life_results = malloc(table_size);
   if (!tactical_life_results) {
-    gprintf("analyze_eyegraph: failed to allocate %d bytes\n", table_size);
-    gg_assert(tactical_life_results != NULL);
+    gprintf(internal_state, "analyze_eyegraph: failed to allocate %d bytes\n", table_size);
+    gg_assert(internal_state, tactical_life_results != NULL);
   }
   memset(tactical_life_results, 0, table_size);
 
@@ -4032,18 +4032,18 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   free(tactical_life_results);
 
   if (verbose) {
-    gprintf("Eyevalue: %s\n", eyevalue_to_string(value));
+    gprintf(internal_state, "Eyevalue: %s\n", eyevalue_to_string(value));
     for (k = 0; k < num_vital_attacks; k++)
-      gprintf("  vital attack point %1m\n", vital_attacks[k]);
+      gprintf(internal_state, "  vital attack point %1m\n", vital_attacks[k]);
     for (k = 0; k < num_vital_defenses; k++)
-      gprintf("  vital defense point %1m\n", vital_defenses[k]);
+      gprintf(internal_state, "  vital defense point %1m\n", vital_defenses[k]);
   }
 
   /* Encode the attack and defense points with symbols in the mg[] array. */
   memset(mg, ' ', sizeof(mg));
 
   for (k = 0; k < vertices.num_ordinary; k++)
-    mg[vertices.pos[k]] = (board[vertices.pos[k]] == BLACK ? 'X' : '.');
+    mg[vertices.pos[k]] = (internal_state->board[vertices.pos[k]] == BLACK ? 'X' : '.');
 
   for (k = 0; k < num_margins; k++)
     mg[margins[k]] = (mg[margins[k]] == 'X' ? '$' : '!');
@@ -4069,11 +4069,11 @@ analyze_eyegraph(const char *coded_eyegraph, struct eyevalue *value,
   k = 0;
   for (i = mini; i < mini + num_rows; i++) {
     for (j = minj; j < minj + maxwidth; j++) {
-      if ((i < 0 || i >= board_size) && (j < 0 || j >= board_size))
+      if ((i < 0 || i >= internal_state->board_size) && (j < 0 || j >= internal_state->board_size))
 	analyzed_eyegraph[k++] = '+';
-      else if (i < 0 || i >= board_size)
+      else if (i < 0 || i >= internal_state->board_size)
 	analyzed_eyegraph[k++] = '-';
-      else if (j < 0 || j >= board_size)
+      else if (j < 0 || j >= internal_state->board_size)
 	analyzed_eyegraph[k++] = '|';
       else
 	analyzed_eyegraph[k++] = mg[POS(i, j)];
