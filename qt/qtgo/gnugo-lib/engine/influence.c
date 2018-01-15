@@ -38,20 +38,22 @@ static void add_influence_source(int pos, int color, float strength,
 static void print_influence(struct board_lib_state_struct *internal_state,
                             const struct influence_data *q,
                 const char *info_string);
-static void print_numeric_influence(struct board_lib_state_struct *internal_state,
+static void print_numeric_influence(board_lib_state_struct *internal_state,
                                     const struct influence_data *q,
                     const float values[BOARDMAX],
                     const char *format, int width,
                     int draw_stones, int mark_epsilon);
-static void print_influence_areas(struct board_lib_state_struct *internal_state,
+static void print_influence_areas(board_lib_state_struct *internal_state,
                                   const struct influence_data *q);
  
-static void value_territory(struct board_lib_state_struct *internal_state,
+static void value_territory(board_lib_state_struct *internal_state,
                             struct influence_data *q);
-static void enter_intrusion_source(int source_pos, int strength_pos,
+static void enter_intrusion_source(board_lib_state_struct *internal_state,
+                                   int source_pos, int strength_pos,
                                    float strength, float attenuation,
                                    struct influence_data *q);
-static void add_marked_intrusions(struct influence_data *q);
+static void add_marked_intrusions(board_lib_state_struct *internal_state,
+                                  struct influence_data *q);
  
 
 /* Influence computed for the initial position, i.e. before making
@@ -523,12 +525,13 @@ add_influence_source(int pos, int color, float strength, float attenuation,
 
 /* Adds an intrusion as an entry in the list q->intrusions.  */
 static void
-enter_intrusion_source(int source_pos, int strength_pos,
+enter_intrusion_source(board_lib_state_struct *internal_state,
+                       int source_pos, int strength_pos,
                        float strength, float attenuation,
                        struct influence_data *q)
 {
   if (q->intrusion_counter >= MAX_INTRUSIONS) {
-    DEBUG(DEBUG_INFLUENCE, "intrusion list exhausted\n");
+    DEBUG(internal_state, DEBUG_INFLUENCE, "intrusion list exhausted\n");
     return;
   }
   q->intrusions[q->intrusion_counter].source_pos = source_pos;
@@ -568,12 +571,12 @@ reset_unblocked_blocks(struct board_lib_state_struct *internal_state,
     if (ON_BOARD(internal_state, pos)) {
       if (!q->safe[pos] && q->white_strength[pos] > 0.0
 	  && q->white_permeability[pos] != 1.0) {
-	DEBUG(DEBUG_INFLUENCE, "  black block removed from %1m\n", pos);
+    DEBUG(internal_state, DEBUG_INFLUENCE, "  black block removed from %1m\n", pos);
 	q->white_permeability[pos] = 1.0;
       }
       if (!q->safe[pos] && q->black_strength[pos] > 0.0
 	  && q->black_permeability[pos] != 1.0) {
-	DEBUG(DEBUG_INFLUENCE, "  white block removed from %1m\n", pos);
+    DEBUG(internal_state, DEBUG_INFLUENCE, "  white block removed from %1m\n", pos);
 	q->black_permeability[pos] = 1.0;
       }
     }
@@ -587,7 +590,8 @@ reset_unblocked_blocks(struct board_lib_state_struct *internal_state,
  * (100% is if q == &followup_influence, 60% otherwise).
  */
 static void
-add_marked_intrusions(struct influence_data *q)
+add_marked_intrusions(board_lib_state_struct *internal_state,
+                      struct influence_data *q)
 {
   int i;
   int j = 0;
@@ -610,7 +614,7 @@ add_marked_intrusions(struct influence_data *q)
       add_influence_source(q->intrusions[i].strength_pos, color,
                            q->intrusions[j].strength,
                            q->intrusions[j].attenuation, q);
-      DEBUG(DEBUG_INFLUENCE, "Adding %s intrusion at %1m, value %f\n",
+      DEBUG(internal_state, DEBUG_INFLUENCE, "Adding %s intrusion at %1m, value %f\n",
 	    (color == BLACK) ? "black" : "white",
 	    q->intrusions[j].strength_pos, q->intrusions[j].strength);
       j = i+1;
@@ -647,7 +651,7 @@ add_marked_intrusions(struct influence_data *q)
         add_influence_source(q->intrusions[j].strength_pos, color,
                              correction * q->intrusions[j].strength,
                              q->intrusions[j].attenuation, q);
-        DEBUG(DEBUG_INFLUENCE,
+        DEBUG(internal_state, DEBUG_INFLUENCE,
               "Adding %s intrusion for %1m at %1m, value %f (correction %f)\n",
               (color == BLACK) ? "black" : "white", source_pos,
               q->intrusions[j].strength_pos,
@@ -754,7 +758,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
       && !pattern->autohelper(ll, pos, color, 0))
     return;
 
-  DEBUG(DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",
+  DEBUG(internal_state, DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",
 	pattern->name, ll, anchor);
 
   /* For t patterns, everything happens in the action. */
@@ -795,7 +799,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
     else
       add_influence_source(pos, this_color, strength, attenuation, q);
 
-    DEBUG(DEBUG_INFLUENCE,
+    DEBUG(internal_state, DEBUG_INFLUENCE,
 	  "  low intensity influence source at %1m, strength %f, color %C\n",
 	  pos, strength, this_color);
     return;
@@ -806,7 +810,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
    */
   if (pattern->class & CLASS_E) {
     add_influence_source(pos, color, pattern->value, DEFAULT_ATTENUATION, q);
-    DEBUG(DEBUG_INFLUENCE,
+    DEBUG(internal_state, DEBUG_INFLUENCE,
 	  "  extra %C source at %1m, strength %f\n", color,
 	  pos, pattern->value);
     return;
@@ -831,11 +835,11 @@ influence_callback(struct board_lib_state_struct *internal_state,
 
 	/* Low intensity influence source for the color in turn to move. */  
 	if (q->is_territorial_influence)
-	  enter_intrusion_source(anchor, ii, strength, 
+      enter_intrusion_source(internal_state, anchor, ii, strength,
 				 TERR_DEFAULT_ATTENUATION, q);
 	else
 	  add_influence_source(ii, color, strength, DEFAULT_ATTENUATION, q); 
-	DEBUG(DEBUG_INFLUENCE, "  intrusion at %1m\n", ii);
+    DEBUG(internal_state, DEBUG_INFLUENCE, "  intrusion at %1m\n", ii);
       }
     return;
   }
@@ -853,7 +857,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
 	blocking_color = color;
       else
 	blocking_color = OTHER_COLOR(color);
-      DEBUG(DEBUG_INFLUENCE, "  barrier for %s influence at %1m\n",
+      DEBUG(internal_state, DEBUG_INFLUENCE, "  barrier for %s influence at %1m\n",
         color_to_string(internal_state, OTHER_COLOR(blocking_color)), ii);
       if (pattern->patn[k].att == ATT_comma) {
 	if (blocking_color == WHITE)
@@ -914,7 +918,7 @@ followup_influence_callback(struct board_lib_state_struct *internal_state,
       && !pattern->autohelper(ll, t, color, FOLLOWUP_INFLUENCE_CALLBACK))
     return;
 
-  DEBUG(DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",
+  DEBUG(internal_state, DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",
 	pattern->name, ll, anchor);
 
   for (k = 0; k < pattern->patlen; ++k)  /* match each point */
@@ -923,9 +927,9 @@ followup_influence_callback(struct board_lib_state_struct *internal_state,
       int ii = AFFINE_TRANSFORM(pattern->patn[k].offset, ll, anchor);
 
       /* Low intensity influence source for the color in turn to move. */
-      enter_intrusion_source(anchor, ii, pattern->value,
+      enter_intrusion_source(internal_state, anchor, ii, pattern->value,
 			     TERR_DEFAULT_ATTENUATION, q);
-      DEBUG(DEBUG_INFLUENCE, "  followup for %1m: intrusion at %1m\n",
+      DEBUG(internal_state, DEBUG_INFLUENCE, "  followup for %1m: intrusion at %1m\n",
             anchor, ii);
     }
 }
@@ -934,9 +938,10 @@ followup_influence_callback(struct board_lib_state_struct *internal_state,
  * territory for (color).
  */
 void
-influence_mark_non_territory(int pos, int color)
+influence_mark_non_territory(board_lib_state_struct *internal_state,
+                             int pos, int color)
 {
-  DEBUG(DEBUG_INFLUENCE, "  non-territory for %C at %1m\n", color, pos);
+  DEBUG(internal_state, DEBUG_INFLUENCE, "  non-territory for %C at %1m\n", color, pos);
   current_influence->non_territory[pos] |= color;
 }
 
@@ -951,11 +956,11 @@ influence_erase_territory(struct board_lib_state_struct *internal_state,
   current_influence = q;
 
   q->territory_value[pos] = 0.0;
-  influence_mark_non_territory(pos, color);
+  influence_mark_non_territory(internal_state, pos, color);
   for (k = 0; k < 4; k++) {
     if (ON_BOARD(internal_state, pos + delta[k])) {
       q->territory_value[pos + delta[k]] = 0.0;
-      influence_mark_non_territory(pos + delta[k], color);
+      influence_mark_non_territory(internal_state, pos + delta[k], color);
     }
   }
 }
@@ -979,7 +984,7 @@ find_influence_patterns(struct board_lib_state_struct *internal_state,
     matchpat(internal_state, influence_callback, q->color_to_move, &barrierspat_db, q, NULL);
 
   if (q->is_territorial_influence)
-    add_marked_intrusions(q);
+    add_marked_intrusions(internal_state, q);
 
   /* Additionally, we introduce a weaker kind of barriers around living
    * stones.
@@ -1101,7 +1106,7 @@ remove_double_blocks(struct board_lib_state_struct *internal_state,
     float *permeability = ((q->color_to_move == BLACK)
 			   ? q->black_permeability : q->white_permeability);
     for (k = 0; k < num_blocks; k++) {
-      DEBUG(DEBUG_INFLUENCE, "Removing block for %s at %1m.\n",
+      DEBUG(internal_state, DEBUG_INFLUENCE, "Removing block for %s at %1m.\n",
         color_to_string(internal_state, q->color_to_move), double_blocks[k]);
       permeability[double_blocks[k]] = 1.0;
       accumulate_influence(internal_state, q, double_blocks[k], q->color_to_move);
@@ -1591,7 +1596,7 @@ compute_followup_influence(struct board_lib_state_struct *internal_state,
   debug = save_debug;
  
   /* Now add the intrusions. */
-  add_marked_intrusions(q);
+  add_marked_intrusions(internal_state, q);
 
   reset_unblocked_blocks(internal_state, q);
   
@@ -1838,7 +1843,7 @@ influence_delta_territory(struct board_lib_state_struct *internal_state,
       
       if (move != -1
 	  && (this_delta > 0.02 || -this_delta > 0.02))
-	DEBUG(DEBUG_TERRITORY,
+    DEBUG(internal_state, DEBUG_TERRITORY,
 	      "  %1m:   - %1m territory change %f (%f -> %f)\n",
 	      move, ii, this_delta, old_value, new_value);
       total_delta += this_delta;
@@ -1850,7 +1855,7 @@ influence_delta_territory(struct board_lib_state_struct *internal_state,
     this_delta = -this_delta;
   if (move != -1
       && this_delta != 0.0)
-    DEBUG(DEBUG_TERRITORY, "  %1m:   - captured stones %f\n",
+    DEBUG(internal_state, DEBUG_TERRITORY, "  %1m:   - captured stones %f\n",
 	  move, this_delta);
   total_delta += this_delta;
 
@@ -2103,7 +2108,7 @@ print_influence_areas(struct board_lib_state_struct *internal_state,
                       const struct influence_data *q)
 {
   int ii;
-  start_draw_board();
+  start_draw_board(internal_state);
   for (ii = BOARDMIN; ii < BOARDMAX; ii++)
     if (ON_BOARD(internal_state, ii)) {
       int c = EMPTY;
@@ -2139,9 +2144,9 @@ print_influence_areas(struct board_lib_state_struct *internal_state,
 	c = 'x';
 	color = GG_COLOR_RED;
       }
-      draw_color_char(I(ii), J(ii), c, color);
+      draw_color_char(internal_state, I(ii), J(ii), c, color);
     }
-  end_draw_board();
+  end_draw_board(internal_state);
 }
 
 

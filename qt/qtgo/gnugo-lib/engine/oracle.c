@@ -360,10 +360,10 @@ metamachine_genmove(int color, float *value, int limit_search)
 	ASK_ORACLE;
       }	
   }
-  count_variations = 1;
+  internal_state->count_variations = 1;
   move = do_metamachine_genmove(color, search_width(), value);
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
   return move;
 }
 

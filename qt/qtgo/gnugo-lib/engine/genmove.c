@@ -111,7 +111,7 @@ reset_engine(struct board_lib_state_struct *internal_state)
   /* Initialize arrays of moves which are meaningless due to
    * static analysis of unconditional status.
    */
-  clear_unconditionally_meaningless_moves();
+  clear_unconditionally_meaningless_moves(internal_state);
 }
 
 /*
@@ -133,7 +133,7 @@ examine_position(struct board_lib_state_struct *internal_state,
 {
   int save_verbose = verbose;
 
-  purge_persistent_caches();
+  purge_persistent_caches(internal_state);
   
   /* Don't print reading traces during make_worms and make_dragons unless 
    * the user really wants it (verbose == 3). 
@@ -142,9 +142,9 @@ examine_position(struct board_lib_state_struct *internal_state,
     --verbose;
 
   if (NEEDS_UPDATE(worms_examined)) {
-    start_timer(0);
+    start_timer(internal_state, 0);
     make_worms();
-    time_report(0, "  make worms", NO_MOVE, 1.0);
+    time_report(internal_state, 0, "  make worms", NO_MOVE, 1.0);
   }
 
   if (how_much == EXAMINE_WORMS) {
@@ -306,11 +306,11 @@ collect_move_reasons(struct board_lib_state_struct *internal_state,
                      int color)
 {
   worm_reasons(color);
-  semeai_move_reasons(color);
+  semeai_move_reasons(internal_state, color);
   owl_reasons(internal_state, color);
   cut_reasons(internal_state, color);
   break_in_move_reasons(internal_state, color);
-  unconditional_move_reasons(color);
+  unconditional_move_reasons(internal_state, color);
 }
 
 /* Call Monte Carlo module to generate a move. */
@@ -343,8 +343,8 @@ monte_carlo_genmove(struct board_lib_state_struct *internal_state,
   if (resign)
     *resign = 0;
   
-  unconditional_life(unconditional_territory_black, BLACK);
-  unconditional_life(unconditional_territory_white, WHITE);
+  unconditional_life(internal_state, unconditional_territory_black, BLACK);
+  unconditional_life(internal_state, unconditional_territory_white, WHITE);
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
     if (!ON_BOARD(internal_state, pos))
@@ -410,7 +410,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
   if (!value)
     value = &dummy_value;
 
-  start_timer(0);
+  start_timer(internal_state, 0);
   clearstats();
 
   /* Usually we would not recommend resignation. */
@@ -443,9 +443,9 @@ do_genmove(struct board_lib_state_struct *internal_state,
   }
 
   /* Find out information about the worms and dragons. */
-  start_timer(1);
+  start_timer(internal_state, 1);
   examine_position(internal_state, EXAMINE_ALL, 0);
-  time_report(1, "examine position", NO_MOVE, 1.0);
+  time_report(internal_state, 1, "examine position", NO_MOVE, 1.0);
 
 
   /* The score will be used to determine when we are safely
@@ -474,12 +474,12 @@ do_genmove(struct board_lib_state_struct *internal_state,
       fprintf(stderr, "\n          dragon_status display:\n\n");
     if (printboard == 2)
       fprintf(stderr, "\n          eye display:\n\n");
-    showboard(printboard); 
+    showboard(internal_state, printboard);
     if (printboard == 1) {
       fprintf(stderr, "\n           owl_status display:\n\n");      
-      showboard(3);
+      showboard(internal_state, 3);
       fprintf(stderr, "\n           matcher_status display:\n\n");      
-      showboard(4);
+      showboard(internal_state, 4);
     }
   }
   
@@ -496,7 +496,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     verbose--;
   collect_move_reasons(internal_state, color);
   verbose = save_verbose;
-  time_report(1, "generate move reasons", NO_MOVE, 1.0);
+  time_report(internal_state, 1, "generate move reasons", NO_MOVE, 1.0);
   
   /* Try to find empty corner moves. */
   fuseki(internal_state, color);
@@ -514,13 +514,13 @@ do_genmove(struct board_lib_state_struct *internal_state,
       = revise_thrashing_dragon(internal_state, color, pessimistic_score, 5.0);
   
   /* The general pattern database. */
-  shapes(color);
-  time_report(1, "shapes", NO_MOVE, 1.0);
+  shapes(internal_state, color);
+  time_report(internal_state, 1, "shapes", NO_MOVE, 1.0);
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Look for combination attacks and defenses against them. */
   combinations(internal_state, color);
-  time_report(1, "combinations", NO_MOVE, 1.0);
+  time_report(internal_state, 1, "combinations", NO_MOVE, 1.0);
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Review the move reasons and estimate move values. */
@@ -529,12 +529,12 @@ do_genmove(struct board_lib_state_struct *internal_state,
 			  use_thrashing_dragon_heuristics))
     TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
   gg_assert(internal_state, internal_state->stackp == 0);
-  time_report(1, "review move reasons", NO_MOVE, 1.0);
+  time_report(internal_state, 1, "review move reasons", NO_MOVE, 1.0);
 
 
   /* If the move value is 6 or lower, we look for endgame patterns too. */
   if (*value <= 6.0 && !disable_endgame_patterns) {
-    endgame_shapes(color);
+    endgame_shapes(internal_state, color);
     endgame(internal_state, color);
     gg_assert(internal_state, internal_state->stackp == 0);
     if (review_move_reasons(&move, value, color, pure_threat_value,
@@ -542,7 +542,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
 			    use_thrashing_dragon_heuristics))
       TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
     gg_assert(internal_state, internal_state->stackp == 0);
-    time_report(1, "endgame", NO_MOVE, 1.0);
+    time_report(internal_state, 1, "endgame", NO_MOVE, 1.0);
   }
   
   /* If no move found yet, revisit any semeai and change the
@@ -551,8 +551,8 @@ do_genmove(struct board_lib_state_struct *internal_state,
    */
   if (move == PASS_MOVE) {
     if (revise_semeai(internal_state, color)) {
-      shapes(color);
-      endgame_shapes(color);
+      shapes(internal_state, color);
+      endgame_shapes(internal_state, color);
       if (review_move_reasons(&move, value, color, pure_threat_value,
 			      pessimistic_score, allowed_moves,
 			      use_thrashing_dragon_heuristics)) {
@@ -560,7 +560,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
 	      move, *value); 
       }
     }
-    time_report(1, "move reasons with revised semeai status",
+    time_report(internal_state, 1, "move reasons with revised semeai status",
 		NO_MOVE, 1.0);
   }
 
@@ -599,7 +599,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
       TRACE(internal_state, "Filling a liberty at %1m\n", move);
       record_top_move(move, *value);
       move_considered(move, *value);
-      time_report(1, "fill liberty", NO_MOVE, 1.0);
+      time_report(internal_state, 1, "fill liberty", NO_MOVE, 1.0);
     }
     else
       move = PASS_MOVE;
@@ -621,7 +621,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
       TRACE(internal_state, "Aftermath move at %1m\n", move);
       record_top_move(move, *value);
       move_considered(move, *value);
-      time_report(1, "aftermath_genmove", NO_MOVE, 1.0);
+      time_report(internal_state, 1, "aftermath_genmove", NO_MOVE, 1.0);
     }
   }
 
@@ -650,10 +650,10 @@ do_genmove(struct board_lib_state_struct *internal_state,
   
   /* If statistics is turned on, this is the place to show it. */
   if (showstatistics)
-    showstats();
+    showstats(internal_state);
 
   if (showtime) {
-    double spent = time_report(0, "TIME to generate move at ", move, 1.0);
+    double spent = time_report(internal_state, 0, "TIME to generate move at ", move, 1.0);
     total_time += spent;
     if (spent > slowest_time) {
       slowest_time = spent;
@@ -781,7 +781,7 @@ find_mirror_move(struct board_lib_state_struct *internal_state,
   int mirror_move;
   if (last_move != NO_MOVE) {
     mirror_move = MIRROR_MOVE(internal_state, last_move);
-    if (test_symmetry_after_move(mirror_move, color, 0)) {
+    if (test_symmetry_after_move(internal_state, mirror_move, color, 0)) {
       *move = mirror_move;
       return 1;
     }
@@ -789,7 +789,7 @@ find_mirror_move(struct board_lib_state_struct *internal_state,
   else {
     for (mirror_move = BOARDMIN; mirror_move < BOARDMAX; mirror_move++) {
       if (ON_BOARD(internal_state, mirror_move)
-	  && test_symmetry_after_move(mirror_move, color, 0)) {
+      && test_symmetry_after_move(internal_state, mirror_move, color, 0)) {
 	*move = mirror_move;
 	return 1;
       }
@@ -846,7 +846,7 @@ break_mirror_go(struct board_lib_state_struct *internal_state,
   if (internal_state->board[tengen] == EMPTY
       && color == BLACK
       && stones_on_board(internal_state, BLACK | WHITE) > 10
-      && test_symmetry_after_move(tengen, color, 1)) {
+      && test_symmetry_after_move(internal_state, tengen, color, 1)) {
     set_minimum_move_value(internal_state, tengen, 30.0);
     TRACE(internal_state, "Play %1m to break mirror go, value 30.\n", tengen);
   }
@@ -963,7 +963,7 @@ draw_search_area(struct board_lib_state_struct *internal_state)
 {
   int m, n;
 
-  start_draw_board();
+  start_draw_board(internal_state);
   for (m = 0; m < internal_state->board_size; m++)
     for (n = 0; n < internal_state->board_size; n++) {
       int col, c;
@@ -981,9 +981,9 @@ draw_search_area(struct board_lib_state_struct *internal_state)
 	c = '*';
       else
 	c = '.';
-      draw_color_char(m, n, c, col);
+      draw_color_char(internal_state, m, n, c, col);
     }
-  end_draw_board();
+  end_draw_board(internal_state);
 }
 
 /* returns true if the position is within the search area */

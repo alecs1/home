@@ -208,8 +208,8 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
   int best_score;
   int best_scoring_move;
 
-  owl_hotspots(owl_hotspot);
-  reading_hotspots(reading_hotspot);
+  owl_hotspots(internal_state, owl_hotspot);
+  reading_hotspots(internal_state, reading_hotspot);
   
   /* As a preparation we compute a distance map to the invincible strings. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
@@ -318,7 +318,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
 	&& distance[pos] == -1
 	&& unconditionally_meaningless_move(pos, color, &replacement_move)
 	&& replacement_move != NO_MOVE) {
-      DEBUG(DEBUG_AFTERMATH, "Replacement move for %1m at %1m\n", pos,
+      DEBUG(internal_state, DEBUG_AFTERMATH, "Replacement move for %1m at %1m\n", pos,
 	    replacement_move);
       return replacement_move;
     }
@@ -373,8 +373,8 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
   }
   
   if (best_scoring_move != NO_MOVE
-      && safe_move(best_scoring_move, color) == WIN) {
-    DEBUG(DEBUG_AFTERMATH, "Closing edge at %1m\n", best_scoring_move);
+      && safe_move(internal_state, best_scoring_move, color) == WIN) {
+    DEBUG(internal_state, DEBUG_AFTERMATH, "Closing edge at %1m\n", best_scoring_move);
     return best_scoring_move;
   }
 
@@ -730,11 +730,11 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
 
     bb = dragons[move];
     if (is_illegal_ko_capture(internal_state, move, color)
-	|| !safe_move(move, color)
+    || !safe_move(internal_state, move, color)
 	|| (DRAGON2(bb).safety != INVINCIBLE
 	    && DRAGON2(bb).safety != STRONGLY_ALIVE
         && owl_does_defend(internal_state, move, bb, NULL) != WIN)
-	|| (!confirm_safety(move, color, NULL, NULL))) {
+    || (!confirm_safety(internal_state, move, color, NULL, NULL))) {
       score[move] = 0;
     }
     else {
@@ -758,9 +758,9 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
         neighbors = chainlinks(internal_state, move, adjs);
 	    for (r = 0; r < neighbors; r++) {
 	      if (worm[adjs[r]].attack_codes[0] != 0
-		  && (find_defense(adjs[r], NULL)
+          && (find_defense(internal_state, adjs[r], NULL)
 		      > worm[adjs[r]].defense_codes[0])) {
-		DEBUG(DEBUG_AFTERMATH,
+        DEBUG(internal_state, DEBUG_AFTERMATH,
 		      "Blunder: %1m becomes tactically safer after %1m\n",
 		      adjs[r], move);
 		move_ok = 0;
@@ -770,7 +770,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
 	    for (r = 0; r < neighbors && move_ok; r++) {
 	      if (dragon[adjs[r]].status == DEAD
           && !owl_does_attack(internal_state, move, adjs[r], NULL)) {
-		DEBUG(DEBUG_AFTERMATH,
+        DEBUG(internal_state, DEBUG_AFTERMATH,
 		      "Blunder: %1m becomes more alive after %1m\n",
 		      adjs[r], move);
 		move_ok = 0;
@@ -783,7 +783,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
       if (!move_ok)
 	score[move] = 0;
       else {
-	DEBUG(DEBUG_AFTERMATH, "Splitting eyespace at %1m\n", move);
+    DEBUG(internal_state, DEBUG_AFTERMATH, "Splitting eyespace at %1m\n", move);
 	return move;
       }
     }
@@ -912,10 +912,10 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
       /* If we don't allow self atari, also call confirm safety to
        * avoid setting up combination attacks.
        */
-      if (!self_atari_ok && !confirm_safety(move, color, NULL, NULL))
+      if (!self_atari_ok && !confirm_safety(internal_state, move, color, NULL, NULL))
 	continue;
 	  
-      DEBUG(DEBUG_AFTERMATH, "Filling opponent liberty at %1m\n", move);
+      DEBUG(internal_state, DEBUG_AFTERMATH, "Filling opponent liberty at %1m\n", move);
       return move;
     }
   }
@@ -947,7 +947,7 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
 	    || DRAGON2(pos).safety == TACTICALLY_DEAD)
 	&& worm[pos].attack_codes[0] != 0
     && !is_illegal_ko_capture(internal_state, worm[pos].attack_points[0], color)) {
-      DEBUG(DEBUG_AFTERMATH, "Tactically attack %1m at %1m\n",
+      DEBUG(internal_state, DEBUG_AFTERMATH, "Tactically attack %1m at %1m\n",
 	    pos, worm[pos].attack_points[0]);
       return worm[pos].attack_points[0];
     }
@@ -1030,7 +1030,7 @@ do_play_aftermath(struct board_lib_state_struct *internal_state,
   int pass = 0;
   int moves = 0;
   int color_to_play = color;
-  DEBUG(DEBUG_AFTERMATH, "The aftermath starts.\n");
+  DEBUG(internal_state, DEBUG_AFTERMATH, "The aftermath starts.\n");
 
   /* Disable computing worm and owl threats. */
   disable_threat_computation = 1;
@@ -1056,7 +1056,7 @@ do_play_aftermath(struct board_lib_state_struct *internal_state,
     if (aftermath_sgftree)
       sgftreeAddPlay(aftermath_sgftree, color_to_play, I(move), J(move));
     moves++;
-    DEBUG(DEBUG_AFTERMATH, "%d %C move %1m (nodes %d, %d  total %d, %d)\n",
+    DEBUG(internal_state, DEBUG_AFTERMATH, "%d %C move %1m (nodes %d, %d  total %d, %d)\n",
       internal_state->movenum, color_to_play, move, get_owl_node_counter() - owl_nodes,
 	  get_reading_node_counter() - reading_nodes,
 	  get_owl_node_counter(), get_reading_node_counter());

@@ -41,9 +41,9 @@
  * of this territory. We look for the closest safe stones belonging to
  * the opponent.
  * For each such string (str) we call
- * - break_in(str, territory) if the opponent is assumed to be next to move,
+ * - break_in(internal_state, str, territory) if the opponent is assumed to be next to move,
  *   or
- * - block_off(str, territory) if the territory owner is next.
+ * - block_off(internal_state, str, territory) if the territory owner is next.
  * If the break in is successful resp. the blocking unsuccessful, we
  * shrink the territory, and see whether the opponent can still break in.
  * We repeat this until the territory is shrunk so much that the opponent
@@ -232,23 +232,23 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
 
   /* When blocking off, we use a somewhat smaller goal area. */
   if (color_to_move == internal_state->board[str])
-    compute_connection_distances(str, NO_MOVE, FP(3.01), &conn, 1);
+    compute_connection_distances(internal_state, str, NO_MOVE, FP(3.01), &conn, 1);
   else
-    compute_connection_distances(str, NO_MOVE, FP(2.81), &conn, 1);
+    compute_connection_distances(internal_state, str, NO_MOVE, FP(2.81), &conn, 1);
 
   sort_connection_queue_tail(&conn);
-  expand_connection_queue(&conn);
+  expand_connection_queue(internal_state, &conn);
   compute_smaller_goal(internal_state, OTHER_COLOR(internal_state->board[str]), color_to_move,
       		       &conn, goal, smaller_goal);
   if (0 && (debug & DEBUG_BREAKIN))
-    print_connection_distances(&conn);
-  DEBUG(DEBUG_BREAKIN, "Trying to break in from %1m to:\n", str);
+    print_connection_distances(internal_state, &conn);
+  DEBUG(internal_state, DEBUG_BREAKIN, "Trying to break in from %1m to:\n", str);
   if (debug & DEBUG_BREAKIN)
     goaldump(internal_state, smaller_goal);
   while ((color_to_move == internal_state->board[str]
-          && break_in(str, smaller_goal, &move))
+          && break_in(internal_state, str, smaller_goal, &move))
          || (color_to_move == OTHER_COLOR(internal_state->board[str])
-	     && !block_off(str, smaller_goal, NULL))) { 
+         && !block_off(internal_state, str, smaller_goal, NULL))) {
     /* Successful break-in/unsuccessful block. Now where exactly can we
      * erase territory? This is difficult, and the method here is very
      * crude: Wherever we enter the territory when computing the closest
@@ -262,10 +262,10 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
     if (ON_BOARD(internal_state, move) && goal[move]) {
       non_territory[(*num_non_territory)++] = move;
       if (info_pos)
-	DEBUG(DEBUG_TERRITORY | DEBUG_BREAKIN,
+    DEBUG(internal_state, DEBUG_TERRITORY | DEBUG_BREAKIN,
 	      "%1m: Erasing territory at %1m -a.\n", info_pos, move);
       else
-	DEBUG(DEBUG_TERRITORY | DEBUG_BREAKIN,
+    DEBUG(internal_state, DEBUG_TERRITORY | DEBUG_BREAKIN,
 	      "Erasing territory at %1m -a.\n", move);
     }
 
@@ -278,10 +278,10 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
 	      || !goal[conn.coming_from[pos]])) {
 	non_territory[(*num_non_territory)++] = pos;
 	if (info_pos)
-	  DEBUG(DEBUG_TERRITORY | DEBUG_BREAKIN,
+      DEBUG(internal_state, DEBUG_TERRITORY | DEBUG_BREAKIN,
 		"%1m: Erasing territory at %1m -b.\n", info_pos, pos);
 	else
-	  DEBUG(DEBUG_TERRITORY | DEBUG_BREAKIN,
+      DEBUG(internal_state, DEBUG_TERRITORY | DEBUG_BREAKIN,
 	        "Erasing territory at %1m -b.\n", pos);
 	if (conn.distances[pos] < cut_off_distance)
 	  cut_off_distance = conn.distances[pos];
@@ -313,7 +313,7 @@ break_in_goal_from_str(struct board_lib_state_struct *internal_state,
 
     compute_smaller_goal(internal_state, OTHER_COLOR(internal_state->board[str]), color_to_move,
 			 &conn, goal, smaller_goal);
-    DEBUG(DEBUG_BREAKIN, "Now trying to break to smaller goal:\n", str);
+    DEBUG(internal_state, DEBUG_BREAKIN, "Now trying to break to smaller goal:\n", str);
     if (debug & DEBUG_BREAKIN)
       goaldump(internal_state, smaller_goal);
 
@@ -340,17 +340,17 @@ break_in_goal(struct board_lib_state_struct *internal_state,
   int candidates = 0;
   int min_distance = FP(5.0);
 
-  DEBUG(DEBUG_BREAKIN,
+  DEBUG(internal_state, DEBUG_BREAKIN,
         "Trying to break (%C to move) %C's territory ", color_to_move, owner);
   if (debug & DEBUG_BREAKIN)
     goaldump(internal_state, goal);
   /* Compute nearby fields of goal. */
-  init_connection_data(intruder, goal, NO_MOVE, FP(3.01), &conn, 1);
+  init_connection_data(internal_state, intruder, goal, NO_MOVE, FP(3.01), &conn, 1);
   k = conn.queue_end;
-  spread_connection_distances(intruder, &conn);
+  spread_connection_distances(internal_state, intruder, &conn);
   sort_connection_queue_tail(&conn);
   if (0 && (debug & DEBUG_BREAKIN))
-    print_connection_distances(&conn);
+    print_connection_distances(internal_state, &conn);
 
   /* Look for nearby stones. */
   memset(used, 0, BOARDMAX);
@@ -401,7 +401,7 @@ break_in_goal(struct board_lib_state_struct *internal_state,
   for (k = 0; k < num_non_territory; k++)
     influence_erase_territory(internal_state, q, non_territory[k], owner);
   if (0 && num_non_territory > 0 && (debug & DEBUG_BREAKIN))
-    showboard(0);
+    showboard(internal_state, 0);
 }
 
 

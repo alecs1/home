@@ -81,14 +81,14 @@ static const int domain_colors[4] = {5, 1, 2, 3}; /* gray, black, white, both */
 /* The following four functions define an API for drawing boards. The
  * typical use would be along the following lines:
  *
- * start_draw_board();
+ * start_draw_board(internal_state);
  * for (m = 0; m < internal_state->board_size; m++)
  *   for (n = 0; n < internal_state->board_size; n++) {
  *     int color = ...;
  *     int c = ...;
- *     draw_color_char(m, n, c, color);
+ *     draw_color_char(internal_state, m, n, c, color);
  *   }
- * end_draw_board();
+ * end_draw_board(internal_state);
  *
  * Coordinate system, hoshi points, and linefeeds are written
  * automatically by the board drawing functions. The coordinates m, n
@@ -98,10 +98,10 @@ static const int domain_colors[4] = {5, 1, 2, 3}; /* gray, black, white, both */
 
 /* Init color and print a line with coordinate letters above the board. */
 void
-start_draw_board()
+start_draw_board(board_lib_state_struct *internal_state)
 {
   gg_init_color();
-  draw_letter_coordinates(stderr);
+  draw_letter_coordinates(internal_state, stderr);
 }
 
 /* Draw a colored character. If c has the value EMPTY, either a "." or
@@ -110,7 +110,8 @@ start_draw_board()
  * is also drawn.
  */
 void
-draw_color_char(int m, int n, int c, int color)
+draw_color_char(board_lib_state_struct *internal_state,
+                int m, int n, int c, int color)
 {
   /* Is this the first column? */
   if (n == 0)
@@ -118,7 +119,7 @@ draw_color_char(int m, int n, int c, int color)
 
   /* Do we see a hoshi point? */
   if (c == EMPTY) {
-    if (is_hoshi_point(m, n))
+    if (is_hoshi_point(internal_state, m, n))
       c = '+';
     else
       c = '.';
@@ -139,17 +140,18 @@ draw_color_char(int m, int n, int c, int color)
 
 /* Draw a black character as specified above. */
 void
-draw_char(int m, int n, int c)
+draw_char(board_lib_state_struct *internal_state,
+          int m, int n, int c)
 {
-  draw_color_char(m, n, c, GG_COLOR_BLACK);
+  draw_color_char(internal_state, m, n, c, GG_COLOR_BLACK);
 }
 
 /* Print a line with coordinate letters under the board. */
 void
-end_draw_board()
+end_draw_board(board_lib_state_struct *internal_state)
 {
   fprintf(stderr, "\n");
-  draw_letter_coordinates(stderr);
+  draw_letter_coordinates(internal_state, stderr);
   fprintf(stderr, "\n");
 }
 
@@ -166,12 +168,13 @@ end_draw_board()
  */
 
 static void 
-showchar(int i, int j, int empty, int xo)
+showchar(board_lib_state_struct *internal_state,
+         int i, int j, int empty, int xo)
 {
   struct dragon_data *d;  /* dragon data at (i, j) */
   struct dragon_data2 *d2;
   int x;
-  ASSERT_ON_BOARD2(i, j);
+  ASSERT_ON_BOARD2(internal_state, i, j);
   x = BOARD(i, j);
   d = &(dragon[POS(i, j)]);
   d2 = &(dragon2[d->id]);
@@ -263,7 +266,8 @@ showchar(int i, int j, int empty, int xo)
  */
 
 void
-showboard(int xo)
+showboard(board_lib_state_struct *internal_state,
+          int xo)
 {
   int i, j, ii;
   gg_init_color();
@@ -274,24 +278,24 @@ showboard(int xo)
   next_white = (259 - 26);
   next_black = 26;
   
-  start_draw_board();
+  start_draw_board(internal_state);
   
   for (i = 0; i < internal_state->board_size; i++) {
     ii = internal_state->board_size - i;
     fprintf(stderr, "\n%2d", ii);
     
     for (j = 0; j < internal_state->board_size; j++)
-      showchar(i, j, is_hoshi_point(internal_state, i, j) ? '+' : '.', xo);
+      showchar(internal_state, i, j, is_hoshi_point(internal_state, i, j) ? '+' : '.', xo);
     
     fprintf(stderr, " %d", ii);
     
     if (xo == 0 && ((internal_state->board_size < 10 && i == internal_state->board_size-2)
             || (internal_state->board_size >= 10 && i == 8)))
-      fprintf(stderr, "     WHITE (O) has captured %d stones", black_captured);
+      fprintf(stderr, "     WHITE (O) has captured %d stones", internal_state->black_captured);
     
     if (xo == 0 && ((internal_state->board_size < 10 && i == internal_state->board_size-1)
             || (internal_state->board_size >= 10 && i == 9)))
-      fprintf(stderr, "     BLACK (X) has captured %d stones", white_captured);
+      fprintf(stderr, "     BLACK (X) has captured %d stones", internal_state->white_captured);
     
     if (xo == 3) {
       if (i == internal_state->board_size-5)
@@ -307,7 +311,7 @@ showboard(int xo)
     }
   }
 
-  end_draw_board();
+  end_draw_board(internal_state);
 }
 
 
@@ -350,12 +354,13 @@ result_to_string(int result)
 
 /* Always returns 1 to allow use in short-circuit logical expressions. */
 int 
-DEBUG_func(int flag, const char *fmt, ...)
+DEBUG_func(board_lib_state_struct *internal_state,
+           int flag, const char *fmt, ...)
 {
   if (debug & flag) {
     va_list ap;
     va_start(ap, fmt);
-    vgprintf(stderr, fmt, ap);
+    vgprintf(internal_state, stderr, fmt, ap);
     va_end(ap);
   }
 

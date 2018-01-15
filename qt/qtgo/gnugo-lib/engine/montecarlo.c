@@ -427,7 +427,7 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	memset(ml, 0, sizeof(ml));
 	
 	do {
-	  ASSERT1(mc->reference_stone[pos2] == reference, pos2);
+      ASSERT1(internal_state, mc->reference_stone[pos2] == reference, pos2);
 	  ASSERT1(internal_state, num_stones < countstones(internal_state, pos), pos);
 	  num_stones++;
 	  for (k = 0; k < 4; k++)
@@ -444,12 +444,12 @@ mc_check_consistency_with_global_board(struct mc_board *mc)
 	do {
 	  int previous = mc->previous_liberty_edge[liberty_edge];
 	  int next = mc->next_liberty_edge[liberty_edge];
-	  ASSERT1(ml[liberty_edge] == 1, pos);
+      ASSERT1(internal_state, ml[liberty_edge] == 1, pos);
 	  ml[liberty_edge] = 0;
 	  num_liberty_edges--;
-	  ASSERT1(mc->next_liberty_edge[previous] == liberty_edge, pos);
-	  ASSERT1(mc->previous_liberty_edge[next] == liberty_edge, pos);
-	  ASSERT1(liberty_of_string(liberty_edge >> 2, pos), pos);
+      ASSERT1(internal_state, mc->next_liberty_edge[previous] == liberty_edge, pos);
+      ASSERT1(internal_state, mc->previous_liberty_edge[next] == liberty_edge, pos);
+      ASSERT1(internal_state, liberty_of_string(internal_state, liberty_edge >> 2, pos), pos);
 	  liberty_edge = mc->next_liberty_edge[liberty_edge];
 	} while (liberty_edge != first_liberty_edge);
 	ASSERT1(internal_state, num_liberty_edges == 0, pos);
@@ -840,7 +840,7 @@ mc_play_move(board_lib_state_struct *internal_state,
   mc->board_ko_pos = NO_MOVE;
 
 #if !TURN_OFF_ASSERTIONS
-  ASSERT1(mc->board[pos] == EMPTY, pos);
+  ASSERT1(internal_state, mc->board[pos] == EMPTY, pos);
 #endif
   mc->board[pos] = color;
   hashdata_invert_stone(&mc->hash, pos, color);
@@ -1657,9 +1657,9 @@ mc_generate_random_move(board_lib_state_struct *internal_state,
 
     move = pos;
 #if !TURN_OFF_ASSERTIONS
-    ASSERT1(move == PASS_MOVE || move_values[move] > 0, move);
-    ASSERT1(move == PASS_MOVE || mc->board[move] == EMPTY, move);
-    ASSERT1(mc_is_legal(internal_state, mc, move, color), move);
+    ASSERT1(internal_state, move == PASS_MOVE || move_values[move] > 0, move);
+    ASSERT1(internal_state, move == PASS_MOVE || mc->board[move] == EMPTY, move);
+    ASSERT1(internal_state, mc_is_legal(internal_state, mc, move, color), move);
 #endif
   }
 
@@ -2117,7 +2117,7 @@ uct_dump_tree(board_lib_state_struct *internal_state,
   SGFTree sgf_tree;
   sgftree_clear(&sgf_tree);
   sgftreeCreateHeaderNode(&sgf_tree, internal_state->board_size, internal_state->komi, 0);
-  sgffile_printboard(&sgf_tree);
+  sgffile_printboard(internal_state, &sgf_tree);
 
   uct_dump_tree_recursive(&tree->nodes[0], &sgf_tree, color, cutoff, 0);
   

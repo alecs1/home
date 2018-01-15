@@ -104,7 +104,7 @@ reinforce_helper(ARGS)
   
   return (!doing_scoring
 	  && !lively_dragon_exists(OTHER_COLOR(color)) 
-	  && safe_move(move, color));
+	  && safe_move(internal_state, move, color));
 }
 
 
@@ -155,9 +155,9 @@ throw_in_atari_helper(ARGS)
     bpos = libs[1];
   
   if (TRYMOVE(move, color)) {
-    if (!attack(cpos, NULL) && !(ON_BOARD(internal_state, dpos) && attack(dpos, NULL))) {
+    if (!attack(internal_state, cpos, NULL) && !(ON_BOARD(internal_state, dpos) && attack(internal_state, dpos, NULL))) {
       if (TRYMOVE(bpos, other)) {
-	if (attack(apos, NULL))
+	if (attack(internal_state, apos, NULL))
 	  success = 1;
 	popgo(internal_state);
       }
@@ -171,7 +171,7 @@ throw_in_atari_helper(ARGS)
   /* The followup is to capture the "a" string. Estimate the value to
    * twice the size.
    */
-  add_followup_value(move, 2 * worm[apos].effective_size);
+  add_followup_value(internal_state, move, 2 * worm[apos].effective_size);
   TRACE(internal_state, "...followup value %f\n", 2 * worm[apos].effective_size);
 
   return success;
@@ -232,10 +232,10 @@ cutstone2_helper(ARGS)
   
   dpos = worm[apos].defense_points[0];
 
-  if (TRYMOVE(dpos, board[apos])) {
-    if (!board[bpos] || attack(bpos, NULL)
-	|| !board[cpos] || attack(cpos, NULL)
-	|| safe_move(move, board[apos]) != 0) {
+  if (TRYMOVE(dpos, internal_state->board[apos])) {
+    if (!internal_state->board[bpos] || attack(internal_state, bpos, NULL)
+	|| !internal_state->board[cpos] || attack(internal_state, cpos, NULL)
+	|| safe_move(internal_state, move, internal_state->board[apos]) != 0) {
       popgo(internal_state);
       worm[worm[apos].origin].cutstone2++;
       propagate_worm(worm[apos].origin);
@@ -262,7 +262,7 @@ edge_double_sente_helper(int move, int apos, int bpos, int cpos)
 {
   int color = internal_state->board[cpos];
   int success = 0;
-  ASSERT1((color == BLACK || color == WHITE), move);
+  ASSERT1(internal_state, (color == BLACK || color == WHITE), move);
   
   if (TRYMOVE(move, color)) {
     ASSERT1(internal_state, countlib(internal_state, move) == 2, move);
@@ -283,7 +283,7 @@ edge_double_sente_helper(int move, int apos, int bpos, int cpos)
 void
 threaten_to_save_helper(int move, int str)
 {
-  add_followup_value(move, 2.0 + 2.0 * worm[str].effective_size);
+  add_followup_value(internal_state, move, 2.0 + 2.0 * worm[str].effective_size);
   TRACE(internal_state, "...followup value %f\n", 2.0 + 2.0 * worm[str].effective_size);
 }
 
@@ -296,7 +296,7 @@ threaten_to_save_helper(int move, int str)
 void
 prevent_attack_threat_helper(int move, int str)
 {
-  add_reverse_followup_value(move, 2.0 * worm[str].effective_size);
+  add_reverse_followup_value(internal_state, move, 2.0 * worm[str].effective_size);
   TRACE(internal_state, "...reverse followup value %f\n", 2.0 * worm[str].effective_size);
 }
 
@@ -336,18 +336,18 @@ threaten_to_capture_helper(int move, int str)
   int defense_move;
   int k;
   
-  adj = chainlinks2(str, adjs, 1);
+  adj = chainlinks2(internal_state, str, adjs, 1);
   for (k = 0; k < adj; k++)
     if (worm[adjs[k]].defense_codes[0] != 0
-	&& !does_defend(move, adjs[k]))
+	&& !does_defend(internal_state, move, adjs[k]))
       return;
 
   if (!TRYMOVE(move, OTHER_COLOR(internal_state->board[str])))
     return;
-  if (find_defense(str, &defense_move) != 0
+  if (find_defense(internal_state, str, &defense_move) != 0
       && defense_move != NO_MOVE
       && TRYMOVE(defense_move, internal_state->board[str])) {
-    if (internal_state->board[move] == EMPTY || attack(move, NULL) != 0) {
+    if (internal_state->board[move] == EMPTY || attack(internal_state, move, NULL) != 0) {
       popgo(internal_state);
       popgo(internal_state);
       return;
@@ -358,13 +358,13 @@ threaten_to_capture_helper(int move, int str)
   /* In addition to the move found by find_defense(), also try all
    * chain breaking moves in the same way.
    */
-  adj = chainlinks2(str, adjs, 1);
+  adj = chainlinks2(internal_state, str, adjs, 1);
   for (k = 0; k < adj; k++) {
     int lib;
     findlib(internal_state, adjs[k], 1, &lib);
     if (TRYMOVE(lib, internal_state->board[str])) {
-      if (!attack(str, NULL)
-	  && (internal_state->board[move] == EMPTY || attack(move, NULL) != 0)) {
+      if (!attack(internal_state, str, NULL)
+	  && (internal_state->board[move] == EMPTY || attack(internal_state, move, NULL) != 0)) {
 	popgo(internal_state);
 	popgo(internal_state);
 	return;
@@ -375,7 +375,7 @@ threaten_to_capture_helper(int move, int str)
 
   popgo(internal_state);
   
-  add_followup_value(move, 2.0 * worm[str].effective_size);
+  add_followup_value(internal_state, move, 2.0 * worm[str].effective_size);
   TRACE(internal_state, "...followup value %f\n", 2.0 * worm[str].effective_size);
 }
 
@@ -399,20 +399,20 @@ defend_against_atari_helper(int move, int str)
   ASSERT1(internal_state, countlib(internal_state, str) == 2, str);
 
   /* No value if the string can capture out of atari. */
-  adj = chainlinks2(str, adjs, 1);
+  adj = chainlinks2(internal_state, str, adjs, 1);
   for (k = 0; k < adj; k++)
     if (worm[adjs[k]].defense_codes[0] != 0
-	&& !does_defend(move, adjs[k]))
+	&& !does_defend(internal_state, move, adjs[k]))
       return;
 
   /* No value if opponent has no safe atari. */
   findlib(internal_state, str, 2, libs);
-  if (!safe_move(libs[0], OTHER_COLOR(internal_state->board[str]))
-      && !safe_move(libs[1], OTHER_COLOR(internal_state->board[str])))
+  if (!safe_move(internal_state, libs[0], OTHER_COLOR(internal_state->board[str]))
+      && !safe_move(internal_state, libs[1], OTHER_COLOR(internal_state->board[str])))
     return;
   
   TRACE(internal_state, "...reverse followup value %f\n", 2.0 * worm[str].effective_size);
-  add_reverse_followup_value(move, 2.0 * worm[str].effective_size);
+  add_reverse_followup_value(internal_state, move, 2.0 * worm[str].effective_size);
 }
 
 
@@ -453,9 +453,9 @@ finish_ko_helper(int pos)
 
   adj = chainlinks2(internal_state, pos, adjs, 1);
   for (k = 0; k < adj; k++) {
-    if (countstones(adjs[k]) == 1) {
+    if (countstones(internal_state, adjs[k]) == 1) {
       findlib(internal_state, adjs[k], 1, &lib);
-      if (is_ko(internal_state, lib, board[pos], NULL))
+      if (is_ko(internal_state, lib, internal_state->board[pos], NULL))
 	return 1;
     }
   }
@@ -477,11 +477,11 @@ squeeze_ko_helper(int pos)
   int k;
 
   liberties = findlib(internal_state, pos, 2, libs);
-  ASSERT1(liberties == 2, pos);
+  ASSERT1(internal_state, liberties == 2, pos);
 
   for (k = 0; k < liberties; k++) {
     int aa = libs[k];
-    if (is_ko(aa, OTHER_COLOR(internal_state->board[pos]), NULL))
+    if (is_ko(internal_state, aa, OTHER_COLOR(internal_state->board[pos]), NULL))
       return 1;
   }
 
@@ -505,7 +505,7 @@ backfill_helper(int apos, int bpos, int cpos)
 
   if (TRYMOVE(apos, color)) {
     if (TRYMOVE(bpos, other)) {
-      if (attack(cpos, NULL) && find_defense(cpos, &dpos)) {
+      if (attack(internal_state, cpos, NULL) && find_defense(cpos, &dpos)) {
 	set_minimum_move_value(dpos, 0.1);
 	TRACE(internal_state, "%o...setting min move value of %1m to 0.1\n", dpos);
       }
@@ -580,7 +580,7 @@ connect_and_cut_helper(int Apos, int bpos, int cpos)
       if (TRYMOVE(cpos, other)) {
 	if (internal_state->board[bpos] == EMPTY
 	    || internal_state->board[epos] == EMPTY
-	    || !defend_both(bpos, epos))
+	    || !defend_both(internal_state, bpos, epos))
 	  result = 1;
 	popgo(internal_state);
       }
@@ -638,7 +638,7 @@ connect_and_cut_helper2(int Apos, int bpos, int cpos, int color)
 	if (TRYMOVE(cpos, color)) {
 	  if (internal_state->board[bpos] == EMPTY
 	      || internal_state->board[epos] == EMPTY
-	      || !defend_both(bpos, epos))
+	      || !defend_both(internal_state, bpos, epos))
 	    result = 1;
 	  popgo(internal_state);
 	}
@@ -702,9 +702,9 @@ adjacent_to_stone_in_atari(int str)
   int adjs[MAXCHAIN];
   int k;
 
-  adj = chainlinks2(str, adjs, 1);
+  adj = chainlinks2(internal_state, str, adjs, 1);
   for (k = 0; k < adj; k++)
-    if (attack(adjs[k], NULL))
+    if (attack(internal_state, adjs[k], NULL))
       return 1;
   
   return 0;
@@ -721,9 +721,9 @@ adjacent_to_defendable_stone_in_atari(int str)
   int adjs[MAXCHAIN];
   int k;
 
-  adj = chainlinks2(str, adjs, 1);
+  adj = chainlinks2(internal_state, str, adjs, 1);
   for (k = 0; k < adj; k++)
-    if (attack_and_defend(adjs[k], NULL, NULL, NULL, NULL))
+    if (attack_and_defend(internal_state, adjs[k], NULL, NULL, NULL, NULL))
       return 1;
   
   return 0;
@@ -735,7 +735,7 @@ backfill_replace(int move, int str)
   int defense_move = NO_MOVE;
 
   if (TRYMOVE(move, OTHER_COLOR(internal_state->board[str]))) {
-    if (attack_and_defend(str, NULL, NULL, NULL, &defense_move)) {
+    if (attack_and_defend(internal_state, str, NULL, NULL, NULL, &defense_move)) {
       /* Must undo the trymove before adding the replacement move. */
       popgo(internal_state);
       add_replacement_move(move, defense_move, internal_state->board[str]);
@@ -846,12 +846,12 @@ int distrust_tactics_helper(int str)
   else if (lib == 1)
     return 0;
   
-  adj = chainlinks3(str, adjs, lib);
+  adj = chainlinks3(internal_state, str, adjs, lib);
   for (r = 0; r < adj; r++) {
     int nakade = 1;
     int adjlib;
     int adjlibs[3];
-    if (countstones(adjs[r]) < 3)
+    if (countstones(internal_state, adjs[r]) < 3)
       continue;
     adjlib = findlib(internal_state, adjs[r], 3, adjlibs);
     for (s = 0; s < adjlib; s++) {

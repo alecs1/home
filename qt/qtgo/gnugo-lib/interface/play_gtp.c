@@ -350,7 +350,7 @@ play_gtp(FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
   clearstats();
   gtp_main_loop(commands, gtp_input, gtp_output, gtp_dump_commands);
   if (showstatistics)
-    showstats();
+    showstats(internal_state);
 }
 
 
@@ -812,7 +812,7 @@ static int
 gtp_get_handicap(char *s)
 {
   UNUSED(s);
-  return gtp_success("%d", handicap);
+  return gtp_success("%d", internal_state->handicap);
 }
 
 
@@ -920,7 +920,7 @@ gtp_list_stones(char *s)
  * Returns:   Number of liberties.
  */
 static int
-gtp_countlib(char *s)
+gtp_countlib(internal_state, char *s)
 {
   int i, j;
   if (!gtp_decode_coord(s, &i, &j))
@@ -929,7 +929,7 @@ gtp_countlib(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  return gtp_success("%d", countlib(POS(i, j)));
+  return gtp_success("%d", countlib(internal_state, POS(i, j)));
 }
 
 
@@ -939,7 +939,7 @@ gtp_countlib(char *s)
  * Returns:   Sorted space separated list of vertices.
  */
 static int
-gtp_findlib(char *s)
+gtp_findlib(internal_state, char *s)
 {
   int i, j;
   int libs[MAXLIBS];
@@ -965,7 +965,7 @@ gtp_findlib(char *s)
  * Returns:   Sorted space separated list of liberties
  */
 static int
-gtp_accuratelib(char *s)
+gtp_accuratelib(internal_state, char *s)
 {
   int i, j;
   int color;
@@ -1079,9 +1079,9 @@ gtp_captures(char *s)
     return gtp_failure("invalid color");
 
   if (color == BLACK)
-    return gtp_success("%d", white_captured);
+    return gtp_success("%d", internal_state->white_captured);
   else
-    return gtp_success("%d", black_captured);
+    return gtp_success("%d", internal_state->black_captured);
 }
 
 
@@ -1279,7 +1279,7 @@ gtp_clear_cache(char *s)
  * Returns:   attack code followed by attack point if attack code nonzero.
  */
 static int
-gtp_attack(char *s)
+gtp_attack(internal_state, char *s)
 {
   int i, j;
   int apos;
@@ -1291,7 +1291,7 @@ gtp_attack(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  attack_code = attack(POS(i, j), &apos);
+  attack_code = attack(internal_state, POS(i, j), &apos);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(attack_code);
   if (attack_code > 0) {
@@ -1374,7 +1374,7 @@ gtp_defend(char *s)
  * Returns:   attack code
  */
 static int
-gtp_does_attack(char *s)
+gtp_does_attack(internal_state, char *s)
 {
   int i, j;
   int ti, tj;
@@ -1399,7 +1399,7 @@ gtp_does_attack(char *s)
   if (internal_state->sgf_dumptree)
     reading_cache_clear();
   
-  attack_code = does_attack(POS(ti, tj), POS(i, j));
+  attack_code = does_attack(internal_state, POS(ti, tj), POS(i, j));
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(attack_code);
   return gtp_finish_response();
@@ -1450,7 +1450,7 @@ gtp_does_defend(char *s)
  * Returns:   attack code followed by attack point if attack code nonzero.
  */
 static int
-gtp_ladder_attack(char *s)
+gtp_ladder_attack(internal_state, char *s)
 {
   int i, j;
   int apos;
@@ -1462,7 +1462,7 @@ gtp_ladder_attack(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  if (countlib(POS(i, j)) != 2)
+  if (countlib(internal_state, POS(i, j)) != 2)
     return gtp_failure("string must have exactly 2 liberties");
 
   attack_code = simple_ladder(POS(i, j), &apos);
@@ -1514,7 +1514,7 @@ gtp_decrease_depths(char *s)
  * Returns:   attack code followed by attack point if attack code nonzero.
  */
 static int
-gtp_owl_attack(char *s)
+gtp_owl_attack(internal_state, char *s)
 {
   int i, j;
   int attack_point;
@@ -1530,7 +1530,7 @@ gtp_owl_attack(char *s)
 
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
-  attack_code = owl_attack(POS(i, j), &attack_point, &result_certain, &kworm);
+  attack_code = owl_attack(internal_state, POS(i, j), &attack_point, &result_certain, &kworm);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(attack_code);
   if (attack_code > 0) {
@@ -1584,7 +1584,7 @@ gtp_owl_defend(char *s)
  *            attack code nonzero.
  */
 static int
-gtp_owl_threaten_attack(char *s)
+gtp_owl_threaten_attack(internal_state, char *s)
 {
   int i, j;
   int attack_point1;
@@ -1599,7 +1599,7 @@ gtp_owl_threaten_attack(char *s)
 
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
-  attack_code = owl_threaten_attack(POS(i, j), &attack_point1, &attack_point2);
+  attack_code = owl_threaten_attack(internal_state, POS(i, j), &attack_point1, &attack_point2);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(attack_code);
   if (attack_code > 0) {
@@ -1654,7 +1654,7 @@ gtp_owl_threaten_defense(char *s)
  * Returns:   attack code
  */
 static int
-gtp_owl_does_attack(char *s)
+gtp_owl_does_attack(internal_state, char *s)
 {
   int i, j;
   int ti, tj;
@@ -1678,7 +1678,7 @@ gtp_owl_does_attack(char *s)
 
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   
-  attack_code = owl_does_attack(POS(ti, tj), POS(i, j), &kworm);
+  attack_code = owl_does_attack(internal_state, POS(ti, tj), POS(i, j), &kworm);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(attack_code);
   return gtp_finish_response();
@@ -1797,7 +1797,7 @@ gtp_defend_both(char *s)
   if (BOARD(bi, bj) == EMPTY)
     return gtp_failure("string vertex must not be empty");
 
-  dcode = defend_both(POS(ai, aj), POS(bi, bj));
+  dcode = defend_both(internal_state, POS(ai, aj), POS(bi, bj));
 
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(dcode);
@@ -2300,7 +2300,7 @@ gtp_unconditional_status(char *s)
  */
 
 static int
-gtp_combination_attack(char *s)
+gtp_combination_attack(internal_state, char *s)
 {
   int color;
   int attack_point;
@@ -3873,12 +3873,12 @@ gtp_worm_stones(struct board_lib_state_struct *internal_state, char *s)
       if (find_origin(POS(u, v)) != POS(u, v))
 	continue;
       if (ON_BOARD2(internal_state, i, j)
-	  && !same_string(POS(u, v), POS(i, j)))
+	  && !same_string(internal_state, POS(u, v), POS(i, j)))
 	continue;
       for (m = 0; m < internal_state->board_size; m++)
     for (n = 0; n < internal_state->board_size; n++)
 	  if (BOARD(m, n) != EMPTY
-	      && same_string(POS(m, n), POS(u, v)))
+	      && same_string(internal_state, POS(m, n), POS(u, v)))
 	    gtp_mprintf("%m ", m, n);
       gtp_printf("\n");
     }
@@ -3931,7 +3931,7 @@ gtp_dragon_data(char *s)
   if (internal_state->stackp > 0)
     return gtp_failure("dragon data unavailable when stackp > 0");
 
-  silent_examine_position(FULL_EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, FULL_EXAMINE_DRAGONS);
 
   gtp_start_response(GTP_SUCCESS);
 
@@ -4108,8 +4108,8 @@ static int
 gtp_start_sgftrace(char *s)
 {
   UNUSED(s);
-  sgffile_begindump(&gtp_sgftree);
-  count_variations = 1;
+  sgffile_begindump(internal_state, &gtp_sgftree);
+  internal_state->count_variations = 1;
   return gtp_success("");
 }
 
@@ -4133,7 +4133,7 @@ gtp_finish_sgftrace(char *s)
     return gtp_failure("missing filename");
 
   sgffile_enddump(filename);
-  count_variations = 0;
+  internal_state->count_variations = 0;
   return gtp_success("");
 }
 

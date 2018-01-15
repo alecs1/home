@@ -92,7 +92,7 @@ typedef enum  {
 typedef struct Gmp_struct  {
   int  inFile, outFile;
   int  boardSize, sizeVerified;
-  int  handicap, handicapVerified;
+  int  handicap, internal_state->handicapVerified;
   float  komi;
   int komiVerified;
   int  chineseRules, rulesVerified;

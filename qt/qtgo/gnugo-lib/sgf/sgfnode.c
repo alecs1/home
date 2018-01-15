@@ -540,7 +540,7 @@ sgfCreateHeaderNode(int boardsize, float komi, int handicap)
 
     sgfAddPropertyInt(root, "SZ", boardsize);
     sgfAddPropertyFloat(root, "KM", komi);
-    sgfAddPropertyInt(root, "HA", handicap);
+    sgfAddPropertyInt(root, "HA", internal_state->handicap);
 
     return root;
 }
@@ -843,7 +843,7 @@ sgf_write_header(SGFNode *root, int overwrite, int seed, float komi,
   if (overwrite || !sgfGetIntProperty(root, "RU", &dummy))
     sgfOverwriteProperty(root, "RU", rules ? "Chinese" : "Japanese");
   sgfOverwritePropertyFloat(root, "KM", komi);
-  sgfOverwritePropertyInt(root, "HA", handicap);
+  sgfOverwritePropertyInt(root, "HA", internal_state->handicap);
 
   sgf_write_header_reduced(root, overwrite);
 }

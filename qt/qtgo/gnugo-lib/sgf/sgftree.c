@@ -175,7 +175,7 @@ sgftreeCreateHeaderNode(SGFTree *tree, int boardsize, float komi, int handicap)
 
   sgfAddPropertyInt(root, "SZ", boardsize);
   sgfAddPropertyFloat(root, "KM", komi);
-  sgfAddPropertyInt(root, "HA", handicap);
+  sgfAddPropertyInt(root, "HA", internal_state->handicap);
   tree->root = root;
   tree->lastnode = root;
 }

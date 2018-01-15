@@ -74,9 +74,10 @@ static int recognize_eye(board_lib_state_struct *internal_state,
              struct half_eye_data heye[BOARDMAX],
              struct vital_points *vp,
              int eyefilling_points[BOARDMAX]);
-static void guess_eye_space(int pos, int effective_eyesize, int margins,
-			    int bulk_score, struct eye_data eye[BOARDMAX],
-			    struct eyevalue *value, int *pessimistic_min);
+static void guess_eye_space(board_lib_state_struct *internal_state,
+                            int pos, int effective_eyesize, int margins,
+                int bulk_score, struct eye_data eye[BOARDMAX],
+                struct eyevalue *value, int *pessimistic_min);
 static struct eye_graph *optical_graph_matcher(board_lib_state_struct *internal_state,
                                                int *vpos,
                            signed char *marginal,
@@ -420,12 +421,12 @@ compute_primary_domains(board_lib_state_struct *internal_state,
   }
   
   if (0 && (debug & DEBUG_EYES)) {
-    start_draw_board();
+    start_draw_board(internal_state);
     for (i = 0; i < internal_state->board_size; i++)
       for (j = 0; j < internal_state->board_size; j++) {
-	draw_color_char(i, j, domain[POS(i, j)] ? '1' : '0', GG_COLOR_BLACK);
+    draw_color_char(internal_state, i, j, domain[POS(i, j)] ? '1' : '0', GG_COLOR_BLACK);
       }
-    end_draw_board();
+    end_draw_board(internal_state);
   }
 }
 
@@ -538,12 +539,12 @@ false_margin(board_lib_state_struct *internal_state,
     if (internal_state->stackp == 0 && worm[apos].attack_codes[0] == 0)
       potential_false_margin = 1;
     
-    if (internal_state->stackp > 0 && !attack(apos, NULL))
+    if (internal_state->stackp > 0 && !attack(internal_state, apos, NULL))
       potential_false_margin = 1;
   }
   
-  if (potential_false_margin && safe_move(pos, other) == 0) {
-    DEBUG(DEBUG_EYES, "False margin for %C at %1m.\n", color, pos);
+  if (potential_false_margin && safe_move(internal_state, pos, other) == 0) {
+    DEBUG(internal_state, DEBUG_EYES, "False margin for %C at %1m.\n", color, pos);
     return 1;
   }
 
@@ -622,7 +623,7 @@ find_eye_dragons(board_lib_state_struct *internal_state,
   int pos;
 
   memset(mx, 0, sizeof(mx));
-  DEBUG(DEBUG_MISCELLANEOUS, "find_eye_dragons: %1m %C\n", origin, eye_color);
+  DEBUG(internal_state, DEBUG_MISCELLANEOUS, "find_eye_dragons: %1m %C\n", origin, eye_color);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (internal_state->board[pos] == eye_color
 	&& mx[dragon[pos].origin] == 0
@@ -638,7 +639,7 @@ find_eye_dragons(board_lib_state_struct *internal_state,
         || (ON_BOARD(internal_state, EAST(pos))
 		&& eye[EAST(pos)].origin == origin
 		&& !eye[EAST(pos)].marginal))) {
-      DEBUG(DEBUG_MISCELLANEOUS, 
+      DEBUG(internal_state, DEBUG_MISCELLANEOUS,
 	    "  dragon: %1m %1m\n", pos, dragon[pos].origin);
       mx[dragon[pos].origin] = 1;
       if (dragons != NULL && num_dragons < max_dragons)
@@ -772,7 +773,7 @@ compute_eyes(board_lib_state_struct *internal_state,
 
   if (debug & DEBUG_EYES) {
     print_eye(internal_state, eye, heye, pos);
-    DEBUG(DEBUG_EYES, "\n");
+    DEBUG(internal_state, DEBUG_EYES, "\n");
   }
   
   /* Look up the eye space in the graphs database. */
@@ -875,7 +876,7 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
 	   * the function.
 	   */
       if (countlib(internal_state, neighbor) == 1
-	      && attack(neighbor, NULL) != 0) {
+          && attack(internal_state, neighbor, NULL) != 0) {
 	    int is_inset = 1;
 	    int splits_eyespace = 0;
 	    int m;
@@ -913,7 +914,7 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
 
   if (debug & DEBUG_EYES) {
     print_eye(internal_state, eye, heye, pos);
-    DEBUG(DEBUG_EYES, "\n");
+    DEBUG(internal_state, DEBUG_EYES, "\n");
   }
   
   /* Look up the eye space in the graphs database. */
@@ -926,7 +927,7 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
     && is_ko(internal_state, pos, OTHER_COLOR(eye[pos].color), NULL))
       *pessimistic_min = 0;
 
-    DEBUG(DEBUG_EYES, "  graph matching - %s, pessimistic_min=%d\n",
+    DEBUG(internal_state, DEBUG_EYES, "  graph matching - %s, pessimistic_min=%d\n",
 	  eyevalue_to_string(value), *pessimistic_min);
   }
   
@@ -936,15 +937,15 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
    * eyespaces.
    */
   else {
-    guess_eye_space(pos, effective_eyesize, margins, bulk_score, eye,
+    guess_eye_space(internal_state, pos, effective_eyesize, margins, bulk_score, eye,
 		    value, pessimistic_min); 
-    DEBUG(DEBUG_EYES, "  guess_eye - %s, pessimistic_min=%d\n",
+    DEBUG(internal_state, DEBUG_EYES, "  guess_eye - %s, pessimistic_min=%d\n",
 	  eyevalue_to_string(value), *pessimistic_min);
   }
 
   if (*pessimistic_min < 0) {
     *pessimistic_min = 0;
-    DEBUG(DEBUG_EYES, "  pessimistic min revised to 0\n");
+    DEBUG(internal_state, DEBUG_EYES, "  pessimistic min revised to 0\n");
   }
 
   /* An eyespace with at least two interior stones is assumed to be
@@ -952,12 +953,12 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
    */
   if (*pessimistic_min < 1 && interior_stones >= 2) {
     *pessimistic_min = 1;
-    DEBUG(DEBUG_EYES, "  pessimistic min revised to 1 (interior stones)\n");
+    DEBUG(internal_state, DEBUG_EYES, "  pessimistic min revised to 1 (interior stones)\n");
   }
 
   if (contains_inset) {
     *pessimistic_min = 0;
-    DEBUG(DEBUG_EYES, "  pessimistic min revised to 0 (contains inset)\n");
+    DEBUG(internal_state, DEBUG_EYES, "  pessimistic min revised to 0 (contains inset)\n");
   }
 
   if (attack_point
@@ -1025,7 +1026,8 @@ compute_eyes_pessimistic(board_lib_state_struct *internal_state,
 
 
 static void
-guess_eye_space(int pos, int effective_eyesize, int margins,
+guess_eye_space(board_lib_state_struct *internal_state,
+                int pos, int effective_eyesize, int margins,
 		int bulk_score, struct eye_data eye[BOARDMAX],
 		struct eyevalue *value, int *pessimistic_min)
 {
@@ -1042,7 +1044,7 @@ guess_eye_space(int pos, int effective_eyesize, int margins,
       int threshold = (4 * (eye[pos].esize - 2)
 		       + (effective_eyesize - 8) * (effective_eyesize - 9));
 
-      DEBUG(DEBUG_EYES, "size: %d(%d), threshold: %d, bulk score: %d\n",
+      DEBUG(internal_state, DEBUG_EYES, "size: %d(%d), threshold: %d, bulk score: %d\n",
 	    eye[pos].esize, effective_eyesize, threshold, bulk_score);
 
       if (bulk_score > threshold && effective_eyesize < 15)
@@ -1514,7 +1516,7 @@ recognize_eye(board_lib_state_struct *internal_state,
       /* If possible, choose a non-sacrificial defense point.
        * Compare white T8 and T6 in lazarus:21.
        */
-      if (safe_move(dpos, eye_color) != WIN)
+      if (safe_move(internal_state, dpos, eye_color) != WIN)
 	score -= 5;
 
       /* See comment to the same code for attack points. */
@@ -1530,9 +1532,9 @@ recognize_eye(board_lib_state_struct *internal_state,
       }
     }
 
-    DEBUG(DEBUG_EYES, "  vital points: %1m (attack) %1m (defense)\n",
+    DEBUG(internal_state, DEBUG_EYES, "  vital points: %1m (attack) %1m (defense)\n",
 	  *attack_point, *defense_point);
-    DEBUG(DEBUG_EYES, "  pattern matched:  %d\n", graph->patnum);
+    DEBUG(internal_state, DEBUG_EYES, "  pattern matched:  %d\n", graph->patnum);
 
   }
 
@@ -1803,7 +1805,7 @@ add_false_eye(board_lib_state_struct *internal_state,
 {
   int k;
   ASSERT1(internal_state, heye[pos].type == FALSE_EYE, pos);
-  DEBUG(DEBUG_EYES, "false eye found at %1m\n", pos);
+  DEBUG(internal_state, DEBUG_EYES, "false eye found at %1m\n", pos);
 
   if (eye[pos].color == GRAY || eye[pos].marginal != 0)
     return;
@@ -2293,7 +2295,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
     return 0.0;
 
   if (internal_state->board[pos] == EMPTY) {
-    int your_safety = safe_move(pos, other);
+    int your_safety = safe_move(internal_state, pos, other);
 
     apos = pos;
     dpos = pos;
@@ -2316,7 +2318,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
     else if (your_safety != WIN)
       value = a;
     else {                           /* So your_safety == WIN. */
-      int our_safety = safe_move(pos, color);
+      int our_safety = safe_move(internal_state, pos, color);
       
       if (our_safety == 0) {
 	int k;
@@ -2342,7 +2344,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
 	  int lib;
 
       if (internal_state->board[diagonal] == other && findlib(internal_state, diagonal, 1, &lib) == 1) {
-	    if (lib != pos && does_secure(color, lib, pos)) {
+        if (lib != pos && does_secure(internal_state, color, lib, pos)) {
 	      value = 1.0;
 	      apos = lib;
 	      break;
@@ -2370,7 +2372,7 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
       dpos  = worm[pos].defense_points[0];
     }
     else
-      attack_and_defend(pos, &acode, &apos, &dcode, &dpos);
+      attack_and_defend(internal_state, pos, &acode, &apos, &dcode, &dpos);
 
     /* Must test acode first since dcode only is reliable if acode is
      * non-zero.
@@ -2418,7 +2420,8 @@ evaluate_diagonal_intersection(board_lib_state_struct *internal_state,
  * status, but it should never be overestimated.
  */
 int
-obvious_false_eye(struct board_lib_state_struct *internal_state, int pos, int color)
+obvious_false_eye(board_lib_state_struct *internal_state,
+                  int pos, int color)
 {
   int i = I(pos);
   int j = J(pos);
@@ -2434,7 +2437,7 @@ obvious_false_eye(struct board_lib_state_struct *internal_state, int pos, int co
     if (!ON_BOARD2(internal_state, i+di, j+dj))
       diagonal_sum++;
     else if (BOARD(i+di, j+dj) == OTHER_COLOR(color)
-	     && !attack(POS(i+di, j+dj), NULL))
+         && !attack(internal_state, POS(i+di, j+dj), NULL))
       diagonal_sum += 2;
   }
   
@@ -2622,7 +2625,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
    * get any from make_worms(), make_dragons(), or the owl reading.
    */
   if (verbose)
-    showboard(0);
+    showboard(internal_state, 0);
   save_verbose = verbose;
   verbose = 0;
   
@@ -2656,7 +2659,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       continue;
 
     if (save_verbose > 1)
-      showboard(0);
+      showboard(internal_state, 0);
 
     /* Now we are ready to test the consistency. This is most easily
      * done with help from the owl code. First we must prepare for
@@ -2675,7 +2678,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
         && is_legal(internal_state, eye_vertices[k], BLACK)
         && owl_does_attack(internal_state, eye_vertices[k], str, NULL)) {
       gprintf(internal_state, "%1m alive, but %1m attacks:\n", str, eye_vertices[k]);
-	  showboard(0);
+      showboard(internal_state, 0);
       gprintf(internal_state, "\n");
 	}
       }
@@ -2689,7 +2692,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
       if (internal_state->board[eye_vertices[k]] == EMPTY
           && !owl_does_defend(internal_state, eye_vertices[k], str, NULL)) {
         gprintf(internal_state, "%1m alive, but almost filled with nakade:\n", str);
-	    showboard(0);
+        showboard(internal_state, 0);
 	  }
 	}
       }
@@ -2705,7 +2708,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
           && is_legal(internal_state, eye_vertices[k], WHITE)
           && owl_does_defend(internal_state, eye_vertices[k], str, NULL)) {
         gprintf(internal_state, "%1m dead, but %1m defends:\n", str, eye_vertices[k]);
-	    showboard(0);
+        showboard(internal_state, 0);
         gprintf(internal_state, "\n");
 	  }
 	}
@@ -2717,21 +2720,21 @@ test_eyeshape(board_lib_state_struct *internal_state,
     if (internal_state->board[attack_point] != EMPTY
         || !is_legal(internal_state, attack_point, BLACK)) {
       gprintf(internal_state, "Bad attack point %1m:\n", attack_point);
-	  showboard(0);
+      showboard(internal_state, 0);
 	}
     else if (!owl_does_attack(internal_state, attack_point, str, NULL)) {
       gprintf(internal_state, "Attack point %1m failed:\n", attack_point);
-	  showboard(0);
+      showboard(internal_state, 0);
 	}
 
     if (internal_state->board[defense_point] != EMPTY
         || !is_legal(internal_state, defense_point, WHITE)) {
       gprintf(internal_state, "Bad defense point %1m:\n", defense_point);
-	  showboard(0);
+      showboard(internal_state, 0);
 	}
     else if (!owl_does_defend(internal_state, defense_point, str, NULL)) {
       gprintf(internal_state, "Defense point %1m failed:\n", defense_point);
-	  showboard(0);
+      showboard(internal_state, 0);
 	}
       }
     }
@@ -3151,7 +3154,7 @@ tactical_life_attack(board_lib_state_struct *internal_state,
   cached_result = results[hash] & 3;
 
   if (0) {
-    showboard(0);
+    showboard(internal_state, 0);
     gprintf(internal_state, "%d %d (%d)\n", hash, cached_result, results[hash]);
   }
   
@@ -3221,7 +3224,7 @@ tactical_life_defend(board_lib_state_struct *internal_state,
   cached_result = (results[hash] >> 2) & 3;
 
   if (0) {
-    showboard(0);
+    showboard(internal_state, 0);
     gprintf(internal_state, "%d %d (%d)\n", hash, cached_result, results[hash]);
   }
 
@@ -4015,7 +4018,7 @@ analyze_eyegraph(board_lib_state_struct *internal_state,
     }
 
   if (verbose)
-    showboard(0);
+    showboard(internal_state, 0);
 
   /* If there are any isolated O stones, those should also be added to
    * the playable vertices.
@@ -4063,7 +4066,7 @@ analyze_eyegraph(board_lib_state_struct *internal_state,
   memset(tactical_life_results, 0, table_size);
 
   if (internal_state->sgf_dumptree)
-    sgffile_printboard(internal_state->sgf_dumptree);
+    sgffile_printboard(internal_state, internal_state->sgf_dumptree);
   
   /* Evaluate the eyespace on the board. */
   evaluate_eyespace(internal_state, value, &vertices,

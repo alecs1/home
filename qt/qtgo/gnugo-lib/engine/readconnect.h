@@ -28,7 +28,8 @@ struct connection_data;
 /* Expensive functions that we try to evaluate as late as possible
  * when spreading connection distances.
  */
-typedef void (*connection_helper_fn_ptr) (struct connection_data *conn,
+typedef void (*connection_helper_fn_ptr) (board_lib_state_struct *internal_state,
+                                          struct connection_data *conn,
 					  int color);
 
 /* This heap contains a list of positions where we have delayed a
@@ -71,16 +72,21 @@ struct connection_data {
 };
 
 
-void compute_connection_distances(int str, int target, int cutoff,
+void compute_connection_distances(board_lib_state_struct *internal_state,
+                                  int str, int target, int cutoff,
 				  struct connection_data *conn,
 				  int speculative);
-void init_connection_data(int color, const signed char goal[BOARDMAX],
-			  int target, int cutoff,
-			  struct connection_data *conn, int speculative);
-void spread_connection_distances(int color, struct connection_data *conn);
+void init_connection_data(board_lib_state_struct *internal_state, int color,
+                          const signed char goal[BOARDMAX],
+                          int target, int cutoff,
+                          struct connection_data *conn, int speculative);
+void spread_connection_distances(board_lib_state_struct *internal_state,
+                                 int color, struct connection_data *conn);
 void sort_connection_queue_tail(struct connection_data *conn);
-void expand_connection_queue(struct connection_data *conn);
-void print_connection_distances(struct connection_data *conn);
+void expand_connection_queue(board_lib_state_struct *internal_state,
+                             struct connection_data *conn);
+void print_connection_distances(board_lib_state_struct *internal_state,
+                                struct connection_data *conn);
 
 
 /*

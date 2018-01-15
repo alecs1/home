@@ -235,7 +235,7 @@ clock_push_button(struct board_lib_state_struct *internal_state, int color)
     td->estimated.time_for_last_move = time_used;
     if (td->estimated.time_left < 0) {
       if (td->estimated.in_byoyomi || byoyomi_stones == 0) {
-    DEBUG(DEBUG_TIME, "%s ran out of time.\n", color_to_string(internal_state, color));
+    DEBUG(internal_state, DEBUG_TIME, "%s ran out of time.\n", color_to_string(internal_state, color));
 	if (debug & DEBUG_TIME)
       clock_print(internal_state, color);
 	td->time_out = 1;
@@ -368,7 +368,7 @@ adjust_level_offset(struct board_lib_state_struct *internal_state, int color)
   if (level + level_offset > max_level)
     level_offset = max_level - level;
 
-  DEBUG(DEBUG_TIME, "New level %d (%d %C %f %f %d)\n", level + level_offset,
+  DEBUG(internal_state, DEBUG_TIME, "New level %d (%d %C %f %f %d)\n", level + level_offset,
     internal_state->movenum / 2, color, time_for_last_move, time_left, stones_left);
 }
 

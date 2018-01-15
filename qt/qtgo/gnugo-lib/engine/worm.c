@@ -222,7 +222,7 @@ make_worms(void)
       if (count_common_libs(w1, w2) > 0)
 	worm[pos].cutstone = 1;
       
-      DEBUG(DEBUG_WORMS, "Worm at %1m has w1 %1m and w2 %1m, cutstone %d\n",
+      DEBUG(internal_state, DEBUG_WORMS, "Worm at %1m has w1 %1m and w2 %1m, cutstone %d\n",
 	    pos, w1, w2, worm[pos].cutstone);
     }
   }
@@ -280,7 +280,7 @@ make_worms(void)
 	 * incremented we must also increment depth values.
 	 */
 	
-	DEBUG(DEBUG_WORMS, "trying %1m\n", pos);
+	DEBUG(internal_state, DEBUG_WORMS, "trying %1m\n", pos);
 	increase_depth_values();
 	
 	/* Now we try to find a group which is saved or attacked as well
@@ -299,7 +299,7 @@ make_worms(void)
 	  if (worm[str].color == OTHER_COLOR(color)
 	      && worm[str].attack_codes[0] != 0
 	      && worm[str].defense_codes[0] != 0) {
-	    int dcode = find_defense(str, NULL);
+	    int dcode = find_defense(internal_state, str, NULL);
 	    if (dcode < worm[str].defense_codes[0]) {
 	      int attack_works = 1;
 
@@ -311,11 +311,11 @@ make_worms(void)
 	       * because we could, for instance, drive the worm into
 	       * seki with our move.
 	       */
-	      if (attack(str, NULL) >= worm[str].attack_codes[0]) {
+	      if (attack(internal_state, str, NULL) >= worm[str].attack_codes[0]) {
 		if (worm[str].defense_codes[0] != 0
 		    && trymove(worm[str].defense_points[0],
 			       OTHER_COLOR(color), "make_worms", 0)) {
-		  int this_dcode = REVERSE_RESULT(attack(str, NULL));
+		  int this_dcode = REVERSE_RESULT(attack(internal_state, str, NULL));
 		  if (this_dcode > dcode) {
 		    dcode = this_dcode;
 		    if (dcode >= worm[str].defense_codes[0])
@@ -329,10 +329,10 @@ make_worms(void)
 	      
 	      /* ...then add an attack point of that worm at pos. */
 	      if (attack_works) {
-		DEBUG(DEBUG_WORMS,
+		DEBUG(internal_state, DEBUG_WORMS,
 		      "adding point of attack of %1m at %1m with code %d\n",
 		      str, pos, REVERSE_RESULT(dcode));
-		change_attack(str, pos, REVERSE_RESULT(dcode));
+		change_attack(internal_state, str, pos, REVERSE_RESULT(dcode));
 	      }
 	    }
 	  }
@@ -344,7 +344,7 @@ make_worms(void)
 	   */
 	  else if (worm[str].color == color
 		   && worm[str].attack_codes[0] != 0) {
-	    int acode = attack(str, NULL);
+	    int acode = attack(internal_state, str, NULL);
 	    if (acode < worm[str].attack_codes[0]) {
 	      int defense_works = 1;
 	      /* Sometimes attack() fails to find an
@@ -358,7 +358,7 @@ make_worms(void)
 		if (internal_state->board[str] == EMPTY)
 		  this_acode = WIN;
 		else
-		  this_acode = REVERSE_RESULT(find_defense(str, NULL));
+		  this_acode = REVERSE_RESULT(find_defense(internal_state, str, NULL));
 		if (this_acode > acode) {
 		  acode = this_acode;
 		  if (acode >= worm[str].attack_codes[0])
@@ -369,7 +369,7 @@ make_worms(void)
 	      
 	      /* ...then add an attack point of that worm at pos. */
 	      if (defense_works) {
-		DEBUG(DEBUG_WORMS,
+		DEBUG(internal_state, DEBUG_WORMS,
 		      "adding point of defense of %1m at %1m with code %d\n",
 		      str, pos, REVERSE_RESULT(acode));
 		change_defense(str, pos, REVERSE_RESULT(acode));
@@ -457,7 +457,7 @@ make_worms(void)
     if (find_lunch(pos, &lunch)
 	&& (worm[lunch].attack_codes[0] == WIN
 	    || worm[lunch].attack_codes[0] == KO_A)) {
-      DEBUG(DEBUG_WORMS, "lunch found for %1m at %1m\n", pos, lunch);
+      DEBUG(internal_state, DEBUG_WORMS, "lunch found for %1m at %1m\n", pos, lunch);
       worm[pos].lunch = lunch;
     }
     else
@@ -502,7 +502,7 @@ make_worms(void)
       int edge;
       int border_color = examine_cavity(pos, &edge);
       if (border_color != GRAY && edge < 3) {
-	DEBUG(DEBUG_WORMS, "Worm %1m identified as inessential.\n", pos);
+	DEBUG(internal_state, DEBUG_WORMS, "Worm %1m identified as inessential.\n", pos);
 	worm[pos].inessential = 1;
 	propagate_worm(pos);
       }
@@ -700,7 +700,7 @@ compute_unconditional_status()
   int color;
   
   for (color = WHITE; color <= BLACK; color++) {
-    unconditional_life(unconditional_territory, color);
+    unconditional_life(internal_state, unconditional_territory, color);
     if (get_level() >= 10)
       find_unconditionally_meaningless_moves(unconditional_territory, color);
 
@@ -758,11 +758,11 @@ find_worm_attacks_and_defenses()
     }
     propagate_worm(str);
     
-    acode = attack(str, &attack_point);
+    acode = attack(internal_state, str, &attack_point);
     if (acode != 0) {
-      DEBUG(DEBUG_WORMS, "worm at %1m can be attacked at %1m\n",
+      DEBUG(internal_state, DEBUG_WORMS, "worm at %1m can be attacked at %1m\n",
 	    str, attack_point);
-      change_attack(str, attack_point, acode);
+      change_attack(internal_state, str, attack_point, acode);
     }
   }
   gg_assert(internal_state, internal_state->stackp == 0);
@@ -779,7 +779,7 @@ find_worm_attacks_and_defenses()
     if (worm[str].attack_codes[0] != 0) {
 
       TRACE(internal_state, "considering defense of %1m\n", str);
-      dcode = find_defense(str, &defense_point);
+      dcode = find_defense(internal_state, str, &defense_point);
       if (dcode != 0) {
 	TRACE(internal_state, "worm at %1m can be defended at %1m\n", str, defense_point);
 	if (defense_point != NO_MOVE)
@@ -793,7 +793,7 @@ find_worm_attacks_and_defenses()
 	attack_point = worm[str].attack_points[0];
 	if (!liberty_of_string(internal_state, attack_point, str))
 	  if (trymove(internal_state, attack_point, worm[str].color, "make_worms", NO_MOVE)) {
-	    int acode = attack(str, NULL);
+	    int acode = attack(internal_state, str, NULL);
 	    if (acode != WIN) {
 	      change_defense(str, attack_point, REVERSE_RESULT(acode));
 	      TRACE(internal_state, "worm at %1m can be defended at %1m with code %d\n",
@@ -839,14 +839,14 @@ find_worm_attacks_and_defenses()
 	 */
 	if (!send_two_return_one(pos, other)
 	    && trymove(internal_state, pos, other, "make_worms", str)) {
-	  if (internal_state->board[str] == EMPTY || attack(str, NULL)) {
+	  if (internal_state->board[str] == EMPTY || attack(internal_state, str, NULL)) {
 	    if (internal_state->board[str] == EMPTY)
 	      dcode = 0;
 	    else
-	      dcode = find_defense(str, NULL);
+	      dcode = find_defense(internal_state, str, NULL);
 	    
 	    if (dcode != WIN)
-	      change_attack(str, pos, REVERSE_RESULT(dcode));
+	      change_attack(internal_state, str, pos, REVERSE_RESULT(dcode));
 	  }
 	  popgo(internal_state);
 	}
@@ -855,7 +855,7 @@ find_worm_attacks_and_defenses()
       if (!defense_move_known(pos, str)) {
 	if (worm[str].defense_codes[0] != 0)
 	  if (trymove(internal_state, pos, color, "make_worms", NO_MOVE)) {
-	    acode = attack(str, NULL);
+	    acode = attack(internal_state, str, NULL);
 	    if (acode != WIN)
 	      change_defense(str, pos, REVERSE_RESULT(acode));
 	    popgo(internal_state);
@@ -905,13 +905,13 @@ find_worm_threats()
 	    if (worm[adjs[k]].defense_codes[r] == 0)
 	      break;
 	    bb = worm[adjs[k]].defense_points[r];
-	    if (trymove(bb, other, "threaten attack", str,
+	    if (trymove(internal_state, bb, other, "threaten attack", str,
 			EMPTY, NO_MOVE)) {
 	      int acode;
 	      if (internal_state->board[str] == EMPTY)
 		acode = WIN;
 	      else
-		acode = attack(str, NULL);
+		acode = attack(internal_state, str, NULL);
 	      if (acode != 0)
 		change_attack_threat(str, bb, acode);
 	      popgo(internal_state);
@@ -934,8 +934,8 @@ find_worm_threats()
 	
 	/* Try to threaten on the liberty. */
 	if (trymove(internal_state, aa, color, "threaten defense", NO_MOVE)) {
-	  if (attack(str, NULL) == WIN) {
-	    int dcode = find_defense(str, NULL);
+	  if (attack(internal_state, str, NULL) == WIN) {
+	    int dcode = find_defense(internal_state, str, NULL);
 	    if (dcode != 0)
 	      change_defense_threat(str, aa, dcode);
 	  }
@@ -951,9 +951,9 @@ find_worm_threats()
 	      || liberty_of_string(internal_state, bb, str))
 	    continue;
 	  
-	  if (trymove(bb, color, "threaten defense", str)) {
-	    if (attack(str, NULL) == WIN) {
-	      int dcode = find_defense(str, NULL);
+	  if (trymove(internal_state, bb, color, "threaten defense", str)) {
+	    if (attack(internal_state, str, NULL) == WIN) {
+	      int dcode = find_defense(internal_state, str, NULL);
 	      if (dcode != 0)
 		change_defense_threat(str, bb, dcode);
 	    }
@@ -1065,7 +1065,7 @@ change_defense(int str, int move, int dcode)
 
 
 /* 
- * change_attack(str, move, acode) is used to add and remove attack
+ * change_attack(internal_state, str, move, acode) is used to add and remove attack
  * points. It can also be used to change the attack code. The meaning
  * of the call is that the string (str) can be attacked by (move) with
  * attack code (acode). If (acode) is zero, the move is removed from
@@ -1076,7 +1076,7 @@ void
 change_attack(int str, int move, int acode)
 {
   str = worm[str].origin;
-  DEBUG(DEBUG_WORMS, "change_attack: %1m %1m %d\n", str, move, acode);
+  DEBUG(internal_state, DEBUG_WORMS, "change_attack: %1m %1m %d\n", str, move, acode);
   change_tactical_point(str, move, acode,
 			worm[str].attack_points, worm[str].attack_codes);
 }
@@ -1519,7 +1519,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
 	       int *border_color, int *edge, int str)
 {
   int k;
-  ASSERT1(mx[pos] == 0, pos);
+  ASSERT1(internal_state, mx[pos] == 0, pos);
 
   mx[pos] = 1;
 
@@ -1584,7 +1584,7 @@ attack_callback(int anchor, int color, struct pattern *pattern, int ll,
    */
   if (pattern->helper) {
     if (!pattern->helper(pattern, ll, move, color)) {
-      DEBUG(DEBUG_WORMS,
+      DEBUG(internal_state, DEBUG_WORMS,
 	    "Attack pattern %s+%d rejected by helper at %1m\n",
 	    pattern->name, ll, move);
       return;
@@ -1618,12 +1618,12 @@ attack_callback(int anchor, int color, struct pattern *pattern, int ll,
        */
       if (trymove(internal_state, move, color, "attack_callback", str)) {
 	int dcode;
-	if (!board[str])
+	if (!internal_state->board[str])
 	  dcode = 0;
-	else if (!attack(str, NULL))
+	else if (!attack(internal_state, str, NULL))
 	  dcode = WIN;
 	else
-	  dcode = find_defense(str, NULL);
+	  dcode = find_defense(internal_state, str, NULL);
 
 	popgo(internal_state);
 
@@ -1633,8 +1633,8 @@ attack_callback(int anchor, int color, struct pattern *pattern, int ll,
          * risk to find an irrelevant move to attack with ko.
 	 */
 	if (dcode != WIN && REVERSE_RESULT(dcode) >= worm[str].attack_codes[0]) {
-	  change_attack(str, move, REVERSE_RESULT(dcode));
-	  DEBUG(DEBUG_WORMS,
+	  change_attack(internal_state, str, move, REVERSE_RESULT(dcode));
+	  DEBUG(internal_state, DEBUG_WORMS,
 		"Attack pattern %s+%d found attack on %1m at %1m with code %d\n",
 		pattern->name, ll, str, move, REVERSE_RESULT(dcode));
 	}
@@ -1672,7 +1672,7 @@ defense_callback(int anchor, int color, struct pattern *pattern, int ll,
    */
   if (pattern->helper) {
     if (!pattern->helper(pattern, ll, move, color)) {
-      DEBUG(DEBUG_WORMS,
+      DEBUG(internal_state, DEBUG_WORMS,
 	    "Defense pattern %s+%d rejected by helper at %1m\n",
 	    pattern->name, ll, move);
       return;
@@ -1696,13 +1696,13 @@ defense_callback(int anchor, int color, struct pattern *pattern, int ll,
        * Play (move) and see if there is an attack.
        */
       if (trymove(internal_state, move, color, "defense_callback", str)) {
-	int acode = attack(str, NULL);
+	int acode = attack(internal_state, str, NULL);
 
 	popgo(internal_state);
 	
 	if (acode < worm[str].attack_codes[0]) {
 	  change_defense(str, move, REVERSE_RESULT(acode));
-	  DEBUG(DEBUG_WORMS,
+	  DEBUG(internal_state, DEBUG_WORMS,
 		"Defense pattern %s+%d found defense of %1m at %1m with code %d\n",
 		pattern->name, ll, str, move, REVERSE_RESULT(acode));
 	}
@@ -1719,10 +1719,10 @@ get_lively_stones(int color, signed char safe_stones[BOARDMAX])
   memset(safe_stones, 0, BOARDMAX * sizeof(*safe_stones));
   for (pos = BOARDMIN; pos < BOARDMAX; pos++)
     if (IS_STONE(internal_state->board[pos]) && find_origin(internal_state, pos) == pos) {
-      if ((internal_state->stackp == 0 && worm[pos].attack_codes[0] == 0) || !attack(pos, NULL)
+      if ((internal_state->stackp == 0 && worm[pos].attack_codes[0] == 0) || !attack(internal_state, pos, NULL)
 	  || (internal_state->board[pos] == color
 	      && ((internal_state->stackp == 0 && worm[pos].defense_codes[0] != 0)
-		  || find_defense(pos, NULL))))
+		  || find_defense(internal_state, pos, NULL))))
 	mark_string(internal_state, pos, safe_stones, 1);
     }
 }

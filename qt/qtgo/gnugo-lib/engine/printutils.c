@@ -461,7 +461,7 @@ is_hoshi_point(struct board_lib_state_struct *internal_state, int m, int n)
 
 /* Print a line with coordinate letters above the board. */
 void
-draw_letter_coordinates(struct board_lib_state_struct *internal_state, FILE *outfile)
+draw_letter_coordinates(board_lib_state_struct *internal_state, FILE *outfile)
 {
   int i;
   int ch;
@@ -475,7 +475,7 @@ draw_letter_coordinates(struct board_lib_state_struct *internal_state, FILE *out
 }
 
 
-/* Bare bones version of showboard(0). No fancy options, no hint of
+/* Bare bones version of showboard(internal_state, 0). No fancy options, no hint of
  * color, and you can choose where to write it.
  */
 void

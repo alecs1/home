@@ -37,7 +37,8 @@
  * don't need that information.
  */
 static int
-capture_non_invincible_strings(int color, int exceptions[BOARDMAX],
+capture_non_invincible_strings(board_lib_state_struct *internal_state,
+                               int color, int exceptions[BOARDMAX],
 			       int *none_invincible)
 {
   int other = OTHER_COLOR(color);
@@ -92,8 +93,8 @@ capture_non_invincible_strings(int color, int exceptions[BOARDMAX],
 	 * |.XO.O|
 	 * +-----+
 	 */
-	int success = tryko(libs[0], other, "unconditional_life");
-	gg_assert(success);
+    int success = tryko(internal_state, libs[0], other, "unconditional_life");
+	gg_assert(internal_state, success);
 	moves_played++;
 	something_captured = 1;
       }
@@ -312,7 +313,8 @@ capture_non_invincible_strings(int color, int exceptions[BOARDMAX],
  */
 
 void
-unconditional_life(int unconditional_territory[BOARDMAX], int color)
+unconditional_life(board_lib_state_struct *internal_state,
+                   int unconditional_territory[BOARDMAX], int color)
 {
   int found_one;
   int other = OTHER_COLOR(color);
@@ -359,7 +361,7 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
     }
   }
   
-  moves_played = capture_non_invincible_strings(color, potential_sekis,
+  moves_played = capture_non_invincible_strings(internal_state, color, potential_sekis,
 						&none_invincible);
 
   /* If there are no invincible strings, nothing can be unconditionally
@@ -503,17 +505,17 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
      * |..OX    |..OO.OX
      * +----    +-------
      */
-    aopen = approxlib(apos, color, 4, NULL);
-    bopen = approxlib(bpos, color, 4, NULL);
-    alib  = approxlib(apos, other, 4, NULL);
-    blib  = approxlib(bpos, other, 4, NULL);
+    aopen = approxlib(internal_state, apos, color, 4, NULL);
+    bopen = approxlib(internal_state, bpos, color, 4, NULL);
+    alib  = approxlib(internal_state, apos, other, 4, NULL);
+    blib  = approxlib(internal_state, bpos, other, 4, NULL);
     
     if (aopen > bopen || (aopen == bopen && alib >= blib)) {
       trymove(internal_state, apos, other, "unconditional_life", pos);
       moves_played++;
     }
     else {
-      trymove(bpos, other, "unconditional_life", pos);
+      trymove(internal_state, bpos, other, "unconditional_life", pos);
       moves_played++;
     }
   }
@@ -573,7 +575,8 @@ unconditional_life(int unconditional_territory[BOARDMAX], int color)
  * moves are computed for the given color.
  */
 void
-find_unconditionally_meaningless_moves(int unconditional_territory[BOARDMAX],
+find_unconditionally_meaningless_moves(board_lib_state_struct *internal_state,
+                                       int unconditional_territory[BOARDMAX],
 				       int color)
 {
   int *meaningless_moves;
@@ -610,16 +613,16 @@ find_unconditionally_meaningless_moves(int unconditional_territory[BOARDMAX],
     if (internal_state->board[pos] != EMPTY || meaningless_moves[pos] != -1)
       continue;
 
-    if (!tryko(pos, color, "find_unconditionally_meaningless_moves"))
+    if (!tryko(internal_state, pos, color, "find_unconditionally_meaningless_moves"))
       continue;
 
-    unconditional_life(opponent_unconditional, other);
+    unconditional_life(internal_state, opponent_unconditional, other);
     if (opponent_unconditional[pos]) {
       /* Move of category 1 or 2. */
       meaningless_moves[pos] = NO_MOVE;
     }
     else {
-      unconditional_life(friendly_unconditional, color);
+      unconditional_life(internal_state, friendly_unconditional, color);
       if (friendly_unconditional[pos])
 	for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++)
 	  if (internal_state->board[pos2] == EMPTY
@@ -663,7 +666,7 @@ unconditionally_meaningless_move(int pos, int color, int *replacement_move)
 }
 
 void
-clear_unconditionally_meaningless_moves()
+clear_unconditionally_meaningless_moves(board_lib_state_struct *internal_state)
 {
   int pos;
   
@@ -678,7 +681,8 @@ clear_unconditionally_meaningless_moves()
  * of unconditional status.
  */
 void
-unconditional_move_reasons(int color)
+unconditional_move_reasons(board_lib_state_struct *internal_state,
+                           int color)
 {
   int replacement_move;
   int pos;
@@ -688,11 +692,11 @@ unconditional_move_reasons(int color)
 	&& unconditionally_meaningless_move(pos, color, &replacement_move)) {
       if (replacement_move == NO_MOVE) {
 	TRACE(internal_state, "%1m unconditional antisuji.\n", pos);
-	add_antisuji_move(pos);
+    add_antisuji_move(internal_state, pos);
       }
       else {
 	TRACE(internal_state, "%1m unconditionally replaced to %1m.\n", pos, replacement_move);
-	add_replacement_move(pos, replacement_move, color);
+    add_replacement_move(internal_state, pos, replacement_move, color);
       }
     }
 }

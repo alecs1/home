@@ -143,7 +143,7 @@ write_pattern(char *name, char board[MAX_BOARD + 2][MAX_BOARD + 2],
   printf("Pattern %s\n\n", name);
   for (i = 0; i <= boardsize + 1; i++) {
     for (j = 0; j <= boardsize + 1; j++)
-      printf("%c", board[i][j]);
+      printf("%c", internal_state->board[i][j]);
     printf("\n");
   }
   printf("\n:8,-,value(%d)\n\n\n", value);

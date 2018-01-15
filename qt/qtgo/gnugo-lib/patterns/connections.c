@@ -36,7 +36,7 @@ disconnect_helper(int apos, int bpos)
   int move;
   ASSERT1(internal_state, color == internal_state->board[bpos] && IS_STONE(color), apos);
 
-  if (disconnect(apos, bpos, &move)) {
+  if (disconnect(internal_state, apos, bpos, &move)) {
     add_cut(apos, bpos, move);
     return 1;
   }
@@ -63,7 +63,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 
   move = AFFINE_TRANSFORM(pattern->move_offset, ll, anchor);
   
-  if ((pattern->class & CLASS_B) && !safe_move(move, other))
+  if ((pattern->class & CLASS_B) && !safe_move(internal_state, move, other))
     return;
 
   if (pattern->class & CLASS_C) {
@@ -116,9 +116,9 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 	/* transform pattern real coordinate */
 	int pos = AFFINE_TRANSFORM(pattern->patn[k].offset, ll, anchor);
 
-	if (attack(pos, NULL) == WIN
+	if (attack(internal_state, pos, NULL) == WIN
 	    && (move == NO_MOVE
-		|| !does_defend(move, pos)))
+		|| !does_defend(internal_state, move, pos)))
 	  return; /* Match failed */
       }
     }
@@ -126,12 +126,12 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 
   /* Get here => Pattern matches. */
   if (pattern->class & CLASS_B) {
-    DEBUG(DEBUG_DRAGONS, "Cutting pattern %s+%d found at %1m\n",
+    DEBUG(internal_state, DEBUG_DRAGONS, "Cutting pattern %s+%d found at %1m\n",
 	  pattern->name, ll, anchor);
-    DEBUG(DEBUG_DRAGONS, "cutting point %1m\n", move);
+    DEBUG(internal_state, DEBUG_DRAGONS, "cutting point %1m\n", move);
   }
   else if (pattern->class & CLASS_C)
-    DEBUG(DEBUG_DRAGONS, "Connecting pattern %s+%d found at %1m\n",
+    DEBUG(internal_state, DEBUG_DRAGONS, "Connecting pattern %s+%d found at %1m\n",
 	  pattern->name, ll, anchor);
 
   /* does the pattern have an action? */
@@ -164,7 +164,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
     if ((pattern->class & CLASS_C)
 	&& internal_state->board[pos] == color
 	&& pattern->patn[k].att == ATT_O
-	&& ((pattern->class & CLASS_s) || attack(pos, NULL) == 0)) {
+	&& ((pattern->class & CLASS_s) || attack(internal_state, pos, NULL) == 0)) {
       if (first_dragon == NO_MOVE)
 	first_dragon = dragon[pos].origin;
       else if (second_dragon == NO_MOVE
@@ -187,7 +187,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
       if (pattern->patn[k].att != ATT_not)
 	break; /* The inhibition points are guaranteed to come first. */
       cutting_points[pos] |= color;
-      DEBUG(DEBUG_DRAGONS, "inhibiting connection at %1m\n", pos);
+      DEBUG(internal_state, DEBUG_DRAGONS, "inhibiting connection at %1m\n", pos);
     }
   } /* loop over elements */
 }

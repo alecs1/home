@@ -31,9 +31,12 @@
 #include "gg_utils.h"
 
 /* Forward declarations */
-static int goal_dist(int pos, signed char goal[BOARDMAX]);
-static int compare_angles(const void *a, const void *b);
-static void show_surround_map(signed char mf[BOARDMAX],
+static int goal_dist(board_lib_state_struct *internal_state,
+                     int pos, signed char goal[BOARDMAX]);
+static int compare_angles(board_lib_state_struct *internal_state,
+                          const void *a, const void *b);
+static void show_surround_map(board_lib_state_struct *internal_state,
+                              signed char mf[BOARDMAX],
 			      signed char mn[BOARDMAX]);
 
 /* Globals */
@@ -84,7 +87,8 @@ static int gg;      /* stores the gravity center of the goal */
  */
 
 int
-compute_surroundings(int pos, int apos, int showboard, int *surround_size)
+compute_surroundings(board_lib_state_struct *internal_state,
+                     int pos, int apos, int showboard, int *surround_size)
 {
   int i, j;
   int m, n;
@@ -123,7 +127,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   memset(left_corner, 0, sizeof(left_corner));
   memset(right_corner, 0, sizeof(right_corner));
   
-  mark_dragon(pos, mf, 1);
+  mark_dragon(internal_state, pos, mf, 1);
 
   /* mark hostile neighbors */
 
@@ -133,7 +137,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
     if (internal_state->board[nd] != color) {
       if (0)
 	gprintf(internal_state, "neighbor: %1m\n", nd);
-      mark_dragon(nd, mn, 1);
+      mark_dragon(internal_state, nd, mn, 1);
     }
   }
 
@@ -161,7 +165,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 
   for (dpos = BOARDMIN; dpos < BOARDMAX; dpos++)
     if (ON_BOARD(internal_state, dpos) && mn[dpos]) 
-      sd[dpos] = goal_dist(dpos, mf);
+      sd[dpos] = goal_dist(internal_state, dpos, mf);
 
   /* revise markings */
 
@@ -176,11 +180,11 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
          * - they are closer to each other than we are to the goal
          */
         for (i = BOARDMIN; i < BOARDMAX; i++)
-	  if (ON_BOARD(i) && mn[i] && i != dpos
+      if (ON_BOARD(internal_state, i) && mn[i] && i != dpos
               && sd[i] < sd[dpos]
               && square_dist(i, dpos) < sd[dpos]) {
             for (j = i + 1; j < BOARDMAX; j++)
-	      if (ON_BOARD(j) && mn[j] && j != dpos
+          if (ON_BOARD(internal_state, j) && mn[j] && j != dpos
                   && sd[j] < sd[dpos]
                   && square_dist(j, dpos) < sd[dpos]
                   && square_dist(i, j) < sd[dpos]) {
@@ -224,7 +228,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   }
   
   if (showboard == 1) {
-    show_surround_map(mf, mn);
+    show_surround_map(internal_state, mf, mn);
   }
 
   /* find top row of surrounding polyhedron */
@@ -275,7 +279,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	    best_slope = slope;
 	  }
 	}
-    ASSERT_ON_BOARD1(best_found);
+    ASSERT_ON_BOARD1(internal_state, best_found);
     left_corner[left_corners] = best_found;
   }
   
@@ -307,7 +311,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	}
       }
     }
-    ASSERT_ON_BOARD1(best_found);
+    ASSERT_ON_BOARD1(internal_state, best_found);
     right_corner[right_corners] = best_found;
   }
   
@@ -394,7 +398,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	&& !mf[dpos]) {
 
       for (mpos = BOARDMIN; mpos < BOARDMAX; mpos++)
-	if (ON_BOARD(internal_state, mpos) && is_same_dragon(mpos, dpos))
+    if (ON_BOARD(internal_state, mpos) && is_same_dragon(internal_state, mpos, dpos))
 	  mf[mpos] = 2;
     }
     /* A special case
@@ -421,7 +425,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
 	    && internal_state->board[dpos + delta[k-4]] == EMPTY
 	    && internal_state->board[dpos + delta[(k-3)%4]] == EMPTY) {
 	  for (mpos = BOARDMIN; mpos < BOARDMAX; mpos++)
-	    if (ON_BOARD(internal_state, mpos) && is_same_dragon(mpos, dpos))
+        if (ON_BOARD(internal_state, mpos) && is_same_dragon(internal_state, mpos, dpos))
 	      mf[mpos] = 2;
 	}
     }
@@ -439,8 +443,8 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
    */
 
   for (k = 0; k < corners - 1; k++) {
-    if (is_edge_vertex(corner[k])
-        && is_edge_vertex(corner[k+1]))
+    if (is_edge_vertex(internal_state, corner[k])
+        && is_edge_vertex(internal_state, corner[k+1]))
       continue;
     if (square_dist(corner[k], corner[k+1]) > 60) {
       surrounded = 0;
@@ -450,8 +454,8 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
       surrounded = WEAKLY_SURROUNDED;
   }
   if (surrounded
-      && (!is_edge_vertex(corner[0])
-          || !is_edge_vertex(corner[corners-1]))) {
+      && (!is_edge_vertex(internal_state, corner[0])
+          || !is_edge_vertex(internal_state, corner[corners-1]))) {
     if (square_dist(corner[0], corner[corners-1]) > 60)
       surrounded = 0;
     else if (square_dist(corner[0], corner[corners-1]) > 27)
@@ -501,7 +505,7 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
   }
 
   if (showboard == 1 || (showboard == 2 && surrounded)) {
-    show_surround_map(mf, mn);
+    show_surround_map(internal_state, mf, mn);
   }
 
   if (!apos && surrounded && surround_pointer < MAX_SURROUND) {
@@ -527,7 +531,8 @@ compute_surroundings(int pos, int apos, int showboard, int *surround_size)
  */
 
 static int
-goal_dist(int pos, signed char goal[BOARDMAX])
+goal_dist(board_lib_state_struct *internal_state,
+          int pos, signed char goal[BOARDMAX])
 {
   int dist = 10000;
   int ii;
@@ -544,7 +549,8 @@ goal_dist(int pos, signed char goal[BOARDMAX])
  * - ascending order is done clock-wise (WEST, NORTH, EAST)
  */
 static int
-compare_angles(const void *a, const void *b)
+compare_angles(board_lib_state_struct *internal_state,
+               const void *a, const void *b)
 {
   int aa = *((const int *)a);
   int bb = *((const int *)b);
@@ -604,11 +610,12 @@ compare_angles(const void *a, const void *b)
 
 
 static void
-show_surround_map(signed char mf[BOARDMAX], signed char mn[BOARDMAX])
+show_surround_map(board_lib_state_struct *internal_state,
+                  signed char mf[BOARDMAX], signed char mn[BOARDMAX])
 {
   int m, n;
 
-  start_draw_board();
+  start_draw_board(internal_state);
   for (m = 0; m < internal_state->board_size; m++)
     for (n = 0; n < internal_state->board_size; n++) {
       int col, c;
@@ -635,9 +642,9 @@ show_surround_map(signed char mf[BOARDMAX], signed char mn[BOARDMAX])
 	c = '*';
       else
 	c = '.';
-      draw_color_char(m, n, c, col);
+      draw_color_char(internal_state, m, n, c, col);
     }
-  end_draw_board();
+  end_draw_board(internal_state);
 }
 
 
@@ -652,11 +659,12 @@ is_surrounded(int dr)
  */
 
 int
-does_surround(int move, int dr)
+does_surround(board_lib_state_struct *internal_state,
+              int move, int dr)
 {
   if (DRAGON2(dr).surround_status)
     return 0;
-  return compute_surroundings(dr, move, 0, NULL);
+  return compute_surroundings(internal_state, dr, move, 0, NULL);
 }
 
 

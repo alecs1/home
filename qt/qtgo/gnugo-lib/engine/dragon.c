@@ -182,7 +182,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 
   for (d = 0; d < number_of_dragons; d++) {
     dragon2[d].surround_status 
-      = compute_surroundings(dragon2[d].origin, NO_MOVE, 0,
+      = compute_surroundings(internal_state, dragon2[d].origin, NO_MOVE, 0,
 			     &(dragon2[d].surround_size));
     if (dragon2[d].surround_status == SURROUNDED) {
       dragon2[d].escape_route = 0;
@@ -202,7 +202,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
   /* Determine life and death status of each dragon using the owl code
    * if necessary.
    */
-  start_timer(2);
+  start_timer(internal_state, 2);
   for (str = BOARDMIN; str < BOARDMAX; str++)
     if (ON_BOARD(internal_state, str)) {
       int attack_point = NO_MOVE;
@@ -228,7 +228,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	int dcode = 0;
 	int kworm = NO_MOVE;
 	int owl_nodes_before = get_owl_node_counter();
-	start_timer(3);
+    start_timer(internal_state, 3);
     acode = owl_attack(internal_state, str, &attack_point,
 			   &DRAGON2(str).owl_attack_certain, &kworm);
 	DRAGON2(str).owl_attack_node_count
@@ -258,7 +258,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 		 * for connection moves to be properly valued.
 		 */
 		DRAGON2(str).owl_status = (acode == GAIN ? ALIVE : CRITICAL);
-		DEBUG(DEBUG_OWL_PERFORMANCE,
+        DEBUG(internal_state, DEBUG_OWL_PERFORMANCE,
 		      "Inconsistent owl attack and defense results for %1m.\n", 
 		      str);
 		/* Let's see whether the attacking move might be the right
@@ -300,7 +300,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
 	}
       }
     }
-  time_report(2, "  owl reading", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  owl reading", NO_MOVE, 1.0);
   
   /* Compute the status to be used by the matcher. We most trust the
    * owl status, if it is available. If it's not we assume that we are
@@ -380,7 +380,7 @@ make_dragons(struct board_lib_state_struct *internal_state,
     if (ON_BOARD(internal_state, str) && internal_state->board[str] != EMPTY)
       dragon[str] = dragon[dragon[str].origin];
 
-  time_report(2, "  owl threats ", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  owl threats ", NO_MOVE, 1.0);
   
 
   /* Compute the safety value. */
@@ -429,8 +429,8 @@ make_dragons(struct board_lib_state_struct *internal_state,
   /* Revise inessentiality of critical worms and dragons. */
   revise_inessentiality(internal_state);
 
-  semeai();
-  time_report(2, "  semeai module", NO_MOVE, 1.0);
+  semeai(internal_state);
+  time_report(internal_state, 2, "  semeai module", NO_MOVE, 1.0);
   
   /* Count the non-dead dragons. */
   lively_white_dragons = 0;
@@ -511,7 +511,7 @@ eye_computations(board_lib_state_struct *internal_state)
       
       compute_eyes(internal_state, str, &value, &attack_point, &defense_point,
 		   black_eye, half_eye, 1);
-      DEBUG(DEBUG_EYES, "Black eyespace at %1m: %s\n", str,
+      DEBUG(internal_state, DEBUG_EYES, "Black eyespace at %1m: %s\n", str,
 	    eyevalue_to_string(&value));
       black_eye[str].value = value;
       propagate_eye(internal_state, str, black_eye);
@@ -524,7 +524,7 @@ eye_computations(board_lib_state_struct *internal_state)
       
       compute_eyes(internal_state, str, &value, &attack_point, &defense_point,
 		   white_eye, half_eye, 1);
-      DEBUG(DEBUG_EYES, "White eyespace at %1m: %s\n", str,
+      DEBUG(internal_state, DEBUG_EYES, "White eyespace at %1m: %s\n", str,
 	    eyevalue_to_string(&value));
       white_eye[str].value = value;
       propagate_eye(internal_state, str, white_eye);
@@ -601,7 +601,7 @@ revise_inessentiality(struct board_lib_state_struct *internal_state)
 	  }
 
 	if (!essential && neighbors > 0) {
-	  DEBUG(DEBUG_WORMS, "Worm %1m revised to be inessential.\n", str);
+      DEBUG(internal_state, DEBUG_WORMS, "Worm %1m revised to be inessential.\n", str);
 	  worm[str].inessential = 1;
 	  propagate_worm(str);
 	}
@@ -625,7 +625,7 @@ revise_inessentiality(struct board_lib_state_struct *internal_state)
       }
 
       if (w == NO_MOVE) {
-	DEBUG(DEBUG_DRAGONS, "Dragon %1m revised to be inessential.\n", str);
+    DEBUG(internal_state, DEBUG_DRAGONS, "Dragon %1m revised to be inessential.\n", str);
 	DRAGON2(str).safety = INESSENTIAL;
       }
     }
@@ -653,7 +653,7 @@ initialize_dragon_data(struct board_lib_state_struct *internal_state)
       half_eye[str].value            =  10.0; /* Something big. */
       
       if (IS_STONE(internal_state->board[str]) && worm[str].origin == str)
-	DEBUG(DEBUG_DRAGONS, 
+    DEBUG(internal_state, DEBUG_DRAGONS,
 	      "Initializing dragon from worm at %1m, size %d\n", 
 	      str, worm[str].size);
     }
@@ -1009,7 +1009,7 @@ dragon_invincible(struct board_lib_state_struct *internal_state,
 	    mx[eye[pos2].origin] = 1; /* good eye */
 	  
       if (internal_state->board[pos2] == OTHER_COLOR(internal_state->board[dr])
-	      && (!attack(pos2, NULL) || find_defense(pos2, NULL)))
+          && (!attack(internal_state, pos2, NULL) || find_defense(internal_state, pos2, NULL)))
 	    mx[eye[pos2].origin] = 2; /* bad eye */
 	}
       }
@@ -1133,7 +1133,7 @@ identify_thrashing_dragons(struct board_lib_state_struct *internal_state)
     return;
 
   thrashing_dragon = dragon[last_move].origin;
-  DEBUG(DEBUG_DRAGONS, "thrashing dragon found at %1m\n", thrashing_dragon);
+  DEBUG(internal_state, DEBUG_DRAGONS, "thrashing dragon found at %1m\n", thrashing_dragon);
   mark_dragon(internal_state, thrashing_dragon, thrashing_stone, 1);
   color = internal_state->board[thrashing_dragon];
   
@@ -1150,7 +1150,7 @@ identify_thrashing_dragons(struct board_lib_state_struct *internal_state)
 	if (DRAGON(d).color == color
 	    && DRAGON(d).status == DEAD
 	    && thrashing_stone[dragon2[d].origin] == 0) {
-	  DEBUG(DEBUG_DRAGONS,
+      DEBUG(internal_state, DEBUG_DRAGONS,
 		"neighbor at distance %d of thrashing dragon found at %1m\n",
 		dist + 1, DRAGON(d).origin);
       mark_dragon(internal_state, DRAGON(d).origin, thrashing_stone,
@@ -1726,11 +1726,11 @@ join_dragons(struct board_lib_state_struct *internal_state,
       || (worm[d1].size == worm[d2].size
 	  && d1 < d2)) {
     origin = d1;
-    DEBUG(DEBUG_DRAGONS, "joining dragon at %1m to dragon at %1m\n", d2, d1);
+    DEBUG(internal_state, DEBUG_DRAGONS, "joining dragon at %1m to dragon at %1m\n", d2, d1);
   }
   else {
     origin = d2;
-    DEBUG(DEBUG_DRAGONS, "joining dragon at %1m to dragon at %1m\n", d1, d2);
+    DEBUG(internal_state, DEBUG_DRAGONS, "joining dragon at %1m to dragon at %1m\n", d1, d2);
   }
   
   dragon[origin].size  = dragon[d2].size + dragon[d1].size;
@@ -2164,7 +2164,7 @@ crude_dragon_weakness(struct board_lib_state_struct *internal_state,
   weakness_value[1] = gg_interpolate(&escape_route2weakness, escape_route);
   weakness_value[2] = gg_interpolate(&genus2weakness, true_genus);
 
-  DEBUG(DEBUG_DRAGONS,
+  DEBUG(internal_state, DEBUG_DRAGONS,
 	"  moyo value %f -> %f, escape %f -> %f, eyes %f -> %f\n",
 	moyo_value, weakness_value[0],
 	escape_route, weakness_value[1],
@@ -2215,7 +2215,7 @@ compute_dragon_weakness_value(struct board_lib_state_struct *internal_state,
    * - possible connections to neighbour dragons
    */
 
-  DEBUG(DEBUG_DRAGONS, "Computing weakness of dragon at %1m:\n", origin);
+  DEBUG(internal_state, DEBUG_DRAGONS, "Computing weakness of dragon at %1m:\n", origin);
 
   weakness = crude_dragon_weakness(internal_state, dragon2[d].safety, &dragon2[d].genus,
 				   dragon2[d].lunch != NO_MOVE,
@@ -2235,7 +2235,7 @@ compute_dragon_weakness_value(struct board_lib_state_struct *internal_state,
   if (weakness > 1.0)
     weakness = 1.0;
 
-  DEBUG(DEBUG_DRAGONS, " result: %f.\n", weakness);
+  DEBUG(internal_state, DEBUG_DRAGONS, " result: %f.\n", weakness);
   return weakness;
 }
 
@@ -2523,7 +2523,7 @@ cut_reasons(struct board_lib_state_struct *internal_state,
   for (k = 0; k < num_cuts; k++)
     if (internal_state->board[cut_list[k].apos] == OTHER_COLOR(color)
     && !is_same_dragon(internal_state, cut_list[k].apos, cut_list[k].bpos)
-	&& string_connect(cut_list[k].apos, cut_list[k].bpos, NULL) == WIN)
+    && string_connect(internal_state, cut_list[k].apos, cut_list[k].bpos, NULL) == WIN)
       add_cut_move(internal_state, cut_list[k].move, cut_list[k].apos, cut_list[k].bpos);
 }
 

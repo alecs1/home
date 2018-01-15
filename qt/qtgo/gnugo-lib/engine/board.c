@@ -301,9 +301,9 @@ static int string_mark;
 
 
 /* Forward declarations. */
-static void really_do_trymove(struct board_lib_state_struct *internal_state, int pos, int color);
-static int do_trymove(struct board_lib_state_struct *internal_state, int pos, int color, int ignore_ko);
-static void undo_trymove(struct board_lib_state_struct *internal_state);
+static void really_do_trymove(board_lib_state_struct *internal_state, int pos, int color);
+static int do_trymove(board_lib_state_struct *internal_state, int pos, int color, int ignore_ko);
+static void undo_trymove(board_lib_state_struct *internal_state);
 
 static int do_approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int maxlib, int *libs);
 static int slow_approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int maxlib, int *libs);
@@ -502,7 +502,7 @@ static Hash_data board_hash_stack[MAXSTACK];
  */
 
 int 
-trymove(struct board_lib_state_struct *internal_state, int pos, int color, const char *message, int str)
+trymove(board_lib_state_struct *internal_state, int pos, int color, const char *message, int str)
 {
   UNUSED(str);
   /* Do the real work elsewhere. */
@@ -610,7 +610,7 @@ tryko(struct board_lib_state_struct *internal_state, int pos, int color, const c
  * either been done or is not needed.
  */
 static void
-really_do_trymove(struct board_lib_state_struct* internal_state, int pos, int color)
+really_do_trymove(board_lib_state_struct* internal_state, int pos, int color)
 {
   BEGIN_CHANGE_RECORD();
   PUSH_VALUE(internal_state->board_ko_pos);
@@ -651,7 +651,7 @@ really_do_trymove(struct board_lib_state_struct* internal_state, int pos, int co
  */
 
 static int 
-do_trymove(struct board_lib_state_struct *internal_state, int pos, int color, int ignore_ko)
+do_trymove(board_lib_state_struct *internal_state, int pos, int color, int ignore_ko)
 {
   /* 1. The color must be BLACK or WHITE. */
   gg_assert(internal_state, color == BLACK || color == WHITE);
@@ -690,7 +690,7 @@ do_trymove(struct board_lib_state_struct *internal_state, int pos, int color, in
     }
 #if 0
     if (verbose > 0) {
-      showboard(0);
+      showboard(internal_state, 0);
       dump_stack(internal_state);
     }
 #endif
@@ -757,7 +757,7 @@ popgo(struct board_lib_state_struct *internal_state)
  */
 
 static void
-undo_trymove(struct board_lib_state_struct *internal_state)
+undo_trymove(board_lib_state_struct *internal_state)
 {
   gg_assert(internal_state, change_stack_pointer - change_stack <= STACK_SIZE);
 
@@ -1305,7 +1305,7 @@ set_new_kom_pos(int new_kom_pos)
  * 5c) Conditional ko capture is allowed according to the rules of 1b.
  */
 int
-komaster_trymove(struct board_lib_state_struct *internal_state, int pos, int color, const char *message, int str,
+komaster_trymove(board_lib_state_struct *internal_state, int pos, int color, const char *message, int str,
 		 int *is_conditional_ko, int consider_conditional_ko)
 {
   int other = OTHER_COLOR(color);
@@ -1860,7 +1860,7 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
 
 #else /* not USE_BOARD_CACHES */
 
-  ASSERT1(internal_state->board[pos] == EMPTY, pos);
+  ASSERT1(internal_state, internal_state->board[pos] == EMPTY, pos);
   ASSERT1(internal_state, IS_STONE(color), pos);
 
   if (!libs) {
@@ -2153,7 +2153,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
 
 #else /* not USE_BOARD_CACHES */
 
-  ASSERT1(internal_state->board[pos] == EMPTY, pos);
+  ASSERT1(internal_state, internal_state->board[pos] == EMPTY, pos);
   ASSERT1(internal_state, IS_STONE(color), pos);
 
   if (!libs) {
@@ -2334,7 +2334,7 @@ do_accuratelib(struct board_lib_state_struct *internal_state, int pos, int color
  */
 
 int
-count_common_libs(struct board_lib_state_struct *internal_state, int str1, int str2)
+count_common_libs(board_lib_state_struct *internal_state, int str1, int str2)
 {
   int all_libs1[MAXLIBS], *libs1;
   int liberties1, liberties2;
@@ -2469,7 +2469,7 @@ find_common_libs(struct board_lib_state_struct *internal_state, int str1, int st
  * If they do and lib != NULL, one common liberty is returned in *lib.
  */
 int
-have_common_lib(struct board_lib_state_struct *internal_state, int str1, int str2, int *lib)
+have_common_lib(board_lib_state_struct *internal_state, int str1, int str2, int *lib)
 {
   int all_libs1[MAXLIBS], *libs1;
   int liberties1;
@@ -2623,7 +2623,7 @@ chainlinks(struct board_lib_state_struct *internal_state, int str, int adj[MAXCH
  */
 
 int
-chainlinks2(struct board_lib_state_struct *internal_state, int str, int adj[MAXCHAIN], int lib)
+chainlinks2(board_lib_state_struct *internal_state, int str, int adj[MAXCHAIN], int lib)
 {
   struct string_data *s, *t;
   struct string_neighbors_data *sn;
@@ -2653,7 +2653,7 @@ chainlinks2(struct board_lib_state_struct *internal_state, int str, int adj[MAXC
  */
 
 int
-chainlinks3(struct board_lib_state_struct *internal_state, int str, int adj[MAXCHAIN], int lib)
+chainlinks3(board_lib_state_struct *internal_state, int str, int adj[MAXCHAIN], int lib)
 {
   struct string_data *s, *t;
   struct string_neighbors_data *sn;
@@ -2746,7 +2746,8 @@ extended_chainlinks(struct board_lib_state_struct *internal_state, int str, int 
  */
 
 int
-send_two_return_one(struct board_lib_state_struct *internal_state, int move, int color)
+send_two_return_one(board_lib_state_struct *internal_state,
+                    int move, int color)
 {
   int other = OTHER_COLOR(color);
   int lib = NO_MOVE;
@@ -2797,7 +2798,7 @@ send_two_return_one(struct board_lib_state_struct *internal_state, int move, int
  */
 
 int
-find_origin(struct board_lib_state_struct *internal_state, int str)
+find_origin(board_lib_state_struct *internal_state, int str)
 {
   ASSERT1(internal_state, IS_STONE(internal_state->board[str]), str);
 
@@ -4223,7 +4224,7 @@ do_play_move(struct board_lib_state_struct *internal_state, int pos, int color)
  */
 #define NO_UNROLL 0
 void
-incremental_order_moves(struct board_lib_state_struct *internal_state,
+incremental_order_moves(board_lib_state_struct *internal_state,
                         int move, int color, int str,
 			int *number_edges, int *number_same_string,
 			int *number_own, int *number_opponent,

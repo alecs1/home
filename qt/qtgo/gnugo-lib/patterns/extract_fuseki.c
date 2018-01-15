@@ -869,7 +869,7 @@ examine_game(SGFNode *sgf, int collect_statistics)
       for (l = 0; l < 8; l++)
 	fprintf(stderr, "%8x ", posthash.values[l]);
       fprintf(stderr, "\n");
-      showboard(0);
+      showboard(internal_state, 0);
     }
     k++;
   }
@@ -956,7 +956,7 @@ check_game(SGFNode *sgf, char *sgfname)
       if (WARN)
 	fprintf(stderr,
 		"No handicap games allowed, sgf file %s has handicap %d\n",
-		sgfname, handicap);
+		sgfname, internal_state->handicap);
       return 0;
     }
   }
@@ -974,7 +974,7 @@ check_game(SGFNode *sgf, char *sgfname)
       if (WARN)
 	fprintf(stderr,
 		"Sgf file %s has wrong number of handicap stones %d\n",
-		sgfname, handicap);
+		sgfname, internal_state->handicap);
       return 0;
     }
 
@@ -983,7 +983,7 @@ check_game(SGFNode *sgf, char *sgfname)
       if (WARN)
 	fprintf(stderr,
 		"Sgf file %s has wrong/weird number of handicap stones %d\n",
-		sgfname, handicap);
+		sgfname, internal_state->handicap);
       return 0;
     }
   }
@@ -1274,7 +1274,7 @@ analyze_statistics(void)
 	  gg_assert(internal_state, 0.01 * min_move_percent*move_frequencies[0].n_player 
 		     > move_frequencies[i].n_player
 		     || move_frequencies[i].n_player < min_move_freq);
-	  gg_assert(situation_table[move_frequencies[i].index].pre.values[0]
+	  gg_assert(internal_state, situation_table[move_frequencies[i].index].pre.values[0]
 		    == winning_moves[number_of_winning_moves].pre);
 	  winning_moves[number_of_winning_moves].n_player +=
 	    move_frequencies[i].n_player;	
@@ -1519,7 +1519,7 @@ print_patterns(void)
 	       dchisq);
       }
       else {
-	printf("Pattern F-H%d-%d\n", handicap_value, l);
+	printf("Pattern F-H%d-%d\n", internal_state->handicap_value, l);
 	printf("# pre : 0x%08x\n",
 	       situation_table[winning_moves[k].index].pre.values[0]);
 	printf("# post: 0x%08x\n",

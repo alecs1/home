@@ -390,7 +390,7 @@ void clear_accuratelib_cache(void);
                          (unsigned) (j) < (unsigned) internal_state->board_size)
 #endif
 
-#define ASSERT_ON_BOARD2(i, j) ASSERT2(ON_BOARD2((i), (j)), (i), (j))
+#define ASSERT_ON_BOARD2(internal_state, i, j) ASSERT2(internal_state, ON_BOARD2(internal_state, (i), (j)), (i), (j))
 
 #define ON_BOARD1(internal_state, pos) (((unsigned) (pos) < BOARDSIZE) && internal_state->board[pos] != GRAY)
 #define ON_BOARD(internal_state, pos) (internal_state->board[pos] != GRAY)
@@ -412,8 +412,10 @@ extern int delta[8];  /* = { NS, -1, -NS, 1, NS-1, -NS-1, -NS+1, NS+1}; */
 
 
 /* SGF routines for debugging purposes in sgffile.c */
-void sgffile_begindump(struct SGFTree_t *tree);
-void sgffile_enddump(const char *filename);
+void sgffile_begindump(board_lib_state_struct *internal_state,
+                       struct SGFTree_t *tree);
+void sgffile_enddump(board_lib_state_struct *internal_state,
+                     const char *filename);
 
 
 /* Hashing and Caching statistics. */

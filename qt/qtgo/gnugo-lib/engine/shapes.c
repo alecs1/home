@@ -42,7 +42,8 @@
 
 /* Take care of joseki patterns. */
 static void
-handle_joseki_patterns(struct pattern_attribute *attributes,
+handle_joseki_patterns(board_lib_state_struct *internal_state,
+                       struct pattern_attribute *attributes,
 		       unsigned int class, int move,
 		       int my_dragons[MAX_DRAGONS_PER_PATTERN],
 		       int my_ndragons,
@@ -58,7 +59,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
     TRACE(internal_state, "...joseki standard move\n");
     add_expand_territory_move(internal_state, move);
     TRACE(internal_state, "...expands territory\n");
-    add_expand_moyo_move(move);
+    add_expand_moyo_move(internal_state, move);
     TRACE(internal_state, "...expands moyo\n");
     set_minimum_move_value(internal_state, move, J_VALUE);
     TRACE(internal_state, "... minimum move value %f\n", J_VALUE);
@@ -74,7 +75,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
       TRACE(internal_state, "...less urgent joseki move\n");
       add_expand_territory_move(internal_state, move);
       TRACE(internal_state, "...expands territory\n");
-      add_expand_moyo_move(move);
+      add_expand_moyo_move(internal_state, move);
       TRACE(internal_state, "...expands moyo\n");
     }
     else {
@@ -100,7 +101,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
        */
       min_value *= 1.005;
 
-      set_maximum_move_value(move, min_value);
+      set_maximum_move_value(internal_state, move, min_value);
       scale_randomness(move, 5.0);
       TRACE(internal_state, "...move value %f (shape %f)\n", min_value, shape_value);
     }
@@ -118,14 +119,14 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
 
     TRACE(internal_state, "...joseki urgent move\n");
     for (k = 0; k < my_ndragons; k++) {
-      add_strategical_defense_move(move, my_dragons[k]);
+      add_strategical_defense_move(internal_state, move, my_dragons[k]);
       TRACE(internal_state, "...strategical defense of %1m\n", my_dragons[k]);
     }
     for (k = 0; k < your_ndragons; k++) {
-      add_strategical_attack_move(move, your_dragons[k]);
+      add_strategical_attack_move(internal_state, move, your_dragons[k]);
       TRACE(internal_state, "...strategical attack on %1m\n", your_dragons[k]);
     }
-    add_shape_value(move, 15);
+    add_shape_value(internal_state, move, 15);
     TRACE(internal_state, "...shape value 15\n");
     set_minimum_move_value(internal_state, move, U_VALUE);
     TRACE(internal_state, "...(min) move value %f\n", U_VALUE);
@@ -136,7 +137,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
    */
   if (class & CLASS_T) {
     TRACE(internal_state, "...joseki trick move\n");
-    add_antisuji_move(move);
+    add_antisuji_move(internal_state, move);
     TRACE(internal_state, "...antisuji\n");
   }
 
@@ -149,7 +150,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
       break;
 
     case MAX_VALUE:
-      set_maximum_move_value(move, attribute->value);
+      set_maximum_move_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...max move value %f\n", attribute->value);
       break;
 
@@ -159,7 +160,7 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
       break;
 
     case MAX_TERRITORY:
-      set_maximum_territorial_value(move, attribute->value);
+      set_maximum_territorial_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...max territorial value %f\n", attribute->value);
       break;
 
@@ -168,19 +169,19 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
        * already.
        */
       if (!(class & (CLASS_j | CLASS_t))) {
-	add_shape_value(move, attribute->value);
+    add_shape_value(internal_state, move, attribute->value);
 	TRACE(internal_state, "...shape value %f\n", attribute->value);
       }
 
       break;
 
     case FOLLOWUP:
-      add_followup_value(move, attribute->value);
+      add_followup_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...followup value %f\n", attribute->value);
       break;
 
     case REVERSE_FOLLOWUP:
-      add_reverse_followup_value(move, attribute->value);
+      add_reverse_followup_value(internal_state, move, attribute->value);
       TRACE(internal_state, "...reverse followup value %f\n", attribute->value);
       break;
 
@@ -196,7 +197,8 @@ handle_joseki_patterns(struct pattern_attribute *attributes,
  * This callback is invoked for each matched pattern.
  */
 static void
-shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
+shapes_callback(board_lib_state_struct *internal_state,
+                int anchor, int color, struct pattern *pattern, int ll,
 		void *data)
 {
   int other = OTHER_COLOR(color);
@@ -262,7 +264,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
       if ((class & CLASS_O)
 	  && internal_state->board[pos] == color
 	  && worm[pos].attack_points[0] != 0
-	  && !does_defend(move, pos))
+      && !does_defend(internal_state, move, pos))
 	return;
 
       origin = dragon[pos].origin;
@@ -277,7 +279,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
            * captured before adding it to the list of my_dragons.  
 	   */
 	  if (worm[pos].attack_codes[0] == 0
-	      || does_defend(move, pos)) {
+          || does_defend(internal_state, move, pos)) {
 	    /* Ok, add the dragon to the list. */
 	    my_dragons[l] = origin;
 	    my_ndragons++;
@@ -310,7 +312,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
 	     * list of my_strings.
 	     */
 	    if (worm[pos].attack_codes[0] == 0
-		|| does_defend(move, pos)) {
+        || does_defend(internal_state, move, pos)) {
 	      /* Ok, add the string to the list. */
 	      my_strings[l] = origin;
 	      my_nstrings++;
@@ -360,7 +362,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
    */
   if (!(class & CLASS_s)) {
     /* Don't allow ko unsafety. */
-    if (safe_move(move, color) != WIN) {
+    if (safe_move(internal_state, move, color) != WIN) {
       if (0)
 	TRACE(internal_state, "  move at %1m wasn't safe, discarded\n", move);
       return;
@@ -380,7 +382,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
    */
   if (class & CLASS_n) {
     /* Allow ko unsafety. */
-    if (safe_move(move, other) == 0) {
+    if (safe_move(internal_state, move, other) == 0) {
       if (0)
 	TRACE(internal_state, "  opponent can't play safely at %1m, move discarded\n", move);
       return;
@@ -399,16 +401,16 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   if (pattern->helper) {
     /* ask helper function to consider the move */
     int accepted;
-    DEBUG(DEBUG_HELPER, "  asking helper to consider '%s'+%d at %1m\n", 
+    DEBUG(internal_state, DEBUG_HELPER, "  asking helper to consider '%s'+%d at %1m\n",
 	  pattern->name, ll, move);
     accepted = pattern->helper(pattern, ll, move, color);
     
     if (accepted) {
-      DEBUG(DEBUG_HELPER, "helper likes pattern '%s' at %1m\n",
+      DEBUG(internal_state, DEBUG_HELPER, "helper likes pattern '%s' at %1m\n",
 	    pattern->name, move);
     }
     else {
-      DEBUG(DEBUG_HELPER, "  helper does not like pattern '%s' at %1m\n", 
+      DEBUG(internal_state, DEBUG_HELPER, "  helper does not like pattern '%s' at %1m\n",
 	    pattern->name, move);
       return;  /* pattern matcher does not like it */
     }
@@ -427,10 +429,10 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   if (class & CLASS_B) {
     for (k = 0; k < your_nstrings; k++)
       for (l = k+1; l < your_nstrings; l++) {
-	if (string_connect(your_strings[k], your_strings[l], NULL)
-	    && !play_connect_n(color, 1, 1, move,
+    if (string_connect(internal_state, your_strings[k], your_strings[l], NULL)
+        && !play_connect_n(internal_state, color, 1, 1, move,
 			       your_strings[k], your_strings[l])) {
-	  add_cut_move(move, your_strings[k], your_strings[l]);
+      add_cut_move(internal_state, move, your_strings[k], your_strings[l]);
 	  TRACE(internal_state, "...cuts strings %1m, %1m\n",
 		your_strings[k], your_strings[l]);
 	}
@@ -441,10 +443,10 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   if (class & CLASS_C) {
     for (k = 0; k < my_nstrings; k++)
       for (l = k+1; l < my_nstrings; l++) {
-	if (disconnect(my_strings[k], my_strings[l], NULL)
-	    && !play_connect_n(color, 0, 1, move,
+    if (disconnect(internal_state, my_strings[k], my_strings[l], NULL)
+        && !play_connect_n(internal_state, color, 0, 1, move,
 			       my_strings[k], my_strings[l])) {
-	  add_connection_move(move, my_strings[k], my_strings[l]);
+      add_connection_move(internal_state, move, my_strings[k], my_strings[l]);
 	  TRACE(internal_state, "...connects strings %1m, %1m\n",
 		my_strings[k], my_strings[l]);
 	}
@@ -459,11 +461,11 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
    */
   if (class & CLASS_c) {
     for (k = 0; k < my_ndragons; k++) {
-      add_strategical_defense_move(move, my_dragons[k]);
+      add_strategical_defense_move(internal_state, move, my_dragons[k]);
       TRACE(internal_state, "...strategical defense (weak connection) of %1m\n",
 	    my_dragons[k]);
     }
-    add_shape_value(move, 1);
+    add_shape_value(internal_state, move, 1);
     TRACE(internal_state, "...shape value 1\n");
   }
 
@@ -478,20 +480,20 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
 
   /* Pattern class E, expand to make moyo. */
   if (class & CLASS_E) {
-    add_expand_moyo_move(move);
+    add_expand_moyo_move(internal_state, move);
     TRACE(internal_state, "...expands moyo\n");
   }
 
   /* Pattern class i, an invasion. */
   if (class & CLASS_I) {
-    add_invasion_move(move);
+    add_invasion_move(internal_state, move);
     TRACE(internal_state, "...is an invasion\n");
   }
 
   /* Pattern class a, strategical level attack on all opponent dragons. */
   if (class & CLASS_a) {
     for (k = 0; k < your_ndragons; k++) {
-      add_strategical_attack_move(move, your_dragons[k]);
+      add_strategical_attack_move(internal_state, move, your_dragons[k]);
       TRACE(internal_state, "...strategical attack on %1m\n", your_dragons[k]);
     }
   }
@@ -499,7 +501,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
   /* Pattern class d, strategical level defense of all own dragons. */
   if (class & CLASS_d) {
     for (k = 0; k < my_ndragons; k++) {
-      add_strategical_defense_move(move, my_dragons[k]);
+      add_strategical_defense_move(internal_state, move, my_dragons[k]);
       TRACE(internal_state, "...strategical defense of %1m\n", my_dragons[k]);
     }
   }
@@ -510,7 +512,7 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
     add_worthwhile_threat_move(move);
   }
 
-  handle_joseki_patterns(pattern->attributes, class, move,
+  handle_joseki_patterns(internal_state, pattern->attributes, class, move,
 			 my_dragons, my_ndragons, your_dragons, your_ndragons);
 }
 
@@ -521,7 +523,8 @@ shapes_callback(int anchor, int color, struct pattern *pattern, int ll,
  * handle_joseki_patterns().
  */
 static void
-joseki_callback(int move, int color, struct corner_pattern *pattern,
+joseki_callback(board_lib_state_struct *internal_state,
+                int move, int color, struct corner_pattern *pattern,
 		int trans, int *stones, int num_stones)
 {
   int k, l;
@@ -556,7 +559,7 @@ joseki_callback(int move, int color, struct corner_pattern *pattern,
            * rather the underlying worm) cannot be tactically
            * captured before adding it to the list of my_dragons.
 	   */
-	  if (worm[pos].attack_codes[0] == 0 || does_defend(move, pos)) {
+      if (worm[pos].attack_codes[0] == 0 || does_defend(internal_state, move, pos)) {
 	    /* Ok, add the dragon to the list. */
 	    my_dragons[l] = origin;
 	    my_ndragons++;
@@ -600,10 +603,10 @@ joseki_callback(int move, int color, struct corner_pattern *pattern,
   /* Pattern class N, antisuji move. */
   if (class & CLASS_N) {
     TRACE(internal_state, "...antisuji move\n");
-    add_antisuji_move(move);
+    add_antisuji_move(internal_state, move);
   }
 
-  handle_joseki_patterns(pattern->attributes, class, move,
+  handle_joseki_patterns(internal_state, pattern->attributes, class, move,
 			 my_dragons, my_ndragons, your_dragons, your_ndragons);
 }
 
@@ -615,23 +618,24 @@ joseki_callback(int move, int color, struct corner_pattern *pattern,
  * by genmove().
  */
 void
-shapes(int color)
+shapes(board_lib_state_struct *internal_state,
+       int color)
 {
   TRACE(internal_state, "\nPattern matcher is looking for move reasons for %s!\n",
 	color_to_string(internal_state, color));
 
-  matchpat(shapes_callback, color, &pat_db, NULL, NULL);
+  matchpat(internal_state, shapes_callback, color, &pat_db, NULL, NULL);
 
   /* Don't match joseki patterns while scoring. */
   if (josekidb && !doing_scoring)
 #if 1
-    corner_matchpat(joseki_callback, color, &joseki_db);
+    corner_matchpat(internal_state, joseki_callback, color, &joseki_db);
 #else
-    matchpat(shapes_callback, color, &joseki_db, NULL, NULL);
+    matchpat(internal_state, shapes_callback, color, &joseki_db, NULL, NULL);
 #endif
 
   if (!disable_fuseki && !doing_scoring)
-    matchpat(shapes_callback, color, &fusekipat_db, NULL, NULL);
+    matchpat(internal_state, shapes_callback, color, &fusekipat_db, NULL, NULL);
 }
 
 
@@ -639,12 +643,13 @@ shapes(int color)
  * Match all patterns in endgame.db on all positions.
  */
 void
-endgame_shapes(int color)
+endgame_shapes(board_lib_state_struct *internal_state,
+               int color)
 {
   TRACE(internal_state, "\nEndgame pattern matcher is looking for move reasons for %s!\n",
 	color_to_string(internal_state, color));
 
-  matchpat(shapes_callback, color, &endpat_db, NULL, NULL);
+  matchpat(internal_state, shapes_callback, color, &endpat_db, NULL, NULL);
 }
 
 

@@ -202,9 +202,9 @@ ascii_showboard(void)
   set_handicap_spots(internal_state->board_size);
 
   printf("\n");
-  printf("    White (O) has captured %d stone%s\n", black_captured,
+  printf("    White (O) has captured %d stone%s\n", internal_state->black_captured,
 	 black_captured == 1 ? "" : "s");
-  printf("    Black (X) has captured %d stone%s\n", white_captured,
+  printf("    Black (X) has captured %d stone%s\n", internal_state->white_captured,
 	 white_captured == 1 ? "" : "s");
   if (showscore) {
     if (current_score_estimate == NO_SCORE)
@@ -903,7 +903,7 @@ do_play_ascii(Gameinfo *gameinfo)
 	  break;
 
 	case CMD_DEAD:
-	  silent_examine_position(FULL_EXAMINE_DRAGONS);
+	  silent_examine_position(internal_state, FULL_EXAMINE_DRAGONS);
 	  showdead = !showdead;
 	  break;
 
@@ -1185,7 +1185,7 @@ showcapture(char *line)
     return;
   }
   
-  if (attack(str, &move))
+  if (attack(internal_state, str, &move))
     mprintf("\nSuccessful attack of %1m at %1m\n", str, move);
   else
     mprintf("\n%1m cannot be attacked\n", str);
@@ -1205,8 +1205,8 @@ showdefense(char *line)
     return;
   }
 
-  if (attack(str, NULL)) {
-      if (find_defense(str, &move))
+  if (attack(internal_state, str, NULL)) {
+      if (find_defense(internal_state, str, &move))
         mprintf("\nSuccessful defense of %1m at %1m\n", str, move);
       else
         mprintf("\n%1m cannot be defended\n", str);

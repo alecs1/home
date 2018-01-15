@@ -296,11 +296,14 @@ extern int metamachine;   /* use metamachine_genmove                     */
 #define GG_COLOR_WHITE   7
 
 /* showbord.c */
-void start_draw_board(void);
-void draw_color_char(int m, int n, int c, int color);
-void draw_char(int m, int n, int c);
-void end_draw_board(void);
-void showboard(int xo);  /* ascii rep. of board to stderr */
+void start_draw_board(board_lib_state_struct *internal_state);
+void draw_color_char(board_lib_state_struct *internal_state,
+                     int m, int n, int c, int color);
+void draw_char(board_lib_state_struct *internal_state,
+               int m, int n, int c);
+void end_draw_board(board_lib_state_struct *internal_state);
+void showboard(board_lib_state_struct *internal_state,
+               int xo);  /* ascii rep. of board to stderr */
 
 
 /* influence.c */
@@ -319,7 +322,8 @@ void debug_influence_move(int move);
 
 /* if debug == 0, then can skip the function call. */
 #define DEBUG  (!(debug)) ? (void)0 : (void)DEBUG_func
-int DEBUG_func(int level, const char *fmt, ...);
+int DEBUG_func(board_lib_state_struct *internal_state,
+               int level, const char *fmt, ...);
 
 #endif  /*HAVE_VARIADIC_DEFINE*/
 
@@ -362,7 +366,8 @@ int get_connection_node_counter(void);
 /* ================================================================ */
 
 /* utils.c */
-void who_wins(int color, FILE *outfile);
+void who_wins(board_lib_state_struct *internal_state,
+              int color, FILE *outfile);
 
 /* high-level routine to generate the best move for the given color */
 int genmove(struct board_lib_state_struct *internal_state,
@@ -392,24 +397,37 @@ void prepare_pattern_profiling(void);
 void report_pattern_profiling(void);
 
 /* sgffile.c */
-void sgffile_add_debuginfo(SGFNode *node, float value);
+void sgffile_add_debuginfo(board_lib_state_struct *internal_state,
+                           SGFNode *node, float value);
 void sgffile_output(SGFTree *tree);
 
-void sgffile_printsgf(int color_to_play, const char *filename);
-void sgffile_printboard(SGFTree *tree);
-void sgffile_recordboard(SGFNode *node);
-int get_sgfmove(SGFProperty *property);
+void sgffile_printsgf(board_lib_state_struct *internal_state,
+                      int color_to_play, const char *filename);
+void sgffile_printboard(board_lib_state_struct *internal_state,
+                        SGFTree *tree);
+void sgffile_recordboard(board_lib_state_struct *internal_state,
+                         SGFNode *node);
+int get_sgfmove(board_lib_state_struct *internal_state,
+                SGFProperty *property);
 
 /* sgfdecide.c */
-void decide_string(int pos);
-void decide_connection(int apos, int bpos);
-void decide_owl(int pos);
-void decide_dragon_data(int pos);
-void decide_semeai(int apos, int bpos);
-void decide_position(void);
-void decide_eye(int pos);
-void decide_combination(int color);
-void decide_surrounded(int pos);
+void decide_string(board_lib_state_struct *internal_state,
+                   int pos);
+void decide_connection(board_lib_state_struct *internal_state,
+                       int apos, int bpos);
+void decide_owl(board_lib_state_struct *internal_state,
+                int pos);
+void decide_dragon_data(board_lib_state_struct *internal_state,
+                        int pos);
+void decide_semeai(board_lib_state_struct *internal_state,
+                   int apos, int bpos);
+void decide_position(board_lib_state_struct *internal_state);
+void decide_eye(board_lib_state_struct *internal_state,
+                int pos);
+void decide_combination(board_lib_state_struct *internal_state,
+                        int color);
+void decide_surrounded(board_lib_state_struct *internal_state,
+                       int pos);
 void decide_oracle(Gameinfo *gameinfo, char *infilename, char *untilstring);
 
 /*oracle.c*/

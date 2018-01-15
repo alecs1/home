@@ -118,7 +118,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 
   sgfOverwritePropertyInt(sgftree.root, "SZ", internal_state->board_size);
 
-  TRACE(internal_state, "size=%d, handicap=%d, komi=%f\n", internal_state->board_size,
+  TRACE(internal_state, "size=%d, internal_state->handicap=%d, komi=%f\n", internal_state->board_size,
 	gameinfo->handicap, komi);
 
   if (gameinfo->handicap)

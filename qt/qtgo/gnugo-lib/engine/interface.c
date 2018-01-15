@@ -48,12 +48,12 @@ init_gnugo(struct board_lib_state_struct *internal_state,
   set_random_seed(HASH_RANDOM_SEED);
   reading_cache_init(memory * 1024 * 1024);
   set_random_seed(seed);
-  persistent_cache_init();
+  persistent_cache_init(internal_state);
   clear_board(internal_state);
 
   transformation_init();
-  dfa_match_init();
-  choose_mc_patterns(NULL);
+  dfa_match_init(internal_state);
+  choose_mc_patterns(internal_state, NULL);
 
   clear_approxlib_cache();
   clear_accuratelib_cache();
@@ -140,12 +140,12 @@ gnugo_play_sgfnode(struct board_lib_state_struct *internal_state,
     switch (prop->name) {
     case SGFAB:
       /* A black stone. */
-      add_stone(internal_state, get_sgfmove(prop), BLACK);
+      add_stone(internal_state, get_sgfmove(internal_state, prop), BLACK);
       break;
 
     case SGFAW:
       /* A white stone. */
-      add_stone(internal_state, get_sgfmove(prop), WHITE);
+      add_stone(internal_state, get_sgfmove(internal_state, prop), WHITE);
       break;
 
     case SGFPL:
@@ -160,7 +160,7 @@ gnugo_play_sgfnode(struct board_lib_state_struct *internal_state,
     case SGFB:
       /* An ordinary move. */
       to_move = (prop->name == SGFW) ? WHITE : BLACK;
-      gnugo_play_move(internal_state, get_sgfmove(prop), to_move);
+      gnugo_play_move(internal_state, get_sgfmove(internal_state, prop), to_move);
       to_move = OTHER_COLOR(to_move);
       break;
     }
@@ -178,7 +178,7 @@ gnugo_sethand(struct board_lib_state_struct *internal_state,
               int desired_handicap, SGFNode *node)
 {
   place_fixed_handicap(internal_state, desired_handicap);
-  sgffile_recordboard(node);
+  sgffile_recordboard(internal_state, node);
   return internal_state->handicap;
 }
 
@@ -303,11 +303,11 @@ gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
   if (untilstr) {
     if (*untilstr > '0' && *untilstr <= '9') {
       until = atoi(untilstr);
-      DEBUG(DEBUG_LOADSGF, "Loading until move %d\n", until);
+      DEBUG(internal_state, DEBUG_LOADSGF, "Loading until move %d\n", until);
     }
     else {
       untilmove = string_to_location(internal_state->board_size, untilstr);
-      DEBUG(DEBUG_LOADSGF, "Loading until move at %1m\n", untilmove);
+      DEBUG(internal_state, DEBUG_LOADSGF, "Loading until move at %1m\n", untilmove);
     }
   }
   
@@ -322,7 +322,7 @@ gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
     int move;
       
     for (prop = tree->lastnode->props; prop; prop = prop->next) {
-      DEBUG(DEBUG_LOADSGF, "%c%c[%s]\n", 
+      DEBUG(internal_state, DEBUG_LOADSGF, "%c%c[%s]\n",
 	    prop->name & 0xff, (prop->name >> 8), prop->value);
       switch (prop->name) {
       case SGFAB:
@@ -333,7 +333,7 @@ gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
 	 * without reference to the order in which the stones are
 	 * placed on the board.
 	 */
-    move = rotate1(internal_state, get_sgfmove(prop), orientation);
+    move = rotate1(internal_state, get_sgfmove(internal_state, prop), orientation);
     if (internal_state->board[move] != EMPTY)
       gprintf(internal_state, "Illegal SGF! attempt to add a stone at occupied point %1m\n",
 		  move);
@@ -369,7 +369,7 @@ gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
       sgfOverwritePropertyInt(tree->root, "HA", internal_state->handicap);
 	}
 
-	move = get_sgfmove(prop);
+    move = get_sgfmove(internal_state, prop);
     if (move == untilmove || internal_state->movenum == until - 1) {
 	  gameinfo->to_move = next;
 	  /* go back so that variant will be added to the proper node */
@@ -399,7 +399,7 @@ gameinfo_play_sgftree_rot(struct board_lib_state_struct *internal_state,
 	 * (board_ko_i, board_ko_j) is set to the location of
 	 * the ko.
 	 */
-    move = rotate1(internal_state, get_sgfmove(prop), orientation);
+    move = rotate1(internal_state, get_sgfmove(internal_state, prop), orientation);
 
 	if (internal_state->board_size > 1)
 	{

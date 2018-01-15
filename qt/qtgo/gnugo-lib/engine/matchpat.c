@@ -140,7 +140,7 @@ static void fixup_patterns_for_board_size(struct board_lib_state_struct *interna
                                           struct pattern *pattern);
 static void prepare_for_match(struct board_lib_state_struct *internal_state,
                               int color);
-static void do_matchpat(struct board_lib_state_struct *internal_state,
+static void do_matchpat(board_lib_state_struct *internal_state,
             int anchor, matchpat_callback_fn_ptr callback,
             int color, struct pattern *database,
             void *callback_data, signed char goal[BOARDMAX]);
@@ -155,7 +155,7 @@ static void matchpat_loop(struct board_lib_state_struct *internal_state, matchpa
  *
  * For pattern element i,  require  (internal_state->board[pos] & andmask[i]) == valmask[i]
  *
- * .XO) For i=0,1,2, board[pos] & 3 is a no-op, so we check board[pos]
+ * .XO) For i=0,1,2, internal_state->board[pos] & 3 is a no-op, so we check board[pos]
  *	== valmask
  * x)   For i=3, we are checking that board[pos] is not color, so AND
  *	color and we get 0 for either empty or OTHER_COLOR, but color
@@ -304,7 +304,7 @@ prepare_for_match(struct board_lib_state_struct *internal_state,
  */
 
 static void
-do_matchpat(struct board_lib_state_struct *internal_state,
+do_matchpat(board_lib_state_struct *internal_state,
         int anchor, matchpat_callback_fn_ptr callback, int color,
 	    struct pattern *pattern, void *callback_data,
 	    signed char goal[BOARDMAX]) 
@@ -422,7 +422,7 @@ do_matchpat(struct board_lib_state_struct *internal_state,
 	   * to just test enough cases to be safe.
 	   */
 
-	  DEBUG(DEBUG_MATCHER, 
+      DEBUG(internal_state, DEBUG_MATCHER,
 		"---\nconsidering pattern '%s', rotation %d at %1m. Range %d,%d -> %d,%d\n",
 		pattern->name, ll, anchor, mi, mj, xi, xj);
 
@@ -487,7 +487,7 @@ do_matchpat(struct board_lib_state_struct *internal_state,
 	
 	/* We jump to here as soon as we discover a pattern has failed. */
       match_failed:
-	DEBUG(DEBUG_MATCHER, 
+    DEBUG(internal_state, DEBUG_MATCHER,
 	      "end of pattern '%s', rotation %d at %1m\n---\n", 
 	      pattern->name, ll, anchor);
 	 
@@ -568,32 +568,32 @@ static void dfa_matchpat_loop(board_lib_state_struct *internal_state, matchpat_c
 
 /* prepare the dfa board (gnugo initialization) */
 void
-dfa_match_init(void)
+dfa_match_init(board_lib_state_struct *internal_state)
 {
   build_spiral_order();
 
   if (owl_vital_apat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "owl_vital_apat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "owl_vital_apat --> using dfa\n");
   if (owl_attackpat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "owl_attackpat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "owl_attackpat --> using dfa\n");
   if (owl_defendpat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "owl_defendpat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "owl_defendpat --> using dfa\n");
   if (pat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "pat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "pat --> using dfa\n");
   if (attpat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "attpat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "attpat --> using dfa\n");
   if (defpat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "defpat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "defpat --> using dfa\n");
   if (endpat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "endpat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "endpat --> using dfa\n");
   if (conn_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "conn --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "conn --> using dfa\n");
   if (influencepat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "influencepat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "influencepat --> using dfa\n");
   if (barrierspat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "barrierspat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "barrierspat --> using dfa\n");
   if (fusekipat_db.pdfa != NULL)
-    DEBUG(DEBUG_MATCHER, "barrierspat --> using dfa\n");
+    DEBUG(internal_state, DEBUG_MATCHER, "barrierspat --> using dfa\n");
 
   /* force out_board initialization */
   dfa_board_size = -1;
@@ -803,7 +803,7 @@ check_pattern_light(board_lib_state_struct *internal_state,
   
   /* We jump to here as soon as we discover a pattern has failed. */
  match_failed:
-  DEBUG(DEBUG_MATCHER, "end of pattern '%s', rotation %d at %1m\n---\n",
+  DEBUG(internal_state, DEBUG_MATCHER, "end of pattern '%s', rotation %d at %1m\n---\n",
 	pattern->name, ll, anchor);
   
 } /* check_pattern_light */

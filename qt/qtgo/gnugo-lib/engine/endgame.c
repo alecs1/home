@@ -142,7 +142,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
    * color. This is just a guess, we'll have to check the results later.
    */
   for (k = 0; k < inessential_liberties; k++) {
-    if (!safe_move(inessential_libs[k], other)
+    if (!safe_move(internal_state, inessential_libs[k], other)
     || !trymove(internal_state, inessential_libs[k], other, "endgame", pos))
       break;
   }
@@ -159,12 +159,12 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
       for (k = 0; k < essential_liberties; k++) {
 	int lib = essential_libs[k];
 
-	if (safe_move(lib, worm_color) && safe_move(lib, other)
+    if (safe_move(internal_state, lib, worm_color) && safe_move(internal_state, lib, other)
         && trymove(internal_state, lib, other, "endgame", pos)) {
-	  if (attack(pos, NULL) != 0) {
+      if (attack(internal_state, pos, NULL) != 0) {
 	    int dpos;
 
-	    if (find_defense(pos, &dpos) && is_proper_eye_space(dpos)) {
+        if (find_defense(internal_state, pos, &dpos) && is_proper_eye_space(dpos)) {
 	      int i;
 
 	      /* If the attack cannot be defended against by playing on
@@ -174,13 +174,13 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
 	       */
 	      for (i = 0; i < essential_liberties; i++) {
 		if (i != k && essential_libs[i] != dpos
-		    && does_defend(essential_libs[i], pos))
+            && does_defend(internal_state, essential_libs[i], pos))
 		  break;
 	      }
 
 	      if (i == essential_liberties) {
 		for (i = 0; i < false_eye_liberties; i++) {
-		  if (does_defend(false_eye_libs[i], pos))
+          if (does_defend(internal_state, false_eye_libs[i], pos))
 		    break;
 		}
 
@@ -193,7 +193,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
 		    int lib2;
             findlib(internal_state, adj[i], 1, &lib2);
 		    if (lib2 != dpos && !is_proper_eye_space(lib2)
-			&& does_defend(lib2, pos))
+            && does_defend(internal_state, lib2, pos))
 		      break;
 		  }
 
@@ -219,20 +219,20 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
     }
 
     /* Try to find moves as in position 2. */
-    if (attack(pos, &apos) != 0) {
+    if (attack(internal_state, pos, &apos) != 0) {
       if (is_proper_eye_space(apos)) {
 	/* The attack point is in someone's eye (must be an eye which the worm
 	 * bounds). This looks promising. If this attack cannot be averted by
 	 * playing on an essential liberty, keep it for further analyzis.
 	 */
 	for (k = 0; k < essential_liberties; k++) {
-	  if (does_defend(essential_libs[k], pos)) {
+      if (does_defend(internal_state, essential_libs[k], pos)) {
 	    apos = NO_MOVE;
 	    break;
 	  }
 	}
 
-	if (apos != NO_MOVE && worm_color == color && !does_defend(apos, pos))
+    if (apos != NO_MOVE && worm_color == color && !does_defend(internal_state, apos, pos))
 	  apos = NO_MOVE;
       }
       else
@@ -258,7 +258,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
      * pointless. Note that checks for safety on previous step were not
      * sufficient since we had additional stones on board then.
      */
-    if (safe_move(attacks[k], other)) {
+    if (safe_move(internal_state, attacks[k], other)) {
       if (defenses[k] != NO_MOVE) {
 	int i;
 
@@ -281,7 +281,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
 	  if (internal_state->board[pos2] == EMPTY) {
 	    int m;
 
-	    if (!is_proper_eye_space(pos2) && safe_move(pos2, other))
+        if (!is_proper_eye_space(pos2) && safe_move(internal_state, pos2, other))
 	      break;
 
 	    for (m = 0; m < inessential_liberties; m++) {
@@ -341,7 +341,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
     if (countlib(internal_state, pos) > 1) {
       for (k = 0; k < num_attacks2; k++) {
     if (trymove(internal_state, attacks[k], other, "endgame", pos)) {
-	  if (attack(pos, NULL) != 0) {
+      if (attack(internal_state, pos, NULL) != 0) {
         TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 		  1, attacks[k]);
         add_expand_territory_move(internal_state, attacks[k]);
@@ -365,7 +365,7 @@ endgame_analyze_worm_liberties(struct board_lib_state_struct *internal_state,
       set_minimum_territorial_value(internal_state, attacks[0], 1.0);
     }
 
-    if (value > 0 && does_attack(apos, pos)) {
+    if (value > 0 && does_attack(internal_state, apos, pos)) {
       TRACE(internal_state, "  endgame move with territorial value %d.0 found at %1m\n",
 	    value, apos);
       add_expand_territory_move(internal_state, apos);
@@ -417,13 +417,13 @@ endgame_find_backfilling_dame(struct board_lib_state_struct *internal_state,
 				&false_eye_liberties, false_eye_libs))
       break;
     for (k = 0; k < inessential_liberties; k++) {
-      if (!safe_move(inessential_libs[k], other)
+      if (!safe_move(internal_state, inessential_libs[k], other)
       || !trymove(internal_state, inessential_libs[k], other, "endgame", str))
 	continue;
       increase_depth_values();
       if (internal_state->board[str] == EMPTY)
 	break;
-      if (attack_and_defend(str, NULL, NULL, NULL, &dpos)) {
+      if (attack_and_defend(internal_state, str, NULL, NULL, NULL, &dpos)) {
 	if (worm[dpos].color == EMPTY) {
 	  potential_moves[num_potential_moves] = dpos;
 	  num_potential_moves++;
@@ -443,7 +443,7 @@ endgame_find_backfilling_dame(struct board_lib_state_struct *internal_state,
   }
 
   for (k = num_potential_moves - 1; k >= 0; k--)
-    if (safe_move(potential_moves[k], color)) {
+    if (safe_move(internal_state, potential_moves[k], color)) {
       move = potential_moves[k];
       TRACE(internal_state, "  backfilling dame found at %1m for string %1m\n", move, str);
       if (color == color_to_move) {

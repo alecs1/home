@@ -1029,7 +1029,7 @@ main(int argc, char *argv[])
   }
   else
   /* Initialize and empty sgf tree if there was no infile. */
-    sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, handicap);
+    sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, internal_state->handicap);
 
   /* Set the game_record to be identical to the loaded one or the
    * newly created empty sgf tree.

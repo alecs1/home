@@ -42,7 +42,8 @@
  * move. (This function is called for both colors.)
  */
 static int
-move_connects_strings(int pos, int color, int to_move)
+move_connects_strings(board_lib_state_struct *internal_state,
+                      int pos, int color, int to_move)
 {
   int ss[4];
   int strings = 0;
@@ -57,7 +58,7 @@ move_connects_strings(int pos, int color, int to_move)
     if (!ON_BOARD(internal_state, ii) || internal_state->board[ii] == EMPTY)
       continue;
 
-    origin = find_origin(ii);
+    origin = find_origin(internal_state, i);
 
     for (l = 0; l < strings; l++)
       if (ss[l] == origin)
@@ -88,7 +89,7 @@ move_connects_strings(int pos, int color, int to_move)
       if (countlib(internal_state, ss[k]) <= 1 && to_move) {
 	int dummy[MAXCHAIN];
 	fewlibs++;
-	fewlibs += chainlinks2(ss[k], dummy, 1);
+    fewlibs += chainlinks2(internal_state, ss[k], dummy, 1);
       }
     }
   }
@@ -117,13 +118,13 @@ value_moves_get_blunder_size(int move, int color)
 
   mark_safe_stones(internal_state, color, move, saved_dragons, saved_worms, safe_stones);
   
-  return blunder_size(move, color, NULL, safe_stones);
+  return blunder_size(internal_state, move, color, NULL, safe_stones);
 }
 
 static int
 value_moves_confirm_safety(int move, int color)
 {
-  return (value_moves_get_blunder_size(move, color) == 0.0);
+  return (value_moves_get_blunder_size(internal_state, move, color) == 0.0);
 }
 
 
@@ -201,7 +202,7 @@ find_more_attack_and_defense_moves(int color)
 	 */
     if (internal_state->board[aa] == color
 	    && !defense_move_reason_known(ii, unstable_worms[k])) {
-	  int acode = attack(aa, NULL);
+	  int acode = attack(internal_state, aa, NULL);
 	  if (acode < worm[aa].attack_codes[0]) {
 	    /* Maybe attack() doesn't find the attack. Try to
 	     * attack with the stored attack move.
@@ -210,10 +211,10 @@ find_more_attack_and_defense_moves(int color)
 	    
 	    if (trymove(worm[aa].attack_points[0], other, 
 			"find_more_attack_and_defense_moves", 0)) {
-	      if (!board[aa])
+	      if (!internal_state->board[aa])
 		defense_works = 0;
 	      else {
-		int this_acode = REVERSE_RESULT(find_defense(aa, NULL));
+		int this_acode = REVERSE_RESULT(find_defense(internal_state, aa, NULL));
 		if (this_acode > acode) {
 		  acode = this_acode;
 		  if (acode >= worm[aa].attack_codes[0])
@@ -240,7 +241,7 @@ find_more_attack_and_defense_moves(int color)
     if (internal_state->board[aa] == other
 	    && !attack_move_reason_known(ii, unstable_worms[k])) {
 	  
-	  int dcode = find_defense(aa, NULL);
+	  int dcode = find_defense(internal_state, aa, NULL);
 	  if (dcode < worm[aa].defense_codes[0]) {
 	    /* Maybe find_defense() doesn't find the defense. Try to
 	     * defend with the stored defense move.
@@ -251,10 +252,10 @@ find_more_attack_and_defense_moves(int color)
 	     */
 	    int attack_works = 1;
 
-	    if (attack(aa, NULL) >= worm[aa].attack_codes[0]) {
+	    if (attack(internal_state, aa, NULL) >= worm[aa].attack_codes[0]) {
 	      if (trymove(worm[aa].defense_points[0], other, 
 			  "find_more_attack_and_defense_moves", 0)) {
-		int this_dcode = REVERSE_RESULT(attack(aa, NULL));
+		int this_dcode = REVERSE_RESULT(attack(internal_state, aa, NULL));
 		if (this_dcode > dcode) {
 		  dcode = this_dcode;
 		  if (dcode >= worm[aa].defense_codes[0])
@@ -360,7 +361,7 @@ do_find_more_owl_attack_and_defense_moves(int color, int pos,
          && internal_state->board[dd] == OTHER_COLOR(color)))
     && !owl_attack_move_reason_known(internal_state, pos, dd)) {
       int kworm = NO_MOVE;
-      int acode = owl_does_attack(pos, dd, &kworm);
+      int acode = owl_does_attack(internal_state, pos, dd, &kworm);
 
       if (acode >= DRAGON2(dd).owl_attack_code) {
     add_owl_attack_move(internal_state, pos, dd, kworm, acode);
@@ -380,7 +381,7 @@ do_find_more_owl_attack_and_defense_moves(int color, int pos,
     && !owl_defense_move_reason_known(internal_state, pos, dd)) {
       int kworm = NO_MOVE;
       /* FIXME: Better use owl_connection_defend() for CONNECT_MOVE ? */
-      int dcode = owl_does_defend(pos, dd, &kworm);
+      int dcode = owl_does_defend(internal_state, pos, dd, &kworm);
 
       if (dcode >= DRAGON2(dd).owl_defense_code) {
 	if (dcode == LOSS && kworm != NO_MOVE)
@@ -414,9 +415,9 @@ try_large_scale_owl_attack(int pos, int color, int target, int dist)
   int save_verbose = verbose;
   int save_owl_node_limit = owl_node_limit;
   
-  ASSERT1(internal_state->board[target] == OTHER_COLOR(color), pos);
+  ASSERT1(internal_state, internal_state->board[target] == OTHER_COLOR(color), pos);
   ASSERT1(internal_state, !owl_attack_move_reason_known(internal_state, pos, target), pos);
-  DEBUG(DEBUG_LARGE_SCALE, "Trying large scale move %1m on %1m\n", pos, target);
+  DEBUG(internal_state, DEBUG_LARGE_SCALE, "Trying large scale move %1m on %1m\n", pos, target);
   
   /* To avoid horizon effects, we temporarily increase 
    * the depth values to find the large scale attacks.
@@ -438,22 +439,22 @@ try_large_scale_owl_attack(int pos, int color, int target, int dist)
       verbose--;
 
     owl_nodes_before = get_owl_node_counter(); 
-    acode = owl_does_attack(pos, target, &kworm);
+    acode = owl_does_attack(internal_state, pos, target, &kworm);
     owl_nodes_used = get_owl_node_counter() - owl_nodes_before;
     
     if (acode >= DRAGON2(target).owl_attack_code
 	&& acode == WIN) {
       add_owl_attack_move(internal_state, pos, target, kworm, acode);
-      DEBUG(DEBUG_LARGE_SCALE | DEBUG_MOVE_REASONS,
+      DEBUG(internal_state, DEBUG_LARGE_SCALE | DEBUG_MOVE_REASONS,
 	    "Move at %1m owl-attacks %1m on a large scale(%s).\n", 
 	    pos, target, result_to_string(acode));
     }
     else
-      DEBUG(DEBUG_LARGE_SCALE,
+      DEBUG(internal_state, DEBUG_LARGE_SCALE,
 	    "Move at %1m isn't a clean large scale attack on %1m (%s).\n",
 	    pos, target, result_to_string(acode));
     
-    DEBUG(DEBUG_LARGE_SCALE, "  owl nodes used = %d, dist = %d\n", 
+    DEBUG(internal_state, DEBUG_LARGE_SCALE, "  owl nodes used = %d, dist = %d\n", 
 	  owl_nodes_used, dist);
     /* Restore settings. */
     verbose = save_verbose;
@@ -482,7 +483,7 @@ find_large_scale_owl_attacks_on_dragon(struct board_lib_state_struct *internal_s
   int y_max = 0;
   int dist;
 
-  ASSERT1(internal_state->board[target] == OTHER_COLOR(color), target);
+  ASSERT1(internal_state, internal_state->board[target] == OTHER_COLOR(color), target);
   
   /* Find the physical extension of the dragon. */
   for (x = 0; x < internal_state->board_size; x++)
@@ -527,7 +528,7 @@ find_large_scale_owl_attacks_on_dragon(struct board_lib_state_struct *internal_s
 	    /* Maximum Manhatan distance, move reason known but no owl
 	     * attack yet.
 	     */
-	    try_large_scale_owl_attack(pos, color, target, dist);
+	    try_large_scale_owl_attack(internal_state, pos, color, target, dist);
 	  
 	}
       }
@@ -542,14 +543,14 @@ find_large_scale_owl_attack_moves(int color)
 {
   int d;
 
-  DEBUG(DEBUG_LARGE_SCALE, "\nTrying to find large scale attack moves.\n");
+  DEBUG(internal_state, DEBUG_LARGE_SCALE, "\nTrying to find large scale attack moves.\n");
   for (d = 0; d < number_of_dragons; d++) {
     int target = dragon2[d].origin;
     if (dragon[target].color == OTHER_COLOR(color)
 	&& dragon[target].size <= 6
         && dragon[target].status == CRITICAL
 	&& dragon2[d].owl_status == CRITICAL) {
-      DEBUG(DEBUG_LARGE_SCALE, "Small critical dragon found at %1m\n", target);
+      DEBUG(internal_state, DEBUG_LARGE_SCALE, "Small critical dragon found at %1m\n", target);
       find_large_scale_owl_attacks_on_dragon(color, target);
     }
   }
@@ -678,7 +679,7 @@ find_more_owl_attack_and_defense_moves(int color)
       if (internal_state->board[pos] == color
           && !owl_defense_move_reason_known(internal_state, pos2, pos)) {
 	    int kworm = NO_MOVE;
-	    int dcode = owl_does_defend(pos2, pos, &kworm);
+	    int dcode = owl_does_defend(internal_state, pos2, pos, &kworm);
 	    if (dcode >= DRAGON2(pos).owl_defense_code) {
 	      if (dcode == LOSS)
 		add_loss_move(pos2, pos, kworm);
@@ -693,7 +694,7 @@ find_more_owl_attack_and_defense_moves(int color)
       else if (internal_state->board[pos] != color
            && !owl_attack_move_reason_known(internal_state, pos2, pos)) {
 	    int kworm = NO_MOVE;
-	    int acode = owl_does_attack(pos2, pos, &kworm);
+	    int acode = owl_does_attack(internal_state, pos2, pos, &kworm);
 	    if (acode >= DRAGON2(pos).owl_attack_code) {
           add_owl_attack_move(internal_state, pos2, pos, kworm, acode);
 	      if (save_verbose)
@@ -737,12 +738,12 @@ try_potential_semeai_move(int pos, int color, struct move_reason *reason)
   if (resulta == 0 && resultb == 0
       && (certain || !old_certain)) {
     add_semeai_move(pos, dr1);
-    DEBUG(DEBUG_SEMEAI,
+    DEBUG(internal_state, DEBUG_SEMEAI,
 	  "Potential semeai move at %1m for dragon at %1m is real\n",
 	  pos, dr1);
   }
   else
-    DEBUG(DEBUG_MOVE_REASONS, "Potential semeai move at %1m for %1m discarded\n",
+    DEBUG(internal_state, DEBUG_MOVE_REASONS, "Potential semeai move at %1m for %1m discarded\n",
 	  pos, dr1);
 }
 
@@ -870,7 +871,7 @@ induce_secondary_move_reasons(int color)
 	if (!attack_move && !move[pos].move_safety)
 	  continue;
 	
-	num_adj = extended_chainlinks(aa, adjs, 1);
+    num_adj = extended_chainlinks(internal_state, aa, adjs, 1);
 	
 	for (i = 0; i < num_adj; i++) {
 	  for (j = i+1; j < num_adj; j++) {
@@ -881,27 +882,27 @@ induce_secondary_move_reasons(int color)
 	      continue;
 	    if (attack_move
         && internal_state->board[adj1] != internal_state->board[aa]
-		&& !disconnect(adj1, adj2, NULL))
+		&& !disconnect(internal_state, adj1, adj2, NULL))
 	      continue;
 	    if (!attack_move
         && internal_state->board[adj1] != internal_state->board[aa]
-		&& !string_connect(adj1, adj2, NULL))
+		&& !string_connect(internal_state, adj1, adj2, NULL))
 	      continue;
 	    if (attack_move
         && internal_state->board[adj1] == internal_state->board[aa])
 	      continue;
 	    if (!attack_move
         && internal_state->board[adj1] == internal_state->board[aa]
-		&& !disconnect(adj1, adj2, NULL))
+		&& !disconnect(internal_state, adj1, adj2, NULL))
 	      continue;
 
         if (trymove(internal_state, pos, color_to_move, "induce_secondary_move_reasons",
 			aa)) {
 	      if (attack_move
           && internal_state->board[adj1] != internal_state->board[aa]
-		  && !disconnect(adj1, adj2, NULL)) {
+		  && !disconnect(internal_state, adj1, adj2, NULL)) {
         popgo(internal_state);
-		DEBUG(DEBUG_MOVE_REASONS,
+		DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		      "Connection move at %1m induced for %1m/%1m due to attack of %1m\n",
 		      pos, adj1, adj2, aa);
 		add_connection_move(pos, adj1, adj2);
@@ -910,18 +911,18 @@ induce_secondary_move_reasons(int color)
 	      }
 	      else if (!attack_move
                && internal_state->board[adj1] != internal_state->board[aa]
-		       && !string_connect(adj1, adj2, NULL)) {
+		       && !string_connect(internal_state, adj1, adj2, NULL)) {
         popgo(internal_state);
-		DEBUG(DEBUG_MOVE_REASONS,
+		DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		      "Cut move at %1m induced for %1m/%1m due to defense of %1m\n",
 		      pos, adj1, adj2, aa);
 		add_cut_move(pos, adj1, adj2);
 	      }
 	      else if (!attack_move
           && internal_state->board[adj1] == internal_state->board[aa]
-		  && !disconnect(adj1, adj2, NULL)) {
+		  && !disconnect(internal_state, adj1, adj2, NULL)) {
         popgo(internal_state);
-		DEBUG(DEBUG_MOVE_REASONS,
+		DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		      "Connection move at %1m induced for %1m/%1m due to defense of %1m\n",
 		      pos, adj1, adj2, aa);
 		add_connection_move(pos, adj1, adj2);
@@ -974,7 +975,7 @@ induce_secondary_move_reasons(int color)
 		  && neighbor_dragons[origin] != 2
 		  && dragon[origin].status != DEAD
 		  && dragon_weak(origin)) {
-		DEBUG(DEBUG_MOVE_REASONS,
+		DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		      "Strategical attack move at %1m induced for %1m due to defense of %1m\n",
 		      pos, origin, aa);
         add_strategical_attack_move(internal_state, pos, origin);
@@ -998,7 +999,7 @@ induce_secondary_move_reasons(int color)
 	    do_find_more_owl_attack_and_defense_moves(color, pos,
 						      STRATEGIC_DEFEND_MOVE,
 						      bb);
-	    DEBUG(DEBUG_MOVE_REASONS, "Strategic defense at %1m induced for %1m due to owl attack on %1m\n",
+	    DEBUG(internal_state, DEBUG_MOVE_REASONS, "Strategic defense at %1m induced for %1m due to owl attack on %1m\n",
 		  pos, bb, aa);
 	  }
 	}
@@ -1027,7 +1028,7 @@ induce_secondary_move_reasons(int color)
 		    add_connection_move(pos, pos3, worm1);
 		    do_find_more_owl_attack_and_defense_moves(color, pos, CONNECT_MOVE,
 							      find_connection(pos3, worm1));
-		    DEBUG(DEBUG_MOVE_REASONS, "Connection at %1m induced for %1m/%1m due to connection at %1m/%1m\n",
+		    DEBUG(internal_state, DEBUG_MOVE_REASONS, "Connection at %1m induced for %1m/%1m due to connection at %1m/%1m\n",
 			  pos, worm1, worm2, pos3, worm1);
 		  }
 		  
@@ -1035,7 +1036,7 @@ induce_secondary_move_reasons(int color)
 		    add_connection_move(pos, pos3, worm2);
 		    do_find_more_owl_attack_and_defense_moves(color, pos, CONNECT_MOVE,
 							      find_connection(pos3, worm2));
-		    DEBUG(DEBUG_MOVE_REASONS, "Connection at %1m induced for %1m/%1m due to connection at %1m/%1m\n",
+		    DEBUG(internal_state, DEBUG_MOVE_REASONS, "Connection at %1m induced for %1m/%1m due to connection at %1m/%1m\n",
 			  pos, worm1, worm2, pos3, worm2);
 		  }
 		}
@@ -1061,13 +1062,13 @@ examine_move_safety(int color)
   int pos;
   int k;
   
-  start_timer(3);
+  start_timer(internal_state, 3);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     int safety = 0;
     int tactical_safety = 0;
     if (!ON_BOARD(internal_state, pos))
       continue;
-    tactical_safety = is_known_safe_move(pos);
+    tactical_safety = is_known_safe_move(internal_state, pos);
       
     for (k = 0; k < MAX_REASONS; k++) {
       int r = move[pos].reason[k];
@@ -1092,7 +1093,7 @@ examine_move_safety(int color)
 	  int ii;
 	  for (ii = first_worm_in_dragon(what); ii != NO_MOVE; 
            ii = next_worm_in_dragon(internal_state, ii)) {
-	    if (!play_connect_n(color, 0, 1, pos, ii, pos))
+	    if (!play_connect_n(internal_state, color, 0, 1, pos, ii, pos))
 	      break;
 	  }
 	  if (ii != NO_MOVE) {
@@ -1172,7 +1173,7 @@ examine_move_safety(int color)
 	     */
 	    int num_adj, adjs[MAXCHAIN];
 	    
-	    num_adj = chainlinks(aa, adjs);
+        num_adj = chainlinks(internal_state, aa, adjs);
 	    for (m = 0; m < num_adj; m++) {
 	      int adj = adjs[m];
 	      
@@ -1255,7 +1256,7 @@ examine_move_safety(int color)
 	   *
 	   * FIXME: Might need to involve semeai code too here.
 	   */
-	  if (owl_does_defend(pos, bb, NULL)) {
+	  if (owl_does_defend(internal_state, pos, bb, NULL)) {
 	    tactical_safety = 1;
 	    safety = 1;
 	  }
@@ -1273,8 +1274,8 @@ examine_move_safety(int color)
 	     */
 	    safety = 1;
 	  
-	  else if (!play_connect_n(color, 0, 1, pos, aa, pos)
-		   && owl_does_defend(pos, aa, NULL))
+	  else if (!play_connect_n(internal_state, color, 0, 1, pos, aa, pos)
+		   && owl_does_defend(internal_state, pos, aa, NULL))
 	    safety = 1;
 	  break;
 	}
@@ -1312,11 +1313,11 @@ examine_move_safety(int color)
 	  break;
 	}
       }
-      if (safety == 1 && (tactical_safety == 1 || safe_move(pos, color)))
+      if (safety == 1 && (tactical_safety == 1 || safe_move(internal_state, pos, color)))
 	break;
     }
       
-    if (safety == 1 && (tactical_safety || safe_move(pos, color)))
+    if (safety == 1 && (tactical_safety || safe_move(internal_state, pos, color)))
       move[pos].move_safety = 1;
     else
       move[pos].move_safety = 0;
@@ -1574,7 +1575,7 @@ adjusted_worm_attack_value(int pos, int ww)
       adjustment_up = 2*dragon[adj].effective_size;
 
     if (worm[adj].attack_codes[0] != 0
-	&& !does_defend(pos, adj)
+	&& !does_defend(internal_state, pos, adj)
 	&& 2*worm[adj].effective_size > adjustment_down)
       adjustment_down = 2*worm[adj].effective_size;
   }
@@ -1809,11 +1810,11 @@ estimate_territorial_value(int pos, int color, float our_score,
     case ATTACK_MOVE_BAD_KO:
       aa = move_reasons[r].what;
       
-      ASSERT1(internal_state->board[aa] != color, aa);
+      ASSERT1(internal_state, internal_state->board[aa] != color, aa);
       
       /* Defenseless stone. */
       if (worm[aa].defense_codes[0] == 0) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "  %1m:   %f (secondary) - attack on %1m (defenseless)\n",
 	      pos, worm[aa].effective_size, aa);
 	secondary_value += worm[aa].effective_size;
@@ -1827,7 +1828,7 @@ estimate_territorial_value(int pos, int color, float our_score,
        * capturing them tactically as well.
        */
       if (dragon[aa].status == DEAD) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "  %1m:   %f (secondary) - attack on %1m (dead)\n",
 	      pos, 0.2 * this_value, aa);
 	secondary_value += 0.2 * this_value;
@@ -1862,7 +1863,7 @@ estimate_territorial_value(int pos, int color, float our_score,
     case DEFEND_MOVE_BAD_KO:
       aa = move_reasons[r].what;
       
-      ASSERT1(internal_state->board[aa] == color, aa);
+      ASSERT1(internal_state, internal_state->board[aa] == color, aa);
       
       /* 
        * Estimate value 
@@ -1875,7 +1876,7 @@ estimate_territorial_value(int pos, int color, float our_score,
        * dead stones.
        */
       if (dragon[aa].status == DEAD) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "  %1m:   %f (secondary) - defense of %1m (dead)\n",
 	      pos, 0.2 * this_value, aa);
 	secondary_value += 0.2 * this_value;
@@ -1886,7 +1887,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       && (owl_defense_move_reason_known(internal_state, pos, aa)
           < defense_move_reason_known(internal_state, pos, aa))
       && !semeai_move_reason_known(internal_state, pos, aa)) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "  %1m:   %f (secondary) - ineffective defense of %1m (critical)\n",
 	      pos, 0.2 * this_value, aa);
 	secondary_value += 0.2 * this_value;
@@ -1934,10 +1935,10 @@ estimate_territorial_value(int pos, int color, float our_score,
       aa = move_reasons[r].what;
 
       /* Make sure this is a threat to attack opponent stones. */
-      ASSERT1(internal_state->board[aa] == other, aa);
+      ASSERT1(internal_state, internal_state->board[aa] == other, aa);
       
       if (dragon[aa].status == DEAD) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "    %1m: 0.0 - threatens to capture %1m (dead)\n", pos, aa);
 	break;
       }
@@ -1985,7 +1986,7 @@ estimate_territorial_value(int pos, int color, float our_score,
     if (internal_state->board[aa] == EMPTY)
 	  num_adj = 0;
 	else
-	  num_adj = chainlinks(aa, adjs);
+      num_adj = chainlinks(internal_state, aa, adjs);
 
 	/* No followup value if string can be defended with threat
          * against our move. An exception to this is when our move
@@ -2005,17 +2006,17 @@ estimate_territorial_value(int pos, int color, float our_score,
 	    && (move[pos].move_safety == 1
 		|| adjacent_to_nondead_stone(pos, color)
         || owl_defense_move_reason_known(internal_state, pos, -1))
-	    && find_defense(aa, &defense_move) == WIN
+	    && find_defense(internal_state, aa, &defense_move) == WIN
 	    && defense_move != NO_MOVE) {
 	  int bad_followup;
 	  int attack_move;
 
-	  if (attack(pos, &attack_move) != WIN) {
+	  if (attack(internal_state, pos, &attack_move) != WIN) {
 	    int i;
 
         if (trymove(internal_state, defense_move, other,
 			"estimate_territorial_value-b", NO_MOVE)) {
-          if (internal_state->board[pos] == EMPTY || attack(pos, NULL) != 0) {
+          if (internal_state->board[pos] == EMPTY || attack(internal_state, pos, NULL) != 0) {
         popgo(internal_state);
         popgo(internal_state);
 		break;
@@ -2040,7 +2041,7 @@ estimate_territorial_value(int pos, int color, float our_score,
 		attacked_string = move_reasons[reason].what;
 		if (move_reasons[reason].type == ATTACK_MOVE
             && internal_state->board[attacked_string] == other) {
-		  int defense_code = find_defense(attacked_string, NULL);
+		  int defense_code = find_defense(internal_state, attacked_string, NULL);
 		  double down_coefficient = 0.0;
 
 		  switch (defense_code) {
@@ -2076,7 +2077,7 @@ estimate_territorial_value(int pos, int color, float our_score,
 	     */
         if (trymove(internal_state, attack_move, other,
 			"estimate_territorial_value-c", NO_MOVE)) {
-	      if (attack(aa, NULL) == 0) {
+	      if (attack(internal_state, aa, NULL) == 0) {
 		/* It is sufficient, no followup. */
         popgo(internal_state);
         popgo(internal_state);
@@ -2100,8 +2101,8 @@ estimate_territorial_value(int pos, int color, float our_score,
           findlib(internal_state, adjs[s], 1, &lib);
           if (trymove(internal_state, lib, other,
 		    	  "estimate_territorial_value-d", NO_MOVE)) {
-		if (!attack(aa, NULL)
-            && (internal_state->board[pos] == EMPTY || attack(pos, NULL) != 0)) {
+		if (!attack(internal_state, aa, NULL)
+            && (internal_state->board[pos] == EMPTY || attack(internal_state, pos, NULL) != 0)) {
           popgo(internal_state);
 		  bad_followup = 1;
 		  break;
@@ -2126,7 +2127,7 @@ estimate_territorial_value(int pos, int color, float our_score,
 	      && 2*dragon[adj].effective_size > adjustment_up)
 	    adjustment_up = 2*dragon[adj].effective_size;
 	  if (dragon[adj].color == color
-	      && attack(adj, NULL)
+	      && attack(internal_state, adj, NULL)
 	      && 2*worm[adj].effective_size > adjustment_down)
 	    adjustment_down = 2*worm[adj].effective_size;
 	}
@@ -2160,7 +2161,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       aa = move_reasons[r].what;
 
       /* Make sure this is a threat to defend our stones. */
-      ASSERT1(internal_state->board[aa] == color, aa);
+      ASSERT1(internal_state, internal_state->board[aa] == color, aa);
       
       /* We don't trust tactical defense threats as ko threats, unless
        * the move is safe.
@@ -2179,11 +2180,11 @@ estimate_territorial_value(int pos, int color, float our_score,
       if (trymove(internal_state, pos, color, "estimate_territorial_value-A", NO_MOVE)) {
 	int attack_move;
 	if (move[pos].move_safety == 1
-	    && attack(aa, &attack_move) == WIN
+	    && attack(internal_state, aa, &attack_move) == WIN
 	    && attack_move != NO_MOVE) {
       if (trymove(internal_state, attack_move, other,
 		      "estimate_territorial_value-b", NO_MOVE)) {
-        if (internal_state->board[pos] == EMPTY || attack(pos, NULL) != 0) {
+        if (internal_state->board[pos] == EMPTY || attack(internal_state, pos, NULL) != 0) {
           popgo(internal_state);
           popgo(internal_state);
 	      break;
@@ -2338,7 +2339,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       aa = move_reasons[r].what;
 
       if (dragon[aa].status == DEAD) {
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "    %1m: 0.0 - threatens to owl attack %1m (dead)\n", pos, aa);
 	break;
       }
@@ -2390,7 +2391,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       aa = move_reasons[r].what;
 
       if (dragon[aa].status != DEAD) {
-       DEBUG(DEBUG_MOVE_REASONS,
+       DEBUG(internal_state, DEBUG_MOVE_REASONS,
              "    %1m: 0.0 - prevent defense threat (dragon is not dead)\n",
              pos);
        break;
@@ -2462,7 +2463,7 @@ estimate_territorial_value(int pos, int color, float our_score,
   mark_inessential_stones(OTHER_COLOR(color), safe_stones);
 
   if (move[pos].move_safety == 1
-      && (is_known_safe_move(pos) || safe_move(pos, color) != 0)) {
+      && (is_known_safe_move(internal_state, pos) || safe_move(internal_state, pos, color) != 0)) {
     safe_stones[pos] = INFLUENCE_SAVED_STONE;
     strength[pos] = DEFAULT_STRENGTH;
     if (0)
@@ -2479,7 +2480,7 @@ estimate_territorial_value(int pos, int color, float our_score,
    * an owl defense).
    */
   if (does_block
-      && tryko(pos, color, "estimate_territorial_value")) {
+      && tryko(internal_state, pos, color, "estimate_territorial_value")) {
     Hash_data safety_hash = goal_to_hashvalue(safe_stones);
     if (disable_delta_territory_cache
 	|| !retrieve_delta_territory_cache(pos, color, &this_value, 
@@ -2500,7 +2501,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       if (this_value != 0.0)
     TRACE(internal_state, "%1m: %f - change in territory\n", pos, this_value);
       else
-	DEBUG(DEBUG_MOVE_REASONS, "%1m: 0.00 - change in territory\n", pos);
+	DEBUG(internal_state, DEBUG_MOVE_REASONS, "%1m: 0.00 - change in territory\n", pos);
       move[pos].influence_followup_value
 	= influence_delta_territory(&move_influence, &followup_influence,
 	    			    color, pos);
@@ -2512,7 +2513,7 @@ estimate_territorial_value(int pos, int color, float our_score,
       if (this_value != 0.0)
     TRACE(internal_state, "%1m: %f - change in territory (cached)\n", pos, this_value);
       else
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "%1m: 0.00 - change in territory (cached)\n", pos);
     }
     popgo(internal_state);
@@ -2652,9 +2653,9 @@ estimate_strategical_value(int pos, int color, float our_score,
              * does not defend or attack, no points.
 	     */
 	    if (worm[bb].attack_codes[0] != 0
-        && ((color == internal_state->board[bb] && !does_defend(pos, bb))
+        && ((color == internal_state->board[bb] && !does_defend(internal_state, pos, bb))
             || (color == OTHER_COLOR(internal_state->board[bb])
-			&& !does_attack(pos, bb))))
+			&& !does_attack(internal_state, pos, bb))))
 	      this_value = 0.0;
 
 	    /* If we are doing scoring, are alive, and the move loses
@@ -2668,7 +2669,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 	      this_value = 0.0;
 	    
 	    if (this_value > dragon_value[bb]) {
-	      DEBUG(DEBUG_MOVE_REASONS,
+	      DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		    "  %1m:   %f - %1m attacked/defended\n",
 		    pos, this_value, bb);
 	      dragon_value[bb] = this_value;
@@ -2777,7 +2778,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 	    
 	    if (this_value > dragon_value[dragon[cc].origin]) {
 	      dragon_value[dragon[cc].origin] = this_value;
-	      DEBUG(DEBUG_MOVE_REASONS,
+	      DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		    "  %1m:   %f - connect %1m and %1m to attack thrashing dragon %1m\n",
 		    pos, this_value, aa, bb, cc);
 	    }
@@ -2804,7 +2805,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 	  this_value = connection_value(aa, bb, pos, 0);
 	if (this_value > dragon_value[aa]) {
 	  dragon_value[aa] = this_value;
-          DEBUG(DEBUG_MOVE_REASONS,
+          DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		"  %1m:   %f - %1m cut/connect strategic value\n",
 		pos, this_value, aa);
 	}
@@ -2816,7 +2817,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 	  this_value = connection_value(bb, aa, pos, 0);
 	if (this_value > dragon_value[bb]) {
 	  dragon_value[bb] = this_value;
-          DEBUG(DEBUG_MOVE_REASONS,
+          DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		"  %1m:   %f - %1m cut/connect strategic value\n",
 		pos, this_value, bb);
 	}
@@ -2890,7 +2891,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 		
 	if (this_value > dragon_value[aa]) {
 	  dragon_value[aa] = this_value;
-          DEBUG(DEBUG_MOVE_REASONS,
+          DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		"  %1m:   %f - %1m strategic attack/defend\n",
 		pos, this_value, aa);
 
@@ -2925,7 +2926,7 @@ estimate_strategical_value(int pos, int color, float our_score,
 	
 	if (this_value > dragon_value[aa]) {
 	  dragon_value[aa] = this_value;
-	  DEBUG(DEBUG_MOVE_REASONS,
+	  DEBUG(internal_state, DEBUG_MOVE_REASONS,
 		"  %1m:   %f - %1m uncertain owl defense bonus\n",
 		pos, this_value, aa);
 	}
@@ -2945,7 +2946,7 @@ estimate_strategical_value(int pos, int color, float our_score,
      */
     if (dragon[aa].status == CRITICAL
     && !owl_move_reason_known(internal_state, pos, aa)) {
-      DEBUG(DEBUG_MOVE_REASONS, "  %1m: 0.0 - disregarding strategic effect on %1m (critical dragon)\n",
+      DEBUG(internal_state, DEBUG_MOVE_REASONS, "  %1m: 0.0 - disregarding strategic effect on %1m (critical dragon)\n",
 	    pos, aa);
       continue;
     }
@@ -3533,7 +3534,7 @@ reevaluate_ko_threats(int ko_move, int color, float ko_value)
           if (internal_state->board[what] != EMPTY)
 		threat_does_work = attack(what, NULL);
 	      else
-		threat_does_work = find_defense(pos, NULL);
+		threat_does_work = find_defense(internal_state, pos, NULL);
 	      break;
 	    case DEFEND_THREAT:
           threat_does_work = (internal_state->board[what] != EMPTY
@@ -3553,8 +3554,8 @@ reevaluate_ko_threats(int ko_move, int color, float ko_value)
 	    /* Is this a losing ko threat? */
 	    if (threat_does_work && type == ATTACK_THREAT) {
 	      int apos;
-	      if (attack(pos, &apos)
-		  && does_defend(apos, what)
+	      if (attack(internal_state, pos, &apos)
+		  && does_defend(internal_state, apos, what)
 		  && (forced_backfilling_moves[apos]
 		      || (!is_proper_eye_space(apos)
 			 && !false_eye_territory[apos]))) {
@@ -3607,7 +3608,7 @@ reevaluate_ko_threats(int ko_move, int color, float ko_value)
 	good_threats[num_good_threats++] = pos;
       }
       else
-	DEBUG(DEBUG_MOVE_REASONS,
+	DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	      "%1m: no additional ko value (threat does not work as ko threat)\n", pos);
     }
   }
@@ -3649,7 +3650,7 @@ redistribute_points(void)
       move[target].final_value = move[target].value;
   
   for (source = BOARDMIN; source < BOARDMAX; source++) {
-    if (!ON_BOARD(source))
+    if (!ON_BOARD(internal_state, source))
       continue;
     target = replacement_map[source];
     if (target == NO_MOVE)
@@ -3717,7 +3718,7 @@ find_best_move(int *the_move, float *value, int color,
       TRACE(internal_state, "Move at %1m would be an illegal ko capture.\n", best_move);
       reevaluate_ko_threats(best_move, color, best_value);
       redistribute_points();
-      time_report(2, "  reevaluate_ko_threats", NO_MOVE, 1.0);
+      time_report(internal_state, 2, "  reevaluate_ko_threats", NO_MOVE, 1.0);
       remove_top_move(best_move);
       move[best_move].value = 0.0;
       move[best_move].final_value = 0.0;
@@ -3785,33 +3786,33 @@ review_move_reasons(int *the_move, float *value, int color,
 
   current_color = color;
   
-  start_timer(2);
+  start_timer(internal_state, 2);
   find_more_attack_and_defense_moves(color);
-  time_report(2, "  find_more_attack_and_defense_moves", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  find_more_attack_and_defense_moves", NO_MOVE, 1.0);
 
   if (get_level() >= 6) {
     find_more_owl_attack_and_defense_moves(color);
-    time_report(2, "  find_more_owl_attack_and_defense_moves", NO_MOVE, 1.0);
+    time_report(internal_state, 2, "  find_more_owl_attack_and_defense_moves", NO_MOVE, 1.0);
   }
 
   if (large_scale && get_level() >= 6) {
     find_large_scale_owl_attack_moves(color);
-    time_report(2, "  find_large_scale_owl_attack_moves", NO_MOVE, 1.0);
+    time_report(internal_state, 2, "  find_large_scale_owl_attack_moves", NO_MOVE, 1.0);
   }
 
   find_more_semeai_moves(color);
-  time_report(2, "  find_more_semeai_moves", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  find_more_semeai_moves", NO_MOVE, 1.0);
 
   save_verbose = verbose;
   if (verbose > 0)
     verbose--;
   examine_move_safety(color);
-  time_report(2, "  examine_move_safety", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  examine_move_safety", NO_MOVE, 1.0);
   verbose = save_verbose;
 
   /* We can't do this until move_safety is known. */
   induce_secondary_move_reasons(color);
-  time_report(2, "  induce_secondary_move_reasons", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  induce_secondary_move_reasons", NO_MOVE, 1.0);
     
   if (printworms || verbose)
     list_move_reasons(stderr, NO_MOVE);
@@ -3819,7 +3820,7 @@ review_move_reasons(int *the_move, float *value, int color,
   /* Evaluate all moves with move reasons. */
   value_moves(color, pure_threat_value, our_score,
       	      use_thrashing_dragon_heuristics);
-  time_report(2, "  value_moves", NO_MOVE, 1.0);
+  time_report(internal_state, 2, "  value_moves", NO_MOVE, 1.0);
 
   /* Perform point redistribution */
   redistribute_points();

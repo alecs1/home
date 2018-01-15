@@ -30,10 +30,12 @@
 
 #define INFINITY 1000
 
-static void find_moves_to_make_seki(void);
-static void update_status(int dr, enum dragon_status new_status, 
-   			  enum dragon_status new_safety);
-static int close_enough_for_proper_semeai(int apos, int bpos);
+static void find_moves_to_make_seki(board_lib_state_struct *internal_state);
+static void update_status(board_lib_state_struct *internal_state,
+                          int dr, enum dragon_status new_status,
+              enum dragon_status new_safety);
+static int close_enough_for_proper_semeai(board_lib_state_struct *internal_state,
+                                          int apos, int bpos);
 
 /* semeai() searches for pairs of dragons of opposite color which
  * have safety DEAD. If such a pair is found, owl_analyze_semeai is
@@ -48,7 +50,7 @@ static int close_enough_for_proper_semeai(int apos, int bpos);
 #define MAX_DRAGONS 50
 
 void
-semeai()
+semeai(board_lib_state_struct *internal_state)
 {
   int semeai_results_first[MAX_DRAGONS][MAX_DRAGONS];
   int semeai_results_second[MAX_DRAGONS][MAX_DRAGONS];
@@ -102,7 +104,7 @@ semeai()
        * that the dragons either are directly adjacent or at least
        * have one common liberty.
        */
-      if (!close_enough_for_proper_semeai(apos, bpos))
+      if (!close_enough_for_proper_semeai(internal_state, apos, bpos))
 	continue;
 
       /* The array semeai_results_first[d1][d2] will contain the status
@@ -111,14 +113,14 @@ semeai()
        * of d1 after the d1 d2 semeai, giving d2 the first move.
        */
       
-      DEBUG(DEBUG_SEMEAI, "Considering semeai between %1m and %1m\n",
+      DEBUG(internal_state, DEBUG_SEMEAI, "Considering semeai between %1m and %1m\n",
 	    apos, bpos);
-      owl_analyze_semeai(apos, bpos,
+      owl_analyze_semeai(internal_state, apos, bpos,
 			 &(semeai_results_first[d1][d2]), 
 			 &(semeai_results_second[d1][d2]),
 			 &(semeai_move[d1][d2]), &result_certain);
-      DEBUG(DEBUG_SEMEAI, "results if %s moves first: %s %s, %1m%s\n",
-	    board[apos] == BLACK ? "black" : "white",
+      DEBUG(internal_state, DEBUG_SEMEAI, "results if %s moves first: %s %s, %1m%s\n",
+        internal_state->board[apos] == BLACK ? "black" : "white",
 	    result_to_string(semeai_results_first[d1][d2]),
 	    result_to_string(semeai_results_second[d1][d2]),
 	    semeai_move[d1][d2], result_certain ? "" : " (uncertain)");
@@ -183,7 +185,7 @@ semeai()
     for (d2 = 0; d2 < num_dragons; d2++) {
       if (semeai_results_first[d1][d2] == -1)
 	continue;
-      gg_assert(semeai_results_second[d1][d2] != -1);
+      gg_assert(internal_state, semeai_results_second[d1][d2] != -1);
       semeais_found++;
 
       if (best_defense < semeai_results_first[d1][d2]
@@ -192,7 +194,7 @@ semeai()
 	best_defense = semeai_results_first[d1][d2];
 	defense_move = semeai_move[d1][d2];
 	defense_certain = semeai_certain[d1][d2];
-	gg_assert(internal_state->board[dragon2[d2].origin] == OTHER_COLOR(internal_state->board[dragon2[d1].origin]));
+    gg_assert(internal_state, internal_state->board[dragon2[d2].origin] == OTHER_COLOR(internal_state->board[dragon2[d1].origin]));
 	semeai_defense_target = dragon2[d2].origin;
       }
       if (best_attack < semeai_results_second[d2][d1]
@@ -208,9 +210,9 @@ semeai()
     if (semeais_found) {
       dragon2[d1].semeais = semeais_found;
       if (best_defense != 0 && best_attack != 0)
-	update_status(DRAGON(d1).origin, CRITICAL, CRITICAL);
+    update_status(internal_state, DRAGON(d1).origin, CRITICAL, CRITICAL);
       else if (best_attack == 0 && attack_certain)
-	update_status(DRAGON(d1).origin, ALIVE, ALIVE);
+    update_status(internal_state, DRAGON(d1).origin, ALIVE, ALIVE);
       dragon2[d1].semeai_defense_code = best_defense;
       dragon2[d1].semeai_defense_point = defense_move;
       dragon2[d1].semeai_defense_certain = defense_certain;
@@ -224,7 +226,7 @@ semeai()
       dragon2[d1].semeai_attack_target = semeai_attack_target;
     }
   }
-  find_moves_to_make_seki();
+  find_moves_to_make_seki(internal_state);
 }
 
 /* Find moves turning supposed territory into seki. This is not
@@ -239,7 +241,7 @@ semeai()
  * include gunnar:42 and gifu03:2.
  */
 static void
-find_moves_to_make_seki()
+find_moves_to_make_seki(board_lib_state_struct *internal_state)
 {
   int str;
   int defend_move;
@@ -247,7 +249,7 @@ find_moves_to_make_seki()
   
   for (str = BOARDMIN; str < BOARDMAX; str++) {
     if (IS_STONE(internal_state->board[str]) && is_worm_origin(str, str)
-	&& attack_and_defend(str, NULL, NULL, NULL, &defend_move)
+	&& attack_and_defend(internal_state, str, NULL, NULL, NULL, &defend_move)
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
       int k;
@@ -272,7 +274,7 @@ find_moves_to_make_seki()
        *        dragon has more than one eye elsewhere.  However, the
        *        heuristics might still need improvement.
        */
-      compute_dragon_genus(opponent, &reduced_genus, str);
+      compute_dragon_genus(internal_state, opponent, &reduced_genus, str);
       
       if (min_eyes(&reduced_genus) > 1
 	  || DRAGON2(opponent).moyo_size > 10
@@ -281,11 +283,11 @@ find_moves_to_make_seki()
 	  || DRAGON2(str).escape_route > 0)
 	continue;
 
-      owl_analyze_semeai_after_move(defend_move, color, opponent, str,
+      owl_analyze_semeai_after_move(internal_state, defend_move, color, opponent, str,
 				    &resulta, &resultb, NULL, &certain, 0);
 
       if (resultb == WIN) {
-	owl_analyze_semeai(str, opponent, &resultb, &resulta,
+    owl_analyze_semeai(internal_state, str, opponent, &resultb, &resulta,
 			   &defend_move, &certain);
 	resulta = REVERSE_RESULT(resulta);
 	resultb = REVERSE_RESULT(resultb);
@@ -297,21 +299,21 @@ find_moves_to_make_seki()
        */
       if (resultb != WIN && certain) {
 	int d = dragon[str].id;
-	DEBUG(DEBUG_SEMEAI, "Move to make seki at %1m (%1m vs %1m)\n",
+    DEBUG(internal_state, DEBUG_SEMEAI, "Move to make seki at %1m (%1m vs %1m)\n",
 	      defend_move, str, opponent);
 	dragon2[d].semeais++;
-	update_status(str, CRITICAL, CRITICAL);
+    update_status(internal_state, str, CRITICAL, CRITICAL);
 	dragon2[d].semeai_defense_code = REVERSE_RESULT(resultb);
 	dragon2[d].semeai_defense_point = defend_move;
 	dragon2[d].semeai_defense_certain = certain;
-	gg_assert(internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
+    gg_assert(internal_state, internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
 	dragon2[d].semeai_defense_target = opponent;
 
 	/* We need to determine a proper attack move (the one that
 	 * prevents seki).  Currently we try the defense move first,
 	 * and if it doesn't work -- all liberties of the string.
 	 */
-	owl_analyze_semeai_after_move(defend_move, OTHER_COLOR(color),
+    owl_analyze_semeai_after_move(internal_state, defend_move, OTHER_COLOR(color),
 				      str, opponent, &resulta, NULL,
 				      NULL, NULL, 0);
 	if (resulta != WIN) {
@@ -324,7 +326,7 @@ find_moves_to_make_seki()
 	  int liberties = findlib(internal_state, str, MAXLIBS, libs);
 
 	  for (k = 0; k < liberties; k++) {
-	    owl_analyze_semeai_after_move(libs[k], OTHER_COLOR(color),
+        owl_analyze_semeai_after_move(internal_state, libs[k], OTHER_COLOR(color),
 					  str, opponent, &resulta, NULL,
 					  NULL, NULL, 0);
 	    if (resulta != WIN) {
@@ -335,16 +337,16 @@ find_moves_to_make_seki()
 	  }
 
 	  if (k == liberties) {
-	    DEBUG(DEBUG_SEMEAI,
+        DEBUG(internal_state, DEBUG_SEMEAI,
 		  "No move to attack in semeai (%1m vs %1m), seki assumed.\n",
 		  str, opponent);
 	    dragon2[d].semeai_attack_code = 0;
 	    dragon2[d].semeai_attack_point = NO_MOVE;
-	    update_status(str, ALIVE, ALIVE_IN_SEKI);
+        update_status(internal_state, str, ALIVE, ALIVE_IN_SEKI);
 	  }
 	}
 
-	DEBUG(DEBUG_SEMEAI, "Move to prevent seki at %1m (%1m vs %1m)\n",
+    DEBUG(internal_state, DEBUG_SEMEAI, "Move to prevent seki at %1m (%1m vs %1m)\n",
 	      dragon2[d].semeai_attack_point, opponent, str);
 
 	dragon2[d].semeai_attack_certain = certain;
@@ -362,7 +364,7 @@ find_moves_to_make_seki()
    */
   for (str = BOARDMIN; str < BOARDMAX; str++) {
     if (IS_STONE(internal_state->board[str]) && is_worm_origin(str, str)
-	&& !find_defense(str, NULL)
+	&& !find_defense(internal_state, str, NULL)
 	&& dragon[str].status == DEAD
 	&& DRAGON2(str).hostile_neighbors == 1) {
       int k;
@@ -387,11 +389,11 @@ find_moves_to_make_seki()
        *        dragon has more than one eye elsewhere.  However, the
        *        heuristics might still need improvement.
        */
-      compute_dragon_genus(opponent, &reduced_genus, str);
+      compute_dragon_genus(internal_state, opponent, &reduced_genus, str);
       if (DRAGON2(opponent).moyo_size > 10 || min_eyes(&reduced_genus) > 1)
 	continue;
 
-      owl_analyze_semeai(str, opponent, &resulta, &resultb,
+      owl_analyze_semeai(internal_state, str, opponent, &resulta, &resultb,
 			 &defend_move, &certain);
 
       /* Do not trust uncertain results. In fact it should only take a
@@ -400,21 +402,21 @@ find_moves_to_make_seki()
        */
       if (resulta != 0 && certain) {
 	int d = dragon[str].id;
-	DEBUG(DEBUG_SEMEAI, "Move to make seki at %1m (%1m vs %1m)\n",
+    DEBUG(internal_state, DEBUG_SEMEAI, "Move to make seki at %1m (%1m vs %1m)\n",
 	      defend_move, str, opponent);
 	dragon2[d].semeais++;
-	update_status(str, CRITICAL, CRITICAL);
+    update_status(internal_state, str, CRITICAL, CRITICAL);
 	dragon2[d].semeai_defense_code = resulta;
 	dragon2[d].semeai_defense_point = defend_move;
 	dragon2[d].semeai_defense_certain = certain;
-	gg_assert(internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
+    gg_assert(internal_state, internal_state->board[opponent] == OTHER_COLOR(internal_state->board[dragon2[d].origin]));
 	dragon2[d].semeai_defense_target = opponent;
 
 	/* We need to determine a proper attack move (the one that
 	 * prevents seki).  Currently we try the defense move first,
 	 * and if it doesn't work -- all liberties of the string.
 	 */
-	owl_analyze_semeai_after_move(defend_move, OTHER_COLOR(color),
+    owl_analyze_semeai_after_move(internal_state, defend_move, OTHER_COLOR(color),
 				      str, opponent, &resulta, NULL,
 				      NULL, NULL, 0);
 	if (resulta != WIN) {
@@ -427,7 +429,7 @@ find_moves_to_make_seki()
 	  int liberties = findlib(internal_state, str, MAXLIBS, libs);
 
 	  for (k = 0; k < liberties; k++) {
-	    owl_analyze_semeai_after_move(libs[k], OTHER_COLOR(color),
+        owl_analyze_semeai_after_move(internal_state, libs[k], OTHER_COLOR(color),
 					  str, opponent, &resulta, NULL,
 					  NULL, NULL, 0);
 	    if (resulta != WIN) {
@@ -438,16 +440,16 @@ find_moves_to_make_seki()
 	  }
 
 	  if (k == liberties) {
-	    DEBUG(DEBUG_SEMEAI,
+        DEBUG(internal_state, DEBUG_SEMEAI,
 		  "No move to attack in semeai (%1m vs %1m), seki assumed.\n",
 		  str, opponent);
 	    dragon2[d].semeai_attack_code = 0;
 	    dragon2[d].semeai_attack_point = NO_MOVE;
-	    update_status(str, ALIVE, ALIVE_IN_SEKI);
+        update_status(internal_state, str, ALIVE, ALIVE_IN_SEKI);
 	  }
 	}
 
-	DEBUG(DEBUG_SEMEAI, "Move to prevent seki at %1m (%1m vs %1m)\n",
+    DEBUG(internal_state, DEBUG_SEMEAI, "Move to prevent seki at %1m (%1m vs %1m)\n",
 	      dragon2[d].semeai_attack_point, opponent, str);
 
 	dragon2[d].semeai_attack_certain = certain;
@@ -458,11 +460,12 @@ find_moves_to_make_seki()
 }
 
 
-/* neighbor_of_dragon(pos, origin) returns true if the vertex at (pos) is a
+/* neighbor_of_dragon(internal_state, pos, origin) returns true if the vertex at (pos) is a
  * neighbor of the dragon with origin at (origin).
  */
 static int 
-neighbor_of_dragon(int pos, int origin)
+neighbor_of_dragon(board_lib_state_struct *internal_state,
+                   int pos, int origin)
 {
   int k;
   if (pos == NO_MOVE)
@@ -479,18 +482,19 @@ neighbor_of_dragon(int pos, int origin)
  * one common liberty.
  */
 static int
-close_enough_for_proper_semeai(int apos, int bpos)
+close_enough_for_proper_semeai(board_lib_state_struct *internal_state,
+                               int apos, int bpos)
 {
   int pos;
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (internal_state->board[pos] == EMPTY
-	&& neighbor_of_dragon(pos, apos)
-	&& neighbor_of_dragon(pos, bpos))
+    && neighbor_of_dragon(internal_state, pos, apos)
+    && neighbor_of_dragon(internal_state, pos, bpos))
       return 1;
     else if (IS_STONE(internal_state->board[pos])) {
-      if (is_same_dragon(internal_state, pos, apos) && neighbor_of_dragon(pos, bpos))
+      if (is_same_dragon(internal_state, pos, apos) && neighbor_of_dragon(internal_state, pos, bpos))
 	return 1;
-      if (is_same_dragon(internal_state, pos, bpos) && neighbor_of_dragon(pos, apos))
+      if (is_same_dragon(internal_state, pos, bpos) && neighbor_of_dragon(internal_state, pos, apos))
 	return 1;
     }
   }
@@ -505,7 +509,8 @@ close_enough_for_proper_semeai(int apos, int bpos)
  * certain result doing the same, we don't trust the semeai move.
  */
 void
-semeai_move_reasons(int color)
+semeai_move_reasons(board_lib_state_struct *internal_state,
+                    int color)
 {
   int other = OTHER_COLOR(color);
   int d;
@@ -521,12 +526,12 @@ semeai_move_reasons(int color)
 	      || dragon2[d].semeai_defense_certain >= 
 	         dragon2[d].owl_defense_certain)) {
 	/* My dragon can be defended. */
-	add_semeai_move(dragon2[d].semeai_defense_point, dragon2[d].origin);
-	DEBUG(DEBUG_SEMEAI, "Adding semeai defense move for %1m at %1m\n",
+    add_semeai_move(internal_state, dragon2[d].semeai_defense_point, dragon2[d].origin);
+    DEBUG(internal_state, DEBUG_SEMEAI, "Adding semeai defense move for %1m at %1m\n",
 	      DRAGON(d).origin, dragon2[d].semeai_defense_point);
-	if (neighbor_of_dragon(dragon2[d].semeai_defense_point,
+    if (neighbor_of_dragon(internal_state, dragon2[d].semeai_defense_point,
 			       dragon2[d].semeai_defense_target)
-	    && !neighbor_of_dragon(dragon2[d].semeai_defense_point,
+        && !neighbor_of_dragon(internal_state, dragon2[d].semeai_defense_point,
 				   dragon2[d].origin)
 	    && !is_self_atari(internal_state, dragon2[d].semeai_defense_point, color)) {
 	  
@@ -538,10 +543,10 @@ semeai_move_reasons(int color)
           liberties = findlib(internal_state, dragon2[d].semeai_defense_target, MAXLIBS, libs);
 
           for (r = 0; r < liberties; r++) {
-            if (!neighbor_of_dragon(libs[r], dragon2[d].origin)
+            if (!neighbor_of_dragon(internal_state, libs[r], dragon2[d].origin)
 		&& !is_self_atari(internal_state, libs[r], color)
 		&& libs[r] != dragon2[d].semeai_defense_point)
-	      add_potential_semeai_defense(libs[r], dragon2[d].origin,
+          add_potential_semeai_defense(internal_state, libs[r], dragon2[d].origin,
 					   dragon2[d].semeai_defense_target);
 	  }
 	}
@@ -553,22 +558,22 @@ semeai_move_reasons(int color)
 		   || dragon2[d].semeai_attack_certain >= 
 		      dragon2[d].owl_attack_certain)) {
 	/* Your dragon can be attacked. */
-	add_semeai_move(dragon2[d].semeai_attack_point, dragon2[d].origin);
-	DEBUG(DEBUG_SEMEAI, "Adding semeai attack move for %1m at %1m\n",
+    add_semeai_move(internal_state, dragon2[d].semeai_attack_point, dragon2[d].origin);
+    DEBUG(internal_state, DEBUG_SEMEAI, "Adding semeai attack move for %1m at %1m\n",
 	      DRAGON(d).origin, dragon2[d].semeai_attack_point);
-	if (neighbor_of_dragon(dragon2[d].semeai_attack_point,
+    if (neighbor_of_dragon(internal_state, dragon2[d].semeai_attack_point,
 			       dragon2[d].origin)
-	    && !neighbor_of_dragon(dragon2[d].semeai_attack_point,
+        && !neighbor_of_dragon(internal_state, dragon2[d].semeai_attack_point,
 				  dragon2[d].semeai_attack_target)
 	    && !is_self_atari(internal_state, dragon2[d].semeai_attack_point, color)) {
 
           liberties = findlib(internal_state, dragon2[d].origin, MAXLIBS, libs);
 
           for (r = 0; r < liberties; r++) {
-            if (!neighbor_of_dragon(libs[r], dragon2[d].semeai_attack_target)
+            if (!neighbor_of_dragon(internal_state, libs[r], dragon2[d].semeai_attack_target)
 		&& !is_self_atari(internal_state, libs[r], color)
 		&& libs[r] != dragon2[d].semeai_attack_point)
-	      add_potential_semeai_attack(libs[r], dragon2[d].origin,
+	      add_potential_semeai_attack(internal_state, libs[r], dragon2[d].origin,
 					  dragon2[d].semeai_attack_target);
 	  }
 	}
@@ -582,14 +587,15 @@ semeai_move_reasons(int color)
  * results found by semeai code don't get ignored.
  */
 static void
-update_status(int dr, enum dragon_status new_status,
+update_status(board_lib_state_struct *internal_state,
+              int dr, enum dragon_status new_status,
     	      enum dragon_status new_safety)
 {
   int pos;
 
   if (dragon[dr].status != new_status
       && (dragon[dr].status != CRITICAL || new_status != DEAD)) {
-    DEBUG(DEBUG_SEMEAI, "Changing status of %1m from %s to %s.\n", dr,
+    DEBUG(internal_state, DEBUG_SEMEAI, "Changing status of %1m from %s to %s.\n", dr,
 	  status_to_string(dragon[dr].status),
 	  status_to_string(new_status));
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
@@ -602,7 +608,7 @@ update_status(int dr, enum dragon_status new_status,
 
   if (DRAGON2(dr).safety != new_safety
       && (DRAGON2(dr).safety != CRITICAL || new_safety != DEAD)) {
-    DEBUG(DEBUG_SEMEAI, "Changing safety of %1m from %s to %s.\n", dr,
+    DEBUG(internal_state, DEBUG_SEMEAI, "Changing safety of %1m from %s to %s.\n", dr,
 	  status_to_string(DRAGON2(dr).safety), status_to_string(new_safety));
     DRAGON2(dr).safety = new_safety;
   }

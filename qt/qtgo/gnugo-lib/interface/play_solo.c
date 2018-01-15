@@ -60,8 +60,8 @@ play_solo(Gameinfo *gameinfo, int moves)
   komi = 5.5;
 
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, handicap);
-  sgf_write_header(sgftree.root, 1, get_random_seed(), 5.5, handicap,
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, internal_state->handicap);
+  sgf_write_header(sgftree.root, 1, get_random_seed(), 5.5, internal_state->handicap,
                    get_level(), chinese_rules);
  
   /* Generate some random moves. */
@@ -152,14 +152,14 @@ load_and_analyze_sgf_file(Gameinfo *gameinfo)
   sgftree = gameinfo->game_record;
 
   if (metamachine)
-    sgffile_begindump(&sgftree);
+    sgffile_begindump(internal_state, &sgftree);
 
   move = genmove(next, &move_value, NULL);
 
   gprintf(internal_state, "%s move %1m\n", next == WHITE ? "white (O)" : "black (X)", move);
 
   if (metamachine)
-    sgffile_enddump(outfilename);
+    sgffile_enddump(internal_state, outfilename);
   else {
     gnugo_play_move(internal_state, move, next);
     sgftreeAddPlay(&sgftree, next, I(move), J(move));
@@ -220,8 +220,8 @@ load_and_score_sgf_file(SGFTree *tree, Gameinfo *gameinfo,
      * available solution.
      */
     sgftreeCreateHeaderNode(&local_tree, internal_state->board_size,
-			    komi + black_captured - internal_state->white_captured, handicap);
-    sgffile_printboard(&local_tree);
+			    komi + internal_state->black_captured - internal_state->white_captured, internal_state->handicap);
+    sgffile_printboard(internal_state, &local_tree);
     sgfAddProperty(local_tree.lastnode, "PL",
 		   gameinfo->to_move == WHITE ? "W" : "B");
     score_tree = &local_tree;

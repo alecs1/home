@@ -44,9 +44,11 @@
 #define REVERSE_RESULT(result)		(WIN - result)
 
 
-void start_timer(int n);
-double time_report(int n, const char *occupation, int move, double mintime);
-void showstats(void);
+void start_timer(board_lib_state_struct *internal_state,
+                 int n);
+double time_report(board_lib_state_struct *internal_state,
+                   int n, const char *occupation, int move, double mintime);
+void showstats(board_lib_state_struct *internal_state);
 void clearstats(void);
 
 void transformation_init(void);
@@ -203,77 +205,100 @@ void fullboard_matchpat(board_lib_state_struct *internal_state,
 void corner_matchpat(board_lib_state_struct *internal_state,
                      corner_matchpat_callback_fn_ptr callback, int color,
                      struct corner_db *database);
-void dfa_match_init(void);
+void dfa_match_init(board_lib_state_struct *internal_state);
 
 void reading_cache_init(int bytes);
 void reading_cache_clear(void);
 float reading_cache_default_size(void);
 
 /* reading.c */
-int attack(int str, int *move);
-int find_defense(int str, int *move);
-int attack_and_defend(int str,
-		      int *attack_code, int *attack_point,
-		      int *defend_code, int *defense_point);
-int attack_either(int astr, int bstr);
-int defend_both(int astr, int bstr);
-int break_through(int apos, int bpos, int cpos);
-int attack_threats(int pos, int max_points, int moves[], int codes[]);
+int attack(board_lib_state_struct *internal_state,
+           int str, int *move);
+int find_defense(board_lib_state_struct *internal_state,
+                 int str, int *move);
+int attack_and_defend(board_lib_state_struct *internal_state,
+                      int str,
+                      int *attack_code, int *attack_point,
+                      int *defend_code, int *defense_point);
+int attack_either(board_lib_state_struct *internal_state,
+                  int astr, int bstr);
+int defend_both(board_lib_state_struct *internal_state,
+                int astr, int bstr);
+int break_through(board_lib_state_struct *internal_state,
+                  int apos, int bpos, int cpos);
+int attack_threats(board_lib_state_struct *internal_state,
+                   int pos, int max_points, int moves[], int codes[]);
 
-int restricted_defend1(int str, int *move,
+int restricted_defend1(board_lib_state_struct *internal_state,
+                       int str, int *move,
 		       int num_forbidden_moves, int *forbidden_moves);
-int restricted_attack2(int str, int *move,
-		       int num_forbidden_moves, int *forbidden_moves);
+int restricted_attack2(board_lib_state_struct *internal_state,
+                       int str, int *move,
+                       int num_forbidden_moves, int *forbidden_moves);
 
-int simple_ladder(int str, int *move);
+int simple_ladder(board_lib_state_struct *internal_state,
+                  int str, int *move);
 #define MOVE_ORDERING_PARAMETERS 67
-void tune_move_ordering(int params[MOVE_ORDERING_PARAMETERS]);
-void draw_reading_shadow(void);
+void tune_move_ordering(board_lib_state_struct *internal_state,
+                        int params[MOVE_ORDERING_PARAMETERS]);
+void draw_reading_shadow(board_lib_state_struct *internal_state);
 
 /* persistent.c */
-void persistent_cache_init(void);
-void purge_persistent_caches(void);
+void persistent_cache_init(board_lib_state_struct *internal_state);
+void purge_persistent_caches(board_lib_state_struct *internal_state);
 void clear_persistent_caches(void);
 
-int search_persistent_reading_cache(enum routine_id routine, int str,
-				    int *result, int *move);
-void store_persistent_reading_cache(enum routine_id routine, int str,
-				    int result, int move, int nodes);
-void reading_hotspots(float values[BOARDMAX]);
-int search_persistent_connection_cache(enum routine_id routine,
-				       int str1, int str2,
-				       int *result, int *move);
-void store_persistent_connection_cache(enum routine_id routine,
-				       int str1, int str2,
-				       int result, int move,
-				       int tactical_nodes,
-				       signed char connection_shadow[BOARDMAX]);
-int search_persistent_breakin_cache(enum routine_id routine,
+int search_persistent_reading_cache(board_lib_state_struct *internal_state,
+                                    enum routine_id routine, int str,
+                                    int *result, int *move);
+void store_persistent_reading_cache(board_lib_state_struct *internal_state,
+                                    enum routine_id routine, int str,
+                                    int result, int move, int nodes);
+void reading_hotspots(board_lib_state_struct *internal_state,
+                      float values[BOARDMAX]);
+int search_persistent_connection_cache(board_lib_state_struct *internal_state,
+                                       enum routine_id routine,
+                                       int str1, int str2,
+                                       int *result, int *move);
+void store_persistent_connection_cache(board_lib_state_struct *internal_state,
+                                       enum routine_id routine,
+                                       int str1, int str2,
+                                       int result, int move,
+                                       int tactical_nodes,
+                                       signed char connection_shadow[BOARDMAX]);
+int search_persistent_breakin_cache(board_lib_state_struct *internal_state,
+                                    enum routine_id routine,
 				    int str, Hash_data *goal_hash,
 				    int breakin_node_limit,
 				    int *result, int *move);
-void store_persistent_breakin_cache(enum routine_id routine,
-				    int str, Hash_data *goal_hash,
-				    int result, int move,
-				    int tactical_nodes,
-				    int breakin_node_limit,
-				    signed char breakin_shadow[BOARDMAX]);
-int search_persistent_owl_cache(enum routine_id routine,
-				int apos, int bpos, int cpos,
-				int *result, int *move, int *move2,
-				int *certain);
-void store_persistent_owl_cache(enum routine_id routine,
+void store_persistent_breakin_cache(board_lib_state_struct *internal_state,
+                                    enum routine_id routine,
+                                    int str, Hash_data *goal_hash,
+                                    int result, int move,
+                                    int tactical_nodes,
+                                    int breakin_node_limit,
+                                    signed char breakin_shadow[BOARDMAX]);
+int search_persistent_owl_cache(board_lib_state_struct *internal_state,
+                                enum routine_id routine,
+                                int apos, int bpos, int cpos,
+                                int *result, int *move, int *move2,
+                                int *certain);
+void store_persistent_owl_cache(board_lib_state_struct *internal_state,
+                                enum routine_id routine,
 				int apos, int bpos, int cpos,
 				int result, int move, int move2, int certain,
 				int tactical_nodes, signed char goal[BOARDMAX],
 				int goal_color);
-void owl_hotspots(float values[BOARDMAX]);
-int search_persistent_semeai_cache(enum routine_id routine,
-			           int apos, int bpos, int cpos, int color,
-				   Hash_data *goal_hash,
-				   int *resulta, int *resultb,
-				   int *move, int *certain);
-void store_persistent_semeai_cache(enum routine_id routine,
+void owl_hotspots(board_lib_state_struct *internal_state,
+                  float values[BOARDMAX]);
+int search_persistent_semeai_cache(board_lib_state_struct *internal_state,
+                                   enum routine_id routine,
+                                   int apos, int bpos, int cpos, int color,
+                                   Hash_data *goal_hash,
+                                   int *resulta, int *resultb,
+                                   int *move, int *certain);
+void store_persistent_semeai_cache(board_lib_state_struct *internal_state,
+                                   enum routine_id routine,
 				   int apos, int bpos, int cpos, int color,
 				   Hash_data *goal_hash,
 				   int resulta, int resultb,
@@ -283,15 +308,21 @@ void store_persistent_semeai_cache(enum routine_id routine,
 
 
 /* readconnect.c */
-int string_connect(int str1, int str2, int *move);
-int disconnect(int str1, int str2, int *move);
-int fast_disconnect(int str1, int str2, int *move);
-int non_transitivity(int str1, int str2, int str3, int *move);
+int string_connect(board_lib_state_struct *internal_state,
+                   int str1, int str2, int *move);
+int disconnect(board_lib_state_struct *internal_state,
+               int str1, int str2, int *move);
+int fast_disconnect(board_lib_state_struct *internal_state,
+                    int str1, int str2, int *move);
+int non_transitivity(board_lib_state_struct *internal_state,
+                     int str1, int str2, int str3, int *move);
 
-int break_in(int str, const signed char goal[BOARDMAX], int *move);
-int block_off(int str1, const signed char goal[BOARDMAX], int *move);
+int break_in(board_lib_state_struct *internal_state,
+             int str, const signed char goal[BOARDMAX], int *move);
+int block_off(board_lib_state_struct *internal_state,
+              int str1, const signed char goal[BOARDMAX], int *move);
 
-int obvious_false_eye(struct board_lib_state_struct *internal_state,
+int obvious_false_eye(board_lib_state_struct *internal_state,
                       int pos, int color);
 void estimate_lunch_eye_value(board_lib_state_struct *internal_state,
                               int lunch, int *min, int *probable, int *max,
@@ -299,23 +330,28 @@ void estimate_lunch_eye_value(board_lib_state_struct *internal_state,
 int owl_topological_eye(int pos, int color);
 int vital_chain(board_lib_state_struct *internal_state,
                 int pos);
-int confirm_safety(int move, int color, int *defense_point,
-		   signed char safe_stones[BOARDMAX]);
+int confirm_safety(board_lib_state_struct *internal_state,
+                   int move, int color, int *defense_point,
+                   signed char safe_stones[BOARDMAX]);
 int dragon_weak(struct board_lib_state_struct *internal_state,
                 int pos);
 float dragon_weakness(int pos, int ignore_dead_dragons);
 int size_of_biggest_critical_dragon(struct board_lib_state_struct *internal_state);
-void change_dragon_status(int dr, enum dragon_status status);
-float blunder_size(int move, int color, int *defense_point,
-		   signed char safe_stones[BOARDMAX]);
+void change_dragon_status(board_lib_state_struct *internal_state,
+                          int dr, enum dragon_status status);
+float blunder_size(board_lib_state_struct *internal_state,
+                   int move, int color, int *defense_point,
+                   signed char safe_stones[BOARDMAX]);
 void set_depth_values(int level, int report_levels);
 void modify_depth_values(int n);
 void increase_depth_values(void);
 void decrease_depth_values(void);
 int get_depth_modification(void);
 
-int safe_move(int move, int color);
-int does_secure(int color, int move, int pos);
+int safe_move(board_lib_state_struct *internal_state,
+              int move, int color);
+int does_secure(board_lib_state_struct *internal_state,
+                int color, int move, int pos);
 
 void compute_new_dragons(struct board_lib_state_struct *internal_state,
                          int dragon_origins[BOARDMAX]);
@@ -369,15 +405,17 @@ void movelist_change_point(int move, int code, int max_points,
 			   int points[], int codes[]);
 
 /* surround.c */
-int compute_surroundings(int pos, int apos, int showboard,
-			 int *surround_size);
+int compute_surroundings(board_lib_state_struct *internal_state,
+                         int pos, int apos, int showboard,
+                         int *surround_size);
 int is_surrounded(int pos);
-int does_surround(int move, int dragon);
+int does_surround(board_lib_state_struct *internal_state,
+                  int move, int dragon);
 void reset_surround_data(void);
 int surround_map(int dr, int pos);
 
 /* functions to add (or remove) move reasons */
-void collect_move_reasons(struct board_lib_state_struct *internal_state,
+void collect_move_reasons(board_lib_state_struct *internal_state,
                           int color);
 
 void clear_move_reasons(board_lib_state_struct *internal_state);
@@ -524,27 +562,36 @@ int owl_strong_dragon(board_lib_state_struct *internal_state,
 void owl_reasons(board_lib_state_struct *internal_state,
                  int color);
 
-void unconditional_life(int unconditional_territory[BOARDMAX], int color);
-void clear_unconditionally_meaningless_moves(void);
-void find_unconditionally_meaningless_moves(int unconditional_territory[BOARDMAX],
-					    int color);
+void unconditional_life(board_lib_state_struct *internal_state,
+                        int unconditional_territory[BOARDMAX], int color);
+void clear_unconditionally_meaningless_moves(board_lib_state_struct *internal_state);
+void find_unconditionally_meaningless_moves(board_lib_state_struct *internal_state,
+                                            int unconditional_territory[BOARDMAX],
+                                            int color);
 int unconditionally_meaningless_move(int pos, int color,
 				     int *replacement_move);
-void unconditional_move_reasons(int color);
+void unconditional_move_reasons(board_lib_state_struct *internal_state,
+                                int color);
 
-void find_superstring(int str, int *num_stones, int *stones);
-void find_superstring_conservative(int str, int *num_stones, int *stones);
-void find_superstring_liberties(int str, int *liberties, int *libs,
+void find_superstring(board_lib_state_struct *internal_state,
+                      int str, int *num_stones, int *stones);
+void find_superstring_conservative(board_lib_state_struct *internal_state,
+                                   int str, int *num_stones, int *stones);
+void find_superstring_liberties(board_lib_state_struct *internal_state,
+                                int str, int *liberties, int *libs,
                                 int liberty_cap);
-void find_proper_superstring_liberties(int str, int *liberties, int *libs, 
+void find_proper_superstring_liberties(board_lib_state_struct *internal_state,
+                                       int str, int *liberties, int *libs,
                                        int liberty_cap);
-void find_superstring_stones_and_liberties(int str, int *num_stones,
+void find_superstring_stones_and_liberties(board_lib_state_struct *internal_state,
+                                           int str, int *num_stones,
 					   int *stones, int *liberties,
 					   int *libs, int liberty_cap);
 void superstring_chainlinks(struct board_lib_state_struct *internal_state,
                             int str, int *num_adj, int adj[MAXCHAIN],
                             int liberty_cap);
-void proper_superstring_chainlinks(int str, int *num_adj, 
+void proper_superstring_chainlinks(board_lib_state_struct *internal_state,
+                                   int str, int *num_adj,
                                    int adj[MAXCHAIN], int liberty_cap);
 
 int place_fixed_handicap(struct board_lib_state_struct *internal_state,
@@ -558,15 +605,19 @@ int free_handicap_total_stones(struct board_lib_state_struct *internal_state);
 /* Various different strategies for finding a move */
 void fuseki(struct board_lib_state_struct *internal_state,
             int color);
-void semeai(void);
-void semeai_move_reasons(int color);
-void shapes(int color);
-void endgame(struct board_lib_state_struct *internal_state,
+void semeai(board_lib_state_struct *internal_state);
+void semeai_move_reasons(board_lib_state_struct *internal_state,
+                         int color);
+void shapes(board_lib_state_struct *internal_state,
+            int color);
+void endgame(board_lib_state_struct *internal_state,
              int color);
-void endgame_shapes(int color);
+void endgame_shapes(board_lib_state_struct *internal_state,
+                    int color);
 
-void combinations(struct board_lib_state_struct *internal_state, int color);
-int atari_atari(struct board_lib_state_struct *internal_state,
+void combinations(board_lib_state_struct *internal_state,
+                  int color);
+int atari_atari(board_lib_state_struct *internal_state,
                 int color, int *attack_move,
                 signed char defense_moves[BOARDMAX],
                 int save_verbose);
@@ -575,7 +626,7 @@ int atari_atari_confirm_safety(board_lib_state_struct *internal_state,
                                const signed char saved_dragons[BOARDMAX],
                                const signed char saved_worms[BOARDMAX]);
 
-int atari_atari_blunder_size(struct board_lib_state_struct *internal_state,
+int atari_atari_blunder_size(board_lib_state_struct *internal_state,
                              int color, int tpos,
                              signed char defense_moves[BOARDMAX],
                              const signed char safe_stones[BOARDMAX]);
@@ -585,7 +636,7 @@ int review_move_reasons(int *move, float *value, int color,
 			int allowed_moves[BOARDMAX],
 			int use_thrashing_dragon_heuristics);
 void prepare_move_influence_debugging(int pos, int color);
-int fill_liberty(struct board_lib_state_struct *internal_state,
+int fill_liberty(board_lib_state_struct *internal_state,
                  int *move, int color);
 int aftermath_genmove(board_lib_state_struct *internal_state,
                       int color, int do_capture_dead_stones,
@@ -598,7 +649,8 @@ int mc_load_patterns_from_db(board_lib_state_struct *internal_state,
                              const char *filename, unsigned int *values);
 void mc_init_patterns(board_lib_state_struct *internal_state,
                       const unsigned int *values);
-int choose_mc_patterns(char *name);
+int choose_mc_patterns(board_lib_state_struct *internal_state,
+                       char *name);
 void list_mc_patterns(void);
 
 void uct_genmove(board_lib_state_struct *internal_state,
@@ -664,21 +716,34 @@ void worm_reasons(int color);
 int semeai_move_reason_known(board_lib_state_struct *internal_state,
                              int move, int dr);
 
-int does_attack(int move, int str);
-int does_defend(int move, int str);
-int double_atari(int move, int color, float *value,
+int does_attack(board_lib_state_struct *internal_state,
+                int move, int str);
+int does_defend(board_lib_state_struct *internal_state,
+                int move, int str);
+int double_atari(board_lib_state_struct *internal_state,
+                 int move, int color, float *value,
 		 signed char safe_stones[BOARDMAX]);
-int playing_into_snapback(int move, int color);
-int play_attack_defend_n(int color, int do_attack, int num_moves, ...);
-int play_attack_defend2_n(int color, int do_attack, int num_moves, ...);
-int play_break_through_n(int color, int num_moves, ...);
-int play_connect_n(int color, int do_connect, int num_moves, ...);
-int play_lib_n(int color, int num_moves, ...);
+int playing_into_snapback(board_lib_state_struct *internal_state,
+                          int move, int color);
+int play_attack_defend_n(board_lib_state_struct *internal_state,
+                         int color, int do_attack, int num_moves, ...);
+int play_attack_defend2_n(board_lib_state_struct *internal_state,
+                          int color, int do_attack, int num_moves, ...);
+int play_break_through_n(board_lib_state_struct *internal_state,
+                         int color, int num_moves, ...);
+int play_connect_n(board_lib_state_struct *internal_state,
+                   int color, int do_connect, int num_moves, ...);
+int play_lib_n(board_lib_state_struct *internal_state,
+               int color, int num_moves, ...);
 int cut_possible(int pos, int color);
-int defend_against(int move, int color, int apos);
-int somewhere(int color, int check_alive, int num_moves, ...);
-int visible_along_edge(int color, int apos, int bpos);
-int test_symmetry_after_move(int move, int color, int strict);
+int defend_against(board_lib_state_struct *internal_state,
+                   int move, int color, int apos);
+int somewhere(board_lib_state_struct *internal_state,
+              int color, int check_alive, int num_moves, ...);
+int visible_along_edge(board_lib_state_struct *internal_state,
+                       int color, int apos, int bpos);
+int test_symmetry_after_move(board_lib_state_struct *internal_state,
+                             int move, int color, int strict);
 
 /* Printmoyo values, specified by -m flag. */
 #define PRINTMOYO_TERRITORY         0x01
@@ -794,7 +859,8 @@ float influence_score(struct board_lib_state_struct *internal_state,
                       const struct influence_data *q, int chinese_rules);
 float game_status(struct board_lib_state_struct *internal_state,
                   int color);
-void influence_mark_non_territory(int pos, int color);
+void influence_mark_non_territory(board_lib_state_struct *internal_state,
+                                  int pos, int color);
 int influence_considered_lively(struct board_lib_state_struct *internal_state,
                                 const struct influence_data *q, int pos);
 void influence_erase_territory(struct board_lib_state_struct *internal_state,

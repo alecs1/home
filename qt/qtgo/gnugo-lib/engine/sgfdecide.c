@@ -41,7 +41,8 @@
  */
 
 void
-decide_string(int pos)
+decide_string(board_lib_state_struct *internal_state,
+              int pos)
 {
   int aa, dd;
   int acode, dcode;
@@ -53,13 +54,13 @@ decide_string(int pos)
   }
 
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
   /* Prepare pattern matcher and reading code. */
   reset_engine(internal_state);
 
-  count_variations = 1;
-  acode = attack(pos, &aa);
+  internal_state->count_variations = 1;
+  acode = attack(internal_state, pos, &aa);
   if (acode) {
     if (acode == WIN)
       gprintf(internal_state, "%1m can be attacked at %1m (%d variations)\n", 
@@ -73,11 +74,11 @@ decide_string(int pos)
 
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
-      draw_reading_shadow();
+      draw_reading_shadow(internal_state);
     }
 
-    count_variations = 1;
-    dcode = find_defense(pos, &dd);
+    internal_state->count_variations = 1;
+    dcode = find_defense(internal_state, pos, &dd);
     if (dcode) {
       if (dcode == WIN)
 	gprintf(internal_state, "%1m can be defended at %1m (%d variations)\n", 
@@ -94,7 +95,7 @@ decide_string(int pos)
 	      pos, internal_state->count_variations);
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
-      draw_reading_shadow();
+      draw_reading_shadow(internal_state);
     }
 
   }
@@ -103,12 +104,12 @@ decide_string(int pos)
 	    pos, internal_state->count_variations);
     if (debug & DEBUG_READING_PERFORMANCE) {
       gprintf(internal_state, "Reading shadow: \n");
-      draw_reading_shadow();
+      draw_reading_shadow(internal_state);
     }
   }
 
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -119,14 +120,15 @@ decide_string(int pos)
  */
 
 void
-decide_connection(int apos, int bpos)
+decide_connection(board_lib_state_struct *internal_state,
+                  int apos, int bpos)
 {
   int move;
   int result;
   SGFTree tree;
 
   ASSERT_ON_BOARD1(internal_state, apos);
-  ASSERT_ON_BOARD1(bpos);
+  ASSERT_ON_BOARD1(internal_state, bpos);
   
   if (internal_state->board[apos] == EMPTY || internal_state->board[bpos] == EMPTY) {
     fprintf(stderr, "gnugo: --decide-connection called on an empty vertex\n");
@@ -139,13 +141,13 @@ decide_connection(int apos, int bpos)
   }
 
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
   /* Prepare pattern matcher and reading code. */
   reset_engine(internal_state);
 
-  count_variations = 1;
-  result = string_connect(apos, bpos, &move);
+  internal_state->count_variations = 1;
+  result = string_connect(internal_state, apos, bpos, &move);
   if (result == WIN) {
     if (move == NO_MOVE)
       gprintf(internal_state, "%1m and %1m are connected as it stands (%d variations)\n", 
@@ -164,8 +166,8 @@ decide_connection(int apos, int bpos)
     gprintf(internal_state, "%1m and %1m cannot be connected (%d variations)\n", 
 	    apos, bpos, internal_state->count_variations);
   
-  count_variations = 1;
-  result = disconnect(apos, bpos, &move);
+  internal_state->count_variations = 1;
+  result = disconnect(internal_state, apos, bpos, &move);
   if (result == WIN) {
     if (move == NO_MOVE)
       gprintf(internal_state, "%1m and %1m are disconnected as it stands (%d variations)\n", 
@@ -184,8 +186,8 @@ decide_connection(int apos, int bpos)
     gprintf(internal_state, "%1m and %1m cannot be disconnected (%d variations)\n", 
 	    apos, bpos, internal_state->count_variations);
   
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -196,7 +198,8 @@ decide_connection(int apos, int bpos)
  */
 
 void
-decide_owl(int pos)
+decide_owl(board_lib_state_struct *internal_state,
+           int pos)
 {
   int move = NO_MOVE;
   int acode, dcode;
@@ -216,10 +219,10 @@ decide_owl(int pos)
   gprintf(internal_state, "finished examine_position\n");
 
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
-  count_variations = 1;
-  acode = owl_attack(pos, &move, &result_certain, &kworm);
+  internal_state->count_variations = 1;
+  acode = owl_attack(internal_state, pos, &move, &result_certain, &kworm);
   if (acode) {
     if (acode == WIN) {
       if (move == NO_MOVE)
@@ -246,8 +249,8 @@ decide_owl(int pos)
   else
     gprintf(internal_state, " result uncertain\n");
 
-  count_variations = 1;
-  dcode = owl_defend(pos, &move, &result_certain, &kworm);
+  internal_state->count_variations = 1;
+  dcode = owl_defend(internal_state, pos, &move, &result_certain, &kworm);
 
   if (dcode) {
     if (dcode == WIN) {
@@ -276,8 +279,8 @@ decide_owl(int pos)
   else
     gprintf(internal_state, " result uncertain\n");
   
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -286,14 +289,15 @@ decide_owl(int pos)
  */
 
 void
-decide_dragon_data(int pos)
+decide_dragon_data(board_lib_state_struct *internal_state,
+                   int pos)
 {
   if (internal_state->board[pos] == EMPTY) {
     fprintf(stderr, "gnugo: --decide-dragon-data called on an empty vertex\n");
     return;
   }
   reset_engine(internal_state);
-  silent_examine_position(FULL_EXAMINE_DRAGONS);
+  silent_examine_position(internal_state, FULL_EXAMINE_DRAGONS);
 
   gprintf(internal_state, "Dragon at %1m:\n", pos);
   report_dragon(internal_state, stderr, pos);
@@ -305,7 +309,8 @@ decide_dragon_data(int pos)
  */
 
 void
-decide_semeai(int apos, int bpos)
+decide_semeai(board_lib_state_struct *internal_state,
+              int apos, int bpos)
 {
   SGFTree tree;
   int resulta, resultb, move, result_certain;
@@ -321,14 +326,14 @@ decide_semeai(int apos, int bpos)
 
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
   gprintf(internal_state, "finished examine_position\n");
-  count_variations = 1;
+  internal_state->count_variations = 1;
 
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
   gprintf(internal_state, "Analyzing semeai between %1m and %1m, %C moves first\n",
-	  apos, bpos, board[apos]);
-  owl_analyze_semeai(apos, bpos, &resulta, &resultb, &move, &result_certain);
+	  apos, bpos, internal_state->board[apos]);
+  owl_analyze_semeai(internal_state, apos, bpos, &resulta, &resultb, &move, &result_certain);
   gprintf(internal_state, "Semeai defense of %1m: result %s %1m\n",
 	  apos, result_to_string(resulta), move);
   gprintf(internal_state, "Semeai attack of %1m: result %s %1m\n",
@@ -337,8 +342,8 @@ decide_semeai(int apos, int bpos)
 	  result_certain ? "" : ", uncertain result");
   
   gprintf(internal_state, "Analyzing semeai between %1m and %1m, %C moves first\n",
-	  bpos, apos, board[bpos]);
-  owl_analyze_semeai(bpos, apos, &resultb, &resulta, &move, &result_certain);
+	  bpos, apos, internal_state->board[bpos]);
+  owl_analyze_semeai(internal_state, bpos, apos, &resultb, &resulta, &move, &result_certain);
   gprintf(internal_state, "Semeai defense of %1m: result %s %1m\n",
 	  bpos, result_to_string(resultb), move);
   gprintf(internal_state, "Semeai attack of %1m: result %s %1m\n",
@@ -346,8 +351,8 @@ decide_semeai(int apos, int bpos)
   gprintf(internal_state, "%d nodes%s\n", internal_state->count_variations,
 	  result_certain ? "" : ", uncertain result");
 
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -357,7 +362,7 @@ decide_semeai(int apos, int bpos)
  */
 
 void
-decide_position()
+decide_position(board_lib_state_struct *internal_state)
 {
   int pos;
   int move = NO_MOVE;
@@ -372,9 +377,9 @@ decide_position()
   silent_examine_position(internal_state, EXAMINE_DRAGONS_WITHOUT_OWL);
 
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
-  count_variations = 1;
+  internal_state->count_variations = 1;
 
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!ON_BOARD(internal_state, pos)
@@ -386,7 +391,7 @@ decide_position()
     gprintf(internal_state, "\nanalyzing %1m\n", pos);
     gprintf(internal_state, "status=%s, escape=%d\n", 
 	    snames[dragon[pos].crude_status], DRAGON2(pos).escape_route);
-    acode = owl_attack(pos, &move, NULL, &kworm);
+    acode = owl_attack(internal_state, pos, &move, NULL, &kworm);
     if (acode) {
       if (acode == WIN) {
 	if (move == NO_MOVE)
@@ -405,8 +410,8 @@ decide_position()
 	gprintf(internal_state, "%1m can be attacked with gain (captures %1m) at %1m (%d variations)", 
 		pos, kworm, move, internal_state->count_variations);
       
-      count_variations = 1;
-      dcode = owl_defend(pos, &move, NULL, &kworm);
+      internal_state->count_variations = 1;
+      dcode = owl_defend(internal_state, pos, &move, NULL, &kworm);
       if (dcode) {
 	if (dcode == WIN) {
 	  if (move == NO_MOVE)
@@ -443,8 +448,8 @@ decide_position()
       gprintf(internal_state, "status of %1m revised to ALIVE\n", pos);
   }
   
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -454,7 +459,8 @@ decide_position()
  */
 
 void
-decide_eye(int pos)
+decide_eye(board_lib_state_struct *internal_state,
+           int pos)
 {
   int color;
   struct eyevalue value;
@@ -473,16 +479,16 @@ decide_eye(int pos)
   }
 
   if (printboard)
-    showboard(0);
+    showboard(internal_state, 0);
 
   /* Enable sgf output. */
   if (*outfilename)
-    sgffile_begindump(&tree);
-  count_variations = 1;
+    sgffile_begindump(internal_state, &tree);
+  internal_state->count_variations = 1;
   
   if (black_eye[pos].color == BLACK) {
     eyepos = black_eye[pos].origin;
-    compute_eyes(eyepos, &value, &attack_point, &defense_point,
+    compute_eyes(internal_state, eyepos, &value, &attack_point, &defense_point,
 		 black_eye, half_eye, 0);
     gprintf(internal_state, "Black eyespace at %1m: %s\n", eyepos, eyevalue_to_string(&value));
     if (eye_move_urgency(&value) > 0) {
@@ -493,7 +499,7 @@ decide_eye(int pos)
   
   if (white_eye[pos].color == WHITE) {
     eyepos = white_eye[pos].origin;
-    compute_eyes(eyepos, &value, &attack_point, &defense_point,
+    compute_eyes(internal_state, eyepos, &value, &attack_point, &defense_point,
 		 white_eye, half_eye, 0);
     gprintf(internal_state, "White eyespace at %1m: %s\n", eyepos, eyevalue_to_string(&value));
     if (eye_move_urgency(&value) > 0) {
@@ -503,8 +509,8 @@ decide_eye(int pos)
   }
   
   /* Finish sgf output. */
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
@@ -514,7 +520,8 @@ decide_eye(int pos)
  */
 
 void
-decide_combination(int color)
+decide_combination(board_lib_state_struct *internal_state,
+                   int color)
 {
   int attack_move;
   signed char defense_moves[BOARDMAX];
@@ -528,8 +535,8 @@ decide_combination(int color)
   silent_examine_position(internal_state, EXAMINE_ALL);
 
   if (*outfilename)
-    sgffile_begindump(&tree);
-  count_variations = 1;
+    sgffile_begindump(internal_state, &tree);
+  internal_state->count_variations = 1;
 
   if (atari_atari(internal_state, color, &attack_move, defense_moves, verbose)) {
     gprintf(internal_state, "Combination attack for %C at %1m, defense at ", color,
@@ -548,13 +555,14 @@ decide_combination(int color)
   else
     gprintf(internal_state, "No Combination attack for %C\n", color);
   
-  sgffile_enddump(outfilename);
-  count_variations = 0;
+  sgffile_enddump(internal_state, outfilename);
+  internal_state->count_variations = 0;
 }
 
 
 void
-decide_surrounded(int pos)
+decide_surrounded(board_lib_state_struct *internal_state,
+                  int pos)
 {
   int surround_status;
 
@@ -567,7 +575,7 @@ decide_surrounded(int pos)
   reset_engine(internal_state);
 
   silent_examine_position(internal_state, EXAMINE_ALL);
-  surround_status = compute_surroundings(pos, NO_MOVE, 1, NULL);
+  surround_status = compute_surroundings(internal_state, pos, NO_MOVE, 1, NULL);
   if (surround_status == 1)
     gprintf(internal_state, "the dragon at %1m is SURROUNDED!\n", pos);
   else if (surround_status == 2)
@@ -586,15 +594,15 @@ decide_oracle(Gameinfo *gameinfo, char *infilename, char *untilstring)
 
   reset_engine(internal_state);
   if (*outfilename)
-    sgffile_begindump(&tree);
+    sgffile_begindump(internal_state, &tree);
 
-  count_variations = 1;
+  internal_state->count_variations = 1;
   summon_oracle();
   oracle_loadsgf(infilename, untilstring);
   consult_oracle(gameinfo->to_move);
-  sgffile_enddump(outfilename);
+  sgffile_enddump(internal_state, outfilename);
   dismiss_oracle();
-  count_variations = 0;
+  internal_state->count_variations = 0;
 }
 
 #endif

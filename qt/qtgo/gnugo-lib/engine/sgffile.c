@@ -47,7 +47,8 @@
  */
 
 void
-sgffile_add_debuginfo(SGFNode *node, float value)
+sgffile_add_debuginfo(board_lib_state_struct *internal_state,
+                      SGFNode *node, float value)
 {
   int pos;
   char comment[24];
@@ -110,19 +111,20 @@ sgffile_output(SGFTree *tree)
  */
 
 void
-sgffile_begindump(SGFTree *tree)
+sgffile_begindump(board_lib_state_struct *internal_state,
+                  SGFTree *tree)
 {
   static SGFTree local_tree;
-  gg_assert(internal_state->sgf_dumptree == NULL);
+  gg_assert(internal_state, internal_state->sgf_dumptree == NULL);
 
   if (tree == NULL)
-    sgf_dumptree = &local_tree;
+    internal_state->sgf_dumptree = &local_tree;
   else 
-    sgf_dumptree = tree;
+    internal_state->sgf_dumptree = tree;
   
   sgftree_clear(internal_state->sgf_dumptree);
-  sgftreeCreateHeaderNode(internal_state->sgf_dumptree, internal_state->board_size, komi, handicap);
-  sgffile_printboard(internal_state->sgf_dumptree);
+  sgftreeCreateHeaderNode(internal_state->sgf_dumptree, internal_state->board_size, internal_state->komi, internal_state->handicap);
+  sgffile_printboard(internal_state, internal_state->sgf_dumptree);
 }
 
 
@@ -131,16 +133,17 @@ sgffile_begindump(SGFTree *tree)
  */
 
 void 
-sgffile_enddump(const char *filename)
+sgffile_enddump(board_lib_state_struct *internal_state,
+                const char *filename)
 {
   /* Check if we have a valid filename and a tree. */
-  if (filename && *filename && sgf_dumptree) {
+  if (filename && *filename && internal_state->sgf_dumptree) {
     if (writesgf(internal_state->sgf_dumptree->root, filename)) {
       /* Only delete the tree if writesgf() succeeds. If it doesn't, one
        * will most likely wish to save into another (writable) file.
        */
       sgfFreeNode(internal_state->sgf_dumptree->root);
-      sgf_dumptree = NULL;
+      internal_state->sgf_dumptree = NULL;
     }
   }
 }
@@ -153,7 +156,8 @@ sgffile_enddump(const char *filename)
  */
 
 void
-sgffile_printsgf(int color_to_play, const char *filename)
+sgffile_printsgf(board_lib_state_struct *internal_state,
+                 int color_to_play, const char *filename)
 {
   SGFTree sgftree;
   int m, n;
@@ -161,16 +165,16 @@ sgffile_printsgf(int color_to_play, const char *filename)
   char str[128];
   float relative_komi;
 
-  relative_komi = komi + black_captured - internal_state->white_captured;
+  relative_komi = internal_state->komi + internal_state->black_captured - internal_state->white_captured;
   
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, relative_komi, handicap);
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, relative_komi, internal_state->handicap);
   sgf_write_header(sgftree.root, 1, get_random_seed(), relative_komi,
-		   handicap, get_level(), chinese_rules);
+           internal_state->handicap, get_level(), chinese_rules);
   gg_snprintf(str, 128, "GNU Go %s load and print", gg_version());
   sgfOverwriteProperty(sgftree.root, "GN", str);
   
-  sgffile_printboard(&sgftree);
+  sgffile_printboard(internal_state, &sgftree);
   
   if (color_to_play != EMPTY) {
     sgfAddProperty(sgftree.lastnode, "PL",
@@ -178,7 +182,7 @@ sgffile_printsgf(int color_to_play, const char *filename)
 
     for (m = 0; m < internal_state->board_size; ++m)
       for (n = 0; n < internal_state->board_size; ++n)
-        if (BOARD(m, n) == EMPTY && !is_legal(POS(m, n), color_to_play)) {
+        if (BOARD(m, n) == EMPTY && !is_legal(internal_state, POS(m, n), color_to_play)) {
 	  gg_snprintf(pos, 3, "%c%c", 'a' + n, 'a' + m);
 	  sgfAddProperty(sgftree.lastnode, "IL", pos);
 	}
@@ -193,7 +197,8 @@ sgffile_printsgf(int color_to_play, const char *filename)
  */
 
 void
-sgffile_printboard(SGFTree *tree)
+sgffile_printboard(board_lib_state_struct *internal_state,
+                   SGFTree *tree)
 {
   int i, j;
   SGFNode *node;
@@ -222,7 +227,8 @@ sgffile_printboard(SGFTree *tree)
 
 
 void
-sgffile_recordboard(SGFNode *node)
+sgffile_recordboard(board_lib_state_struct *internal_state,
+                    SGFNode *node)
 {
   int i, j;
 
@@ -235,7 +241,8 @@ sgffile_recordboard(SGFNode *node)
 
 
 int
-get_sgfmove(SGFProperty *property)
+get_sgfmove(board_lib_state_struct *internal_state,
+            SGFProperty *property)
 {
   return POS(get_moveX(property, internal_state->board_size), get_moveY(property, internal_state->board_size));
 }

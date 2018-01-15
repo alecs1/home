@@ -390,14 +390,14 @@ add_move_reason(board_lib_state_struct *internal_state,
    * Otherwise drop it.
    */
   if (k >= MAX_REASONS) {
-    DEBUG(DEBUG_MOVE_REASONS,
+    DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	  "Move reason at %1m (type=%d, what=%d) dropped because list full.\n",
 	  pos, type, what);
     return;
   }
 
   if (next_reason >= MAX_MOVE_REASONS) {
-    DEBUG(DEBUG_MOVE_REASONS,
+    DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	  "Move reason at %1m (type=%d, what=%d) dropped because global list full.\n",
 	  pos, type, what);
     return;
@@ -916,7 +916,7 @@ add_potential_semeai_move(board_lib_state_struct *internal_state,
   ASSERT1(internal_state, ON_BOARD(internal_state, dr1), pos);
   ASSERT1(internal_state, ON_BOARD(internal_state, dr2), pos);
   if (next_semeai >= MAX_POTENTIAL_SEMEAI)
-    DEBUG(DEBUG_MOVE_REASONS,
+    DEBUG(internal_state, DEBUG_MOVE_REASONS,
 	  "Potential semeai move at %1m dropped as list was full\n", pos);
   else {
     semeai_target1[next_semeai] = dr1;
@@ -1608,7 +1608,7 @@ mark_changed_dragon(board_lib_state_struct *internal_state,
         || defense_move_reason_known(internal_state, pos, ii))
 	  worm_is_safe = 1;
 	else if (trymove(internal_state, pos, color, "mark-changed-dragon", ii)) {
-	    if (REVERSE_RESULT(attack(ii, NULL)) >= result_to_beat)
+        if (REVERSE_RESULT(attack(internal_state, ii, NULL)) >= result_to_beat)
 	      worm_is_safe = 1;
 	    popgo(internal_state);
 	}
@@ -1723,7 +1723,7 @@ mark_safe_stones(board_lib_state_struct *internal_state,
       safe_stones[pos] = 0;
   }
   safe_stones[move_pos]
-    = move[move_pos].move_safety && safe_move(move_pos, color) == WIN;
+    = move[move_pos].move_safety && safe_move(internal_state, move_pos, color) == WIN;
 }
 
 
@@ -2019,7 +2019,7 @@ discard_redundant_move_reasons(board_lib_state_struct *internal_state,
           break;
         if ((move_reasons[r].type == discard_rules[k1].reason_type[k2])
             && (discard_rules[k1].condition(internal_state, pos, move_reasons[r].what))) {
-          DEBUG(DEBUG_MOVE_REASONS, discard_rules[k1].trace_message,
+          DEBUG(internal_state, DEBUG_MOVE_REASONS, discard_rules[k1].trace_message,
                 pos, get_pos(internal_state, move_reasons[r].type, move_reasons[r].what));
           move_reasons[r].status |= discard_rules[k1].flags;
         }
