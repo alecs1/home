@@ -57,7 +57,7 @@ jump_out_helper(ARGS)
 
   own_eyespace = (white_eye[move].color == color);
   
-  if (whose_area(OPPOSITE_INFLUENCE(color), move) != color && !own_eyespace)
+  if (whose_area(internal_state, OPPOSITE_INFLUENCE(color), move) != color && !own_eyespace)
     return 1;
   else
     return 0;
@@ -72,7 +72,7 @@ jump_out_helper(ARGS)
 int 
 jump_out_far_helper(ARGS)
 {
-  if (whose_area(OPPOSITE_INFLUENCE(color), move) != OTHER_COLOR(color))
+  if (whose_area(internal_state, OPPOSITE_INFLUENCE(color), move) != OTHER_COLOR(color))
     return jump_out_helper(pattern, trans, move, color);
   else
     return 0;
@@ -671,7 +671,7 @@ test_attack_either_move(int move, int color, int worma, int wormb)
   if (trymove(internal_state, move, color, "test_attack_either_move", worma)) {
     if (internal_state->board[worma] == OTHER_COLOR(color)
 	&& internal_state->board[wormb] == OTHER_COLOR(color)) {
-      if (!find_defense(worma, NULL) || !find_defense(wormb, NULL)) {
+      if (!find_defense(internal_state, worma, NULL) || !find_defense(internal_state, wormb, NULL)) {
 	if (0)
 	  gprintf(internal_state, "%1m: Rej. attack_either_move for %1m & %1m (regular attack)\n",
 		  move, worma, wormb);

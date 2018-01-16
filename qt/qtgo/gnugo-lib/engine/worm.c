@@ -313,7 +313,7 @@ make_worms(void)
 	       */
 	      if (attack(internal_state, str, NULL) >= worm[str].attack_codes[0]) {
 		if (worm[str].defense_codes[0] != 0
-		    && trymove(worm[str].defense_points[0],
+		    && trymove(internal_state, worm[str].defense_points[0],
 			       OTHER_COLOR(color), "make_worms", 0)) {
 		  int this_dcode = REVERSE_RESULT(attack(internal_state, str, NULL));
 		  if (this_dcode > dcode) {
@@ -352,7 +352,7 @@ make_worms(void)
 	       * Try if the old attack move still works.
 	       */
 	      if (worm[str].attack_codes[0] != 0
-		  && trymove(worm[str].attack_points[0],
+		  && trymove(internal_state, worm[str].attack_points[0],
 			     OTHER_COLOR(color), "make_worms", 0)) {
 		int this_acode;
 		if (internal_state->board[str] == EMPTY)
@@ -837,7 +837,7 @@ find_worm_attacks_and_defenses()
 	/* Try to attack on the liberty. Don't consider
 	 * send-two-return-one moves.
 	 */
-	if (!send_two_return_one(pos, other)
+	if (!send_two_return_one(internal_state, pos, other)
 	    && trymove(internal_state, pos, other, "make_worms", str)) {
 	  if (internal_state->board[str] == EMPTY || attack(internal_state, str, NULL)) {
 	    if (internal_state->board[str] == EMPTY)

@@ -614,7 +614,7 @@ move_is_marked_unsafe(board_lib_state_struct *internal_state,
   UNUSED(what);
   UNUSED(internal_state);
   return (!move[pos].move_safety
-	  && !adjacent_to_nondead_stone(pos, current_color));
+      && !adjacent_to_nondead_stone(internal_state, pos, current_color));
 }
 
 /* Check whether a dragon is non-critical. */

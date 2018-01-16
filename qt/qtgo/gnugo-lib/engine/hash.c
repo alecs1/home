@@ -223,7 +223,7 @@ hashdata_calc_orientation_invariant(struct board_lib_state_struct *internal_stat
 
 /* Compute hash value to identify the goal area. */
 Hash_data
-goal_to_hashvalue(struct board_lib_state_struct *internal_state, const signed char *goal)
+goal_to_hashvalue(board_lib_state_struct *internal_state, const signed char *goal)
 {
   int pos;
   Hash_data return_value;

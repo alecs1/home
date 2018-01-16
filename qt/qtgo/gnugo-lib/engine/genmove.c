@@ -467,7 +467,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     average_score = (white_score + black_score)/2.0;
   else
     average_score = -(white_score + black_score)/2.0;
-  choose_strategy(color, average_score, game_status(internal_state, color));
+  choose_strategy(internal_state, color, average_score, game_status(internal_state, color));
 
   if (printboard) {
     if (printboard == 1)
@@ -524,7 +524,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Review the move reasons and estimate move values. */
-  if (review_move_reasons(&move, value, color, 
+  if (review_move_reasons(internal_state, &move, value, color,
 			  pure_threat_value, pessimistic_score, allowed_moves,
 			  use_thrashing_dragon_heuristics))
     TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
@@ -537,7 +537,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     endgame_shapes(internal_state, color);
     endgame(internal_state, color);
     gg_assert(internal_state, internal_state->stackp == 0);
-    if (review_move_reasons(&move, value, color, pure_threat_value,
+    if (review_move_reasons(internal_state, &move, value, color, pure_threat_value,
 	  		    pessimistic_score, allowed_moves,
 			    use_thrashing_dragon_heuristics))
       TRACE(internal_state, "Move generation likes %1m with value %f\n", move, *value);
@@ -553,7 +553,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     if (revise_semeai(internal_state, color)) {
       shapes(internal_state, color);
       endgame_shapes(internal_state, color);
-      if (review_move_reasons(&move, value, color, pure_threat_value,
+      if (review_move_reasons(internal_state, &move, value, color, pure_threat_value,
 			      pessimistic_score, allowed_moves,
 			      use_thrashing_dragon_heuristics)) {
 	TRACE(internal_state, "Upon reconsideration move generation likes %1m with value %f\n",

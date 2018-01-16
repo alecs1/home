@@ -217,7 +217,8 @@ void mark_changed_dragon(board_lib_state_struct *internal_state,
 void mark_changed_string(board_lib_state_struct *internal_state,
                          int affected, signed char changed_stones[BOARDMAX],
                          float strength[BOARDMAX], signed char new_status);
-int adjacent_to_nondead_stone(int pos, int color);
+int adjacent_to_nondead_stone(board_lib_state_struct *internal_state,
+                              int pos, int color);
 
 int find_connection(board_lib_state_struct *internal_state,
                     int worm1, int worm2);

@@ -509,11 +509,13 @@ void add_reverse_followup_value(board_lib_state_struct *internal_state,
                                 int pos, float value);
 int list_move_reasons(board_lib_state_struct *internal_state,
                       FILE *out, int pos);
-void print_all_move_values(FILE *output);
+void print_all_move_values(board_lib_state_struct *internal_state,
+                           FILE *output);
 void record_top_move(int move, float val);
 void remove_top_move(int move);
 void scale_randomness(int pos, float scaling);
-void compute_move_probabilities(float probabilities[BOARDMAX]);
+void compute_move_probabilities(board_lib_state_struct *internal_state,
+                                float probabilities[BOARDMAX]);
 
 void register_good_attack_threat(board_lib_state_struct *internal_state,
                                  int move, int target);
@@ -631,11 +633,13 @@ int atari_atari_blunder_size(board_lib_state_struct *internal_state,
                              signed char defense_moves[BOARDMAX],
                              const signed char safe_stones[BOARDMAX]);
 
-int review_move_reasons(int *move, float *value, int color,
-			float pure_threat_value, float our_score,
-			int allowed_moves[BOARDMAX],
-			int use_thrashing_dragon_heuristics);
-void prepare_move_influence_debugging(int pos, int color);
+int review_move_reasons(board_lib_state_struct *internal_state,
+                        int *move, float *value, int color,
+                        float pure_threat_value, float our_score,
+                        int allowed_moves[BOARDMAX],
+                        int use_thrashing_dragon_heuristics);
+void prepare_move_influence_debugging(board_lib_state_struct *internal_state,
+                                      int pos, int color);
 int fill_liberty(board_lib_state_struct *internal_state,
                  int *move, int color);
 int aftermath_genmove(board_lib_state_struct *internal_state,
@@ -855,24 +859,25 @@ void get_influence(struct board_lib_state_struct *internal_state,
                    float territory_value[BOARDMAX],
                    int influence_regions[BOARDMAX],
                    int non_territory[BOARDMAX]);
-float influence_score(struct board_lib_state_struct *internal_state,
+float influence_score(board_lib_state_struct *internal_state,
                       const struct influence_data *q, int chinese_rules);
-float game_status(struct board_lib_state_struct *internal_state,
+float game_status(board_lib_state_struct *internal_state,
                   int color);
 void influence_mark_non_territory(board_lib_state_struct *internal_state,
                                   int pos, int color);
-int influence_considered_lively(struct board_lib_state_struct *internal_state,
+int influence_considered_lively(board_lib_state_struct *internal_state,
                                 const struct influence_data *q, int pos);
 void influence_erase_territory(struct board_lib_state_struct *internal_state,
                                struct influence_data *q, int pos, int color);
 
-void break_territories(struct board_lib_state_struct *internal_state,
+void break_territories(board_lib_state_struct *internal_state,
                        int color_to_move, struct influence_data *q,
                        int store, int pos);
 void clear_break_in_list(void);
-void break_in_move_reasons(struct board_lib_state_struct *internal_state, int color);
+void break_in_move_reasons(board_lib_state_struct *internal_state, int color);
 
-void choose_strategy(int color, float our_score, float game_status);
+void choose_strategy(board_lib_state_struct *internal_state,
+                     int color, float our_score, float game_status);
 
 /* Eye space functions. */
 int is_eye_space(int pos);

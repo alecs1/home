@@ -964,7 +964,8 @@ do_aftermath_genmove(struct board_lib_state_struct *internal_state,
  * important not to miss the move.
  */
 static int
-reduced_genmove(struct board_lib_state_struct *internal_state, int color)
+reduced_genmove(board_lib_state_struct *internal_state,
+                int color)
 {
   float value;
   int save_verbose;
@@ -1007,7 +1008,7 @@ reduced_genmove(struct board_lib_state_struct *internal_state, int color)
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Review the move reasons and estimate move values. */
-  if (review_move_reasons(&move, &value, color, 0.0, our_score, NULL, 0))
+  if (review_move_reasons(internal_state, &move, &value, color, 0.0, our_score, NULL, 0))
     TRACE(internal_state, "Move generation likes %1m with value %f\n", move, value);
   gg_assert(internal_state, internal_state->stackp == 0);
 

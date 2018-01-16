@@ -562,7 +562,7 @@ trymove(board_lib_state_struct *internal_state, int pos, int color, const char *
  */
 
 int 
-tryko(struct board_lib_state_struct *internal_state, int pos, int color, const char *message)
+tryko(board_lib_state_struct *internal_state, int pos, int color, const char *message)
 {
   /* Do the real work elsewhere. */
   if (!do_trymove(internal_state, pos, color, 1))
@@ -1164,7 +1164,7 @@ is_suicide(struct board_lib_state_struct *internal_state, int pos, int color)
 
 
 /*
- * is_illegal_ko_capture(pos, color) determines whether the move
+ * is_illegal_ko_capture(internal_state, pos, color) determines whether the move
  * (color) at (pos) would be an illegal ko capture.
  */
 int 

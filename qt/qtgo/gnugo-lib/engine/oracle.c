@@ -288,7 +288,7 @@ do_consult_oracle(int color)
   matchpat(internal_state, oracle_callback, color, &oracle_db, oracle_moves, NULL);
   for (k = 0; k < MAX_ORACLE_MOVES; k++)
     if (oracle_moves[k].value > -1) {
-      oracle_trymove(oracle_moves[k].pos, color, oracle_moves[k].reason,
+      oracle_trymove(internal_state, oracle_moves[k].pos, color, oracle_moves[k].reason,
 		     0, 0, NO_MOVE);
       do_consult_oracle(OTHER_COLOR(color));
       oracle_popgo(internal_state);

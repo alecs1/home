@@ -2142,7 +2142,7 @@ static struct interpolation_data genus2weakness =
   { 6, 0.0, 3.0, {1.0, 0.95, 0.8, 0.5, 0.2, 0.1, 0.0}};
 
 float
-crude_dragon_weakness(struct board_lib_state_struct *internal_state,
+crude_dragon_weakness(board_lib_state_struct *internal_state,
                   int safety, struct eyevalue *genus, int has_lunch,
     		      float moyo_value, float escape_route)
 {
