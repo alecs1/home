@@ -1239,7 +1239,7 @@ analyze_statistics(void)
     }
     
     /* Sort the moves, in falling order. */
-    gg_sort(move_frequencies, number_of_moves,
+    gg_sort(internal_state, move_frequencies, number_of_moves,
 	    sizeof(*move_frequencies), compare_frequencies2);
     
     /* Debug output. */

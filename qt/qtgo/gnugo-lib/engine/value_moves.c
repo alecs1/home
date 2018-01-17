@@ -1021,7 +1021,7 @@ induce_secondary_move_reasons(board_lib_state_struct *internal_state,
 	int worm2 = conn_worm2[move_reasons[r].what];
 	int pos2;
 	for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-      if (On_board(internal_state, pos2) && internal_state->board[pos2] == EMPTY
+      if (ON_BOARD(internal_state, pos2) && internal_state->board[pos2] == EMPTY
 	      && cut_possible(pos2, OTHER_COLOR(color))
 	      && square_dist(pos, pos2) <= 5) {
 	    for (j = 0; j < 8; j++) {
@@ -3036,7 +3036,8 @@ estimate_strategical_value(board_lib_state_struct *internal_state,
 
 /* Compare two move reasons, used for sorting before presentation. */
 static int
-compare_move_reasons(const void *p1, const void *p2)
+compare_move_reasons(board_lib_state_struct *internal_state,
+                     const void *p1, const void *p2)
 {
   const int mr1 = *(const int *) p1;
   const int mr2 = *(const int *) p2;
@@ -3084,7 +3085,7 @@ value_move_reasons(board_lib_state_struct *internal_state,
     num_reasons = 0;
     while (move[pos].reason[num_reasons] >= 0 && num_reasons < MAX_REASONS)
       num_reasons++;
-    gg_sort(move[pos].reason, num_reasons, sizeof(move[pos].reason[0]),
+    gg_sort(internal_state, move[pos].reason, num_reasons, sizeof(move[pos].reason[0]),
 	    compare_move_reasons);
 
     /* Discard move reasons that only duplicate another. */

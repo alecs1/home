@@ -52,6 +52,7 @@
 #include <io.h>
 #endif
 
+struct board_lib_state_struct;
 
 void gg_init_color(void);
 void write_color_char(int c, int x);
@@ -66,8 +67,9 @@ double gg_cputime(void);
 
 float gg_normalize_float(float x, float a);
 int gg_normalize_float2int(float x, float a);
-void gg_sort(void *base, size_t nel, size_t width,
-             int (*compar)(board_lib_state_struct *, const void *, const void *));
+void gg_sort(struct board_lib_state_struct *internal_state,
+             void *base, size_t nel, size_t width,
+             int (*compar)(struct board_lib_state_struct *, const void *, const void *));
 
 #define MAX_INTERPOLATION_STEPS 20
 struct interpolation_data

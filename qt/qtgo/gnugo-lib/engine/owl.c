@@ -3331,7 +3331,7 @@ owl_determine_life(board_lib_state_struct *internal_state,
        */
       if (pessimistic_min > 0) {
 	for (pos2 = BOARDMIN; pos2 < BOARDMAX; pos2++) {
-	  if (On_board(internal_state, pos2)
+      if (ON_BOARD(internal_state, pos2)
 	      && eye[pos2].origin == pos
 	      && owl->inessential[pos2]) {
 	    pessimistic_min = 0;
@@ -6853,7 +6853,7 @@ compute_owl_escape_values(board_lib_state_struct *internal_state,
     
   internal_state->sgf_dumptree = NULL;
   internal_state->count_variations = 0;
-  get_lively_stones(OTHER_COLOR(owl->color), safe_stones);
+  get_lively_stones(internal_state, OTHER_COLOR(owl->color), safe_stones);
   internal_state->sgf_dumptree = save_sgf_dumptree;
   internal_state->count_variations = save_count_variations;
 

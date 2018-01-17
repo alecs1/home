@@ -66,6 +66,7 @@ typedef struct SGFNode_t {
   struct SGFNode_t *next;
 } SGFNode;
 
+struct board_lib_state_struc;
 
 /* low level functions */
 SGFNode *sgfPrev(SGFNode *node);
@@ -109,7 +110,8 @@ SGFNode *sgfStartVariant(SGFNode *node);
 SGFNode *sgfStartVariantFirst(SGFNode *node);
 SGFNode *sgfAddChild(SGFNode *node);
 
-SGFNode *sgfCreateHeaderNode(int boardsize, float komi, int handicap);
+SGFNode *sgfCreateHeaderNode(struct board_lib_state_struct *internal_state,
+                             int boardsize, float komi, int handicap);
 
 /* Read SGF tree from file. */
 SGFNode *readsgffile(const char *filename);

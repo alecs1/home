@@ -602,7 +602,7 @@ add_marked_intrusions(board_lib_state_struct *internal_state,
   float allowed_strength;
   int color = q->color_to_move;
 
-  gg_sort(q->intrusions, q->intrusion_counter, sizeof(q->intrusions[0]),
+  gg_sort(internal_state, q->intrusions, q->intrusion_counter, sizeof(q->intrusions[0]),
           compare_intrusions);
 
   /* Go through all intrusion sources. */

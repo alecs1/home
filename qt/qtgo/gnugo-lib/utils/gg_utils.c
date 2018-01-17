@@ -361,7 +361,8 @@ gg_normalize_float2int(float x, float a)
  * of equal elements will be consistent.
  */
 void
-gg_sort(void *base, size_t nel, size_t width,
+gg_sort(struct board_lib_state_struct *internal_state,
+        void *base, size_t nel, size_t width,
     int (*cmp)(struct board_lib_state_struct *internal_state, const void *, const void *))
 {
   int gap = nel;
@@ -372,7 +373,7 @@ gg_sort(void *base, size_t nel, size_t width,
     swap_made = 0;
     gap = (10 * gap + 3) / 13;
     for (a = base, b = a + gap * width; b <= end; a += width, b += width) {
-      if (cmp((void *) a, (void *) b) > 0) {
+      if (cmp(internal_state, (void *) a, (void *) b) > 0) {
 	char *c = a;
 	char *d = b;
 	size_t size = width;

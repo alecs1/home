@@ -53,12 +53,13 @@ void clearstats(void);
 
 void transformation_init(void);
 
-void ascii_report_worm(char *string);
-void report_dragon(struct board_lib_state_struct *internal_state,
+void ascii_report_worm(board_lib_state_struct *internal_state,
+                       char *string);
+void report_dragon(board_lib_state_struct *internal_state,
                    FILE *outfile, int pos);
-void ascii_report_dragon(struct board_lib_state_struct *internal_state,
+void ascii_report_dragon(board_lib_state_struct *internal_state,
                          char *string);
-struct dragon_data2 *dragon2_func(struct board_lib_state_struct *internal_state,
+struct dragon_data2 *dragon2_func(board_lib_state_struct *internal_state,
                                   int pos);
 
 /* Routine names used by persistent and non-persistent caching schemes. */
@@ -188,7 +189,8 @@ typedef void (*fullboard_matchpat_callback_fn_ptr)(board_lib_state_struct *inter
                                                    int move,
                                                    struct fullboard_pattern *,
                                                    int rotation);
-typedef void (*corner_matchpat_callback_fn_ptr)(int move, int color,
+typedef void (*corner_matchpat_callback_fn_ptr)(board_lib_state_struct *internal_state,
+                                                int move, int color,
 						struct corner_pattern *pattern,
 						int trans,
 						int *stones, int num_stones);
@@ -391,11 +393,14 @@ void add_cut(struct board_lib_state_struct *internal_state,
 void cut_reasons(struct board_lib_state_struct *internal_state,
                  int color);
 
-void get_lively_stones(int color, signed char safe_stones[BOARDMAX]);
+void get_lively_stones(board_lib_state_struct *internal_state,
+                       int color, signed char safe_stones[BOARDMAX]);
 int is_same_worm(int w1, int w2);
 int is_worm_origin(int w, int pos);
-void propagate_worm(int pos);
-int examine_cavity(int pos, int *edge);
+void propagate_worm(board_lib_state_struct *internal_state,
+                    int pos);
+int examine_cavity(board_lib_state_struct *internal_state,
+                   int pos, int *edge);
 void find_cuts(void);
 void find_connections(void);
 
@@ -703,19 +708,25 @@ void oracle_loadsgf(char *infilename, char *untilstring);
 int oracle_threatens(int move, int target);
 int within_search_area(int pos);
 int metamachine_genmove(int color, float *value);
-void draw_search_area(struct board_lib_state_struct *internal_state);
+void draw_search_area(board_lib_state_struct *internal_state);
 
-int genmove_restricted(struct board_lib_state_struct *internal_state, int color, int allowed_moves[BOARDMAX]);
+int genmove_restricted(board_lib_state_struct *internal_state,
+                       int color, int allowed_moves[BOARDMAX]);
 
-void change_attack(int str, int move, int acode);
-void change_defense(int str, int move, int dcode);
-void change_attack_threat(int str, int move, int acode);
-void change_defense_threat(int str, int move, int dcode);
+void change_attack(board_lib_state_struct *internal_state,
+                   int str, int move, int acode);
+void change_defense(board_lib_state_struct *internal_state,
+                    int str, int move, int dcode);
+void change_attack_threat(board_lib_state_struct *internal_state,
+                          int str, int move, int acode);
+void change_defense_threat(board_lib_state_struct *internal_state,
+                           int str, int move, int dcode);
 int attack_move_known(int move, int str);
 int defense_move_known(int move, int str);
 int attack_threat_move_known(int move, int str);
 int defense_threat_move_known(int move, int str);
-void worm_reasons(int color);
+void worm_reasons(board_lib_state_struct *internal_state,
+                  int color);
 
 int semeai_move_reason_known(board_lib_state_struct *internal_state,
                              int move, int dr);

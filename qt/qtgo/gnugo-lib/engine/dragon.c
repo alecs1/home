@@ -603,7 +603,7 @@ revise_inessentiality(struct board_lib_state_struct *internal_state)
 	if (!essential && neighbors > 0) {
       DEBUG(internal_state, DEBUG_WORMS, "Worm %1m revised to be inessential.\n", str);
 	  worm[str].inessential = 1;
-	  propagate_worm(str);
+      propagate_worm(internal_state, str);
 	}
       }
     }
@@ -1092,7 +1092,7 @@ get_alive_stones(struct board_lib_state_struct *internal_state,
                  int color, signed char safe_stones[BOARDMAX])
 {
   int d;
-  get_lively_stones(color, safe_stones);
+  get_lively_stones(internal_state, color, safe_stones);
   for (d = 0; d < number_of_dragons; d++) {
     if (dragon2[d].safety == DEAD
 	|| (dragon2[d].safety == CRITICAL
@@ -2032,7 +2032,7 @@ compute_escape(struct board_lib_state_struct *internal_state,
   /* Compute escape_value array.  Points are awarded for moyo (4),
    * area (2) or EMPTY (1).  Values may change without notice.
    */
-  get_lively_stones(OTHER_COLOR(internal_state->board[pos]), safe_stones);
+  get_lively_stones(internal_state, OTHER_COLOR(internal_state->board[pos]), safe_stones);
   compute_escape_influence(internal_state, internal_state->board[pos], safe_stones, NULL, 0, escape_value);
 
   /* If we can reach a live group, award 6 points. */

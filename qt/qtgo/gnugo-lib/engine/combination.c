@@ -250,18 +250,19 @@ static int update_aa_goal(struct board_lib_state_struct *internal_state,
               signed char new_goal[BOARDMAX],
               int apos, int color);
 static void aa_init_moves(struct aa_move attacks[AA_MAX_MOVES]);
-static void aa_add_move(struct board_lib_state_struct *internal_state,
+static void aa_add_move(board_lib_state_struct *internal_state,
             struct aa_move attacks[AA_MAX_MOVES],
             int move, int target);
-static int aa_move_known(struct board_lib_state_struct *internal_state,
+static int aa_move_known(board_lib_state_struct *internal_state,
              struct aa_move attacks[AA_MAX_MOVES],
              int move, int target);
-static void aa_sort_moves(struct aa_move attacks[AA_MAX_MOVES]);
+static void aa_sort_moves(board_lib_state_struct *internal_state,
+                          struct aa_move attacks[AA_MAX_MOVES]);
 
 /* Set to 1 if you want verbose traces from this function. */
 
 int
-atari_atari(struct board_lib_state_struct *internal_state,
+atari_atari(board_lib_state_struct *internal_state,
             int color, int *attack_move, signed char defense_moves[BOARDMAX],
 	    int save_verbose)
 {
@@ -967,7 +968,7 @@ atari_atari_find_attack_moves(struct board_lib_state_struct *internal_state,
   atari_atari_attack_patterns(internal_state, color, minsize, attacks, goal);
 
   /* Sort the attack moves. */
-  aa_sort_moves(attacks);
+  aa_sort_moves(internal_state, attacks);
   
   if (debug & DEBUG_ATARI_ATARI) {
     gprintf(internal_state, "Attack moves:");
@@ -1555,7 +1556,8 @@ move_comp_func(struct board_lib_state_struct *internal_state,
  * of their first target.
  */
 static void
-aa_sort_moves(struct aa_move attacks[AA_MAX_MOVES])
+aa_sort_moves(board_lib_state_struct *internal_state,
+              struct aa_move attacks[AA_MAX_MOVES])
 {
   int k;
   int r;
@@ -1567,11 +1569,11 @@ aa_sort_moves(struct aa_move attacks[AA_MAX_MOVES])
       if (attacks[k].target[r] == NO_MOVE)
 	break;
     number_of_targets = r;
-    gg_sort(attacks[k].target, number_of_targets,
+    gg_sort(internal_state, attacks[k].target, number_of_targets,
         sizeof(attacks[k].target[0]), target_comp_func);
   }
   number_of_attacks = k;
-  gg_sort(attacks, number_of_attacks, sizeof(attacks[0]), move_comp_func);
+  gg_sort(internal_state, attacks, number_of_attacks, sizeof(attacks[0]), move_comp_func);
 }
 
 

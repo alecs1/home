@@ -218,7 +218,7 @@ compute_surroundings(board_lib_state_struct *internal_state,
 
   /* sort the corner array */
 
-  gg_sort(corner, corners, sizeof(int), compare_angles);
+  gg_sort(internal_state, corner, corners, sizeof(int), compare_angles);
 
   /* if apos is not NO_MOVE, mark it. */
 

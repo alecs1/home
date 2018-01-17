@@ -47,6 +47,7 @@
 
 #include "sgftree.h"
 #include "gg_utils.h"
+//#include "../engine/board.h"
 
 #define STRICT_SGF 's'
 #define LAX_SGF    'l'
@@ -534,12 +535,13 @@ sgfAddPlayLast(SGFNode *node, int who, int movex, int movey)
 
 
 SGFNode *
-sgfCreateHeaderNode(int boardsize, float komi, int handicap)
+sgfCreateHeaderNode(struct board_lib_state_struct *internal_state,
+                    int boardsize, float komi, int handicap)
 {
     SGFNode *root = sgfNewNode();
 
-    sgfAddPropertyInt(root, "SZ", boardsize);
-    sgfAddPropertyFloat(root, "KM", komi);
+    sgfAddPropertyInt(root, "SZ", internal_state->boardsize);
+    sgfAddPropertyFloat(root, "KM", internal_state->komi);
     sgfAddPropertyInt(root, "HA", internal_state->handicap);
 
     return root;
@@ -1138,7 +1140,7 @@ gametreefuseki(SGFNode **p, SGFNode *parent, int mode,
 }
 
 SGFNode *
-readsgffilefuseki(internal_state, const char *filename, int moves_per_game)
+readsgffilefuseki(board_lib_state_struct *internal_state, const char *filename, int moves_per_game)
 {
   SGFNode *root;
   int tmpi = 0;

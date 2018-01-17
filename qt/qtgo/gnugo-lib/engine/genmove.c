@@ -143,7 +143,7 @@ examine_position(struct board_lib_state_struct *internal_state,
 
   if (NEEDS_UPDATE(worms_examined)) {
     start_timer(internal_state, 0);
-    make_worms();
+    make_worms(internal_state);
     time_report(internal_state, 0, "  make worms", NO_MOVE, 1.0);
   }
 
@@ -155,7 +155,7 @@ examine_position(struct board_lib_state_struct *internal_state,
 
   if (stones_on_board(internal_state, BLACK | WHITE) != 0) {
     if (NEEDS_UPDATE(initial_influence_examined))
-      compute_worm_influence();
+      compute_worm_influence(internal_state);
     if (how_much == EXAMINE_INITIAL_INFLUENCE) {
       verbose = save_verbose;
       gg_assert(internal_state, test_gray_border(internal_state) < 0);
@@ -305,7 +305,7 @@ void
 collect_move_reasons(struct board_lib_state_struct *internal_state,
                      int color)
 {
-  worm_reasons(color);
+  worm_reasons(internal_state, color);
   semeai_move_reasons(internal_state, color);
   owl_reasons(internal_state, color);
   cut_reasons(internal_state, color);

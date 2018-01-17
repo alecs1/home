@@ -2622,7 +2622,7 @@ test_eyeshape(board_lib_state_struct *internal_state,
   }
 
   /* Show the board if verbose is on. Then turn off traces so we don't
-   * get any from make_worms(), make_dragons(), or the owl reading.
+   * get any from make_worms(internal_state), make_dragons(), or the owl reading.
    */
   if (verbose)
     showboard(internal_state, 0);

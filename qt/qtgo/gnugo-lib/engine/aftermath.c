@@ -1150,7 +1150,7 @@ play_aftermath(struct board_lib_state_struct *internal_state, int color, SGFTree
     }
     else {
       if (internal_state->board[pos] == EMPTY) {
-	int enclosing_color = examine_cavity(pos, NULL);
+    int enclosing_color = examine_cavity(internal_state, pos, NULL);
 	a->final_status[pos] = DAME;
 	if (enclosing_color == BLACK)
 	  a->black_area++;

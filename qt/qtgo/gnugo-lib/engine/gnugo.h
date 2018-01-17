@@ -380,8 +380,8 @@ float aftermath_compute_score(struct board_lib_state_struct *internal_state,
 
 /* Basic information gathering. */
 /* worm.c */
-void make_worms(void);
-void compute_worm_influence(void);
+void make_worms(board_lib_state_struct *internal_state);
+void compute_worm_influence(board_lib_state_struct *internal_state);
 
 /* dragon.c */
 void make_dragons(struct board_lib_state_struct *internal_state,

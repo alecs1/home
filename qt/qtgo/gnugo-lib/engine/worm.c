@@ -30,36 +30,49 @@
 #include "liberty.h"
 #include "patterns.h"
 
-static void compute_effective_worm_sizes(void);
-static void do_compute_effective_worm_sizes(int color,
-					    int (*cw)[MAX_CLOSE_WORMS],
-					    int *ncw, int max_distance);
-static void compute_unconditional_status(void);
-static void find_worm_attacks_and_defenses(void);
-static void find_worm_threats(void);
-static int find_lunch(int str, int *lunch);
-static void change_tactical_point(int str, int move, int code,
-				  int points[MAX_TACTICAL_POINTS],
-				  int codes[MAX_TACTICAL_POINTS]);
-static void propagate_worm2(int str);
-static int genus(int str);
-static void markcomponent(int str, int pos, int mg[BOARDMAX]);
-static void cavity_recurse(int pos, int mx[BOARDMAX], 
+static void compute_effective_worm_sizes(board_lib_state_struct *internal_state);
+static void do_compute_effective_worm_sizes(board_lib_state_struct *internal_state,
+                                            int color,
+                        int (*cw)[MAX_CLOSE_WORMS],
+                        int *ncw, int max_distance);
+static void compute_unconditional_status(board_lib_state_struct *internal_state);
+static void find_worm_attacks_and_defenses(board_lib_state_struct *internal_state);
+static void find_worm_threats(board_lib_state_struct *internal_state);
+static int find_lunch(board_lib_state_struct *internal_state,
+                      int str, int *lunch);
+static void change_tactical_point(board_lib_state_struct *internal_state,
+                                  int str, int move, int code,
+                  int points[MAX_TACTICAL_POINTS],
+                  int codes[MAX_TACTICAL_POINTS]);
+static void propagate_worm2(board_lib_state_struct *internal_state,
+                            int str);
+static int genus(board_lib_state_struct *internal_state,
+                 int str);
+static void markcomponent(board_lib_state_struct *internal_state,
+                          int str, int pos, int mg[BOARDMAX]);
+static void cavity_recurse(board_lib_state_struct *internal_state,
+                           int pos, int mx[BOARDMAX],
 			   int *border_color, int *edge, int str);
-static void ping_cave(int str, int *result1,  int *result2,
-		      int *result3, int *result4);
-static void ping_recurse(int pos, int *counter, 
+static void ping_cave(board_lib_state_struct *internal_state,
+                      int str, int *result1,  int *result2,
+              int *result3, int *result4);
+static void ping_recurse(board_lib_state_struct *internal_state,
+                         int pos, int *counter,
 			 int mx[BOARDMAX], 
 			 int mr[BOARDMAX], int color);
-static int touching(int pos, int color);
-static void find_attack_patterns(void);
-static void attack_callback(int anchor, int color,
-			    struct pattern *pattern, int ll, void *data);
-static void find_defense_patterns(void);
-static void defense_callback(int anchor, int color,
-			     struct pattern *pattern, int ll, void *data);
-static void build_worms(void);
-static void report_worm(int pos);
+static int touching(board_lib_state_struct *internal_state,
+                    int pos, int color);
+static void find_attack_patterns(board_lib_state_struct *internal_state);
+static void attack_callback(board_lib_state_struct *internal_state,
+                            int anchor, int color,
+                struct pattern *pattern, int ll, void *data);
+static void find_defense_patterns(board_lib_state_struct *internal_state);
+static void defense_callback(board_lib_state_struct *internal_state,
+                             int anchor, int color,
+                 struct pattern *pattern, int ll, void *data);
+static void build_worms(board_lib_state_struct *internal_state);
+static void report_worm(board_lib_state_struct *internal_state,
+                        int pos);
 
 /* A worm or string is a maximal connected set of stones of the same color, 
  * black or white.
@@ -68,7 +81,7 @@ static void report_worm(int pos);
  */
 
 
-/* make_worms() finds all worms and assembles some data about them.
+/* make_worms(internal_state) finds all worms and assembles some data about them.
  *
  * Each worm is marked with an origin.  This is an arbitrarily chosen
  * element of the worm, in practice the algorithm puts the origin at
@@ -82,26 +95,26 @@ static void report_worm(int pos);
  */
 
 void
-make_worms(void)
+make_worms(board_lib_state_struct *internal_state)
 {
   int pos;
 
   /* Build the basic worm data:  color, origin, size, liberties. */
-  build_worms();
+  build_worms(internal_state);
 
   /* No point continuing if the board is completely empty. */
   if (stones_on_board(internal_state, BLACK | WHITE) == 0)
     return;
 
   /* Compute effective sizes of all worms. */
-  compute_effective_worm_sizes();
+  compute_effective_worm_sizes(internal_state);
 
   /* Look for unconditionally alive and dead worms, and unconditional
    * territory.
    */
-  compute_unconditional_status();
+  compute_unconditional_status(internal_state);
   
-  find_worm_attacks_and_defenses();
+  find_worm_attacks_and_defenses(internal_state);
   
   gg_assert(internal_state, internal_state->stackp == 0);
 
@@ -110,14 +123,14 @@ make_worms(void)
     if (IS_STONE(internal_state->board[pos]) && is_worm_origin(pos, pos)) {
       int lib1, lib2, lib3, lib4;
       
-      ping_cave(pos, &lib1, &lib2, &lib3, &lib4);
+      ping_cave(internal_state, pos, &lib1, &lib2, &lib3, &lib4);
       ASSERT1(internal_state, worm[pos].liberties == lib1, pos);
       worm[pos].liberties2 = lib2;
       worm[pos].liberties3 = lib3;
       worm[pos].liberties4 = lib4;
       worm[pos].cutstone = 0;
       worm[pos].cutstone2 = 0;
-      propagate_worm(pos);
+      propagate_worm(internal_state, pos);
     }
   }
   
@@ -219,7 +232,7 @@ make_worms(void)
     /* Only do this if we really found something. */
     if (w2 != NO_MOVE) {
       worm[pos].cutstone = 2;
-      if (count_common_libs(w1, w2) > 0)
+      if (count_common_libs(internal_state, w1, w2) > 0)
 	worm[pos].cutstone = 1;
       
       DEBUG(internal_state, DEBUG_WORMS, "Worm at %1m has w1 %1m and w2 %1m, cutstone %d\n",
@@ -232,8 +245,8 @@ make_worms(void)
   /* Set the genus of all worms. */
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (IS_STONE(internal_state->board[pos]) && is_worm_origin(pos, pos)) {
-      worm[pos].genus = genus(pos);
-      propagate_worm(pos);
+      worm[pos].genus = genus(internal_state, pos);
+      propagate_worm(internal_state, pos);
     }
   }
   gg_assert(internal_state, internal_state->stackp == 0);
@@ -372,7 +385,7 @@ make_worms(void)
 		DEBUG(internal_state, DEBUG_WORMS,
 		      "adding point of defense of %1m at %1m with code %d\n",
 		      str, pos, REVERSE_RESULT(acode));
-		change_defense(str, pos, REVERSE_RESULT(acode));
+        change_defense(internal_state, str, pos, REVERSE_RESULT(acode));
 	      }
 	    }
 	  }
@@ -410,14 +423,14 @@ make_worms(void)
       if (worm[pos].attack_codes[0] != 0
 	  && worm[SOUTH(pos)].attack_codes[0] != 0) {
 	if (worm[pos].defense_codes[0] == 0
-	    && does_defend(worm[SOUTH(pos)].attack_points[0], pos)) {
+        && does_defend(internal_state, worm[SOUTH(pos)].attack_points[0], pos)) {
 	  /* FIXME: need to check ko relationship here */
-	  change_defense(pos, worm[SOUTH(pos)].attack_points[0], WIN);
+      change_defense(internal_state, pos, worm[SOUTH(pos)].attack_points[0], WIN);
 	}
 	if (worm[SOUTH(pos)].defense_codes[0] == 0
-	    && does_defend(worm[pos].attack_points[0], SOUTH(pos))) {
+        && does_defend(internal_state, worm[pos].attack_points[0], SOUTH(pos))) {
 	  /* FIXME: need to check ko relationship here */	    
-	  change_defense(SOUTH(pos), worm[pos].attack_points[0], WIN);
+      change_defense(internal_state, SOUTH(pos), worm[pos].attack_points[0], WIN);
 	}
       }
     }
@@ -431,14 +444,14 @@ make_worms(void)
       if (worm[pos].attack_codes[0] != 0
 	  && worm[EAST(pos)].attack_codes[0] != 0) {
 	if (worm[pos].defense_codes[0] == 0
-	    && does_defend(worm[EAST(pos)].attack_points[0], pos)) {
+        && does_defend(internal_state, worm[EAST(pos)].attack_points[0], pos)) {
 	  /* FIXME: need to check ko relationship here */	    
-	  change_defense(pos, worm[EAST(pos)].attack_points[0], WIN);
+      change_defense(internal_state, pos, worm[EAST(pos)].attack_points[0], WIN);
 	}
 	if (worm[EAST(pos)].defense_codes[0] == 0
-	    && does_defend(worm[pos].attack_points[0], EAST(pos))) {
+        && does_defend(internal_state, worm[pos].attack_points[0], EAST(pos))) {
 	  /* FIXME: need to check ko relationship here */	    
-	  change_defense(EAST(pos), worm[pos].attack_points[0], WIN);
+      change_defense(internal_state, EAST(pos), worm[pos].attack_points[0], WIN);
 	}
       }
     }
@@ -454,7 +467,7 @@ make_worms(void)
     if (!IS_STONE(internal_state->board[pos]) || !is_worm_origin(pos, pos))
       continue;
     
-    if (find_lunch(pos, &lunch)
+    if (find_lunch(internal_state, pos, &lunch)
 	&& (worm[lunch].attack_codes[0] == WIN
 	    || worm[lunch].attack_codes[0] == KO_A)) {
       DEBUG(internal_state, DEBUG_WORMS, "lunch found for %1m at %1m\n", pos, lunch);
@@ -463,11 +476,11 @@ make_worms(void)
     else
       worm[pos].lunch = NO_MOVE;
     
-    propagate_worm(pos);
+    propagate_worm(internal_state, pos);
   }
   
   if (!disable_threat_computation)
-    find_worm_threats();
+    find_worm_threats(internal_state);
 
   /* Identify INESSENTIAL strings.
    *
@@ -500,11 +513,11 @@ make_worms(void)
 	&& !worm[pos].cutstone
 	&& worm[pos].lunch == NO_MOVE) {
       int edge;
-      int border_color = examine_cavity(pos, &edge);
+      int border_color = examine_cavity(internal_state, pos, &edge);
       if (border_color != GRAY && edge < 3) {
 	DEBUG(internal_state, DEBUG_WORMS, "Worm %1m identified as inessential.\n", pos);
 	worm[pos].inessential = 1;
-	propagate_worm(pos);
+    propagate_worm(internal_state, pos);
       }
     }
   }
@@ -514,11 +527,11 @@ make_worms(void)
 /* 
  * Clear all worms and initialize the basic data fields:
  *   color, origin, size, liberties
- * This is a substep of make_worms().
+ * This is a substep of make_worms(internal_state).
  */
 
 static void
-build_worms()
+build_worms(board_lib_state_struct *internal_state)
 {
   int pos;
 
@@ -542,7 +555,7 @@ build_worms()
     if (IS_STONE(internal_state->board[pos])) {
       worm[pos].liberties = countlib(internal_state, pos);
       worm[pos].size = countstones(internal_state, pos);
-      propagate_worm(pos);
+      propagate_worm(internal_state, pos);
     }
   }
 }
@@ -564,18 +577,19 @@ build_worms()
  */
 
 static void
-compute_effective_worm_sizes()
+compute_effective_worm_sizes(board_lib_state_struct *internal_state)
 {
-  do_compute_effective_worm_sizes(BLACK | WHITE, close_worms,
+  do_compute_effective_worm_sizes(internal_state, BLACK | WHITE, close_worms,
 				  number_close_worms, 3);
-  do_compute_effective_worm_sizes(BLACK, close_black_worms,
+  do_compute_effective_worm_sizes(internal_state, BLACK, close_black_worms,
 				  number_close_black_worms, 5);
-  do_compute_effective_worm_sizes(WHITE, close_white_worms,
+  do_compute_effective_worm_sizes(internal_state, WHITE, close_white_worms,
 				  number_close_white_worms, 5);
 }
 
 static void
-do_compute_effective_worm_sizes(int color, int (*cw)[MAX_CLOSE_WORMS],
+do_compute_effective_worm_sizes(board_lib_state_struct *internal_state,
+                                int color, int (*cw)[MAX_CLOSE_WORMS],
 				int *ncw, int max_distance)
 {
   int pos;
@@ -666,7 +680,7 @@ do_compute_effective_worm_sizes(int color, int (*cw)[MAX_CLOSE_WORMS],
     /* Propagate the effective size values all over the worms. */
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
       if (IS_STONE(internal_state->board[pos]) && is_worm_origin(pos, pos))
-	propagate_worm(pos);
+    propagate_worm(internal_state, pos);
   }
 
   /* Fill in the appropriate close_*_worms (cw) and
@@ -693,7 +707,7 @@ do_compute_effective_worm_sizes(int color, int (*cw)[MAX_CLOSE_WORMS],
  * unconditional territory for either player.
  */
 static void
-compute_unconditional_status()
+compute_unconditional_status(board_lib_state_struct *internal_state)
 {
   int unconditional_territory[BOARDMAX];
   int pos;
@@ -702,7 +716,7 @@ compute_unconditional_status()
   for (color = WHITE; color <= BLACK; color++) {
     unconditional_life(internal_state, unconditional_territory, color);
     if (get_level() >= 10)
-      find_unconditionally_meaningless_moves(unconditional_territory, color);
+      find_unconditionally_meaningless_moves(internal_state, unconditional_territory, color);
 
     for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
       if (!ON_BOARD(internal_state, pos) || !unconditional_territory[pos])
@@ -731,7 +745,7 @@ compute_unconditional_status()
  */
 
 static void
-find_worm_attacks_and_defenses()
+find_worm_attacks_and_defenses(board_lib_state_struct *internal_state)
 {
   int str;
   int k;
@@ -756,7 +770,7 @@ find_worm_attacks_and_defenses()
       worm[str].defense_codes[k]  = 0;
       worm[str].defense_points[k] = 0;
     }
-    propagate_worm(str);
+    propagate_worm(internal_state, str);
     
     acode = attack(internal_state, str, &attack_point);
     if (acode != 0) {
@@ -768,7 +782,7 @@ find_worm_attacks_and_defenses()
   gg_assert(internal_state, internal_state->stackp == 0);
   
   /* 2. Use pattern matching to find a few more attacks. */
-  find_attack_patterns();
+  find_attack_patterns(internal_state);
   gg_assert(internal_state, internal_state->stackp == 0);
   
   /* 3. Now find defense moves. */
@@ -783,7 +797,7 @@ find_worm_attacks_and_defenses()
       if (dcode != 0) {
 	TRACE(internal_state, "worm at %1m can be defended at %1m\n", str, defense_point);
 	if (defense_point != NO_MOVE)
-	  change_defense(str, defense_point, dcode);
+      change_defense(internal_state, str, defense_point, dcode);
       }
       else {
 	/* If the point of attack is not adjacent to the worm, 
@@ -795,7 +809,7 @@ find_worm_attacks_and_defenses()
 	  if (trymove(internal_state, attack_point, worm[str].color, "make_worms", NO_MOVE)) {
 	    int acode = attack(internal_state, str, NULL);
 	    if (acode != WIN) {
-	      change_defense(str, attack_point, REVERSE_RESULT(acode));
+          change_defense(internal_state, str, attack_point, REVERSE_RESULT(acode));
 	      TRACE(internal_state, "worm at %1m can be defended at %1m with code %d\n",
 		    str, attack_point, REVERSE_RESULT(acode));
 	    }	 
@@ -807,7 +821,7 @@ find_worm_attacks_and_defenses()
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* 4. Use pattern matching to find a few more defense moves. */
-  find_defense_patterns();
+  find_defense_patterns(internal_state);
   gg_assert(internal_state, internal_state->stackp == 0);
   
   /*
@@ -857,7 +871,7 @@ find_worm_attacks_and_defenses()
 	  if (trymove(internal_state, pos, color, "make_worms", NO_MOVE)) {
 	    acode = attack(internal_state, str, NULL);
 	    if (acode != WIN)
-	      change_defense(str, pos, REVERSE_RESULT(acode));
+          change_defense(internal_state, str, pos, REVERSE_RESULT(acode));
 	    popgo(internal_state);
 	  }
       }
@@ -872,7 +886,7 @@ find_worm_attacks_and_defenses()
  */
 
 static void
-find_worm_threats()
+find_worm_threats(board_lib_state_struct *internal_state)
 {
   int str;
   static int libs[MAXLIBS];
@@ -890,7 +904,7 @@ find_worm_threats()
     /* 1. Start with finding attack threats. */
     /* Only try those worms that have no attack. */
     if (worm[str].attack_codes[0] == 0) {
-      attack_threats(str, MAX_TACTICAL_POINTS,
+      attack_threats(internal_state, str, MAX_TACTICAL_POINTS,
 		     worm[str].attack_threat_points,
 		     worm[str].attack_threat_codes);
 #if 0
@@ -937,7 +951,7 @@ find_worm_threats()
 	  if (attack(internal_state, str, NULL) == WIN) {
 	    int dcode = find_defense(internal_state, str, NULL);
 	    if (dcode != 0)
-	      change_defense_threat(str, aa, dcode);
+          change_defense_threat(internal_state, str, aa, dcode);
 	  }
 	  popgo(internal_state);
 	}
@@ -955,7 +969,7 @@ find_worm_threats()
 	    if (attack(internal_state, str, NULL) == WIN) {
 	      int dcode = find_defense(internal_state, str, NULL);
 	      if (dcode != 0)
-		change_defense_threat(str, bb, dcode);
+        change_defense_threat(internal_state, str, bb, dcode);
 	    }
 	    popgo(internal_state);
 	  }
@@ -983,7 +997,8 @@ find_worm_threats()
  */
 	
 static int
-find_lunch(int str, int *lunch)
+find_lunch(board_lib_state_struct *internal_state,
+           int str, int *lunch)
 {
   int pos;
   int k;
@@ -1048,7 +1063,7 @@ is_worm_origin(int w, int pos)
 
 
 /* 
- * change_defense(str, move, dcode) is used to add and remove defense
+ * change_defense(internal_state, str, move, dcode) is used to add and remove defense
  * points. It can also be used to change the defense code. The meaning
  * of the call is that the string (str) can be defended by (move) with
  * defense code (dcode). If (dcode) is zero, the move is removed from
@@ -1056,10 +1071,11 @@ is_worm_origin(int w, int pos)
  */
 
 void
-change_defense(int str, int move, int dcode)
+change_defense(board_lib_state_struct *internal_state,
+               int str, int move, int dcode)
 {
   str = worm[str].origin;
-  change_tactical_point(str, move, dcode,
+  change_tactical_point(internal_state, str, move, dcode,
 			worm[str].defense_points, worm[str].defense_codes);
 }
 
@@ -1073,17 +1089,18 @@ change_defense(int str, int move, int dcode)
  */
 
 void
-change_attack(int str, int move, int acode)
+change_attack(board_lib_state_struct *internal_state,
+              int str, int move, int acode)
 {
   str = worm[str].origin;
   DEBUG(internal_state, DEBUG_WORMS, "change_attack: %1m %1m %d\n", str, move, acode);
-  change_tactical_point(str, move, acode,
+  change_tactical_point(internal_state, str, move, acode,
 			worm[str].attack_points, worm[str].attack_codes);
 }
 
 
 /* 
- * change_defense_threat(str, move, dcode) is used to add and remove
+ * change_defense_threat(internal_state, str, move, dcode) is used to add and remove
  * defense threat points. It can also be used to change the defense
  * threat code. The meaning of the call is that the string (str) can
  * threaten to be defended by (move) with defense threat code (dcode).
@@ -1092,10 +1109,11 @@ change_attack(int str, int move, int acode)
  */
 
 void
-change_defense_threat(int str, int move, int dcode)
+change_defense_threat(board_lib_state_struct *internal_state,
+                      int str, int move, int dcode)
 {
   str = worm[str].origin;
-  change_tactical_point(str, move, dcode,
+  change_tactical_point(internal_state, str, move, dcode,
 			worm[str].defense_threat_points,
 			worm[str].defense_threat_codes);
 }
@@ -1111,10 +1129,11 @@ change_defense_threat(int str, int move, int dcode)
  */
 
 void
-change_attack_threat(int str, int move, int acode)
+change_attack_threat(board_lib_state_struct *internal_state,
+                     int str, int move, int acode)
 {
   str = worm[str].origin;
-  change_tactical_point(str, move, acode,
+  change_tactical_point(internal_state, str, move, acode,
 			worm[str].attack_threat_points,
 			worm[str].attack_threat_codes);
 }
@@ -1174,7 +1193,8 @@ defense_threat_move_known(int move, int str)
  */
 
 static void
-change_tactical_point(int str, int move, int code,
+change_tactical_point(board_lib_state_struct *internal_state,
+                      int str, int move, int code,
 		      int points[MAX_TACTICAL_POINTS],
 		      int codes[MAX_TACTICAL_POINTS])
 {
@@ -1182,7 +1202,7 @@ change_tactical_point(int str, int move, int code,
   ASSERT1(internal_state, str == worm[str].origin, str);
   
   movelist_change_point(move, code, MAX_TACTICAL_POINTS, points, codes);
-  propagate_worm2(str);
+  propagate_worm2(internal_state, str);
 }
 
 
@@ -1195,7 +1215,8 @@ change_tactical_point(int str, int move, int code,
  */
 
 void 
-propagate_worm(int pos)
+propagate_worm(board_lib_state_struct *internal_state,
+               int pos)
 {
   int k;
   int num_stones;
@@ -1217,7 +1238,8 @@ propagate_worm(int pos)
  */
 
 static void 
-propagate_worm2(int str)
+propagate_worm2(board_lib_state_struct *internal_state,
+                int str)
 {
   int pos;
   ASSERT_ON_BOARD1(internal_state, str);
@@ -1235,7 +1257,8 @@ propagate_worm2(int str)
  * Exclude send-two-return-one moves.
  */
 void
-worm_reasons(int color)
+worm_reasons(board_lib_state_struct *internal_state,
+             int color)
 {
   int pos;
   int k;
@@ -1250,12 +1273,12 @@ worm_reasons(int color)
     if (internal_state->board[pos] == OTHER_COLOR(color)) {
       for (k = 0; k < MAX_TACTICAL_POINTS; k++) {
 	if (worm[pos].attack_codes[k] != 0
-	    && !send_two_return_one(worm[pos].attack_points[k], color))
-	  add_attack_move(worm[pos].attack_points[k], pos,
+        && !send_two_return_one(internal_state, worm[pos].attack_points[k], color))
+      add_attack_move(internal_state, worm[pos].attack_points[k], pos,
 			  worm[pos].attack_codes[k]);
 	if (worm[pos].attack_threat_codes[k] != 0
-	    && !send_two_return_one(worm[pos].attack_threat_points[k], color))
-	  add_attack_threat_move(worm[pos].attack_threat_points[k], pos,
+        && !send_two_return_one(internal_state, worm[pos].attack_threat_points[k], color))
+      add_attack_threat_move(internal_state, worm[pos].attack_threat_points[k], pos,
 				 worm[pos].attack_threat_codes[k]);
       }
     }
@@ -1263,14 +1286,14 @@ worm_reasons(int color)
     if (internal_state->board[pos] == color) {
       for (k = 0; k < MAX_TACTICAL_POINTS; k++) {
 	if (worm[pos].defense_codes[k] != 0
-	    && !send_two_return_one(worm[pos].defense_points[k], color))
-	  add_defense_move(worm[pos].defense_points[k], pos,
+        && !send_two_return_one(internal_state, worm[pos].defense_points[k], color))
+      add_defense_move(internal_state, worm[pos].defense_points[k], pos,
 			   worm[pos].defense_codes[k]);
 
 	if (worm[pos].defense_threat_codes[k] != 0
-	    && !send_two_return_one(worm[pos].defense_threat_points[k],
+        && !send_two_return_one(internal_state, worm[pos].defense_threat_points[k],
 				    color))
-	  add_defense_threat_move(worm[pos].defense_threat_points[k], pos,
+      add_defense_threat_move(internal_state, worm[pos].defense_threat_points[k], pos,
 				  worm[pos].defense_threat_codes[k]);
       }
     }
@@ -1310,7 +1333,8 @@ worm_reasons(int color)
  */
 
 static void 
-ping_cave(int str, int *lib1, int *lib2, int *lib3, int *lib4)
+ping_cave(board_lib_state_struct *internal_state,
+          int str, int *lib1, int *lib2, int *lib3, int *lib4)
 {
   int pos;
   int k;
@@ -1342,22 +1366,23 @@ ping_cave(int str, int *lib1, int *lib2, int *lib3, int *lib4)
   
   *lib2 = 0;
   memset(mrc, 0, sizeof(mrc));
-  ping_recurse(str, lib2, mse, mrc, color);
+  ping_recurse(internal_state, str, lib2, mse, mrc, color);
 
   *lib3 = 0;
   memset(mrc, 0, sizeof(mrc));
-  ping_recurse(str, lib3, mse, mrc, color);
+  ping_recurse(internal_state, str, lib3, mse, mrc, color);
 
   *lib4 = 0;
   memset(mrc, 0, sizeof(mrc));
-  ping_recurse(str, lib4, mse, mrc, color);
+  ping_recurse(internal_state, str, lib4, mse, mrc, color);
 }
 
 
 /* recursive function called by ping_cave */
 
 static void 
-ping_recurse(int pos, int *counter,
+ping_recurse(board_lib_state_struct *internal_state,
+             int pos, int *counter,
 	     int mx[BOARDMAX], int mr[BOARDMAX],
 	     int color)
 {
@@ -1369,7 +1394,7 @@ ping_recurse(int pos, int *counter,
     if (internal_state->board[apos] == EMPTY
 	&& mx[apos] == 0
 	&& mr[apos] == 0
-	&& !touching(apos, OTHER_COLOR(color))) {
+    && !touching(internal_state, apos, OTHER_COLOR(color))) {
       (*counter)++;
       mr[apos] = 1;
       mx[apos] = 1;
@@ -1383,7 +1408,7 @@ ping_recurse(int pos, int *counter,
 	  && mr[apos] == 0
 	  && (mx[apos] == 1
 	      || internal_state->board[apos] == color))
-	ping_recurse(apos, counter, mx, mr, color);
+    ping_recurse(internal_state, apos, counter, mx, mr, color);
     }
   }
 }
@@ -1394,7 +1419,8 @@ ping_recurse(int pos, int *counter,
  */
 
 static int
-touching(int pos, int color)
+touching(board_lib_state_struct *internal_state,
+         int pos, int color)
 {
   return (internal_state->board[SOUTH(pos)] == color
 	  || internal_state->board[WEST(pos)] == color
@@ -1409,7 +1435,8 @@ touching(int pos, int color)
  */
 
 static int 
-genus(int str)
+genus(board_lib_state_struct *internal_state,
+      int str)
 {
   int pos;
   int mg[BOARDMAX];
@@ -1420,7 +1447,7 @@ genus(int str)
     if (ON_BOARD(internal_state, pos)
 	&& !mg[pos]
 	&& (internal_state->board[pos] == EMPTY || !is_same_worm(pos, str))) {
-      markcomponent(str, pos, mg);
+      markcomponent(internal_state, str, pos, mg);
       gen++;
     }
   }
@@ -1434,7 +1461,8 @@ genus(int str)
  */
 
 static void 
-markcomponent(int str, int pos, int mg[BOARDMAX])
+markcomponent(board_lib_state_struct *internal_state,
+              int str, int pos, int mg[BOARDMAX])
 {
   int k;
   mg[pos] = 1;
@@ -1443,12 +1471,12 @@ markcomponent(int str, int pos, int mg[BOARDMAX])
     if (ON_BOARD(internal_state, apos)
 	&& mg[apos] == 0
 	&& (internal_state->board[apos] == EMPTY || !is_same_worm(apos, str)))
-      markcomponent(str, apos, mg);
+      markcomponent(internal_state, str, apos, mg);
   }
 }
 
 
-/* examine_cavity(pos, *edge), if (pos) is EMPTY, examines the
+/* examine_cavity(internal_state, pos, *edge), if (pos) is EMPTY, examines the
  * cavity at (m, n) and returns its bordercolor,
  * which can be BLACK, WHITE or GRAY. The edge parameter is set to the
  * number of edge vertices in the cavity.
@@ -1460,7 +1488,8 @@ markcomponent(int str, int pos, int mg[BOARDMAX])
  */
 
 int
-examine_cavity(int pos, int *edge)
+examine_cavity(board_lib_state_struct *internal_state,
+               int pos, int *edge)
 {
   int border_color = EMPTY;
   int ml[BOARDMAX];
@@ -1476,7 +1505,7 @@ examine_cavity(int pos, int *edge)
   if (IS_STONE(internal_state->board[pos]))
     origin = find_origin(internal_state, pos);
   
-  cavity_recurse(pos, ml, &border_color, edge, origin);
+  cavity_recurse(internal_state, pos, ml, &border_color, edge, origin);
 
   if (border_color != EMPTY)
     return border_color;
@@ -1515,7 +1544,8 @@ examine_cavity(int pos, int *edge)
  */
 
 static void 
-cavity_recurse(int pos, int mx[BOARDMAX], 
+cavity_recurse(board_lib_state_struct *internal_state,
+               int pos, int mx[BOARDMAX],
 	       int *border_color, int *edge, int str)
 {
   int k;
@@ -1545,7 +1575,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
       if (!neighbor_empty)
 	*border_color |= internal_state->board[apos];
       else
-	cavity_recurse(apos, mx, border_color, edge, str);
+    cavity_recurse(internal_state, apos, mx, border_color, edge, str);
     }
   }
 }
@@ -1553,7 +1583,7 @@ cavity_recurse(int pos, int mx[BOARDMAX],
 
 /* Find attacking moves by pattern matching, for both colors. */
 static void
-find_attack_patterns(void)
+find_attack_patterns(board_lib_state_struct *internal_state)
 {
   matchpat(internal_state, attack_callback, ANCHOR_OTHER, &attpat_db, NULL, NULL);
 }
@@ -1562,7 +1592,8 @@ find_attack_patterns(void)
  * before or not. Only exclude already known attacking moves.
  */
 static void
-attack_callback(int anchor, int color, struct pattern *pattern, int ll,
+attack_callback(board_lib_state_struct *internal_state,
+                int anchor, int color, struct pattern *pattern, int ll,
 		void *data)
 {
   int move;
@@ -1644,13 +1675,14 @@ attack_callback(int anchor, int color, struct pattern *pattern, int ll,
 }
 
 static void
-find_defense_patterns(void)
+find_defense_patterns(board_lib_state_struct *internal_state)
 {
-  matchpat(defense_callback, ANCHOR_COLOR, &defpat_db, NULL, NULL);
+  matchpat(internal_state, defense_callback, ANCHOR_COLOR, &defpat_db, NULL, NULL);
 }
 
 static void
-defense_callback(int anchor, int color, struct pattern *pattern, int ll,
+defense_callback(board_lib_state_struct *internal_state,
+                 int anchor, int color, struct pattern *pattern, int ll,
 		 void *data)
 {
   int move;
@@ -1701,7 +1733,7 @@ defense_callback(int anchor, int color, struct pattern *pattern, int ll,
 	popgo(internal_state);
 	
 	if (acode < worm[str].attack_codes[0]) {
-	  change_defense(str, move, REVERSE_RESULT(acode));
+      change_defense(internal_state, str, move, REVERSE_RESULT(acode));
 	  DEBUG(internal_state, DEBUG_WORMS,
 		"Defense pattern %s+%d found defense of %1m at %1m with code %d\n",
 		pattern->name, ll, str, move, REVERSE_RESULT(acode));
@@ -1713,7 +1745,8 @@ defense_callback(int anchor, int color, struct pattern *pattern, int ll,
 
 
 void
-get_lively_stones(int color, signed char safe_stones[BOARDMAX])
+get_lively_stones(board_lib_state_struct *internal_state,
+                  int color, signed char safe_stones[BOARDMAX])
 {
   int pos;
   memset(safe_stones, 0, BOARDMAX * sizeof(*safe_stones));
@@ -1729,14 +1762,14 @@ get_lively_stones(int color, signed char safe_stones[BOARDMAX])
 
 
 void
-compute_worm_influence()
+compute_worm_influence(board_lib_state_struct *internal_state)
 {
   signed char safe_stones[BOARDMAX];
 
-  get_lively_stones(BLACK, safe_stones);
+  get_lively_stones(internal_state, BLACK, safe_stones);
   compute_influence(internal_state, BLACK, safe_stones, NULL, &initial_black_influence,
       		    NO_MOVE, "initial black influence");
-  get_lively_stones(WHITE, safe_stones);
+  get_lively_stones(internal_state, WHITE, safe_stones);
   compute_influence(internal_state, WHITE, safe_stones, NULL, &initial_white_influence,
       		    NO_MOVE, "initial white influence");
 }
@@ -1757,15 +1790,17 @@ compute_worm_influence()
  */
 
 void
-ascii_report_worm(char *string)
+ascii_report_worm(board_lib_state_struct *internal_state,
+                  char *string)
 {
   int pos = string_to_location(internal_state->board_size, string);
-  report_worm(pos);
+  report_worm(internal_state, pos);
 }
 
 
 static void
-report_worm(int pos)
+report_worm(board_lib_state_struct *internal_state,
+            int pos)
 {
   int i;
 

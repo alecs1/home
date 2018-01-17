@@ -1048,7 +1048,7 @@ do_corner_matchpat(board_lib_state_struct *internal_state,
 	/* We have found a matching pattern. */
     ASSERT1(internal_state, internal_state->board[move] == EMPTY, move);
 
-	callback(move, callback_color, pattern, trans, pattern_stones, stones);
+    callback(internal_state, move, callback_color, pattern, trans, pattern_stones, stones);
 	continue;
       }
     }
