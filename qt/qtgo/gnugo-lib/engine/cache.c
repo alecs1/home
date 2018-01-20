@@ -70,10 +70,11 @@ keyhash_init(void)
 }
 
 static void
-calculate_hashval_for_tt(Hash_data *hashdata, int routine, int target1,
+calculate_hashval_for_tt(board_lib_state_struct* internal_state,
+                         Hash_data *hashdata, int routine, int target1,
 			 int target2, Hash_data *extra_hash)
 { 
-  *hashdata = board_hash;                /* from globals.c */
+  *hashdata = internal_state->board_hash;                /* from globals.c */
   hashdata_xor(*hashdata, routine_hash[routine]);
   hashdata_xor(*hashdata, target1_hash[target1]);
   if (target2 != NO_MOVE)
@@ -144,7 +145,8 @@ tt_free(Transposition_table *table)
  */
  
 int
-tt_get(Transposition_table *table, 
+tt_get(board_lib_state_struct* internal_state,
+       Transposition_table *table,
        enum routine_id routine, 
        int target1, int target2, int remaining_depth,
        Hash_data *extra_hash,
@@ -159,7 +161,7 @@ tt_get(Transposition_table *table,
     return 0;
 
   /* Get the combined hash value. */
-  calculate_hashval_for_tt(&hashval, routine, target1, target2, extra_hash);
+  calculate_hashval_for_tt(internal_state, &hashval, routine, target1, target2, extra_hash);
 
   /* Get the correct entry and node. */
   entry = &table->entries[hashdata_remainder(hashval, table->num_entries)];
@@ -170,7 +172,7 @@ tt_get(Transposition_table *table,
   else
     return 0;
 
-  stats.read_result_hits++;
+  internal_state->stats.read_result_hits++;
 
   /* Return data.  Only set the result if remaining depth in the table
    * is big enough to be trusted.  The move can always be used for move
@@ -183,7 +185,7 @@ tt_get(Transposition_table *table,
       *value1 = hn_get_value1(node->data);
     if (value2)
       *value2 = hn_get_value2(node->data);
-    stats.trusted_read_result_hits++;
+    internal_state->stats.trusted_read_result_hits++;
     return 2;
   }
 
@@ -215,7 +217,7 @@ tt_update(struct board_lib_state_struct *internal_state,
     return;
 
   /* Get the combined hash value. */
-  calculate_hashval_for_tt(&hashval, routine, target1, target2, extra_hash);
+  calculate_hashval_for_tt(internal_state, &hashval, routine, target1, target2, extra_hash);
 
   data = hn_create_data(remaining_depth, value1, value2, move,
       		        routine_costs[routine]);
@@ -262,7 +264,7 @@ tt_update(struct board_lib_state_struct *internal_state,
     newest->data = data;
   }
 
-  stats.read_result_entered++;
+  internal_state->stats.read_result_entered++;
   table->is_clean = 0;
 }
 

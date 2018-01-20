@@ -273,7 +273,7 @@ static struct autohelper_func autohelper_functions[] = {
   {"lib2",			1, 0, 0.01, "worm[%s].liberties2"},
   {"lib3",			1, 0, 0.01, "worm[%s].liberties3"},
   {"lib4",			1, 0, 0.01, "worm[%s].liberties4"},
-  {"lib",			1, 0, 0.01, "countlib(%s)"},
+  {"lib",			2, 0, 0.01, "countlib(internal_state, %s)"},
   {"alive",			1, 0, 0.01,
 		"(dragon[%s].status == ALIVE)"},
   {"unknown",			1, 0, 0.01,
@@ -1749,8 +1749,10 @@ finish_constraint_and_action(void)
  * must be first.
  */
 
+//TODO - this should not be needed, just the signature of the comparison function needed to change when libified
 static int
-compare_elements(const void *a, const void *b)
+compare_elements(board_lib_state_struct* internal_state,
+                 const void *a, const void *b)
 {
   /* score for each attribute */
   static int order[] = {7, 2, 3, 5, 6, 0, 4, 1};
@@ -1780,7 +1782,7 @@ write_elements(FILE *outfile)
   assert(database_type == DB_DFA || transformation_hint == 0);
 
   /* sort the elements so that least-likely elements are tested first. */
-  gg_sort(elements, el, sizeof(struct patval_b), compare_elements);
+  gg_sort(NULL, elements, el, sizeof(struct patval_b), compare_elements);
 
   fprintf(outfile, "static struct patval %s%d[] = {", prefix, patno);
 

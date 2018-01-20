@@ -191,9 +191,10 @@ void matchpat(matchpat_callback_fn_ptr callback, int color,
 void matchpat_goal_anchor(matchpat_callback_fn_ptr callback, int color,
 	      struct pattern_db *pdb, void *callback_data,
 	      signed char goal[BOARDMAX], int anchor_in_goal);
-void fullboard_matchpat(fullboard_matchpat_callback_fn_ptr callback,
+void fullboard_matchpat(board_lib_state_struct *internal_state,
+                        fullboard_matchpat_callback_fn_ptr callback,
 			int color, struct fullboard_pattern *pattern);
-void corner_matchpat(corner_matchpat_callback_fn_ptr callback, int color,
+void corner_matchpat(internal_state, corner_matchpat_callback_fn_ptr callback, int color,
 		     struct corner_db *database);
 void dfa_match_init(void);
 
@@ -360,7 +361,7 @@ void add_lunch(int eater, int food);
 void add_attack_move(int pos, int ww, int code);
 void add_defense_move(int pos, int ww, int code);
 void add_attack_threat_move(int pos, int ww, int code);
-void remove_attack_threat_move(int pos, int ww);
+void remove_attack_threat_move(internal_state, int pos, int ww);
 void add_defense_threat_move(int pos, int ww, int code);
 void add_connection_move(int pos, int dr1, int dr2);
 void add_cut_move(int pos, int dr1, int dr2);
@@ -496,7 +497,7 @@ int review_move_reasons(int *move, float *value, int color,
 			int use_thrashing_dragon_heuristics);
 void prepare_move_influence_debugging(int pos, int color);
 int fill_liberty(int *move, int color);
-int aftermath_genmove(int color, int do_capture_dead_stones,
+int aftermath_genmove(internal_stateint color, int do_capture_dead_stones,
 		      int allowed_moves[BOARDMAX]);
 enum dragon_status aftermath_final_status(int color, int pos);
 
@@ -553,7 +554,8 @@ int attack_threat_move_known(int move, int str);
 int defense_threat_move_known(int move, int str);
 void worm_reasons(int color);
 
-int semeai_move_reason_known(int move, int dr);
+int semeai_move_reason_known(board_lib_state_struct *internal_state,
+                             int move, int dr);
 
 int does_attack(int move, int str);
 int does_defend(int move, int str);
@@ -776,7 +778,7 @@ extern const int transformation2[8][2][2];
  * arrays. If more than MAX_CLOSE_WORMS are equally close, none is
  * listed.
  *
- * See compute_effective_worm_sizes() in worm.c for details.
+ * See compute_effective_worm_sizes(internal_state) in worm.c for details.
  */
 #define MAX_CLOSE_WORMS 4
 extern int close_worms[BOARDMAX][MAX_CLOSE_WORMS];

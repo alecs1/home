@@ -343,7 +343,7 @@ mc_init_board_from_global_board(board_lib_state_struct *internal_state,
   
   memcpy(mc->board, internal_state->board, sizeof(mc->board));
   mc->board_ko_pos = internal_state->board_ko_pos;
-  mc->hash = board_hash;
+  mc->hash = internal_state->board_hash;
   memset(mc->queue, 0, sizeof(mc->queue));
   mc->queue[0] = 1;
 

@@ -1761,7 +1761,7 @@ retrieve_delta_territory_cache(struct board_lib_state_struct *internal_state,
   /* We check whether the color, the board position, or the base influence
    * data has changed since the cache entry got entered.
    */
-  if (territory_cache_position_number == position_number
+  if (territory_cache_position_number == internal_state->position_number
       && territory_cache_color == color
       && territory_cache_influence_id == base->id
       && delta_territory_cache[pos] != NOT_COMPUTED) {
@@ -1792,13 +1792,13 @@ store_delta_territory_cache(struct board_lib_state_struct *internal_state,
   ASSERT_ON_BOARD1(internal_state, pos);
   ASSERT1(internal_state, IS_STONE(color), pos);
 
-  if (territory_cache_position_number != position_number
+  if (territory_cache_position_number != internal_state->position_number
       || territory_cache_color != color
       || territory_cache_influence_id != base->id) {
     int ii;
     for (ii = BOARDMIN; ii < BOARDMAX; ii++)
       delta_territory_cache[ii] = NOT_COMPUTED;
-    territory_cache_position_number = position_number;
+    territory_cache_position_number = internal_state->position_number;
     territory_cache_influence_id = base->id;
     territory_cache_color = color;
     if (0)

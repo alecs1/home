@@ -302,7 +302,7 @@ struct mc_pattern_database {
 
 /* helper functions */
 
-#define DECLARE(x) int x(struct pattern *pattern, int transformation, int move, int color)
+#define DECLARE(x) int x(board_lib_state_struct* internal_state, struct pattern *pattern, int transformation, int move, int color)
 
 DECLARE(jump_out_helper);
 DECLARE(jump_out_far_helper);
@@ -313,27 +313,46 @@ DECLARE(cutstone2_helper);
 DECLARE(thrash_around_helper);
 
 /* autohelper fns */
-int seki_helper(int str);
-void threaten_to_save_helper(int move, int str);
+int seki_helper(board_lib_state_struct *internal_state,
+                int str);
+void threaten_to_save_helper(board_lib_state_struct *internal_state,
+                             int move, int str);
 void threaten_to_capture_helper(int move, int str);
-void prevent_attack_threat_helper(int move, int str);
-void defend_against_atari_helper(int move, int str);
-void amalgamate_most_valuable_helper(int apos, int bpos, int cpos);
-int finish_ko_helper(int apos);
-int squeeze_ko_helper(int apos);
-int backfill_helper(int apos, int bpos, int cpos);
+void prevent_attack_threat_helper(board_lib_state_struct* internal_state,
+                                  int move, int str);
+void defend_against_atari_helper(board_lib_state_struct *internal_state,
+                                 int move, int str);
+void amalgamate_most_valuable_helper(board_lib_state_struct* internal_state,
+                                     int apos, int bpos, int cpos);
+int finish_ko_helper(board_lib_state_struct *internal_state,
+                     int apos);
+int squeeze_ko_helper(board_lib_state_struct *internal_state,
+                      int apos);
+int backfill_helper(board_lib_state_struct* internal_state,
+                    int apos, int bpos, int cpos);
 int owl_threatens_attack(int apos, int bpos);
-int connect_and_cut_helper(int Apos, int bpos, int cpos);
-int connect_and_cut_helper2(int Apos, int bpos, int cpos, int color);
-int edge_double_sente_helper(int move, int apos, int bpos, int cpos);
-void test_attack_either_move(int move, int color, int worma, int wormb);
-int adjacent_to_stone_in_atari(int str);
-int adjacent_to_defendable_stone_in_atari(int str);
-void backfill_replace(int move, int str);
-int break_mirror_helper(int str, int color);
-int distrust_tactics_helper(int str);
-int bent_four_helper(int str);
-int disconnect_helper(int apos, int bpos);
+int connect_and_cut_helper(board_lib_state_struct* internal_state,
+                           int Apos, int bpos, int cpos);
+int connect_and_cut_helper2(board_lib_state_struct *internal_state,
+                            int Apos, int bpos, int cpos, int color);
+int edge_double_sente_helper(board_lib_state_struct *internal_state,
+                             int move, int apos, int bpos, int cpos);
+void test_attack_either_move(board_lib_state_struct *internal_state,
+                             int move, int color, int worma, int wormb);
+int adjacent_to_stone_in_atari(board_lib_state_struct *internal_state,
+                               int str);
+int adjacent_to_defendable_stone_in_atari(board_lib_state_struct* internal_state,
+                                          int str);
+void backfill_replace(board_lib_state_struct *internal_state,
+                      int move, int str);
+int break_mirror_helper(board_lib_state_struct *internal_state,
+                        int str, int color);
+int distrust_tactics_helper(board_lib_state_struct *internal_state,
+                            int str);
+int bent_four_helper(board_lib_state_struct* internal_state,
+                     int str);
+int disconnect_helper(board_lib_state_struct *internal_state,
+                      int apos, int bpos);
 
 
 /* pattern arrays themselves */

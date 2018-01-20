@@ -75,7 +75,7 @@ defend_against(board_lib_state_struct *internal_state,
 
 /* 
  * Returns true if color can cut at (pos), or if connection through (pos)
- * is inhibited. This information is collected by find_cuts(), using the B
+ * is inhibited. This information is collected by find_cuts(internal_state), using the B
  * patterns in the connections database.
  */
 
@@ -1989,21 +1989,21 @@ time_report(board_lib_state_struct *internal_state,
 }
 
 void
-clearstats()
+clearstats(board_lib_state_struct* internal_state)
 {
-  stats.nodes                    = 0;
-  stats.read_result_entered      = 0;
-  stats.read_result_hits         = 0;
-  stats.trusted_read_result_hits = 0;
+  internal_state->stats.nodes                    = 0;
+  internal_state->stats.read_result_entered      = 0;
+  internal_state->stats.read_result_hits         = 0;
+  internal_state->stats.trusted_read_result_hits = 0;
 }
   
 void
 showstats(board_lib_state_struct *internal_state)
 {
-  gprintf(internal_state, "Nodes:                    %d\n", stats.nodes);
-  gprintf(internal_state, "Read results entered:     %d\n", stats.read_result_entered);
-  gprintf(internal_state, "Read result hits:         %d\n", stats.read_result_hits);
-  gprintf(internal_state, "Trusted read result hits: %d\n", stats.trusted_read_result_hits);
+  gprintf(internal_state, "Nodes:                    %d\n", internal_state->stats.nodes);
+  gprintf(internal_state, "Read results entered:     %d\n", internal_state->stats.read_result_entered);
+  gprintf(internal_state, "Read result hits:         %d\n", internal_state->stats.read_result_hits);
+  gprintf(internal_state, "Trusted read result hits: %d\n", internal_state->stats.trusted_read_result_hits);
 }
 
 

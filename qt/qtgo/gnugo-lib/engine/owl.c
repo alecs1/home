@@ -741,7 +741,7 @@ do_owl_analyze_semeai(board_lib_state_struct *internal_state,
   bpos = find_origin(internal_state, bpos);
 
   if (internal_state->stackp <= semeai_branch_depth
-      && tt_get(&ttable, SEMEAI, apos, bpos, depth - internal_state->stackp, NULL,
+      && tt_get(internal_state, &ttable, SEMEAI, apos, bpos, depth - internal_state->stackp, NULL,
 		&value1, &value2, &xpos) == 2) {
     TRACE_CACHED_RESULT2(value1, value2, xpos);
     *move = xpos;
@@ -2062,7 +2062,7 @@ do_owl_attack(board_lib_state_struct *internal_state,
 
   str = find_origin(internal_state, str);
 
-  if (tt_get(&ttable, OWL_ATTACK, str, NO_MOVE, depth - internal_state->stackp, NULL, 
+  if (tt_get(internal_state, &ttable, OWL_ATTACK, str, NO_MOVE, depth - internal_state->stackp, NULL,
 	     &value1, &value2, &xpos) == 2) {
 
     TRACE_CACHED_RESULT(value1, xpos);
@@ -2714,7 +2714,7 @@ do_owl_defend(board_lib_state_struct *internal_state,
   
   str = find_origin(internal_state, str);
 
-  if (tt_get(&ttable, OWL_DEFEND, str, NO_MOVE, depth - internal_state->stackp, NULL, 
+  if (tt_get(internal_state, &ttable, OWL_DEFEND, str, NO_MOVE, depth - internal_state->stackp, NULL,
 	     &value1, &value2, &xpos) == 2) {
     
     TRACE_CACHED_RESULT(value1, xpos);

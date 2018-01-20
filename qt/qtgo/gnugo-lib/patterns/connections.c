@@ -30,14 +30,15 @@
  * store it in the cut list of dragons.c.
  */
 int
-disconnect_helper(int apos, int bpos)
+disconnect_helper(board_lib_state_struct* internal_state,
+                  int apos, int bpos)
 {
   int color = internal_state->board[apos];
   int move;
   ASSERT1(internal_state, color == internal_state->board[bpos] && IS_STONE(color), apos);
 
   if (disconnect(internal_state, apos, bpos, &move)) {
-    add_cut(apos, bpos, move);
+    add_cut(internal_state, apos, bpos, move);
     return 1;
   }
   return 0;
@@ -50,7 +51,8 @@ disconnect_helper(int apos, int bpos)
  */
 
 static void
-cut_connect_callback(int anchor, int color, struct pattern *pattern,
+cut_connect_callback(board_lib_state_struct* internal_state,
+                     int anchor, int color, struct pattern *pattern,
 		     int ll, void *data)
 {
   int move;
@@ -175,7 +177,7 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 	if (verbose || (debug & DEBUG_DRAGONS))
 	  gprintf(internal_state, "Pattern %s joins %C dragons %1m, %1m\n",
 		  pattern->name, color, first_dragon, second_dragon);
-	join_dragons(second_dragon, first_dragon);
+    join_dragons(internal_state, second_dragon, first_dragon);
 	/* Now look for another second dragon. */
 	second_dragon = NO_MOVE;
 	first_dragon = dragon[pos].origin;
@@ -195,35 +197,37 @@ cut_connect_callback(int anchor, int color, struct pattern *pattern,
 
 /* Only consider B patterns. */
 static void
-cut_callback(int anchor, int color, struct pattern *pattern, int ll,
+cut_callback(board_lib_state_struct* internal_state,
+             int anchor, int color, struct pattern *pattern, int ll,
 	     void *data)
 {
   if (pattern->class & CLASS_B)
-    cut_connect_callback(anchor, color, pattern, ll, data);
+    cut_connect_callback(internal_state, anchor, color, pattern, ll, data);
 }
   
 
 /* Consider C patterns and those without classification. */
 static void
-conn_callback(int anchor, int color, struct pattern *pattern, int ll,
+conn_callback(board_lib_state_struct* internal_state,
+              int anchor, int color, struct pattern *pattern, int ll,
 	      void *data)
 {
   if (!(pattern->class & CLASS_B))
-    cut_connect_callback(anchor, color, pattern, ll, data);
+    cut_connect_callback(internal_state, anchor, color, pattern, ll, data);
 }
   
 /* Find cutting points which should inhibit amalgamations and sever
  * the adjacent eye space.
  */
 void
-find_cuts(void)
+find_cuts(board_lib_state_struct* internal_state)
 {
   matchpat(internal_state, cut_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
 }
 
 /* Find explicit connection patterns and amalgamate the involved dragons. */
 void
-find_connections(void)
+find_connections(board_lib_state_struct* internal_state)
 {
   matchpat(internal_state, conn_callback, ANCHOR_COLOR, &conn_db, NULL, NULL);
 }

@@ -60,11 +60,11 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
         switch (sgf_prop->name) {
         case SGFAB:
             /* add black */
-            add_stone(get_sgfmove(sgf_prop), BLACK);
+            add_stone(internal_state, get_sgfmove(sgf_prop), BLACK);
             break;
         case SGFAW:
             /* add white */
-            add_stone(get_sgfmove(sgf_prop), WHITE);
+            add_stone(internal_state, get_sgfmove(sgf_prop), WHITE);
             break;
         case SGFB:
         case SGFW:
@@ -96,7 +96,7 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
 
         /* Now report on how well the computer generated the move. */
         if (new_move != old_move || !quiet) {
-            mprintf("Move %d (%C): ", movenum + 1, color);
+            mprintf("Move %d (%C): ", internal_state->movenum + 1, color);
 
             if (resign) {
                 printf("%s - GNU Go resigns", __func__);
@@ -521,7 +521,7 @@ void GoTable::resetGnuGo(int newSize) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
     }
-    clear_board();
+    clear_board(internal_state);
     gnuGoMutex->unlock();
     //printfGnuGoStruct();
 }
@@ -548,7 +548,7 @@ QPoint GoTable::fromGnuGoPos(int pos) {
 void GoTable::printfGnuGoStruct() {
     for (int i = 0; i < 21; i++) {
         for (int j = 0; j < 20; j++)
-            printf("%d", board[i*20+j]);
+            printf("%d", internal_state->board[i*20+j]);
         printf("\n");
     }
 }
@@ -560,13 +560,13 @@ bool GoTable::moveIsLegal(int row, int col, int colour) {
     if (row == FREEGO_RESIGN_MOVE) {
         return true;
     }
-    return (is_legal(pos, colour));
+    return (is_legal(internal_state, pos, colour));
 }
 
 int GoTable::populateStructFromGnuGo() {
     for (int i = 0; i < game.size; i++) {
         for(int j = 0; j < game.size; j++)
-            game.state[i][j] = board[toGnuGoPos(i, j)];
+            game.state[i][j] = internal_state->board[toGnuGoPos(i, j)];
     }
     return 0;
 }
@@ -725,7 +725,7 @@ void AIThread::run_value_moves(int colour) {
 //        mutex->lock();
 //    }
 
-    //value_moves(colour, 0.0, 0.0, 1);
+    //value_moves(internal_state, colour, 0.0, 0.0, 1);
     //run genmove to fill in best_move_values
     set_level(2);
     int val = genmove(colour, NULL, NULL);

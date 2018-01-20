@@ -166,7 +166,7 @@ make_worms(board_lib_state_struct *internal_state)
    *     cutting or connecting the surrounding dragons. 
    *
    * The cutstone field will now be set. The cutstone2 field is set
-   * later, during find_cuts(), called from make_dragons().
+   * later, during find_cuts(internal_state), called from make_dragons().
    *
    * We maintain both fields because the historically older cutstone
    * field is needed to deal with the fact that e.g. in the position

@@ -35,7 +35,7 @@
  * After using this macro x will always have the value
  * position_number.
  */
-#define NEEDS_UPDATE(x) (x != position_number ? (x = position_number, 1) : 0)
+#define NEEDS_UPDATE(x) (x != internal_state->position_number ? (x = internal_state->position_number, 1) : 0)
 
 /* Mark a limited search area. If limit_search != 1, genmove
  * will only return moves within the area marked by the array
@@ -92,7 +92,7 @@ reset_engine(struct board_lib_state_struct *internal_state)
   /* Initialize things for hashing of positions. */
   reading_cache_clear();
 
-  hashdata_recalc(&board_hash, internal_state->board, internal_state->board_ko_pos);
+  hashdata_recalc(&internal_state->board_hash, internal_state->board, internal_state->board_ko_pos);
 
   worms_examined = -1;
   initial_influence_examined = -1;
@@ -174,7 +174,7 @@ examine_position(struct board_lib_state_struct *internal_state,
       make_dragons(internal_state, 0);
       compute_scores(internal_state, chinese_rules || aftermath_play);
       /* We have automatically done a partial dragon analysis as well. */
-      dragons_examined_without_owl = position_number;
+      dragons_examined_without_owl = internal_state->position_number;
     }
     if (how_much == EXAMINE_DRAGONS) {
       verbose = save_verbose;
@@ -411,7 +411,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     value = &dummy_value;
 
   start_timer(internal_state, 0);
-  clearstats();
+  clearstats(internal_state);
 
   /* Usually we would not recommend resignation. */
   if (resign)

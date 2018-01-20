@@ -275,13 +275,13 @@ static int next_stone[BOARDMAX];
   do {\
     PUSH_VERTEX(internal_state->board[pos]);\
     internal_state->board[pos] = color;\
-    hashdata_invert_stone(&board_hash, pos, color);\
+    hashdata_invert_stone(&internal_state->board_hash, pos, color);\
   } while (0)
 
 #define DO_REMOVE_STONE(internal_state, pos)\
   do {\
     PUSH_VERTEX(internal_state->board[pos]);\
-    hashdata_invert_stone(&board_hash, pos, internal_state->board[pos]);\
+    hashdata_invert_stone(&internal_state->board_hash, pos, internal_state->board[pos]);\
     internal_state->board[pos] = EMPTY;\
   } while (0)
 
@@ -519,24 +519,24 @@ trymove(board_lib_state_struct *internal_state, int pos, int color, const char *
     if (pos == NO_MOVE) {
       if (komaster != EMPTY)
 	gg_snprintf(buf, 100, "%s (variation %d, hash %s, komaster %s:%s)", 
-            message, internal_state->count_variations, hashdata_to_string(internal_state, &board_hash),
+            message, internal_state->count_variations, hashdata_to_string(internal_state, &internal_state->board_hash),
             color_to_string(internal_state, komaster), location_to_string(internal_state, kom_pos));
       else
 	gg_snprintf(buf, 100, "%s (variation %d, hash %s)", message,
-            internal_state->count_variations, hashdata_to_string(internal_state, &board_hash));
+            internal_state->count_variations, hashdata_to_string(internal_state, &internal_state->board_hash));
     }
     else {
       if (komaster != EMPTY)
 	gg_snprintf(buf, 100, 
 		    "%s at %s (variation %d, hash %s, komaster %s:%s)", 
             message, location_to_string(internal_state, pos), internal_state->count_variations,
-            hashdata_to_string(internal_state, &board_hash),
+            hashdata_to_string(internal_state, &internal_state->board_hash),
             color_to_string(internal_state, komaster),
             location_to_string(internal_state, kom_pos));
       else
 	gg_snprintf(buf, 100, "%s at %s (variation %d, hash %s)", 
             message, location_to_string(internal_state, pos), internal_state->count_variations,
-            hashdata_to_string(internal_state, &board_hash));
+            hashdata_to_string(internal_state, &internal_state->board_hash));
     }
     sgftreeAddPlayLast(internal_state->sgf_dumptree, color, I(pos), J(pos));
     sgftreeAddComment(internal_state->sgf_dumptree, buf);
@@ -544,7 +544,7 @@ trymove(board_lib_state_struct *internal_state, int pos, int color, const char *
   
   if (internal_state->count_variations)
     internal_state->count_variations++;
-  stats.nodes++;
+  internal_state->stats.nodes++;
 
   return 1;
 }
@@ -574,11 +574,11 @@ tryko(board_lib_state_struct *internal_state, int pos, int color, const char *me
       message = "UNKNOWN";
     if (komaster != EMPTY)
       gg_snprintf(buf, 100, "tryko: %s (variation %d, %s, komaster %s:%s)", 
-          message, internal_state->count_variations, hashdata_to_string(internal_state, &board_hash),
+          message, internal_state->count_variations, hashdata_to_string(internal_state, &internal_state->board_hash),
           color_to_string(internal_state, komaster), location_to_string(internal_state, kom_pos));
     else
       gg_snprintf(buf, 100, "tryko: %s (variation %d, %s)", message,
-          internal_state->count_variations, hashdata_to_string(internal_state, &board_hash));
+          internal_state->count_variations, hashdata_to_string(internal_state, &internal_state->board_hash));
 
     /* Add two pass moves to the SGF output to simulate the ko threat
      * and the answer.
@@ -599,7 +599,7 @@ tryko(board_lib_state_struct *internal_state, int pos, int color, const char *me
   
   if (internal_state->count_variations)
     internal_state->count_variations++;
-  stats.nodes++;
+  internal_state->stats.nodes++;
 
   return 1;
 }
@@ -628,10 +628,10 @@ really_do_trymove(board_lib_state_struct* internal_state, int pos, int color)
    *         hashdata in a stack doesn't take a lot of time, so
    *         this is not an urgent FIXME.
    */
-  memcpy(&board_hash_stack[internal_state->stackp], &board_hash, sizeof(board_hash));
+  memcpy(&board_hash_stack[internal_state->stackp], &internal_state->board_hash, sizeof(board_hash));
 
   if (internal_state->board_ko_pos != NO_MOVE)
-    hashdata_invert_ko(&board_hash, internal_state->board_ko_pos);
+    hashdata_invert_ko(&internal_state->board_hash, internal_state->board_ko_pos);
 
   internal_state->board_ko_pos = NO_MOVE;
   
@@ -770,7 +770,7 @@ undo_trymove(board_lib_state_struct *internal_state)
   POP_VERTICES();
   
   internal_state->stackp--;
-  memcpy(&board_hash, &(board_hash_stack[internal_state->stackp]), sizeof(board_hash));
+  memcpy(&internal_state->board_hash, &(board_hash_stack[internal_state->stackp]), sizeof(board_hash));
 }
 
 
@@ -788,7 +788,7 @@ dump_stack(struct board_lib_state_struct *internal_state)
   if (internal_state->count_variations)
     gprintf(internal_state, "%o (variation %d)", internal_state->count_variations-1);
 #else
-  gprintf(internal_state, "%o (%s)", hashdata_to_string(&board_hash));
+  gprintf(internal_state, "%o (%s)", hashdata_to_string(&internal_state->board_hash));
 #endif
 
   gprintf(internal_state, "%o\n");
@@ -832,7 +832,7 @@ add_stone(struct board_lib_state_struct *internal_state, int pos, int color)
   ASSERT1(internal_state, internal_state->board[pos] == EMPTY, pos);
 
   internal_state->board[pos] = color;
-  hashdata_invert_stone(&board_hash, pos, color);
+  hashdata_invert_stone(&internal_state->board_hash, pos, color);
   reset_move_history(internal_state);
   new_position(internal_state);
 }
@@ -849,7 +849,7 @@ remove_stone(struct board_lib_state_struct *internal_state, int pos)
   ASSERT_ON_BOARD1(internal_state, pos);
   ASSERT1(internal_state, IS_STONE(internal_state->board[pos]), pos);
 
-  hashdata_invert_stone(&board_hash, pos, internal_state->board[pos]);
+  hashdata_invert_stone(&internal_state->board_hash, pos, internal_state->board[pos]);
   internal_state->board[pos] = EMPTY;
   reset_move_history(internal_state);
   new_position(internal_state);
@@ -875,7 +875,7 @@ play_move_no_history(struct board_lib_state_struct *internal_state, int pos, int
 #endif
 
   if (internal_state->board_ko_pos != NO_MOVE)
-    hashdata_invert_ko(&board_hash, internal_state->board_ko_pos);
+    hashdata_invert_ko(&internal_state->board_hash, internal_state->board_ko_pos);
   internal_state->board_ko_pos = NO_MOVE;
 
   /* If the move is a pass, we can skip some steps. */
@@ -979,7 +979,7 @@ play_move(struct board_lib_state_struct *internal_state, int pos, int color)
 
   internal_state->move_history_color[internal_state->move_history_pointer] = color;
   internal_state->move_history_pos[internal_state->move_history_pointer] = pos;
-  internal_state->move_history_hash[internal_state->move_history_pointer] = board_hash;
+  internal_state->move_history_hash[internal_state->move_history_pointer] = internal_state->board_hash;
   if (internal_state->board_ko_pos != NO_MOVE)
     hashdata_invert_ko(&internal_state->move_history_hash[internal_state->move_history_pointer], internal_state->board_ko_pos);
   internal_state->move_history_pointer++;
@@ -1241,22 +1241,24 @@ is_allowed_move(struct board_lib_state_struct *internal_state, int pos, int colo
 
 /* Necessary work to set the new komaster state. */
 static void
-set_new_komaster(int new_komaster)
+set_new_komaster(board_lib_state_struct* internal_state,
+                 int new_komaster)
 {
   PUSH_VALUE(komaster);
-  hashdata_invert_komaster(&board_hash, komaster);
+  hashdata_invert_komaster(&internal_state->board_hash, komaster);
   komaster = new_komaster;
-  hashdata_invert_komaster(&board_hash, komaster);
+  hashdata_invert_komaster(&internal_state->board_hash, komaster);
 }
 
 /* Necessary work to set the new komaster position. */
 static void
-set_new_kom_pos(int new_kom_pos)
+set_new_kom_pos(board_lib_state_struct* internal_state,
+                int new_kom_pos)
 {
   PUSH_VALUE(kom_pos);
-  hashdata_invert_kom_pos(&board_hash, kom_pos);
+  hashdata_invert_kom_pos(&internal_state->board_hash, kom_pos);
   kom_pos = new_kom_pos;
-  hashdata_invert_kom_pos(&board_hash, kom_pos);
+  hashdata_invert_kom_pos(&internal_state->board_hash, kom_pos);
 }
 
 /* Variation of trymove()/tryko() where ko captures (both conditional
@@ -1349,8 +1351,8 @@ komaster_trymove(board_lib_state_struct *internal_state, int pos, int color, con
 
     /* Conditional ko capture, set komaster parameters. */
     if (komaster == EMPTY || komaster == WEAK_KO) {
-      set_new_komaster(color);
-      set_new_kom_pos(kpos);
+      set_new_komaster(internal_state, color);
+      set_new_kom_pos(internal_state, kpos);
       return 1;
     }
   }
@@ -1369,13 +1371,13 @@ komaster_trymove(board_lib_state_struct *internal_state, int pos, int color, con
      && (IS_STONE(internal_state->board[kom_pos])
          || (!is_ko(internal_state, kom_pos, other, NULL)
          && is_suicide(internal_state, kom_pos, other))))) {
-      set_new_komaster(EMPTY);
-      set_new_kom_pos(NO_MOVE);
+      set_new_komaster(internal_state, EMPTY);
+      set_new_kom_pos(internal_state, NO_MOVE);
     }
 
     if (komaster == WEAK_KO) {
-      set_new_komaster(EMPTY);
-      set_new_kom_pos(NO_MOVE);
+      set_new_komaster(internal_state, EMPTY);
+      set_new_kom_pos(internal_state, NO_MOVE);
     }
     
     return 1;
@@ -1383,21 +1385,21 @@ komaster_trymove(board_lib_state_struct *internal_state, int pos, int color, con
 
   if (komaster == other) {
     if (color == WHITE)
-      set_new_komaster(GRAY_BLACK);
+      set_new_komaster(internal_state, GRAY_BLACK);
     else
-      set_new_komaster(GRAY_WHITE);
+      set_new_komaster(internal_state, GRAY_WHITE);
   }
   else if (komaster == color) {
     /* This is where we update kom_pos after a nested capture. */
-    set_new_kom_pos(kpos);
+    set_new_kom_pos(internal_state, kpos);
   }
   else {
     /* We can reach here when komaster is EMPTY or WEAK_KO. If previous
      * move was also a ko capture, we now set komaster to WEAK_KO.
      */
     if (previous_board_ko_pos != NO_MOVE) {
-      set_new_komaster(WEAK_KO);
-      set_new_kom_pos(previous_board_ko_pos);
+      set_new_komaster(internal_state, WEAK_KO);
+      set_new_kom_pos(internal_state, previous_board_ko_pos);
     }
   }
   
@@ -1419,7 +1421,7 @@ get_kom_pos()
 
 /* Determine whether vertex is on the edge. */
 int
-is_edge_vertex(struct board_lib_state_struct *internal_state, int pos)
+is_edge_vertex(board_lib_state_struct *internal_state, int pos)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if (!ON_BOARD(internal_state, SW(pos))
@@ -1442,7 +1444,7 @@ edge_distance(struct board_lib_state_struct *internal_state, int pos)
 
 /* Determine whether vertex is a corner. */
 int
-is_corner_vertex(struct board_lib_state_struct *internal_state, int pos)
+is_corner_vertex(board_lib_state_struct *internal_state, int pos)
 {
   ASSERT_ON_BOARD1(internal_state, pos);
   if ((!ON_BOARD(internal_state, WEST(pos)) || !ON_BOARD(internal_state, EAST(pos)))
@@ -1824,7 +1826,7 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
 
   if (!libs) {
     /* First see if this result is cached. */
-    if (hashdata_is_equal(board_hash, entry->position_hash)
+    if (hashdata_is_equal(internal_state->board_hash, entry->position_hash)
 	&& maxlib <= entry->threshold) {
       return entry->liberties;
     }
@@ -1837,7 +1839,7 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
        */
       entry->threshold = MAXLIBS;
       entry->liberties = liberties;
-      entry->position_hash = board_hash;
+      entry->position_hash = internal_state->board_hash;
 
       return liberties;
     }
@@ -1856,7 +1858,7 @@ approxlib(struct board_lib_state_struct *internal_state, int pos, int color, int
     liberties = slow_approxlib(internal_state, pos, color, maxlib, libs);
 
   entry->liberties = liberties;
-  entry->position_hash = board_hash;
+  entry->position_hash = internal_state->board_hash;
 
 #else /* not USE_BOARD_CACHES */
 
@@ -2122,7 +2124,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
 
   if (!libs) {
     /* First see if this result is cached. */
-    if (hashdata_is_equal(board_hash, entry->position_hash)
+    if (hashdata_is_equal(internal_state->board_hash, entry->position_hash)
 	&& maxlib <= entry->threshold) {
       return entry->liberties;
     }
@@ -2135,7 +2137,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
        */
       entry->threshold = MAXLIBS;
       entry->liberties = liberties;
-      entry->position_hash = board_hash;
+      entry->position_hash = internal_state->board_hash;
 
       return liberties;
     }
@@ -2149,7 +2151,7 @@ accuratelib(struct board_lib_state_struct *internal_state, int pos, int color, i
    */
   entry->threshold = liberties < maxlib ? MAXLIBS : maxlib;
   entry->liberties = liberties;
-  entry->position_hash = board_hash;
+  entry->position_hash = internal_state->board_hash;
 
 #else /* not USE_BOARD_CACHES */
 
@@ -3132,7 +3134,7 @@ is_ko_point(struct board_lib_state_struct *internal_state, int pos)
 static int
 is_superko_violation(struct board_lib_state_struct *internal_state, int pos, int color, enum ko_rules type)
 {
-  Hash_data this_board_hash = board_hash;
+  Hash_data this_board_hash = internal_state->board_hash;
   Hash_data new_board_hash;
   int k;
 
@@ -3144,7 +3146,7 @@ is_superko_violation(struct board_lib_state_struct *internal_state, int pos, int
     hashdata_invert_ko(&this_board_hash, internal_state->board_ko_pos);
 
   really_do_trymove(internal_state, pos, color);
-  new_board_hash = board_hash;
+  new_board_hash = internal_state->board_hash;
   if (internal_state->board_ko_pos != NO_MOVE)
     hashdata_invert_ko(&new_board_hash, internal_state->board_ko_pos);
   undo_trymove(internal_state);
@@ -3245,7 +3247,7 @@ stones_on_board(struct board_lib_state_struct *internal_state, int color)
 
   gg_assert(internal_state, internal_state->stackp == 0);
 
-  if (stone_count_for_position != position_number) {
+  if (stone_count_for_position != internal_state->position_number) {
     int pos;
     white_stones = 0;
     black_stones = 0;
@@ -3256,7 +3258,7 @@ stones_on_board(struct board_lib_state_struct *internal_state, int color)
 	black_stones++;
     }
     
-    stone_count_for_position = position_number;
+    stone_count_for_position = internal_state->position_number;
   }
 
   return ((color & BLACK ? black_stones : 0) +
@@ -3306,7 +3308,7 @@ new_position(struct board_lib_state_struct *internal_state)
   int pos;
   int s;
 
-  position_number++;
+  internal_state->position_number++;
   next_string = 0;
   liberty_mark = 0;
   string_mark = 0;
@@ -4204,9 +4206,9 @@ do_play_move(struct board_lib_state_struct *internal_state, int pos, int color)
       && captured_stones == 1) {
     /* In case of a double ko: clear old ko position first. */
     if (internal_state->board_ko_pos != NO_MOVE)
-      hashdata_invert_ko(&board_hash, internal_state->board_ko_pos);
+      hashdata_invert_ko(&internal_state->board_hash, internal_state->board_ko_pos);
     internal_state->board_ko_pos = string_libs[s].list[0];
-    hashdata_invert_ko(&board_hash, internal_state->board_ko_pos);
+    hashdata_invert_ko(&internal_state->board_hash, internal_state->board_ko_pos);
   }
 }
 

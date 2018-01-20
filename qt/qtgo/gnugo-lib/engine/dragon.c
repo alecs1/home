@@ -125,8 +125,8 @@ make_dragons(struct board_lib_state_struct *internal_state,
    * involved dragons.
    */
   memset(cutting_points, 0, sizeof(cutting_points));
-  find_cuts();
-  find_connections();
+  find_cuts(internal_state);
+  find_connections(internal_state);
 
   /* At this time, all dragons have been finalized and we can
    * initialize the dragon2[] array. After that we can no longer allow
@@ -1653,8 +1653,8 @@ compute_new_dragons(struct board_lib_state_struct *internal_state,
     new_dragon_origins[pos] = find_origin(internal_state, pos);
     }
   
-  find_cuts();
-  find_connections();
+  find_cuts(internal_state);
+  find_connections(internal_state);
 
   memcpy(cutting_points, saved_cutting_points, sizeof(cutting_points));
   memcpy(dragon_origins, new_dragon_origins, sizeof(new_dragon_origins));
@@ -1692,7 +1692,7 @@ join_new_dragons(struct board_lib_state_struct *internal_state,
  */
 
 void 
-join_dragons(struct board_lib_state_struct *internal_state,
+join_dragons(board_lib_state_struct *internal_state,
              int d1, int d2)
 {
   int ii;

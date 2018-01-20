@@ -103,7 +103,8 @@ extern Transposition_table ttable;
 #define DEFAULT_NUMBER_OF_CACHE_ENTRIES 350000
 
 void tt_free(Transposition_table *table);
-int  tt_get(Transposition_table *table, enum routine_id routine,
+int  tt_get(board_lib_state_struct* internal_state,
+            Transposition_table *table, enum routine_id routine,
 	    int target1, int target2, int remaining_depth,
 	    Hash_data *extra_hash,
 	    int *value1, int *value2, int *move);

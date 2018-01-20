@@ -136,7 +136,7 @@ selected_line_exists(char *text, char start_char)
  * case, pass a NULL pointer for labels.
  */
 static void
-write_diagram(int movei, int movej, int color, int marki, int markj,
+write_diagram(board_lib_state_struct* internal_state, int movei, int movej, int color, int marki, int markj,
 	      char labels[MAX_BOARD][MAX_BOARD])
 {
   int i, j;
@@ -218,7 +218,7 @@ write_colon_line(int move_type, char symmetry, char *text)
 
 /* Check if the board and labels are symmetric. */
 static int
-board_is_symmetric(int n, char labels[MAX_BOARD][MAX_BOARD])
+board_is_symmetric(board_lib_state_struct* internal_state, int n, char labels[MAX_BOARD][MAX_BOARD])
 {
   int i;
   int j;
@@ -236,7 +236,7 @@ board_is_symmetric(int n, char labels[MAX_BOARD][MAX_BOARD])
 
 /* Write a pattern to stdout. */
 static void
-make_pattern(int movei, int movej, int color,
+make_pattern(board_lib_state_struct* internal_state, int movei, int movej, int color,
 	     int marki, int markj, int multiple_marks,
 	     char labels[MAX_BOARD][MAX_BOARD], char *text,
 	     const char *prefix)
@@ -255,11 +255,11 @@ make_pattern(int movei, int movej, int color,
   printf("\n");
 
   /* Write the main diagram. */
-  write_diagram(movei, movej, color, marki, markj, NULL);
+  write_diagram(internal_state, movei, movej, color, marki, markj, NULL);
   printf("\n");
 
   /* Write the colon line. */
-  if (movei == movej && marki == markj && board_is_symmetric(marki, labels))
+  if (movei == movej && marki == markj && board_is_symmetric(internal_state, marki, labels))
     symmetry = '/';
   write_colon_line(move_type, symmetry, text);
   printf("\n");
@@ -270,7 +270,7 @@ make_pattern(int movei, int movej, int color,
   if (labels
       || selected_line_exists(text, ';')
       || selected_line_exists(text, '>')) {
-    write_diagram(movei, movej, color, marki, markj, labels);
+    write_diagram(internal_state, movei, movej, color, marki, markj, labels);
 
     printf("\n");
 
@@ -287,7 +287,7 @@ make_pattern(int movei, int movej, int color,
     fprintf(stderr, "Warning: Multiple square marks in pattern %s%d\n",
 	    prefix, pattern_number);
 
-  if (is_suicide(POS(movei, movej), color)) {
+  if (is_suicide(internal_state, POS(movei, movej), color)) {
     fprintf(stderr, "Error: Illegal move in pattern %s%d\n",
 	    prefix, pattern_number);
     exit(EXIT_FAILURE);
@@ -299,7 +299,7 @@ make_pattern(int movei, int movej, int color,
  * recursive calls for child node and siblings.
  */
 static void
-analyze_node(struct board_lib_state_struct *internal_state, SGFNode *node, const char *prefix)
+analyze_node(board_lib_state_struct *internal_state, SGFNode *node, const char *prefix)
 {
   SGFProperty *prop;
   int i, j;
@@ -360,22 +360,22 @@ analyze_node(struct board_lib_state_struct *internal_state, SGFNode *node, const
   }
 
   /* If we have a move and a square mark, produce a pattern. */
-  if (SAFE_ON_BOARD(internal_state, movei, movej) && ON_BOARD2(internal_state, marki, markj))
-    make_pattern(movei, movej, color, marki, markj, multiple_marks,
+  if (SAFE_ON_BOARD(movei, movej) && ON_BOARD2(internal_state, marki, markj))
+    make_pattern(internal_state, movei, movej, color, marki, markj, multiple_marks,
 		 (label_found ? labels : NULL), comment, prefix);
 
   /* Traverse child, if any. */
   if (node->child) {
-    if (SAFE_ON_BOARD(internal_state, movei, movej))
-      tryko(POS(movei, movej), color, NULL);
-    analyze_node(node->child, prefix);
-    if (SAFE_ON_BOARD(internal_state, movei, movej))
+    if (SAFE_ON_BOARD(movei, movej))
+      tryko(internal_state, POS(movei, movej), color, NULL);
+    analyze_node(internal_state, node->child, prefix);
+    if (SAFE_ON_BOARD(movei, movej))
       popgo(internal_state);
   }
 
   /* Traverse sibling, if any. */
   if (node->next)
-    analyze_node(node->next, prefix);
+    analyze_node(internal_state, node->next, prefix);
 }
 
 
@@ -431,11 +431,13 @@ main(int argc, char *argv[])
 \n\n\
 "
 
+  board_lib_state_struct* internal_state = malloc(sizeof(board_lib_state_struct));
+
   printf(PREAMBLE);
   printf("attribute_map general\n\n");
 
   /* Call the engine to setup and clear the board. */
-  board_size = MAX_BOARD;
+  internal_state->board_size = MAX_BOARD;
   clear_board(internal_state);
   
   /* Determine board size of the file. */
@@ -445,7 +447,9 @@ main(int argc, char *argv[])
   }
   
   /* Walk through the tree and make patterns. */
-  analyze_node(sgf, prefix);
+  analyze_node(internal_state, sgf, prefix);
+
+  free(internal_state);
     
   return 0;
 }

@@ -2910,7 +2910,7 @@ eyegraph_trymove(board_lib_state_struct *internal_state,
   static Hash_data remembered_board_hashes[MAXSTACK];
   int k;
   
-  remembered_board_hashes[internal_state->stackp] = board_hash;
+  remembered_board_hashes[internal_state->stackp] = internal_state->board_hash;
 
   if (!trymove(internal_state, pos, color, message, str)) {
     int ko_threat_pos = NO_MOVE;
@@ -2941,7 +2941,7 @@ eyegraph_trymove(board_lib_state_struct *internal_state,
     return 1;
 
   for (k = 0; k < internal_state->stackp; k++)
-    if (hashdata_is_equal(board_hash, remembered_board_hashes[k])) {
+    if (hashdata_is_equal(internal_state->board_hash, remembered_board_hashes[k])) {
       popgo(internal_state);
       return 0;
     }

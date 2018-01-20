@@ -102,7 +102,7 @@ class GtkWidgetProps {
         unsigned short windowOpacity;
 
         int widgetMask;
-        DEF_WIDGET_SIG_CONN_PROPS(shadowDestroy);
+        DEF_WIDGET_SIG_CONN_PROPS(internal_state->shadowDestroy);
 
         DEF_WIDGET_SIG_CONN_PROPS(entryEnter);
         DEF_WIDGET_SIG_CONN_PROPS(entryLeave);

@@ -535,14 +535,13 @@ sgfAddPlayLast(SGFNode *node, int who, int movex, int movey)
 
 
 SGFNode *
-sgfCreateHeaderNode(struct board_lib_state_struct *internal_state,
-                    int boardsize, float komi, int handicap)
+sgfCreateHeaderNode(int boardsize, float komi, int handicap)
 {
     SGFNode *root = sgfNewNode();
 
-    sgfAddPropertyInt(root, "SZ", internal_state->boardsize);
-    sgfAddPropertyFloat(root, "KM", internal_state->komi);
-    sgfAddPropertyInt(root, "HA", internal_state->handicap);
+    sgfAddPropertyInt(root, "SZ", boardsize);
+    sgfAddPropertyFloat(root, "KM", komi);
+    sgfAddPropertyInt(root, "HA", handicap);
 
     return root;
 }
@@ -845,7 +844,7 @@ sgf_write_header(SGFNode *root, int overwrite, int seed, float komi,
   if (overwrite || !sgfGetIntProperty(root, "RU", &dummy))
     sgfOverwriteProperty(root, "RU", rules ? "Chinese" : "Japanese");
   sgfOverwritePropertyFloat(root, "KM", komi);
-  sgfOverwritePropertyInt(root, "HA", internal_state->handicap);
+  sgfOverwritePropertyInt(root, "HA", handicap);
 
   sgf_write_header_reduced(root, overwrite);
 }
@@ -1140,7 +1139,7 @@ gametreefuseki(SGFNode **p, SGFNode *parent, int mode,
 }
 
 SGFNode *
-readsgffilefuseki(board_lib_state_struct *internal_state, const char *filename, int moves_per_game)
+readsgffilefuseki(const char *filename, int moves_per_game)
 {
   SGFNode *root;
   int tmpi = 0;

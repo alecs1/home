@@ -49,7 +49,7 @@ void start_timer(board_lib_state_struct *internal_state,
 double time_report(board_lib_state_struct *internal_state,
                    int n, const char *occupation, int move, double mintime);
 void showstats(board_lib_state_struct *internal_state);
-void clearstats(void);
+void clearstats(board_lib_state_struct* internal_state);
 
 void transformation_init(void);
 
@@ -401,8 +401,8 @@ void propagate_worm(board_lib_state_struct *internal_state,
                     int pos);
 int examine_cavity(board_lib_state_struct *internal_state,
                    int pos, int *edge);
-void find_cuts(void);
-void find_connections(void);
+void find_cuts(board_lib_state_struct *internal_state);
+void find_connections(board_lib_state_struct *internal_state);
 
 /* movelist.c */
 int movelist_move_known(int move, int max_points, int points[], int codes[]);

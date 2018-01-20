@@ -71,8 +71,8 @@ struct _unused_patterns_h {
 };
 
 
-#define ATTACK_MACRO(pos) ((stackp == 0) ? (worm[pos].attack_codes[0]) : attack(pos, NULL))
-#define DEFEND_MACRO(pos) ((stackp == 0) ? (worm[pos].defense_codes[0]) : find_defense(pos, NULL))
+#define ATTACK_MACRO(pos) ((internal_state->stackp == 0) ? (worm[pos].attack_codes[0]) : attack(internal_state, pos, NULL))
+#define DEFEND_MACRO(pos) ((internal_state->stackp == 0) ? (worm[pos].defense_codes[0]) : find_defense(internal_state, pos, NULL))
 
 struct pattern; /* forward reference to keep gcc happy */
 

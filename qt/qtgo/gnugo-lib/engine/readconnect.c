@@ -2068,7 +2068,7 @@ recursive_connect2(board_lib_state_struct *internal_state,
   str2 = find_origin(internal_state, str2);
 
   if (internal_state->stackp <= depth && !has_passed
-      && tt_get(&ttable, CONNECT, str1, str2, depth - internal_state->stackp, NULL,
+      && tt_get(internal_state, &ttable, CONNECT, str1, str2, depth - internal_state->stackp, NULL,
 		&value, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT2(value, value, xpos);
     if (value != 0)
@@ -2237,7 +2237,7 @@ recursive_disconnect2(board_lib_state_struct *internal_state,
   internal_state->count_variations = save_count_variations;
 
   if (internal_state->stackp <= depth
-      && tt_get(&ttable, DISCONNECT, str1, str2,
+      && tt_get(internal_state, &ttable, DISCONNECT, str1, str2,
 		depth - internal_state->stackp, NULL,
 		&value, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT2(value, value, xpos);
@@ -2942,7 +2942,7 @@ recursive_break(board_lib_state_struct *internal_state,
 
   str = find_origin(internal_state, str);
   if (internal_state->stackp <= depth && !has_passed
-      && tt_get(&ttable, BREAK_IN, str, NO_MOVE, depth - internal_state->stackp, goal_hash,
+      && tt_get(internal_state, &ttable, BREAK_IN, str, NO_MOVE, depth - internal_state->stackp, goal_hash,
 		&retval, NULL, &xpos) == 2) {
     /* FIXME: Use move for move ordering if tt_get() returned 1 */
     TRACE_CACHED_RESULT(retval, xpos);
@@ -3062,7 +3062,7 @@ recursive_block(board_lib_state_struct *internal_state,
   
   str = find_origin(internal_state, str);
   if (internal_state->stackp <= depth
-      && tt_get(&ttable, BLOCK_OFF, str, NO_MOVE,
+      && tt_get(internal_state, &ttable, BLOCK_OFF, str, NO_MOVE,
 		depth - internal_state->stackp, goal_hash, &retval, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT(retval, xpos);
     SGFTRACE(internal_state, xpos, retval, "cached");

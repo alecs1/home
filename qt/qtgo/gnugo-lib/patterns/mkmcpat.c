@@ -116,10 +116,12 @@ main(int argc, char *argv[])
   printf("#include \"liberty.h\"\n\n");
   printf("#include \"patterns.h\"\n\n");
 
+  board_lib_state_struct* internal_state = malloc(sizeof(board_lib_state_struct));
+
   values = malloc(N * sizeof(*values));
 
   for (i = 1; i < argc; i++) {
-    if (!mc_load_patterns_from_db(argv[i], values))
+    if (!mc_load_patterns_from_db(internal_state, argv[i], values))
       exit(EXIT_FAILURE);
 
     name = copy_and_trim_name(argv[i]);

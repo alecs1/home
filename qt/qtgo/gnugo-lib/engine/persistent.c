@@ -334,10 +334,10 @@ purge_persistent_cache(board_lib_state_struct *internal_state,
   gg_assert(internal_state, internal_state->stackp == 0);
 
   /* Never do this more than once per move. */
-  if (cache->last_purge_position_number == position_number)
+  if (cache->last_purge_position_number == internal_state->position_number)
     return;
   else
-    cache->last_purge_position_number = position_number;
+    cache->last_purge_position_number = internal_state->position_number;
 
   for (k = 0; k < cache->current_size; k++) {
     int played_moves = 0;

@@ -1245,7 +1245,7 @@ do_find_defense(board_lib_state_struct *internal_state,
     xpos = *move;
 
   if (internal_state->stackp <= depth
-      && tt_get(&ttable, FIND_DEFENSE, str, NO_MOVE, depth - internal_state->stackp, NULL,
+      && tt_get(internal_state, &ttable, FIND_DEFENSE, str, NO_MOVE, depth - internal_state->stackp, NULL,
 		&retval, NULL, &xpos) == 2) {
     /* Note that if return value is 1 (too small depth), the move will
      * still be used for move ordering.
@@ -2908,7 +2908,7 @@ do_attack(board_lib_state_struct *internal_state,
    * still be used for move ordering.
    */
   if (internal_state->stackp <= depth
-      && tt_get(&ttable, ATTACK, str, NO_MOVE, depth - internal_state->stackp, NULL,
+      && tt_get(internal_state, &ttable, ATTACK, str, NO_MOVE, depth - internal_state->stackp, NULL,
 		&retval, NULL, &xpos) == 2) {
     TRACE_CACHED_RESULT(retval, xpos);
     SGFTRACE(internal_state, xpos, retval, "cached");
@@ -5548,7 +5548,7 @@ safe_move(board_lib_state_struct *internal_state,
    */
   if (internal_state->stackp == 0
       && depth_offset == 0
-      && safe_move_cache_when[move][color == BLACK] == position_number)
+      && safe_move_cache_when[move][color == BLACK] == internal_state->position_number)
     return safe_move_cache[move][color == BLACK];
 
   /* Otherwise calculate the value... */
@@ -5569,8 +5569,8 @@ safe_move(board_lib_state_struct *internal_state,
   if (internal_state->stackp == 0 && depth_offset == 0) {
     if (0)
       gprintf(internal_state, "Safe move at %1m for %s cached when depth=%d, position number=%d\n",
-          move, color_to_string(internal_state, color), depth, position_number);
-    safe_move_cache_when[move][color == BLACK] = position_number;
+          move, color_to_string(internal_state, color), depth, internal_state->position_number);
+    safe_move_cache_when[move][color == BLACK] = internal_state->position_number;
     safe_move_cache[move][color == BLACK] = safe;
   }
 

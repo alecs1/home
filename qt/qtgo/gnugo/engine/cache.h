@@ -53,7 +53,7 @@
  *   value2         :  4 bits
  *   move           : 10 bits
  *   cost           :  4 bits
- *   remaining_depth:  5 bits (depth - stackp)  NOTE: HN_MAX_REMAINING_DEPTH
+ *   remaining_depth:  5 bits (depth - internal_state->stackp)  NOTE: HN_MAX_REMAINING_DEPTH
  *
  *   The last 9 bits together give an index for the total costs.
  */
@@ -123,24 +123,24 @@ void tt_update(Transposition_table *table, enum routine_id routine,
 #if TRACE_READ_RESULTS
 
 #define TRACE_CACHED_RESULT(result, move) \
-      gprintf("%o%s %1m %d %d %1m (cached) ", read_function_name, \
-	      q, stackp, result, move); \
-      dump_stack();
+      gprintf(internal_state, "%o%s %1m %d %d %1m (cached) ", read_function_name, \
+	      q, internal_state->stackp, result, move); \
+      dump_stack(internal_state);
 
 #define TRACE_CACHED_RESULT2(result1, result2, move) \
-      gprintf("%o%s %1m %1m %d %d %d %1m (cached) ", read_function_name, \
-	      q1, q2, stackp, result1, result2, move); \
-      dump_stack();
+      gprintf(internal_state, "%o%s %1m %1m %d %d %d %1m (cached) ", read_function_name, \
+	      q1, q2, internal_state->stackp, result1, result2, move); \
+      dump_stack(internal_state);
 
 
 #define SETUP_TRACE_INFO(name, str) \
   const char *read_function_name = name; \
-  int q = find_origin(str);
+  int q = find_origin(internal_state, str);
 
 #define SETUP_TRACE_INFO2(name, str1, str2) \
   const char *read_function_name = name; \
-  int q1 = board[str1] == EMPTY ? str1 : find_origin(str1); \
-  int q2 = board[str2] == EMPTY ? str2 : find_origin(str2);
+  int q1 = internal_state->board[str1] == EMPTY ? str1 : find_origin(internal_state, str1); \
+  int q2 = internal_state->board[str2] == EMPTY ? str2 : find_origin(internal_state, str2);
 
 #else
 
@@ -174,20 +174,20 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
  * and q. These must of course not be used for anything else in
  * the function.
  */
-#define SGFTRACE(move, result, message) \
-  if (sgf_dumptree) \
+#define SGFTRACE(internal_state, move, result, message) \
+  if (internal_state->sgf_dumptree) \
     sgf_trace(read_function_name, q, move, result, message)
 
 /* Corresponding macro for use in connection or semeai reading, where
  * two groups are involved.
  */
 #define SGFTRACE2(move, result, message) \
-  if (sgf_dumptree) \
+  if (internal_state->sgf_dumptree) \
     sgf_trace2(read_function_name, q1, q2, move, \
 	       result_to_string(result), message)
 
-#define SGFTRACE_SEMEAI(move, result1, result2, message) \
-  if (sgf_dumptree) \
+#define SGFTRACE_SEMEAI(internal_state, move, result1, result2, message) \
+  if (internal_state->sgf_dumptree) \
     sgf_trace_semeai(read_function_name, q1, q2, move, \
 	             result1, result2, message)
 
@@ -255,8 +255,8 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
   do { \
     tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
 	      0, 0, NO_MOVE);\
-    gprintf("%o%s %1m %d 0 0 ", read_function_name, q, stackp); \
-    dump_stack(); \
+    gprintf(internal_state, "%o%s %1m %d 0 0 ", read_function_name, q, internal_state->stackp); \
+    dump_stack(internal_state); \
     return 0; \
   } while (0)
 
@@ -265,9 +265,9 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
     tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
               value, 0, move);\
     if ((value) != 0 && (point) != 0) *(point) = (move); \
-    gprintf("%o%s %1m %d %d %1m ", read_function_name, q, stackp, \
+    gprintf(internal_state, "%o%s %1m %d %d %1m ", read_function_name, q, internal_state->stackp, \
 	    (value), (move)); \
-    dump_stack(); \
+    dump_stack(internal_state); \
     return (value); \
   } while (0)
 
@@ -276,9 +276,9 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
     tt_update(&ttable, routine, str1, str2, remaining_depth, NULL, \
               value1, value2, move); \
     if ((value1) != 0 && (point) != 0) *(point) = (move); \
-    gprintf("%o%s %1m %1m %d %d %d %1m ", read_function_name, q1, q2, stackp, \
+    gprintf(internal_state, "%o%s %1m %1m %d %d %d %1m ", read_function_name, q1, q2, internal_state->stackp, \
 	    (value1), (value2), (move)); \
-    dump_stack(); \
+    dump_stack(internal_state); \
     return; \
   } while (0)
 
@@ -287,9 +287,9 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
     tt_update(&ttable, routine, str1, str2, remaining_depth, NULL,\
               value, 0, move);\
     if ((value) != 0 && (point) != 0) *(point) = (move); \
-    gprintf("%o%s %1m %1m %d %d %1m ", read_function_name, q1, q2, stackp, \
+    gprintf(internal_state, "%o%s %1m %1m %d %d %1m ", read_function_name, q1, q2, internal_state->stackp, \
 	    (value), (move)); \
-    dump_stack(); \
+    dump_stack(internal_state); \
     return (value); \
   } while (0)
 
@@ -298,9 +298,9 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
     tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, hash,\
               value, 0, move);\
     if ((value) != 0 && (point) != 0) *(point) = (move); \
-    gprintf("%o%s %1m %d %d %1m ", read_function_name, q, stackp, \
+    gprintf(internal_state, "%o%s %1m %d %d %1m ", read_function_name, q, internal_state->stackp, \
 	    (value), (move)); \
-    dump_stack(); \
+    dump_stack(internal_state); \
     return (value); \
   } while (0)
 
@@ -309,9 +309,9 @@ void sgf_trace_semeai(const char *func, int str1, int str2, int move,
     tt_update(&ttable, routine, str, NO_MOVE, remaining_depth, NULL,\
               value1, value2, move);\
     if ((value1) != 0 && (point) != 0) *(point) = (move); \
-    gprintf("%o%s %1m %d %d %1m ", read_function_name, q, stackp, \
+    gprintf(internal_state, "%o%s %1m %d %d %1m ", read_function_name, q, internal_state->stackp, \
 	    (value1), (move)); \
-    dump_stack(); \
+    dump_stack(internal_state); \
     return (value1); \
   } while (0)
 

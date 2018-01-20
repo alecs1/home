@@ -347,7 +347,7 @@ play_gtp(FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
   
   /* Prepare pattern matcher and reading code. */
   reset_engine(internal_state);
-  clearstats();
+  clearstats(internal_state);
   gtp_main_loop(commands, gtp_input, gtp_output, gtp_dump_commands);
   if (showstatistics)
     showstats(internal_state);
@@ -1226,7 +1226,7 @@ gtp_tryko(char *s)
   if (!gtp_decode_move(s, &color, &i, &j) || POS(i, j) == PASS_MOVE)
     return gtp_failure("invalid color or coordinate");
 
-  if (!tryko(POS(i, j), color, "gtp_tryko"))
+  if (!tryko(internal_state, POS(i, j), color, "gtp_tryko"))
     return gtp_failure("illegal move");
 
   return gtp_success("");
@@ -2388,7 +2388,7 @@ gtp_aa_confirm_safety(char *s)
   get_saved_dragons(POS(i, j), saved_dragons);
   get_saved_worms(POS(i, j), saved_worms);
   
-  if (!tryko(POS(i, j), color, NULL))
+  if (!tryko(internal_state, POS(i, j), color, NULL))
     return gtp_failure("invalid move");
   popgo(internal_state);
 

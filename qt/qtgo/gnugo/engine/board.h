@@ -177,7 +177,7 @@ const char *color_to_string(int color);
 #define BOARD(i, j)   board[POS(i, j)]
 
 
-#define MIRROR_MOVE(pos) POS(board_size - 1 - I(pos), board_size - 1 - J(pos))
+#define MIRROR_MOVE(internal_state, pos) POS(internal_state->board_size - 1 - I(pos), internal_state->board_size - 1 - J(pos))
 
 /* ================================================================ */
 /*                         global variables                         */
@@ -327,7 +327,7 @@ int neighbor_of_string(int pos, int str);
 int has_neighbor(int pos, int color);
 int same_string(int str1, int str2);
 int adjacent_strings(int str1, int str2);
-void mark_string(struct board_lib_state_struct *internal_state, int str, signed char mx[BOARDMAX], signed char mark);
+void mark_string(int str, signed char mx[BOARDMAX], signed char mark);
 int are_neighbors(int pos1, int pos2);
 
 /* Count and/or find liberties at (pos). */
@@ -377,11 +377,11 @@ void clear_accuratelib_cache(void);
 		         (unsigned) (j) < (unsigned) board_size)
 #endif
 
-#define ASSERT_ON_BOARD2(i, j) ASSERT2(ON_BOARD2((i), (j)), (i), (j))
+#define ASSERT_ON_BOARD2(internal_state, i, j) ASSERT2(ON_BOARD2((i), (j)), (i), (j))
 
-#define ON_BOARD1(pos) (((unsigned) (pos) < BOARDSIZE) && board[pos] != GRAY)
-#define ON_BOARD(pos) (board[pos] != GRAY)
-#define ASSERT_ON_BOARD1(pos) ASSERT1(ON_BOARD1(pos), (pos))
+#define ON_BOARD1(pos) (((unsigned) (pos) < BOARDSIZE) && internal_state->board[pos] != GRAY)
+#define ON_BOARD(pos) (internal_state->board[pos] != GRAY)
+#define ASSERT_ON_BOARD1(internal_state, pos) ASSERT1(internal_state, ON_BOARD1(pos), (pos))
 
 /* Coordinates for the eight directions, ordered
  * south, west, north, east, southwest, northwest, northeast, southeast.
@@ -448,15 +448,15 @@ void abortgo(const char *file, int line, const char *msg, int pos)
 
 #ifdef GG_TURN_OFF_ASSERTS
 #define ASSERT2(x, i, j)
-#define ASSERT1(x, pos)
+#define ASSERT1(internal_state, x, pos)
 #else
 /* avoid dangling else */
 /* FIXME: Should probably re-write these using do {...} while (0) idiom. */
-#define ASSERT2(x, i, j) if (x) ; else abortgo(__FILE__, __LINE__, #x, POS(i, j))
-#define ASSERT1(x, pos) if (x) ; else abortgo(__FILE__, __LINE__, #x, pos)
+#define ASSERT2(x, i, j) if (x) ; else abortgo(internal_state, __FILE__, __LINE__, #x, POS(i, j))
+#define ASSERT1(internal_state, x, pos) if (x) ; else abortgo(internal_state, __FILE__, __LINE__, #x, pos)
 #endif
 
-#define gg_assert(x) ASSERT1(x, NO_MOVE)
+#define gg_assert(x) ASSERT1(internal_state, x, NO_MOVE)
 
 /* Are we using valgrind memory checking? */
 #if USE_VALGRIND

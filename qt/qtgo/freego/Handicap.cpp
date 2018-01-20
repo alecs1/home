@@ -75,7 +75,7 @@ void Handicap::showKomiMenu() {
 void Handicap::setKomi(float value) {
     handicap.komi = value;
     QString komiVal = QString::number(value, 'g', 2);
-    ui->komiButton->setText("Komi: " + komiVal);
+    ui->komiButton->setText("Komi: " + internal_state->komiVal);
     ui->komiEdit->setText(komiVal);
     for(int i = 0; i < defaultKomiValues.size(); i++) {
         if (fabs(defaultKomiValues[i] - value) < 0.1) {

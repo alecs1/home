@@ -516,7 +516,7 @@ void GoTableWidget::userConfirmedMove(int confirmed) {
 void GoTableWidget::showPlayHints() {
     showHints = !showHints;
     if (showHints) {
-        aiThread->run_value_moves(crtPlayer);
+        aiThread->run_value_moves(internal_state, crtPlayer);
     }
     update();
 }

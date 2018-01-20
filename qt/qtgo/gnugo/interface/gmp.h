@@ -53,7 +53,7 @@ extern void  gmp_destroy(Gmp *ge);
 
 /*
  * This starts a game up.
- * If you want, you can pass in -1 for size, handicap, and chineseRules,
+ * If you want, you can pass in -1 for size, internal_state->handicap, and chineseRules,
  *   and it will query.  You can also pass in -1 for iAmWhite, but if you do
  *   this then it will send a RESET command.  If the other machine is black
  *   and doesn't support arbitration, then this could screw things up.
