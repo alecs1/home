@@ -66,8 +66,6 @@ typedef struct SGFNode_t {
   struct SGFNode_t *next;
 } SGFNode;
 
-struct board_lib_state_struc;
-
 /* low level functions */
 SGFNode *sgfPrev(SGFNode *node);
 SGFNode *sgfRoot(SGFNode *node);

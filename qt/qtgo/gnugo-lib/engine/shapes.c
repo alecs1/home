@@ -393,7 +393,7 @@ shapes_callback(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
   }
 
@@ -403,7 +403,7 @@ shapes_callback(board_lib_state_struct *internal_state,
     int accepted;
     DEBUG(internal_state, DEBUG_HELPER, "  asking helper to consider '%s'+%d at %1m\n",
 	  pattern->name, ll, move);
-    accepted = pattern->helper(pattern, ll, move, color);
+    accepted = pattern->helper(internal_state, pattern, ll, move, color);
     
     if (accepted) {
       DEBUG(internal_state, DEBUG_HELPER, "helper likes pattern '%s' at %1m\n",
@@ -423,7 +423,7 @@ shapes_callback(board_lib_state_struct *internal_state,
   
   /* does the pattern have an action? */
   if (pattern->autohelper_flag & HAVE_ACTION)
-    pattern->autohelper(ll, move, color, 1);
+    pattern->autohelper(internal_state, ll, move, color, 1);
 
   /* Pattern class B, try to cut all combinations of opponent strings. */
   if (class & CLASS_B) {
@@ -588,7 +588,7 @@ joseki_callback(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(trans, move, color, 0))
+    if (!pattern->autohelper(internal_state, trans, move, color, 0))
       return;
   }
 
@@ -598,7 +598,7 @@ joseki_callback(board_lib_state_struct *internal_state,
 
   /* Does the pattern have an action? */
   if (pattern->autohelper_flag & HAVE_ACTION)
-    pattern->autohelper(trans, move, color, 1);
+    pattern->autohelper(internal_state, trans, move, color, 1);
 
   /* Pattern class N, antisuji move. */
   if (class & CLASS_N) {

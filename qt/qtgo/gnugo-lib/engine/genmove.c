@@ -261,7 +261,7 @@ genmove(struct board_lib_state_struct *internal_state,
 
 #if ORACLE
   if (metamachine) {
-    move = metamachine_genmove(color, value, limit_search);
+    move = metamachine_genmove(internal_state, color, value, limit_search);
     gg_assert(internal_state, internal_state->stackp == 0);
     if (move != PASS_MOVE)
       return move;

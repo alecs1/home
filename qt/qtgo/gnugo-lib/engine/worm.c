@@ -1606,7 +1606,7 @@ attack_callback(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
   }
 
@@ -1614,7 +1614,7 @@ attack_callback(board_lib_state_struct *internal_state,
    * be rejected.
    */
   if (pattern->helper) {
-    if (!pattern->helper(pattern, ll, move, color)) {
+    if (!pattern->helper(internal_state, pattern, ll, move, color)) {
       DEBUG(internal_state, DEBUG_WORMS,
 	    "Attack pattern %s+%d rejected by helper at %1m\n",
 	    pattern->name, ll, move);
@@ -1695,7 +1695,7 @@ defense_callback(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
   }
 
@@ -1703,7 +1703,7 @@ defense_callback(board_lib_state_struct *internal_state,
    * be rejected.
    */
   if (pattern->helper) {
-    if (!pattern->helper(pattern, ll, move, color)) {
+    if (!pattern->helper(internal_state, pattern, ll, move, color)) {
       DEBUG(internal_state, DEBUG_WORMS,
 	    "Defense pattern %s+%d rejected by helper at %1m\n",
 	    pattern->name, ll, move);

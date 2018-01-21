@@ -405,7 +405,7 @@ free_handicap_callback(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
   }
   
@@ -418,7 +418,7 @@ free_handicap_callback(board_lib_state_struct *internal_state,
     for (k = 0; k < number_of_matches; k++) {
       if (handicap_matches[k].value < least_value) {
 	r = k;
-	least_value = handicap_matches[k].value;
+    least_value = handicap_matches[k].value;
       }
     }
   }

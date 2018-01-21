@@ -3846,7 +3846,7 @@ check_pattern_hard(board_lib_state_struct *internal_state,
   /* If the constraint is cheap to check, we do this first. */
   if ((pattern->autohelper_flag & HAVE_CONSTRAINT)
       && pattern->constraint_cost < 0.45) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return 0;
     constraint_checked = 1;
   }
@@ -3885,7 +3885,7 @@ check_pattern_hard(board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if ((pattern->autohelper_flag & HAVE_CONSTRAINT) && !constraint_checked)
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return 0;
   return 1;
 }
@@ -4647,7 +4647,7 @@ owl_shapes_callback(board_lib_state_struct *internal_state,
     gg_assert(internal_state, 0);
     DEBUG(internal_state, DEBUG_HELPER, "  asking helper to consider '%s'+%d at %1m\n",
 	  pattern->name, ll, move);
-    tval = pattern->helper(pattern, ll, move, color);
+    tval = pattern->helper(internal_state, pattern, ll, move, color);
     
     if (tval > 0) {
       DEBUG(internal_state, DEBUG_HELPER, "helper likes pattern '%s' value %d at %1m\n",

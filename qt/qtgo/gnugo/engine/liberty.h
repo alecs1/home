@@ -194,7 +194,7 @@ void matchpat_goal_anchor(matchpat_callback_fn_ptr callback, int color,
 void fullboard_matchpat(board_lib_state_struct *internal_state,
                         fullboard_matchpat_callback_fn_ptr callback,
 			int color, struct fullboard_pattern *pattern);
-void corner_matchpat(internal_state, corner_matchpat_callback_fn_ptr callback, int color,
+void corner_matchpat(board_lib_state_struct* internal_state, corner_matchpat_callback_fn_ptr callback, int color,
 		     struct corner_db *database);
 void dfa_match_init(void);
 
@@ -361,7 +361,7 @@ void add_lunch(int eater, int food);
 void add_attack_move(int pos, int ww, int code);
 void add_defense_move(int pos, int ww, int code);
 void add_attack_threat_move(int pos, int ww, int code);
-void remove_attack_threat_move(internal_state, int pos, int ww);
+void remove_attack_threat_move(board_lib_state_struct* internal_state, int pos, int ww);
 void add_defense_threat_move(int pos, int ww, int code);
 void add_connection_move(int pos, int dr1, int dr2);
 void add_cut_move(int pos, int dr1, int dr2);
@@ -497,7 +497,8 @@ int review_move_reasons(int *move, float *value, int color,
 			int use_thrashing_dragon_heuristics);
 void prepare_move_influence_debugging(int pos, int color);
 int fill_liberty(int *move, int color);
-int aftermath_genmove(internal_stateint color, int do_capture_dead_stones,
+int aftermath_genmove(board_lib_state_struct* internal_state,
+                      int color, int do_capture_dead_stones,
 		      int allowed_moves[BOARDMAX]);
 enum dragon_status aftermath_final_status(int color, int pos);
 

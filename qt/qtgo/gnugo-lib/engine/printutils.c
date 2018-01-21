@@ -172,7 +172,8 @@ vgprintf(struct board_lib_state_struct *internal_state, FILE *outputfile, const 
  */
 
 void 
-gfprintf(struct board_lib_state_struct *internal_state, FILE *outfile, const char *fmt, ...)
+gfprintf(board_lib_state_struct *internal_state,
+         FILE *outfile, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);

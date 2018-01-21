@@ -117,7 +117,7 @@ SGFNode *readsgffile(const char *filename);
 SGFNode *
 readsgfStream(FILE* auxFile);
 /* Specific solution for fuseki */
-SGFNode *readsgffilefuseki(internal_state, const char *filename, int moves_per_game);
+SGFNode *readsgffilefuseki(struct board_lib_state_struct* internal_state, const char *filename, int moves_per_game);
 
 /* Write SGF tree to a file. */
 int writesgf(SGFNode *root, const char *filename);

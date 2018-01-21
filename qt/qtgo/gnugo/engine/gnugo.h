@@ -113,7 +113,7 @@ enum dragon_status {
 int check_boardsize(int boardsize, FILE *out);
 void gnugo_clear_board(int boardsize);
 void gnugo_play_move(int move, int color);
-int gnugo_play_sgfnode(SGFNode *node, int to_move);
+int gnugo_play_sgfnode(board_lib_state_struct* internal_state, sgFNode *node, int to_move);
 int gnugo_sethand(int desired_handicap, SGFNode *node);
 float gnugo_estimate_score(float *upper, float *lower);
 
@@ -129,11 +129,11 @@ typedef struct {
   int computer_player;	/* BLACK, WHITE, or EMPTY (used as BOTH) */
 } Gameinfo;
 
-void gameinfo_clear(Gameinfo *ginfo);
-void gameinfo_print(Gameinfo *ginfo);
+void gameinfo_clear(internal_state, gameinfo *ginfo);
+void gameinfo_print(internal_state, gameinfo *ginfo);
 int gameinfo_play_sgftree_rot(Gameinfo *gameinfo, SGFTree *tree,
 			      const char *untilstr, int orientation);
-int gameinfo_play_sgftree(Gameinfo *gameinfo, SGFTree *tree,
+int gameinfo_play_sgftree(internal_state, gameinfo *gameinfo, SGFTree *tree,
 			  const char *untilstr);
 
 
@@ -377,7 +377,7 @@ void prepare_pattern_profiling(void);
 void report_pattern_profiling(void);
 
 /* sgffile.c */
-void sgffile_add_debuginfo(SGFNode *node, float value);
+void sgffile_add_debuginfo(internal_state, sGFNode *node, float value);
 void sgffile_output(SGFTree *tree);
 
 void sgffile_printsgf(int color_to_play, const char *filename);

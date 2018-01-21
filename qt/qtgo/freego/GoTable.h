@@ -8,6 +8,9 @@
 #include "Settings.h"
 
 #include <sgf/sgftree.h>
+//#include "engine/structures.h"
+
+struct board_lib_state_struct;
 
 class QMutex;
 
@@ -18,7 +21,7 @@ public:
     AIThread(QMutex* mutex);
     bool run_genmove(int color, int AIStrength);
     bool run_gnugo_estimate_score();
-    void run_value_moves(int colour);
+    void run_value_moves(board_lib_state_struct* internal_state, int colour);
 
 public:
     QMutex* mutex = nullptr;
@@ -34,6 +37,8 @@ private:
         do_genmove = 1,
         gnugo_estimate_score
     };
+
+    board_lib_state_struct* internal_state;
 
     struct Parameters {
         OpType operation;
@@ -109,6 +114,7 @@ protected:
     void updateLogic();
 
 protected:
+    board_lib_state_struct* internal_state;
     GameStruct game;
     int crtPlayer = 1;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK

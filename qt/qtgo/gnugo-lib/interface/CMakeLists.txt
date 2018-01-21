@@ -10,7 +10,7 @@ SET(gnugo_SRCS
     main.c
     play_ascii.c
     play_gmp.c
-    play_gtp.c
+    #play_gtp.c #removed for now to enable compilation
     play_solo.c
     play_test.c
     gmp.c

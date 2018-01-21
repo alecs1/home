@@ -15,15 +15,15 @@ extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
 #include "engine/gnugo.h"
 #include "engine/liberty.h"
-void init_gnugo(float memory, unsigned int seed);
+//void init_gnugo(float memory, unsigned int seed);
 //void compute_scores(int use_chinese_rules);
-float gnugo_estimate_score(float *upper, float *lower);
+//float gnugo_estimate_score(float *upper, float *lower);
 void value_moves(int color, float pure_threat_value, float our_score,
             int use_thrashing_dragon_heuristics);
 }
 
 extern "C" {
-int get_sgfmove(SGFProperty *property);
+//int get_sgfmove(SGFProperty *property);
 }
 
 
@@ -60,11 +60,11 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
         switch (sgf_prop->name) {
         case SGFAB:
             /* add black */
-            add_stone(internal_state, get_sgfmove(sgf_prop), BLACK);
+            add_stone(internal_state, get_sgfmove(internal_state, sgf_prop), BLACK);
             break;
         case SGFAW:
             /* add white */
-            add_stone(internal_state, get_sgfmove(sgf_prop), WHITE);
+            add_stone(internal_state, get_sgfmove(internal_state, sgf_prop), WHITE);
             break;
         case SGFB:
         case SGFW:
@@ -77,7 +77,7 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
     if (!move_prop)
         return;
 
-    old_move = get_sgfmove(move_prop);
+    old_move = get_sgfmove(internal_state, move_prop);
     color = (move_prop->name == SGFW) ? WHITE : BLACK;
 
     if (color == color_to_replay || color_to_replay == GRAY) {
@@ -86,7 +86,7 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
 
         /* Get a move from the engine for color. */
         int resign;
-        new_move = genmove(color, NULL, &resign);
+        new_move = genmove(internal_state, color, NULL, &resign);
 
         /* Pick up the relevant values from the potential_moves[] array. */
         if (new_move != PASS_MOVE)
@@ -96,18 +96,18 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
 
         /* Now report on how well the computer generated the move. */
         if (new_move != old_move || !quiet) {
-            mprintf("Move %d (%C): ", internal_state->movenum + 1, color);
+            mprintf(internal_state, "Move %d (%C): ", internal_state->movenum + 1, color);
 
             if (resign) {
                 printf("%s - GNU Go resigns", __func__);
             }
             else {
-                mprintf("GNU Go plays %1m ", new_move);
+                mprintf(internal_state, "GNU Go plays %1m ", new_move);
                 if (new_move != PASS_MOVE)
                     printf("(%.2f) ", new_move_value);
             }
 
-            mprintf("- Game move %1m ", old_move);
+            mprintf(internal_state, "- Game move %1m ", old_move);
             if (new_move != PASS_MOVE && old_move_value > 0.0)
                 printf("(%.2f) ", old_move_value);
             printf("\n");
@@ -119,28 +119,28 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
         if (new_move != old_move) {
             if (resign) {
                 printf("%s - GNU Go resigns - Game move %s (%.2f)",
-                            __func__, location_to_string(old_move), old_move_value);
+                            __func__, location_to_string(internal_state, old_move), old_move_value);
             }
             else {
                 printf("%s - GNU Go plays %s (%.2f) - Game move %s (%.2f)",
-                            __func__, location_to_string(new_move), new_move_value,
-                            location_to_string(old_move), old_move_value);
+                            __func__, location_to_string(internal_state, new_move), new_move_value,
+                            location_to_string(internal_state, old_move), old_move_value);
                 if (new_move != PASS_MOVE)
                     sgfCircle(node, I(new_move), J(new_move));
             }
         }
         else
             printf("%s - GNU Go plays the same move %s (%.2f)",
-                        __func__, location_to_string(new_move), new_move_value);
+                        __func__, location_to_string(internal_state, new_move), new_move_value);
 
         sgfAddComment(node, buf);
-        sgffile_add_debuginfo(node, 0.0);
+        sgffile_add_debuginfo(internal_state, node, 0.0);
     }
 
     /* Finally, do play the move from the file. */
     QPoint point = GoTable::fromGnuGoPos(old_move);
     printf("%s - move=%d (%d:%d), color=%d\n", __func__, old_move, point.y(), point.x(), color);
-    play_move(old_move, color);
+    play_move(internal_state, old_move, color);
     sgftreeAddPlay(outTree, color, point.y(), point.x());
     lastMoveRow = point.y();
     lastMoveCol = point.x();
@@ -165,7 +165,7 @@ GoTable::GoTable()
     sgfTree->lastnode = NULL;
     sgfTree->root = sgfNewNode();
     if (useGNUGO) {
-        init_gnugo(50, 314);
+        init_gnugo(internal_state, 50, 314);
         resetGnuGo(gameSettings.size);
     }
 
@@ -358,7 +358,7 @@ void GoTable::changeGameSettings(const SGameSettings& newSettings) {
         resetGnuGo((game.size));
         insertDefaultHandicap(gameSettings.handicap.handicap);
     }
-    komi = gameSettings.handicap.komi;
+    internal_state->komi = gameSettings.handicap.komi;
     gameSettings = newSettings;
 }
 
@@ -402,7 +402,7 @@ bool GoTable::playMove(const int row, const int col) {
 
     bool retVal = false;
     if (useGNUGO) {
-        play_move(toGnuGoPos(row, col), crtPlayer);
+        play_move(internal_state, toGnuGoPos(row, col), crtPlayer);
         retVal = true;
         populateStructFromGnuGo();
     }
@@ -482,7 +482,7 @@ bool GoTable::undoMove() {
             printf("%s - can't undo against network game\n", __func__);
     }
 
-    int result = undo_move(count);
+    int result = undo_move(internal_state, count);
     if (result == 1) {
         //success: go back in history too
         for(int i = 0; i < count; i++) {
@@ -506,17 +506,17 @@ float GoTable::wrapper_gnugo_estimate_score(float *upper, float *lower, bool wai
         }
         gnuGoMutex->lock();
     }
-    float score= gnugo_estimate_score(upper, lower);
+    float score= gnugo_estimate_score(internal_state, upper, lower);
     gnuGoMutex->unlock();
     return score;
 }
 
 float GoTable::wrapper_aftermath_compute_score() {
-    return aftermath_compute_score(BLACK, NULL);
+    return aftermath_compute_score(internal_state, BLACK, NULL);
 }
 
 void GoTable::resetGnuGo(int newSize) {
-    board_size = newSize;
+    internal_state->board_size = newSize;
     if (gnuGoMutex->tryLock() == false) {
         printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
         gnuGoMutex->lock();
@@ -644,7 +644,7 @@ void GoTable::activateEstimatingScore(bool estimate) {
 int GoTable::insertDefaultHandicap(int newHandicap) {
     //http://en.wikipedia.org/wiki/Go_handicaps#Fixed_placement
     Logger::log(QString("%1 - newHandicap=%2").arg(__func__).arg(newHandicap));
-    place_fixed_handicap(newHandicap);
+    place_fixed_handicap(internal_state, newHandicap);
     populateStructFromGnuGo();
     //register all moves, since this is not done by GnuGo
     for(int row = 0; row < game.size; row++) {
@@ -656,10 +656,10 @@ int GoTable::insertDefaultHandicap(int newHandicap) {
     }
 
     //GnuGo may have decided the handicap is inappropriate for the table size
-    if (newHandicap != handicap) {
-        gameSettings.handicap.handicap = handicap;
+    if (newHandicap != internal_state->handicap) {
+        gameSettings.handicap.handicap = internal_state->handicap;
     }
-    return handicap;
+    return internal_state->handicap;
 }
 
 bool GoTable::AIPlayNextMove() {
@@ -719,7 +719,7 @@ bool AIThread::run_gnugo_estimate_score() {
     return true;
 }
 
-void AIThread::run_value_moves(int colour) {
+void AIThread::run_value_moves(board_lib_state_struct* internal_state, int colour) {
 //    if (mutex->tryLock() == false) {
 //        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
 //        mutex->lock();
@@ -727,8 +727,9 @@ void AIThread::run_value_moves(int colour) {
 
     //value_moves(internal_state, colour, 0.0, 0.0, 1);
     //run genmove to fill in best_move_values
+    this->internal_state = internal_state;
     set_level(2);
-    int val = genmove(colour, NULL, NULL);
+    int val = genmove(internal_state, colour, NULL, NULL);
     Q_UNUSED(val);
     mutex->unlock();;
 }
@@ -741,13 +742,13 @@ void AIThread::run() {
 //        mutex->lock();
 //    }
     set_level(p.strength);
-    p.result = genmove(p.color, &p.move_value, &p.resign);
+    p.result = genmove(internal_state, p.color, &p.move_value, &p.resign);
     mutex->unlock();
 
     int move = p.result;
     if (p.resign) {
         Logger::log(QString("%1 - AI has decided to resign, will compute finals scores.").arg(__func__));
-        float score = gnugo_estimate_score(NULL, NULL);
+        float score = gnugo_estimate_score(internal_state, NULL, NULL);
         if (score > 0) {
             printf("%s - estimates: white winning by %f\n", __func__, score);
         }

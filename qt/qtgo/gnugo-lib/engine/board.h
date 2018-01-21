@@ -101,7 +101,7 @@ int test_gray_border(struct board_lib_state_struct *internal_state);
 void setup_board(Intersection new_board[MAX_BOARD][MAX_BOARD], int ko_pos,
                  int *last, float new_komi, int w_captured, int b_captured);
 void add_stone(struct board_lib_state_struct *internal_state, int pos, int color);
-void remove_stone(struct board_lib_state_struct *internal_state, int pos);
+void remove_stone(board_lib_state_struct *internal_state, int pos);
 void play_move(struct board_lib_state_struct *internal_state, int pos, int color);
 int undo_move(struct board_lib_state_struct *internal_state, int n);
 
@@ -141,7 +141,7 @@ int is_illegal_ko_capture(struct board_lib_state_struct *internal_state, int pos
 int is_allowed_move(struct board_lib_state_struct *internal_state, int pos, int color);
 int is_ko(board_lib_state_struct *internal_state,
           int pos, int color, int *ko_pos);
-int is_ko_point(struct board_lib_state_struct *internal_state,
+int is_ko_point(board_lib_state_struct *internal_state,
                 int pos);
 int does_capture_something(struct board_lib_state_struct *internal_state,
                            int pos, int color);
@@ -260,7 +260,7 @@ void sgffile_enddump(board_lib_state_struct *internal_state,
 int gprintf(struct board_lib_state_struct *internal_state, const char *fmt, ...);
 void vgprintf(struct board_lib_state_struct *internal_state, FILE *outputfile, const char *fmt, va_list ap);
 void mprintf(struct board_lib_state_struct *internal_state, const char *fmt, ...);
-void gfprintf(struct board_lib_state_struct *internal_state, FILE *outfile, const char *fmt, ...);
+void gfprintf(board_lib_state_struct *internal_state, FILE *outfile, const char *fmt, ...);
 
 const char *color_to_string(struct board_lib_state_struct *internal_state,
                             int color);

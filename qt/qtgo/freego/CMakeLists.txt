@@ -21,9 +21,9 @@ find_package(Qt5Qml REQUIRED) #required for Qt5Multimedia; would freeze at start
 find_package(Qt5Multimedia REQUIRED)
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 include_directories(${Qt5Svg_INCLUDE_DIRS})
-include_directories("../gnugo")
-include_directories("../gnugo/sgf")
-include_directories("../gnugo/utils")
+include_directories("../gnugo-lib")
+include_directories("../gnugo-lib/sgf")
+include_directories("../gnugo-lib/utils")
 #include_directories("../qtcurve/qt5")
 #include_directories("../qtcurve/lib")
 

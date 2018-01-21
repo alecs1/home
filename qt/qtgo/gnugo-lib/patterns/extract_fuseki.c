@@ -378,7 +378,8 @@ read_sgf_filenames(const char *name, char *filenames[])
 
 /* Fill one of the zobrist hash tables with random numbers. */
 static void
-init_zobrist_table(unsigned int hash[8][MAX_BOARD][MAX_BOARD])
+init_zobrist_table(board_lib_state_struct* internal_state,
+                   unsigned int hash[8][MAX_BOARD][MAX_BOARD])
 {
   unsigned int k;
   int m, n;
@@ -416,12 +417,12 @@ init_zobrist_table(unsigned int hash[8][MAX_BOARD][MAX_BOARD])
 
 /* Initialize all Zobrist hash tables with random numbers. */
 static void
-init_zobrist_numbers(void)
+init_zobrist_numbers(board_lib_state_struct* internal_state)
 {
   gg_srand(1);
-  init_zobrist_table(O_hash);
-  init_zobrist_table(X_hash);
-  init_zobrist_table(move_hash);
+  init_zobrist_table(internal_state, O_hash);
+  init_zobrist_table(internal_state, X_hash);
+  init_zobrist_table(internal_state, move_hash);
 }
 
 /* Initialize the situation_table array. */
@@ -439,9 +440,11 @@ init_situations(void)
 
 /* Compare two hash values. Used for sorting the hash values in the
  * invariant hash.
+ * TODO - internal_state is not needed, only respect signature
  */
 static int
-compare_numbers(const void *a, const void *b)
+compare_numbers(board_lib_state_struct* internal_state,
+                const void *a, const void *b)
 {
   unsigned int aa = *((const unsigned int *) a);
   unsigned int bb = *((const unsigned int *) b);
@@ -457,7 +460,8 @@ compare_numbers(const void *a, const void *b)
  * this function.
  */
 static void
-common_hash_board(struct invariant_hash *hash, int color_to_play)
+common_hash_board(board_lib_state_struct* internal_state,
+                  struct invariant_hash *hash, int color_to_play)
 {
   int m, n;
   int k;
@@ -478,23 +482,25 @@ common_hash_board(struct invariant_hash *hash, int color_to_play)
 
 /* Compute invariant hash for the current position. */
 static void
-hash_board(struct invariant_hash *hash, int color_to_play)
+hash_board(board_lib_state_struct* internal_state,
+           struct invariant_hash *hash, int color_to_play)
 {
-  common_hash_board(hash, color_to_play);
+  common_hash_board(internal_state, hash, color_to_play);
   /* Sort the 8 hash values. */
-  gg_sort(hash->values, 8, sizeof(hash->values[0]), compare_numbers);
+  gg_sort(internal_state, hash->values, 8, sizeof(hash->values[0]), compare_numbers);
 }
 
 /* Compute invariant hash for the current situation, i.e. position
  * plus a move to be made.
  */
 static void
-hash_board_and_move(struct invariant_hash *hash, int color_to_play,
+hash_board_and_move(board_lib_state_struct* internal_state,
+                    struct invariant_hash *hash, int color_to_play,
 		    int m, int n)
 {
   int k;
   
-  common_hash_board(hash, color_to_play);
+  common_hash_board(internal_state, hash, color_to_play);
   
   for (k = 0; k < 8; k++)
     hash->values[k] ^= move_hash[k][m][n];
@@ -502,7 +508,7 @@ hash_board_and_move(struct invariant_hash *hash, int color_to_play,
   /* Notice that we of course must wait with sorting until we have
    * added the move to the hash values.
    */
-  gg_sort(hash->values, 8, sizeof(hash->values[0]), compare_numbers);
+  gg_sort(internal_state, hash->values, 8, sizeof(hash->values[0]), compare_numbers);
 }
 
 
@@ -525,7 +531,8 @@ hash_string(const char *v)
  * game record, 0 otherwise.
  */
 static int
-get_move_from_sgf(SGFNode *node, int *m, int *n, int *color)
+get_move_from_sgf(board_lib_state_struct* internal_state,
+                  SGFNode *node, int *m, int *n, int *color)
 {
   SGFProperty *prop;
   int i, j;
@@ -615,7 +622,8 @@ compare_situations(const void *a, const void *b)
 }
 
 static int
-compare_situations2(const void *a, const void *b)
+compare_situations2(board_lib_state_struct* internal_state,
+                    const void *a, const void *b)
 {
   const struct situation *aa = a;
   const struct situation *bb = b;
@@ -658,7 +666,8 @@ compare_positions(const void *a, const void *b)
  * counts a game only once per unique player.
  */
 static int
-compare_frequencies(const void *a, const void *b)
+compare_frequencies(board_lib_state_struct* internal_state,
+                    const void *a, const void *b)
 {
   const struct frequency *aa = a;
   const struct frequency *bb = b;
@@ -673,7 +682,8 @@ compare_frequencies(const void *a, const void *b)
 }
 
 static int
-compare_frequencies2(const void *a, const void *b)
+compare_frequencies2(board_lib_state_struct* internal_state,
+                     const void *a, const void *b)
 {
   const struct frequency *aa = a;
   const struct frequency *bb = b;
@@ -725,7 +735,8 @@ find_region(int m, int n)
  * entry of the winner struct.
  */
 static void
-store_pattern_if_winner(struct invariant_hash *pre,
+store_pattern_if_winner(board_lib_state_struct* internal_state,
+                        struct invariant_hash *pre,
 			struct invariant_hash *post,
 			int color, int m, int n)
 {
@@ -762,7 +773,7 @@ store_pattern_if_winner(struct invariant_hash *pre,
 	}
       winning_moves[k].pattern[m][n] = '*';
       /* Add ? in areas far away from the move. */
-      if (half_board_patterns == 1 && move_number > 3 && board_size == 19)
+      if (half_board_patterns == 1 && move_number > 3 && internal_state->board_size == 19)
         region = find_region(m, n);
       if (region != 8) {
         for (i = 0; i < internal_state->board_size; i++) {
@@ -776,7 +787,7 @@ store_pattern_if_winner(struct invariant_hash *pre,
  	        winning_moves[k].pattern[i][j] = '?';
  	    }
             else if (region == 2) {
-              if (i + board_size - j < 14)
+              if (i + internal_state->board_size - j < 14)
  	        winning_moves[k].pattern[i][j] = '?';
  	    }
  	    else if (region == 3) {
@@ -815,7 +826,8 @@ store_pattern_if_winner(struct invariant_hash *pre,
  * e.g. fewer moves than expected.
  */
 static int
-examine_game(SGFNode *sgf, int collect_statistics)
+examine_game(board_lib_state_struct* internal_state,
+             SGFNode *sgf, int collect_statistics)
 {
   int k;
   int m, n;
@@ -841,7 +853,7 @@ examine_game(SGFNode *sgf, int collect_statistics)
   
   /* Loop through the first moves_per_game moves of each game. */
   for (k = 0; k < moves_per_game && node != NULL; node = node->child) {
-    if (!get_move_from_sgf(node, &m, &n, &color)) {
+    if (!get_move_from_sgf(internal_state, node, &m, &n, &color)) {
       if (k > 0) {
 	/* something is wrong with the file */
 	if (0)
@@ -851,14 +863,14 @@ examine_game(SGFNode *sgf, int collect_statistics)
       continue;
     }
     gg_assert(internal_state, m >= 0 && m < internal_state->board_size && n >= 0 && n <= internal_state->board_size);
-    hash_board(&prehash, color);
-    hash_board_and_move(&posthash, color, m, n);
+    hash_board(internal_state, &prehash, color);
+    hash_board_and_move(internal_state, &posthash, color, m, n);
     if (collect_statistics != EMPTY)
       add_situation(&prehash, &posthash, collect_statistics == color, 
 		    color == WHITE ? white_player : black_player);
     else
-      store_pattern_if_winner(&prehash, &posthash, color, m, n);
-    play_move(POS(m, n), color);
+      store_pattern_if_winner(internal_state, &prehash, &posthash, color, m, n);
+    play_move(internal_state, POS(m, n), color);
     
     /* Debug output. */
     if (0) {
@@ -930,7 +942,8 @@ enough_strength(char *strength)
  * 1 means probably okay, without going through moves
  */
 static int
-check_game(SGFNode *sgf, char *sgfname)
+check_game(board_lib_state_struct* internal_state,
+           SGFNode *sgf, char *sgfname)
 {
   int handicap, size;
   char *WR, *BR; /* white rank */
@@ -1039,7 +1052,7 @@ check_game(SGFNode *sgf, char *sgfname)
  */
 
 static void
-sort_games(void)
+sort_games(board_lib_state_struct* internal_state)
 {
   int k;
 
@@ -1061,7 +1074,7 @@ sort_games(void)
       continue;
     }
 
-    if (!check_game(sgf, sgf_names[k]))
+    if (!check_game(internal_state, sgf, sgf_names[k]))
       unused_games[k] = 1;
     
     /* Free memory of SGF file */
@@ -1074,7 +1087,7 @@ sort_games(void)
  * for the encountered situations.
  */
 static void
-collect_situations(void)
+collect_situations(board_lib_state_struct* internal_state)
 {
   int k;
   int winner; /* who won the game in question */
@@ -1097,7 +1110,7 @@ collect_situations(void)
       continue;
     }
     
-    if (!check_game(sgf, sgf_names[k])) {
+    if (!check_game(internal_state, sgf, sgf_names[k])) {
       unused_games[k] = 1; 
       sgfFreeNode(sgf);
       continue;
@@ -1115,7 +1128,7 @@ collect_situations(void)
       gg_assert(internal_state, 0);
     }
     
-    if (!examine_game(sgf, winner)) {
+    if (!examine_game(internal_state, sgf, winner)) {
       if (WARN)
 	fprintf(stderr, "Warning: Problem with sgf file %s\n", sgf_names[k]);
       unused_games[k] = 1; /* the game could not be used */
@@ -1130,11 +1143,11 @@ collect_situations(void)
  * generate patterns.
  */
 static void
-analyze_statistics(void)
+analyze_statistics(board_lib_state_struct* internal_state)
 {
   int k;
   /* Sort all the collected situations. */
-  gg_sort(situation_table, number_of_situations, sizeof(*situation_table),
+  gg_sort(internal_state, situation_table, number_of_situations, sizeof(*situation_table),
 	  compare_situations2);
   
   /* Debug output. */
@@ -1177,7 +1190,7 @@ analyze_statistics(void)
   }
   
   /* Sort the frequency table, in falling order. */
-  gg_sort(frequency_table, number_of_distinct_positions,
+  gg_sort(internal_state, frequency_table, number_of_distinct_positions,
 	  sizeof(*frequency_table), compare_frequencies);
   
   /* Debug output. */
@@ -1328,7 +1341,7 @@ analyze_statistics(void)
  * corresponding to the winning moves.
  */
 static void
-generate_patterns(void)
+generate_patterns(board_lib_state_struct* internal_state)
 {
   int k;
   SGFNode *sgf;
@@ -1351,7 +1364,7 @@ generate_patterns(void)
       continue;
     }
     
-    examine_game(sgf, 0);
+    examine_game(internal_state, sgf, 0);
     
     /* Free memory of SGF file. */
     sgfFreeNode(sgf);
@@ -1360,7 +1373,7 @@ generate_patterns(void)
 
 /* Print the winning patterns in patterns.db format on stdout. */
 static void
-print_patterns(void)
+print_patterns(board_lib_state_struct* internal_state)
 {
   int k, l;
   int m, n;
@@ -1519,7 +1532,7 @@ print_patterns(void)
 	       dchisq);
       }
       else {
-	printf("Pattern F-H%d-%d\n", internal_state->handicap_value, l);
+    printf("Pattern F-H%d-%d\n", handicap_value, l);
 	printf("# pre : 0x%08x\n",
 	       situation_table[winning_moves[k].index].pre.values[0]);
 	printf("# post: 0x%08x\n",
@@ -1583,10 +1596,11 @@ main(int argc, char *argv[])
   }
   
   /* Check arguments. */
-  board_size = atoi(argv[2]);
+  board_lib_state_struct* internal_state = malloc(sizeof(board_lib_state_struct));
+  internal_state->board_size = atoi(argv[2]);
   if (internal_state->board_size % 2 == 0) {
     fprintf(stderr, "Fatal error, only odd boardsizes supported: %d.\n",
-	    board_size);
+        internal_state->board_size);
     exit(EXIT_FAILURE);
   }
   if (internal_state->board_size < 9 || internal_state->board_size > 19)
@@ -1598,7 +1612,7 @@ main(int argc, char *argv[])
 	    moves_per_game);
   
   handicap_value = atoi(argv[4]);
-  if (handicap_value < 0 || internal_state->handicap_value > 10)
+  if (handicap_value < 0 || handicap_value > 10)
     fprintf(stderr, "Warning: unusual handicap value: %d.\n",
 	    handicap_value);
   
@@ -1654,29 +1668,29 @@ main(int argc, char *argv[])
   /* Save memory by sorting out the games that can be used first */
   if (argv[10] != NULL) {
     fprintf(stderr, "Starting game sort\n");
-    sort_games();
+    sort_games(internal_state);
     fprintf(stderr, "Starting game writes\n");
     write_sgf_filenames(argv[10], sgf_names);
   }
   else {
     /* Build tables of random numbers for Zobrist hashing. */
-    init_zobrist_numbers();
+    init_zobrist_numbers(internal_state);
     
     /* Play through the initial moves of all games and collect hash values
      * for the encountered situations.
      */
-    collect_situations();
+    collect_situations(internal_state);
     fprintf(stderr, "collect OK.\n");
     
     /* Find the most common positions and moves, for which we want to
      * generate patterns.
      */
-    analyze_statistics();
+    analyze_statistics(internal_state);
     fprintf(stderr, "analyze OK.\n");
     
     /* Generate patterns from the chosen positions and moves.
      */
-    generate_patterns();
+    generate_patterns(internal_state);
     fprintf(stderr, "generate OK.\n");
 
     printf("attribute_map value_only\n\n\n");
@@ -1687,7 +1701,7 @@ main(int argc, char *argv[])
 
     /* Write the patterns to stdout in patterns.db format.
      */
-    print_patterns();
+    print_patterns(internal_state);
     
     /* Tell the user everything worked out fine */
     fprintf(stderr, "The pattern database was produced with no errors.\n");

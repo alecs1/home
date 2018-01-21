@@ -2945,7 +2945,7 @@ X*
 O?
 A*
 
-;lib(A)==1 && wormsize(A)==4 && bent_four_helper(A)
+;lib(A)==1 && wormsize(A)==4 && bent_four_helper(internal_state,A)
 
 
 Pattern D712
@@ -2963,7 +2963,7 @@ X*
 ?O
 A*
 
-;lib(A)==1 && wormsize(A)==4 && bent_four_helper(A)
+;lib(A)==1 && wormsize(A)==4 && bent_four_helper(internal_state,A)
 
 
 Pattern D713

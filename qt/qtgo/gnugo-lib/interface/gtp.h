@@ -57,7 +57,7 @@
 #define GTP_FAILURE  1
 
 /* Function pointer for callback functions. */
-typedef int (*gtp_fn_ptr)(char *s);
+typedef int (*gtp_fn_ptr)(struct board_lib_state_struct* internal_state, char *s);
 
 /* Function pointer for vertex transform functions. */
 typedef void (*gtp_transform_ptr)(int ai, int aj, int *bi, int *bj);
@@ -69,7 +69,7 @@ struct gtp_command {
 };
 
 void gtp_main_loop(struct gtp_command commands[],
-		   FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands);
+           FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands);
 void gtp_internal_set_boardsize(int size);
 void gtp_set_vertex_transform_hooks(gtp_transform_ptr in,
 				    gtp_transform_ptr out);

@@ -176,7 +176,7 @@ oracle_trymove(int pos, int color, const char *message, int str,
   if (!trymove(internal_state, pos, color, message, str))
     return 0;
   if (debug & DEBUG_ORACLE_STREAM)
-    gfprintf(stderr, "%o%s %1m\n", 
+    gfprintf(internal_state, stderr, "%o%s %1m\n", 
 	     color == BLACK ? "black" : "white", pos);
   gfprintf(to_gnugo_stream, "%o%s %1m\n", 
 	   color == BLACK ? "black" : "white", pos);
@@ -204,7 +204,7 @@ oracle_play_move(int pos, int color)
   play_move(internal_state, pos, color);
 
   if (debug & DEBUG_ORACLE_STREAM)
-    gfprintf(stderr, "%o%s %1m\n", 
+    gfprintf(internal_state, stderr, "%o%s %1m\n", 
 	     color == BLACK ? "black" : "white", pos);
   gfprintf(to_gnugo_stream, "%o%s %1m\n", 
 	   color == BLACK ? "black" : "white", pos);
@@ -354,14 +354,14 @@ metamachine_genmove(int color, float *value, int limit_search)
     for (pos = BOARDMIN; pos < BOARDMAX; pos++)
       if (within_search_area(pos)) {
 	if (debug & DEBUG_ORACLE_STREAM)
-	  gfprintf(stderr, "%oset_search_limit %1m\n", pos);
+	  gfprintf(internal_state, stderr, "%oset_search_limit %1m\n", pos);
 	gfprintf(to_gnugo_stream, "%oset_search_limit %1m\n", pos);
 	fflush(to_gnugo_stream);
 	ASK_ORACLE;
       }	
   }
   internal_state->count_variations = 1;
-  move = do_metamachine_genmove(color, search_width(), value);
+  move = do_metamachine_genmove(internal_state, color, search_width(), value);
   sgffile_enddump(internal_state, outfilename);
   internal_state->count_variations = 0;
   return move;

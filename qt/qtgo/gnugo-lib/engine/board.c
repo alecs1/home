@@ -825,7 +825,7 @@ reset_move_history(struct board_lib_state_struct *internal_state)
  */
 
 void
-add_stone(struct board_lib_state_struct *internal_state, int pos, int color)
+add_stone(board_lib_state_struct *internal_state, int pos, int color)
 {
   ASSERT1(internal_state, internal_state->stackp == 0, pos);
   ASSERT_ON_BOARD1(internal_state, pos);
@@ -843,7 +843,7 @@ add_stone(struct board_lib_state_struct *internal_state, int pos, int color)
  */
 
 void
-remove_stone(struct board_lib_state_struct *internal_state, int pos)
+remove_stone(board_lib_state_struct *internal_state, int pos)
 {
   ASSERT1(internal_state, internal_state->stackp == 0, pos);
   ASSERT_ON_BOARD1(internal_state, pos);
@@ -935,7 +935,7 @@ replay_move_history(struct board_lib_state_struct *internal_state, int n)
  * possible to unplay at a later time.
  */
 void
-play_move(struct board_lib_state_struct *internal_state, int pos, int color)
+play_move(board_lib_state_struct *internal_state, int pos, int color)
 {
     //printf("play_move\n");
   ASSERT1(internal_state, internal_state->stackp == 0, pos);

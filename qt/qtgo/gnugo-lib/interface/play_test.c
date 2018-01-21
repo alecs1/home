@@ -33,8 +33,9 @@
 #include "gg_utils.h"
 #include "liberty.h"
 
-static void replay_node(SGFNode *node, int color_to_test, float *replay_score,
-			float *total_score);
+static void replay_node(board_lib_state_struct *internal_state,
+                        SGFNode *node, int color_to_test, float *replay_score,
+            float *total_score);
 
 
 /* --------------------------------------------------------------*/
@@ -42,7 +43,8 @@ static void replay_node(SGFNode *node, int color_to_test, float *replay_score,
 /* --------------------------------------------------------------*/
 
 void
-play_replay(SGFTree *tree, int color_to_replay)
+play_replay(board_lib_state_struct* internal_state,
+            SGFTree *tree, int color_to_replay)
 {
   char *tmpc = NULL;
   float replay_score = 0.0;
@@ -60,7 +62,7 @@ play_replay(SGFTree *tree, int color_to_replay)
     printf("Board Size:   %d\n", internal_state->board_size);
     if (sgfGetCharProperty(node, "HA", &tmpc))
       printf("Handicap:     %s\n", tmpc);
-    printf("Komi:         %.1f\n", komi);
+    printf("Komi:         %.1f\n", internal_state->komi);
     if (sgfGetCharProperty(node, "RU", &tmpc))
       printf("Ruleset:      %s\n", tmpc);
     if (sgfGetCharProperty(node, "GN", &tmpc))
@@ -85,7 +87,7 @@ play_replay(SGFTree *tree, int color_to_replay)
    * we need to check what move GNU Go would make, and see if it is OK. 
    */
   while (node) {
-    replay_node(node, color_to_replay, &replay_score, &total_score);
+    replay_node(internal_state, node, color_to_replay, &replay_score, &total_score);
     sgffile_output(tree);
     node = node->child;
   }
@@ -97,7 +99,7 @@ play_replay(SGFTree *tree, int color_to_replay)
     gprintf(internal_state, "SLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
     fprintf(stderr, "(%.2f seconds)\n", slowest_time);
     fprintf(stderr, "AVERAGE TIME: %.2f seconds per move\n",
-	    total_time / movenum);
+        total_time / internal_state->movenum);
     fprintf(stderr, "TOTAL TIME: %.2f seconds\n",
 	    total_time);
   }
@@ -111,7 +113,8 @@ play_replay(SGFTree *tree, int color_to_replay)
  */
 
 static void
-replay_node(SGFNode *node, int color_to_replay, float *replay_score,
+replay_node(board_lib_state_struct* internal_state,
+            SGFNode *node, int color_to_replay, float *replay_score,
 	    float *total_score)
 {
   SGFProperty *sgf_prop;  /* iterate over properties of the node */
@@ -131,11 +134,11 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     switch (sgf_prop->name) {
     case SGFAB:
       /* add black */
-      add_stone(internal_state, get_sgfmove(sgf_prop), BLACK);
+      add_stone(internal_state, get_sgfmove(internal_state, sgf_prop), BLACK);
       break;
     case SGFAW:
       /* add white */
-      add_stone(internal_state, get_sgfmove(sgf_prop), WHITE);
+      add_stone(internal_state, get_sgfmove(internal_state, sgf_prop), WHITE);
       break;
     case SGFB:
     case SGFW:
@@ -148,7 +151,7 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
   if (!move_prop)
     return;
 
-  old_move = get_sgfmove(move_prop);
+  old_move = get_sgfmove(internal_state, move_prop);
   color = (move_prop->name == SGFW) ? WHITE : BLACK;
 
   if (color == color_to_replay || color_to_replay == GRAY) {
@@ -157,7 +160,7 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
   
     /* Get a move from the engine for color. */
     int resign;
-    new_move = genmove(color, NULL, &resign);
+    new_move = genmove(internal_state, color, NULL, &resign);
     
     /* Pick up the relevant values from the potential_moves[] array. */
     if (new_move != PASS_MOVE)
@@ -167,17 +170,17 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     
     /* Now report on how well the computer generated the move. */
     if (new_move != old_move || !quiet) {
-      mprintf("Move %d (%C): ", internal_state->movenum + 1, color);
+      mprintf(internal_state, "Move %d (%C): ", internal_state->movenum + 1, color);
     
       if (resign)
 	printf("GNU Go resigns ");
       else {
-	mprintf("GNU Go plays %1m ", new_move);
+	mprintf(internal_state, "GNU Go plays %1m ", new_move);
 	if (new_move != PASS_MOVE)
 	  printf("(%.2f) ", new_move_value);
       }
       
-      mprintf("- Game move %1m ", old_move);
+      mprintf(internal_state, "- Game move %1m ", old_move);
       if (new_move != PASS_MOVE && old_move_value > 0.0)
 	printf("(%.2f) ", old_move_value);
       printf("\n");
@@ -189,26 +192,26 @@ replay_node(SGFNode *node, int color_to_replay, float *replay_score,
     if (new_move != old_move) {
       if (resign)
 	gg_snprintf(buf, BUFSIZE, "GNU Go resigns - Game move %s (%.2f)",
-		    location_to_string(old_move), old_move_value);
+		    location_to_string(internal_state, old_move), old_move_value);
       else {      
 	gg_snprintf(buf, BUFSIZE,
 		    "GNU Go plays %s (%.2f) - Game move %s (%.2f)",
-		    location_to_string(new_move), new_move_value,
-		    location_to_string(old_move), old_move_value);
+		    location_to_string(internal_state, new_move), new_move_value,
+		    location_to_string(internal_state, old_move), old_move_value);
 	if (new_move != PASS_MOVE)
 	  sgfCircle(node, I(new_move), J(new_move));
       }
     }
     else
       gg_snprintf(buf, BUFSIZE, "GNU Go plays the same move %s (%.2f)",
-		  location_to_string(new_move), new_move_value);
+		  location_to_string(internal_state, new_move), new_move_value);
     
     sgfAddComment(node, buf);
-    sgffile_add_debuginfo(node, 0.0);
+    sgffile_add_debuginfo(internal_state, node, 0.0);
   }
 
   /* Finally, do play the move from the file. */
-  play_move(old_move, color);
+  play_move(internal_state, old_move, color);
 }
 
 

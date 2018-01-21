@@ -755,7 +755,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if ((pattern->autohelper_flag & HAVE_CONSTRAINT)
-      && !pattern->autohelper(ll, pos, color, 0))
+      && !pattern->autohelper(internal_state, ll, pos, color, 0))
     return;
 
   DEBUG(internal_state, DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",
@@ -764,7 +764,7 @@ influence_callback(struct board_lib_state_struct *internal_state,
   /* For t patterns, everything happens in the action. */
   if ((pattern->class & CLASS_t)
       && (pattern->autohelper_flag & HAVE_ACTION)) {
-    pattern->autohelper(ll, pos, color, INFLUENCE_CALLBACK);
+    pattern->autohelper(internal_state, ll, pos, color, INFLUENCE_CALLBACK);
     return;
   }
   
@@ -910,12 +910,12 @@ followup_influence_callback(struct board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT
-      && !pattern->autohelper(ll, t, color, 0))
+      && !pattern->autohelper(internal_state, ll, t, color, 0))
     return;
 
   /* Actions in B patterns are used as followup specific constraints. */
   if ((pattern->autohelper_flag & HAVE_ACTION)
-      && !pattern->autohelper(ll, t, color, FOLLOWUP_INFLUENCE_CALLBACK))
+      && !pattern->autohelper(internal_state, ll, t, color, FOLLOWUP_INFLUENCE_CALLBACK))
     return;
 
   DEBUG(internal_state, DEBUG_INFLUENCE, "influence pattern '%s'+%d matched at %1m\n",

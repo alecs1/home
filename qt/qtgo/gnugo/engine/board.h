@@ -264,7 +264,8 @@ void clear_board(void);
 int test_gray_border(void);
 void setup_board(Intersection new_board[MAX_BOARD][MAX_BOARD], int ko_pos,
                  int *last, float new_komi, int w_captured, int b_captured);
-void add_stone(int pos, int color);
+void add_stone(board_lib_state_struct* internal_state,
+               int pos, int color);
 void remove_stone(int pos);
 void play_move(int pos, int color);
 int undo_move(int n);

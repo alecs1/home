@@ -71,8 +71,8 @@ struct _unused_patterns_h {
 };
 
 
-#define ATTACK_MACRO(pos) ((stackp == 0) ? (worm[pos].attack_codes[0]) : attack(pos, NULL))
-#define DEFEND_MACRO(pos) ((stackp == 0) ? (worm[pos].defense_codes[0]) : find_defense(pos, NULL))
+#define ATTACK_MACRO(pos) ((internal_state->stackp == 0) ? (worm[pos].attack_codes[0]) : attack(internal_state, pos, NULL))
+#define DEFEND_MACRO(pos) ((internal_state->stackp == 0) ? (worm[pos].defense_codes[0]) : find_defense(internal_state, pos, NULL))
 
 struct pattern; /* forward reference to keep gcc happy */
 
@@ -85,10 +85,12 @@ struct pattern; /* forward reference to keep gcc happy */
  * return value : weight of move, or 0 if match failed            
  */
  
-typedef int (*pattern_helper_fn_ptr)(struct pattern *, int rotation,
+typedef int (*pattern_helper_fn_ptr)(board_lib_state_struct* internal_state,
+                                     struct pattern *, int rotation,
 				     int move, int color);
 
-typedef int (*autohelper_fn_ptr)(int rotation, int move,
+typedef int (*autohelper_fn_ptr)(board_lib_state_struct* internal_state,
+                                 int rotation, int move,
 				 int color, int action);
 
 

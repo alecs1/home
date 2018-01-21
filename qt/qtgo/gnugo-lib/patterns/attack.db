@@ -154,7 +154,7 @@ AOX
 A.*
 ---
 
-; lib(internal_state, A)==1
+; lib(A)==1
 
 
 Pattern Attack16
@@ -169,7 +169,7 @@ O.OX
 b.OX
 ?AA?
 
-;lib(internal_state, A)==1 && olib(*)>1 && lib(b)>1
+;lib(A)==1 && olib(*)>1 && lib(b)>1
 
 
 Pattern Attack17
@@ -209,7 +209,7 @@ O.X
 O.A
 ..O
 
-; lib(internal_state, A) == 1
+; lib(A) == 1
 
 
 # END OF FILE

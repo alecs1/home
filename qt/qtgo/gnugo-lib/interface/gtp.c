@@ -139,7 +139,7 @@ gtp_main_loop(struct gtp_command commands[],
      */
     for (i = 0; commands[i].name != NULL; i++) {
       if (strcmp(command, commands[i].name) == 0) {
-	status = (*commands[i].function)(p);
+    status = (*commands[i].function)(NULL, p);
 	break;
       }
     }

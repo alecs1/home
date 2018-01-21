@@ -44,7 +44,7 @@ static void rotate_on_input(int ai, int aj, int *bi, int *bj);
 static void rotate_on_output(int ai, int aj, int *bi, int *bj);
 
 
-#define DECLARE(func) static int func(char *s)
+#define DECLARE(func) static int func(board_lib_state_struct* internal_state, char *s)
 
 DECLARE(gtp_aa_confirm_safety);
 DECLARE(gtp_accurate_approxlib);
@@ -327,7 +327,8 @@ static struct gtp_command commands[] = {
 
 /* Start playing using the Go Text Protocol. */
 void
-play_gtp(FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
+play_gtp(board_lib_state_struct* internal_state,
+         FILE *gtp_input, FILE *gtp_output, FILE *gtp_dump_commands,
 	 int gtp_initial_orientation)
 {
   /* Make sure `gtp_output' is unbuffered. (Line buffering is also
@@ -437,7 +438,8 @@ gtp_program_version(char *s)
  * Status:    GTP version 2 standard command.
  */
 static int
-gtp_set_boardsize(char *s)
+gtp_set_boardsize(board_lib_state_struct* internal_state,
+                  char *s)
 {
   int boardsize;
 
@@ -457,7 +459,7 @@ gtp_set_boardsize(char *s)
   if (stones_on_board(internal_state, BLACK | WHITE) > 0)
     update_random_seed();
 
-  board_size = boardsize;
+  internal_state->board_size = boardsize;
   clear_board(internal_state);
   gtp_internal_set_boardsize(boardsize);
   reset_engine(internal_state);
@@ -577,7 +579,7 @@ static int
 gtp_get_komi(char *s)
 {
   UNUSED(s);
-  return gtp_success("%4.1f", komi);
+  return gtp_success("%4.1f", internal_state->komi);
 }
 
 
@@ -611,7 +613,7 @@ gtp_playblack(char *s)
   if (!is_allowed_move(POS(i, j), BLACK))
     return gtp_failure("illegal move");
 
-  gnugo_play_move(POS(i, j), BLACK);
+  gnugo_play_move(internal_state, POS(i, j), BLACK);
   return gtp_success("");
 }
 
@@ -642,7 +644,7 @@ gtp_playwhite(char *s)
   if (!is_allowed_move(POS(i, j), WHITE))
     return gtp_failure("illegal move");
 
-  gnugo_play_move(POS(i, j), WHITE);
+  gnugo_play_move(internal_state, POS(i, j), WHITE);
   return gtp_success("");
 }
 
@@ -666,7 +668,7 @@ gtp_play(char *s)
   if (!is_allowed_move(POS(i, j), color))
     return gtp_failure("illegal move");
 
-  gnugo_play_move(POS(i, j), color);
+  gnugo_play_move(internal_state, POS(i, j), color);
   return gtp_success("");
 }
 
@@ -712,7 +714,7 @@ gtp_fixed_handicap(char *s)
 	  gtp_printf(" ");
 	else
 	  first = 0;
-	gtp_mprintf("%m", m, n);
+	gtp_mprintf(internal_state, "%m", m, n);
       }
   
   return gtp_finish_response();
@@ -752,7 +754,7 @@ gtp_place_free_handicap(char *s)
 	  gtp_printf(" ");
 	else
 	  first = 0;
-	gtp_mprintf("%m", m, n);
+	gtp_mprintf(internal_state, "%m", m, n);
       }
   
   return gtp_finish_response();
@@ -843,10 +845,10 @@ gtp_loadsgf(char *s)
     return gtp_failure("cannot open or parse '%s'", filename);
 
   if (nread == 1)
-    color_to_move = gameinfo_play_sgftree_rot(&gameinfo, &sgftree, NULL,
+    color_to_move = gameinfo_play_sgftree_rot(internal_state, &gameinfo, &sgftree, NULL,
 					      gtp_orientation);
   else
-    color_to_move = gameinfo_play_sgftree_rot(&gameinfo, &sgftree, untilstring,
+    color_to_move = gameinfo_play_sgftree_rot(internal_state, &gameinfo, &sgftree, untilstring,
                                               gtp_orientation);
 
   if (color_to_move == EMPTY)
@@ -859,7 +861,7 @@ gtp_loadsgf(char *s)
   sgfFreeNode(sgftree.root);
 
   gtp_start_response(GTP_SUCCESS);
-  gtp_mprintf("%C", color_to_move);
+  gtp_mprintf(internal_state, "%C", color_to_move);
   return gtp_finish_response();
 }
 
@@ -1104,7 +1106,7 @@ gtp_last_move(char *s)
   color = move_history_color[move_history_pointer - 1];
   
   gtp_start_response(GTP_SUCCESS);
-  gtp_mprintf("%C %m", color, I(pos), J(pos));
+  gtp_mprintf(internal_state, "%C %m", color, I(pos), J(pos));
   return gtp_finish_response();
 }
 
@@ -1125,7 +1127,7 @@ gtp_move_history(char *s)
     for (k = move_history_pointer-1; k >= 0; k--) {
       color = move_history_color[k];
       pos = move_history_pos[k];
-      gtp_mprintf("%C %m\n", color, I(pos), J(pos));
+      gtp_mprintf(internal_state, "%C %m\n", color, I(pos), J(pos));
     }
   else
     gtp_printf("\n");
@@ -1174,7 +1176,7 @@ gtp_invariant_hash_for_moves(char *s)
     if (internal_state->board[pos] == EMPTY
     && trymove(internal_state, pos, color, "gtp_invariant_hash_for_moves", NO_MOVE)) {
       hashdata_calc_orientation_invariant(&hash, board, board_ko_pos);
-      gtp_mprintf("%m %s\n", I(pos), J(pos), hashdata_to_string(&hash));
+      gtp_mprintf(internal_state, "%m %s\n", I(pos), J(pos), hashdata_to_string(&hash));
       popgo(internal_state);
       move_found = 1;
     }
@@ -1357,7 +1359,7 @@ gtp_defend(char *s)
   if (BOARD(i, j) == EMPTY)
     return gtp_failure("vertex must not be empty");
 
-  defend_code = find_defense(POS(i, j), &dpos);
+  defend_code = find_defense(internal_state, pOS(i, j), &dpos);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(defend_code);
   if (defend_code > 0) {
@@ -1865,7 +1867,7 @@ gtp_analyze_semeai(char *s)
   gtp_print_code(resulta);
   gtp_printf(" ");
   gtp_print_code(resultb);
-  gtp_mprintf(" %m", I(move), J(move));
+  gtp_mprintf(internal_state, " %m", I(move), J(move));
   if (!result_certain && report_uncertainty)
     gtp_printf(" uncertain");
 
@@ -1919,7 +1921,7 @@ gtp_analyze_semeai_after_move(char *s)
   gtp_print_code(resulta);
   gtp_printf(" ");
   gtp_print_code(resultb);
-  gtp_mprintf(" %m", I(semeai_move), J(semeai_move));
+  gtp_mprintf(internal_state, " %m", I(semeai_move), J(semeai_move));
   if (!result_certain && report_uncertainty)
     gtp_printf(" uncertain");
 
@@ -1962,7 +1964,7 @@ gtp_connect(char *s)
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(result);
   if (result != 0)
-    gtp_mprintf(" %m", I(connect_move), J(connect_move));
+    gtp_mprintf(internal_state, " %m", I(connect_move), J(connect_move));
 
   return gtp_finish_response();
 }  
@@ -1999,7 +2001,7 @@ gtp_disconnect(char *s)
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(result);
   if (result != 0)
-    gtp_mprintf(" %m", I(disconnect_move), J(disconnect_move));
+    gtp_mprintf(internal_state, " %m", I(disconnect_move), J(disconnect_move));
 
   return gtp_finish_response();
 }  
@@ -2047,7 +2049,7 @@ gtp_break_in(char *s)
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(result);
   if (result != 0)
-    gtp_mprintf(" %m", I(break_move), J(break_move));
+    gtp_mprintf(internal_state, " %m", I(break_move), J(break_move));
 
   return gtp_finish_response();
 }
@@ -2094,7 +2096,7 @@ gtp_block_off(char *s)
   gtp_start_response(GTP_SUCCESS);
   gtp_print_code(result);
   if (result != 0)
-    gtp_mprintf(" %m", I(block_move), J(block_move));
+    gtp_mprintf(internal_state, " %m", I(block_move), J(block_move));
 
   return gtp_finish_response();
 }
@@ -2198,7 +2200,7 @@ gtp_dragon_status(char *s)
 		&& internal_state->board[pos] != EMPTY
 		&& dragon[pos].origin == pos))) {
       if (str == NO_MOVE)
-	gtp_mprintf("%m: ", I(pos), J(pos));
+	gtp_mprintf(internal_state, "%m: ", I(pos), J(pos));
       
       if (dragon[pos].status == ALIVE)
 	gtp_printf("alive\n");
@@ -2210,7 +2212,7 @@ gtp_dragon_status(char *s)
 	/* Only remaining possibility. */
 	assert(dragon[pos].status == CRITICAL); 
 	/* Status critical, need to return attack and defense point as well. */
-	gtp_mprintf("critical %m %m\n", 
+	gtp_mprintf(internal_state, "critical %m %m\n", 
 		    I(DRAGON2(pos).owl_attack_point),
 		    J(DRAGON2(pos).owl_attack_point),
 		    I(DRAGON2(pos).owl_defense_point),
@@ -2367,7 +2369,7 @@ gtp_combination_defend(char *s)
  */
 
 static int
-gtp_aa_confirm_safety(char *s)
+gtp_aa_confirm_safety(board_lib_state_struct* internal_state, char *s)
 {
   int color;
   int i, j;
@@ -2384,22 +2386,22 @@ gtp_aa_confirm_safety(char *s)
 
   sscanf(s + n, "%d", &minsize);
 
-  genmove(color, NULL, NULL);
-  get_saved_dragons(POS(i, j), saved_dragons);
-  get_saved_worms(POS(i, j), saved_worms);
+  genmove(internal_state, color, NULL, NULL);
+  get_saved_dragons(internal_state, POS(i, j), saved_dragons);
+  get_saved_worms(internal_state, POS(i, j), saved_worms);
   
   if (!tryko(internal_state, POS(i, j), color, NULL))
     return gtp_failure("invalid move");
   popgo(internal_state);
 
-  result = atari_atari_confirm_safety(color, POS(i, j),
+  result = atari_atari_confirm_safety(internal_state, color, POS(i, j),
 				      &defense_point, minsize,
 				      saved_dragons, saved_worms);
   
   gtp_start_response(GTP_SUCCESS);
-  gtp_mprintf("%d", result);
+  gtp_mprintf(internal_state, "%d", result);
   if (result == 0)
-    gtp_mprintf(" %m", I(defense_point), J(defense_point));
+    gtp_mprintf(internal_state, " %m", I(defense_point), J(defense_point));
   
   return gtp_finish_response();
 }
@@ -2417,7 +2419,7 @@ gtp_aa_confirm_safety(char *s)
  * Status:    Obsolete GTP version 1 command.
  */
 static int
-gtp_genmove_black(char *s)
+gtp_genmove_black(board_lib_state_struct* internal_state, char *s)
 {
   int move;
   UNUSED(s);
@@ -2425,7 +2427,7 @@ gtp_genmove_black(char *s)
   if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
-  move = genmove(BLACK, NULL, NULL);
+  move = genmove(internal_state, BLACK, NULL, NULL);
 
   gnugo_play_move(internal_state, move, BLACK);
 
@@ -2442,7 +2444,8 @@ gtp_genmove_black(char *s)
  * Status:    Obsolete GTP version 1 command.
  */
 static int
-gtp_genmove_white(char *s)
+gtp_genmove_white(board_lib_state_struct* internal_state,
+                  char *s)
 {
   int move;
   UNUSED(s);
@@ -2450,7 +2453,7 @@ gtp_genmove_white(char *s)
   if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
-  move = genmove(WHITE, NULL, NULL);
+  move = genmove(internal_state, WHITE, NULL, NULL);
 
   gnugo_play_move(internal_state, move, WHITE);
 
@@ -2467,7 +2470,8 @@ gtp_genmove_white(char *s)
  * Status:    GTP version 2 standard command.
  */
 static int
-gtp_genmove(char *s)
+gtp_genmove(board_lib_state_struct* internal_state,
+            char *s)
 {
   int move;
   int resign;
@@ -2481,8 +2485,8 @@ gtp_genmove(char *s)
   if (internal_state->stackp > 0)
     return gtp_failure("genmove cannot be called when stackp > 0");
 
-  adjust_level_offset(color);
-  move = genmove(color, NULL, &resign);
+  adjust_level_offset(internal_state, color);
+  move = genmove(internal_state, color, NULL, &resign);
 
   if (resign)
     return gtp_success("resign");
@@ -2503,7 +2507,8 @@ gtp_genmove(char *s)
  * Status:    GTP version 2 standard command.
  */
 static int
-gtp_reg_genmove(char *s)
+gtp_reg_genmove(board_lib_state_struct* internal_state,
+                char *s)
 {
   int move;
   int color;
@@ -2540,7 +2545,7 @@ gtp_reg_genmove(char *s)
  * This differs from reg_genmove in the optional random seed.
  */
 static int
-gtp_gg_genmove(char *s)
+gtp_gg_genmove(board_lib_state_struct* internal_state, char *s)
 {
   int move;
   int color;
@@ -2580,7 +2585,7 @@ gtp_gg_genmove(char *s)
  * Returns:   a move coordinate (or "PASS")
  */
 static int
-gtp_restricted_genmove(char *s)
+gtp_restricted_genmove(board_lib_state_struct* internal_state, char *s)
 {
   int move;
   int i, j;
@@ -2622,7 +2627,7 @@ gtp_restricted_genmove(char *s)
    */
   set_random_seed(0);
   
-  move = genmove_restricted(color, allowed_moves);
+  move = genmove_restricted(internal_state, color, allowed_moves);
   set_random_seed(saved_random_seed);
   gtp_start_response(GTP_SUCCESS);
   gtp_print_vertex(I(move), J(move));
@@ -2661,8 +2666,8 @@ gtp_kgs_genmove_cleanup(char *s)
    */
   capture_all_dead = 1;
   
-  adjust_level_offset(color);
-  move = genmove(color, NULL, NULL);
+  adjust_level_offset(internal_state, color);
+  move = genmove(internal_state, color, NULL, NULL);
 
   capture_all_dead = save_capture_all_dead;
   
@@ -2752,7 +2757,7 @@ gtp_top_moves_white(char *s)
 {
   int k;
   UNUSED(s);
-  genmove(WHITE, NULL, NULL);
+  genmove(internal_state, WHITE, NULL, NULL);
   gtp_start_response(GTP_SUCCESS);
   for (k = 0; k < 10; k++)
     if (best_move_values[k] > 0.0) {
@@ -2773,7 +2778,7 @@ gtp_top_moves_black(char *s)
 {
   int k;
   UNUSED(s);
-  genmove(BLACK, NULL, NULL);
+  genmove(internal_state, BLACK, NULL, NULL);
   gtp_start_response(GTP_SUCCESS);
   for (k = 0; k < 10; k++)
     if (best_move_values[k] > 0.0) {
@@ -2814,7 +2819,7 @@ gtp_undo(char *s)
 {
   UNUSED(s);
 
-  if (internal_state->stackp > 0 || !undo_move(1))
+  if (internal_state->stackp > 0 || !undo_move(internal_state, 1))
     return gtp_failure("cannot undo");
 
   reset_engine(internal_state);
@@ -2954,10 +2959,10 @@ finish_and_score_game(int seed)
   /* Let black start if we have no move history. Otherwise continue
    * alternation.
    */
-  if (get_last_player() == EMPTY)
+  if (get_last_player(internal_state) == EMPTY)
     next = BLACK;
   else
-    next = OTHER_COLOR(get_last_player());
+    next = OTHER_COLOR(get_last_player(internal_state));
 
   do {
     move = genmove_conservative(next, NULL);
@@ -3200,7 +3205,7 @@ gtp_estimate_score(char *s)
   float upper_bound, lower_bound;
   UNUSED(s);
 
-  score = gnugo_estimate_score(&upper_bound, &lower_bound);
+  score = gnugo_estimate_score(internal_state, &upper_bound, &lower_bound);
   gtp_start_response(GTP_SUCCESS);
   /* Traditionally W wins jigo */
   if (score >= 0.0) 
@@ -3235,7 +3240,7 @@ gtp_experimental_score(char *s)
     return gtp_failure("invalid color");
 
   genmove_conservative(color, NULL);
-  gnugo_estimate_score(&upper_bound, &lower_bound);
+  gnugo_estimate_score(internal_state, &upper_bound, &lower_bound);
 
   if (debug & DEBUG_SCORING)
     fprintf(stderr, "upper = %3.1f, lower = %3.1f, best = %3.1f\n",
@@ -3685,7 +3690,7 @@ gtp_move_probabilities(char *s)
   gtp_start_response(GTP_SUCCESS);
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (ON_BOARD(internal_state, pos) && probabilities[pos] != 0.0) {
-      gtp_mprintf("%m ", I(pos), J(pos));
+      gtp_mprintf(internal_state, "%m ", I(pos), J(pos));
       gtp_printf("%.4f\n", probabilities[pos]);
       any_moves_printed = 1;
     }
@@ -3809,8 +3814,8 @@ gtp_worm_data(char *s)
 	struct worm_data *w = &worm[POS(m, n)];
 	gtp_print_vertex(m, n);
 	gtp_printf(":\n");
-	gtp_mprintf("origin               %m\n",  I(w->origin), J(w->origin));
-	gtp_mprintf("color                %C\n",  w->color);
+	gtp_mprintf(internal_state, "origin               %m\n",  I(w->origin), J(w->origin));
+	gtp_mprintf(internal_state, "color                %C\n",  w->color);
 	gtp_printf("size                 %d\n",   w->size);
 	gtp_printf("effective_size       %.2f\n", w->effective_size);
 	gtp_printf("liberties            %d\n",   w->liberties);
@@ -3818,12 +3823,12 @@ gtp_worm_data(char *s)
 	gtp_printf("liberties3           %d\n",   w->liberties3);
 	gtp_printf("liberties4           %d\n",   w->liberties4);
 	gtp_printf("attack_code          %d\n",   w->attack_codes[0]);
-	gtp_mprintf("attack_point         %m\n",  
+	gtp_mprintf(internal_state, "attack_point         %m\n",  
 		    I(w->attack_points[0]), J(w->attack_points[0]));
 	gtp_printf("defense_code         %d\n",   w->defense_codes[0]);
-	gtp_mprintf("defense_point        %m\n",  
+	gtp_mprintf(internal_state, "defense_point        %m\n",  
 		    I(w->defense_points[0]), J(w->defense_points[0]));
-	gtp_mprintf("lunch                %m\n",  
+	gtp_mprintf(internal_state, "lunch                %m\n",  
 		    I(w->lunch), J(w->lunch));
 	gtp_printf("cutstone             %d\n",   w->cutstone);
 	gtp_printf("cutstone2            %d\n",   w->cutstone2);
@@ -3879,7 +3884,7 @@ gtp_worm_stones(struct board_lib_state_struct *internal_state, char *s)
     for (n = 0; n < internal_state->board_size; n++)
 	  if (BOARD(m, n) != EMPTY
 	      && same_string(internal_state, POS(m, n), POS(u, v)))
-	    gtp_mprintf("%m ", m, n);
+	    gtp_mprintf(internal_state, "%m ", m, n);
       gtp_printf("\n");
     }
   
@@ -3936,7 +3941,7 @@ gtp_dragon_data(char *s)
   gtp_start_response(GTP_SUCCESS);
 
   if (ON_BOARD2(internal_state, i, j) && BOARD(i, j) == EMPTY)
-    gtp_mprintf("%m empty\n", i, j);
+    gtp_mprintf(internal_state, "%m empty\n", i, j);
   else {
     newline_needed = 1;
     for (m = 0; m < internal_state->board_size; m++)
@@ -3997,7 +4002,7 @@ gtp_dragon_stones(struct board_lib_state_struct *internal_state, char *s)
       for (m = 0; m < internal_state->board_size; m++)
     for (n = 0; n < internal_state->board_size; n++)
 	  if (dragon[POS(m, n)].origin == POS(u, v))
-	    gtp_mprintf("%m ", m, n);
+	    gtp_mprintf(internal_state, "%m ", m, n);
       gtp_printf("\n");
     }
   
@@ -4033,8 +4038,8 @@ gtp_eye_data(char *s)
   else
     e = &white_eye[POS(i, j)];
   
-  gtp_mprintf("origin               %m\n", I(e->origin), J(e->origin));
-  gtp_mprintf("color                %C\n", e->color);
+  gtp_mprintf(internal_state, "origin               %m\n", I(e->origin), J(e->origin));
+  gtp_mprintf(internal_state, "color                %C\n", e->color);
   gtp_printf("esize                %d\n", e->esize);
   gtp_printf("msize                %d\n", e->msize);
   gtp_printf("value                %s\n", eyevalue_to_string(&e->value));
@@ -4081,11 +4086,11 @@ gtp_half_eye_data(char *s)
     gtp_printf("type                 %d\n", h->type);
   gtp_printf("num_attacks          %d\n", h->num_attacks);
   for (k = 0; k < h->num_attacks; k++)
-    gtp_mprintf("attack_point[%d]      %m\n", k, I(h->attack_point[k]),
+    gtp_mprintf(internal_state, "attack_point[%d]      %m\n", k, I(h->attack_point[k]),
 		J(h->attack_point[k]));
   gtp_printf("num_defenses         %d\n", h->num_defenses);
   for (k = 0; k < h->num_defenses; k++)
-    gtp_mprintf("defense_point[%d]     %m\n", k, I(h->defense_point[k]),
+    gtp_mprintf(internal_state, "defense_point[%d]     %m\n", k, I(h->defense_point[k]),
 		J(h->defense_point[k]));
   
   gtp_printf("\n");
@@ -4151,10 +4156,10 @@ gtp_printsgf(char *s)
   int nread;
   int next;
   
-  if (get_last_player() == EMPTY)
+  if (get_last_player(internal_state) == EMPTY)
     next = BLACK;
   else
-    next = OTHER_COLOR(get_last_player());
+    next = OTHER_COLOR(get_last_player(internal_state));
 
   nread = sscanf(s, "%s", filename);
 
@@ -4493,7 +4498,7 @@ gtp_set_search_diamond(char *s)
     return gtp_failure("invalid coordinate");
   
   set_limit_search(1);
-  set_search_diamond(POS(i, j));
+  set_search_diamond(internal_state, pOS(i, j));
   return gtp_success("");
 }
 

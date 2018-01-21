@@ -331,9 +331,12 @@ int adjacent_to_stone_in_atari(int str);
 int adjacent_to_defendable_stone_in_atari(int str);
 void backfill_replace(int move, int str);
 int break_mirror_helper(int str, int color);
-int distrust_tactics_helper(int str);
-int bent_four_helper(int str);
-int disconnect_helper(int apos, int bpos);
+int distrust_tactics_helper(board_lib_state_struct* internal_state,
+                            int str);
+int bent_four_helper(board_lib_state_struct* internal_state,
+                     int str);
+int disconnect_helper(board_lib_state_struct* internal_state,
+                      int apos, int bpos);
 
 
 /* pattern arrays themselves */

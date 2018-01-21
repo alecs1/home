@@ -112,7 +112,7 @@ enum dragon_status {
 
 
 int check_boardsize(int boardsize, FILE *out);
-void gnugo_clear_board(struct board_lib_state_struct *internal_state,
+void gnugo_clear_board(board_lib_state_struct *internal_state,
                        int boardsize);
 void gnugo_play_move(struct board_lib_state_struct *internal_state,
                      int move, int color);

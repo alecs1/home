@@ -37,7 +37,8 @@
 /* Play a game against a go-modem-protocol (GMP) client.         */
 /* --------------------------------------------------------------*/
 void
-play_gmp(Gameinfo *gameinfo, int simplified)
+play_gmp(board_lib_state_struct* internal_state,
+         Gameinfo *gameinfo, int simplified)
 {
   SGFTree sgftree;
 
@@ -58,7 +59,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
     mycolor = 0;
 
   sgftree_clear(&sgftree);
-  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, komi, gameinfo->handicap);
+  sgftreeCreateHeaderNode(&sgftree, internal_state->board_size, internal_state->komi, gameinfo->handicap);
 
   ge = gmp_create(0, 1);
   TRACE(internal_state, "board size=%d\n", internal_state->board_size);
@@ -69,11 +70,11 @@ play_gmp(Gameinfo *gameinfo, int simplified)
    * command line, keep it. Otherwise, its value will be 0.0 and we
    * use 5.5 in an even game, 0.5 otherwise.
    */
-  if (komi == 0.0) {
+  if (internal_state->komi == 0.0) {
     if (gameinfo->handicap == 0)
-      komi = 5.5;
+      internal_state->komi = 5.5;
     else
-      komi = 0.5;
+      internal_state->komi = 0.5;
   }
 
   if (!simplified) {
@@ -85,7 +86,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
   }
   else {
     gmp_startGame(ge, internal_state->board_size, gameinfo->handicap,
-		  komi, chinese_rules, mycolor, 1);
+          internal_state->komi, chinese_rules, mycolor, 1);
   }
 
   do {
@@ -106,10 +107,10 @@ play_gmp(Gameinfo *gameinfo, int simplified)
   if (!check_boardsize(gmp_size(ge), stderr))
     exit(EXIT_FAILURE);
   
-  gnugo_clear_board(gmp_size(ge));
+  gnugo_clear_board(internal_state, gmp_size(ge));
 
   /* Let's pretend GMP knows about komi in case something will ever change. */
-  komi = gmp_komi(ge);
+  internal_state->komi = gmp_komi(ge);
 
 #if ORACLE
   if (metamachine && oracle_exists)
@@ -118,8 +119,8 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 
   sgfOverwritePropertyInt(sgftree.root, "SZ", internal_state->board_size);
 
-  TRACE(internal_state, "size=%d, internal_state->handicap=%d, komi=%f\n", internal_state->board_size,
-	gameinfo->handicap, komi);
+  TRACE(internal_state, "size=%d, internal_state->handicap=%d, internal_state->komi=%f\n", internal_state->board_size,
+	gameinfo->handicap, internal_state->komi);
 
   if (gameinfo->handicap)
     to_move = WHITE;
@@ -136,9 +137,9 @@ play_gmp(Gameinfo *gameinfo, int simplified)
   }
 
   gameinfo->computer_player = mycolor;
-  sgf_write_header(sgftree.root, 1, get_random_seed(), komi,
+  sgf_write_header(sgftree.root, 1, get_random_seed(), internal_state->komi,
 		   gameinfo->handicap, get_level(), chinese_rules);
-  gameinfo->handicap = gnugo_sethand(gameinfo->handicap, sgftree.root);
+  gameinfo->handicap = gnugo_sethand(internal_state, gameinfo->handicap, sgftree.root);
   sgfOverwritePropertyInt(sgftree.root, "HA", gameinfo->handicap);
 
   /* main GMP loop */
@@ -161,7 +162,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 	assert(j > 0);
 	
 	for (k = 0; k < j; k++) {
-	  if (!undo_move(1)) {
+	  if (!undo_move(internal_state, 1)) {
 	    fprintf(stderr, "GNU Go: play_gmp UNDO: can't undo %d moves\n",
 		    j - k);
 	    break;
@@ -189,30 +190,30 @@ play_gmp(Gameinfo *gameinfo, int simplified)
 
     }
     else {
-      /* Generate my next move. */
-      float move_value;
-      int move;
-      if (autolevel_on)
-	adjust_level_offset(mycolor);
-      move = genmove(mycolor, &move_value, NULL);
-      gnugo_play_move(internal_state, move, mycolor);
-      sgffile_add_debuginfo(sgftree.lastnode, move_value);
-      
-      if (is_pass(move)) {
-	/* pass */
-        sgftreeAddPlay(&sgftree, to_move, -1, -1);
-	gmp_sendPass(ge);
-	++passes;
-      }
-      else {
-	/* not pass */
-        sgftreeAddPlay(&sgftree, to_move, I(move), J(move));
-	gmp_sendMove(ge, J(move), I(move));
-	passes = 0;
-	TRACE(internal_state, "\nmy move: %1m\n\n", move);
-      }
-      sgffile_add_debuginfo(sgftree.lastnode, 0.0);
-      sgffile_output(&sgftree);
+        /* Generate my next move. */
+        float move_value;
+        int move;
+        if (autolevel_on)
+            adjust_level_offset(internal_state, mycolor);
+        move = genmove(internal_state, mycolor, &move_value, NULL);
+        gnugo_play_move(internal_state, move, mycolor);
+        sgffile_add_debuginfo(internal_state, sgftree.lastnode, move_value);
+
+        if (is_pass(move)) {
+            /* pass */
+            sgftreeAddPlay(&sgftree, to_move, -1, -1);
+            gmp_sendPass(ge);
+            ++passes;
+        }
+        else {
+            /* not pass */
+            sgftreeAddPlay(&sgftree, to_move, I(move), J(move));
+            gmp_sendMove(ge, J(move), I(move));
+            passes = 0;
+            TRACE(internal_state, "\nmy move: %1m\n\n", move);
+        }
+        sgffile_add_debuginfo(internal_state, sgftree.lastnode, 0.0);
+        sgffile_output(&sgftree);
     }
     
     to_move = OTHER_COLOR(to_move);
@@ -223,13 +224,13 @@ play_gmp(Gameinfo *gameinfo, int simplified)
   
   if (!quiet)
     fprintf(stderr, "Game over - waiting for client to shut us down\n");
-  who_wins(mycolor, stderr);
+  who_wins(internal_state, mycolor, stderr);
 
   if (showtime) {
     gprintf(internal_state, "\nSLOWEST MOVE: %d at %1m ", slowest_movenum, slowest_move);
     fprintf(stderr, "(%.2f seconds)\n", slowest_time);
     fprintf(stderr, "\nAVERAGE TIME: %.2f seconds per move\n",
-	    total_time / movenum);
+        total_time / internal_state->movenum);
     fprintf(stderr, "\nTOTAL TIME: %.2f seconds\n",
 	    total_time);
   }
@@ -239,7 +240,7 @@ play_gmp(Gameinfo *gameinfo, int simplified)
    * writing code is here.
    */
   { 
-    float score = gnugo_estimate_score(NULL, NULL);
+    float score = gnugo_estimate_score(internal_state, NULL, NULL);
     sgfWriteResult(sgftree.root, score, 1);
   }
   sgffile_output(&sgftree);

@@ -95,7 +95,7 @@ int check_boardsize(int boardsize, FILE *out)
  * Clear the board.
  */
 void
-gnugo_clear_board(struct board_lib_state_struct *internal_state,
+gnugo_clear_board(board_lib_state_struct *internal_state,
                   int boardsize)
 {
   internal_state->board_size = boardsize;
@@ -174,7 +174,7 @@ gnugo_play_sgfnode(struct board_lib_state_struct *internal_state,
  * updates the sgf file.
  */
 int
-gnugo_sethand(struct board_lib_state_struct *internal_state,
+gnugo_sethand(board_lib_state_struct *internal_state,
               int desired_handicap, SGFNode *node)
 {
   place_fixed_handicap(internal_state, desired_handicap);
@@ -190,7 +190,7 @@ gnugo_sethand(struct board_lib_state_struct *internal_state,
  */
 
 float
-gnugo_estimate_score(struct board_lib_state_struct *internal_state,
+gnugo_estimate_score(board_lib_state_struct *internal_state,
                      float *upper, float *lower)
 {
   silent_examine_position(internal_state, EXAMINE_DRAGONS);
@@ -212,7 +212,7 @@ gnugo_estimate_score(struct board_lib_state_struct *internal_state,
  */
 
 void
-gameinfo_clear(struct board_lib_state_struct *internal_state,
+gameinfo_clear(board_lib_state_struct *internal_state,
                Gameinfo *gameinfo)
 {
   gnugo_clear_board(internal_state, internal_state->board_size);

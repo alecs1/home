@@ -98,7 +98,7 @@ cut_connect_callback(board_lib_state_struct* internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT) {
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
   }
 
@@ -106,7 +106,7 @@ cut_connect_callback(board_lib_state_struct* internal_state,
    * be rejected.
    */
   if (pattern->helper) {
-    if (!pattern->helper(pattern, ll, move, color))
+    if (!pattern->helper(internal_state, pattern, ll, move, color))
       return;
   }
 
@@ -138,7 +138,7 @@ cut_connect_callback(board_lib_state_struct* internal_state,
 
   /* does the pattern have an action? */
   if (pattern->autohelper_flag & HAVE_ACTION) {
-    pattern->autohelper(ll, move, color, 1);
+    pattern->autohelper(internal_state, ll, move, color, 1);
   }
 
   /* If it is a B pattern, set cutting point. */

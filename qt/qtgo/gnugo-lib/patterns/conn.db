@@ -603,7 +603,7 @@ c
 a
 b
 
-;!xcut(a) && !disconnect_helper(b,c)
+;!xcut(a) && !disconnect_helper(internal_state,b,c)
 
 
 Pattern CC504
@@ -616,7 +616,7 @@ O.
 Xb
 ca
 
-;!xcut(a) && !disconnect_helper(b,c)
+;!xcut(a) && !disconnect_helper(internal_state,b,c)
 
 
 Pattern CC505
@@ -629,9 +629,9 @@ OX
 Bc
 dA
 
-;((attack(A) && !distrust_tactics_helper(A))
-; || (attack(B) && !distrust_tactics_helper(B)))
-;&& !disconnect_helper(c,d)
+;((attack(A) && !distrust_tactics_helper(internal_state,A))
+; || (attack(B) && !distrust_tactics_helper(internal_state,B)))
+;&& !disconnect_helper(internal_state,c,d)
 
 
 Pattern CC506
@@ -648,7 +648,7 @@ a
 b
 d
 
-;!xcut(a) && !xcut(b) && !disconnect_helper(c,d)
+;!xcut(a) && !xcut(b) && !disconnect_helper(internal_state,c,d)
 
 
 Pattern CC506b
@@ -665,7 +665,7 @@ Eo
 ab
 d.
 
-;!xcut(a) && !xcut(b) && lib(E)<=2 && !disconnect_helper(c,d)
+;!xcut(a) && !xcut(b) && lib(E)<=2 && !disconnect_helper(internal_state,c,d)
 
 
 Pattern CC507
@@ -680,7 +680,7 @@ cx
 ab
 xd
 
-;!xcut(a) && !xcut(b) && !disconnect_helper(c,d)
+;!xcut(a) && !xcut(b) && !disconnect_helper(internal_state,c,d)
 
 
 Pattern CC508
@@ -695,7 +695,7 @@ b?
 aX
 xc
 
-;!xcut(a) && !disconnect_helper(b,c)
+;!xcut(a) && !disconnect_helper(internal_state,b,c)
 
 
 Pattern CC509
@@ -712,7 +712,7 @@ ab
 cd
 xf
 
-;!xcut(a) && !xcut(b) && !xcut(c) && !xcut(d) && !disconnect_helper(e,f)
+;!xcut(a) && !xcut(b) && !xcut(c) && !xcut(d) && !disconnect_helper(internal_state,e,f)
 
 
 Pattern CC511

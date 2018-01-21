@@ -1044,14 +1044,14 @@ atari_atari_attack_callback(struct board_lib_state_struct *internal_state,
    * if the pattern must be rejected.
    */
   if (pattern->autohelper_flag & HAVE_CONSTRAINT)
-    if (!pattern->autohelper(ll, move, color, 0))
+    if (!pattern->autohelper(internal_state, ll, move, color, 0))
       return;
 
   /* If the pattern has a helper, call it to see if the pattern must
    * be rejected.
    */
   if (pattern->helper)
-    if (!pattern->helper(pattern, ll, move, color))
+    if (!pattern->helper(internal_state, pattern, ll, move, color))
       return;
 
   /* Loop through pattern elements in search of X strings to
