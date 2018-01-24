@@ -151,6 +151,8 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
 
 GoTable::GoTable()
 {
+    internal_state = new board_lib_state_struct;
+    init_board_lib_state_struct(internal_state);
     gnuGoMutex = new QMutex;
     aiThread = new AIThread(gnuGoMutex);
     //connect(aiThread, SIGNAL(AIThreadPlaceStone(int,int)), this, SLOT(playMove(int,int)));
@@ -173,6 +175,7 @@ GoTable::GoTable()
     auxInfo.comment = "test save";
     auxInfo.freeGoVersion = "1000";
     auxInfo.gameDate = "2015-02-19T00:31";
+    delete internal_state;
 }
 
 

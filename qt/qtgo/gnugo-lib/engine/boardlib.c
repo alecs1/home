@@ -28,7 +28,7 @@
 #include "hash.h"
 
 /* The board state itself. */
-void init_board_lib_state(struct board_lib_state_struct* board_lib_state) {
+void init_board_lib_state_struct(board_lib_state_struct* board_lib_state) {
     board_lib_state->board_size = DEFAULT_BOARD_SIZE; /* board size */
     //board_lib_state->board[BOARDSIZE];
     //board_lib_state->board_ko_pos;

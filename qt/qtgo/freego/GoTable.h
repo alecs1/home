@@ -114,7 +114,7 @@ protected:
     void updateLogic();
 
 protected:
-    board_lib_state_struct* internal_state;
+    board_lib_state_struct* internal_state = nullptr;
     GameStruct game;
     int crtPlayer = 1;
     PlayerType players[3]; //board.h enum: EMPTY, WHITE, BLACK

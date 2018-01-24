@@ -96,8 +96,9 @@ struct board_state {
 
 
 /* Functions handling the permanent board state. */
-void clear_board(struct board_lib_state_struct *internal_state);
-int test_gray_border(struct board_lib_state_struct *internal_state);
+void init_board_lib_state_struct(board_lib_state_struct *internal_state);
+void clear_board(board_lib_state_struct *internal_state);
+int test_gray_border(board_lib_state_struct *internal_state);
 void setup_board(Intersection new_board[MAX_BOARD][MAX_BOARD], int ko_pos,
                  int *last, float new_komi, int w_captured, int b_captured);
 void add_stone(struct board_lib_state_struct *internal_state, int pos, int color);
