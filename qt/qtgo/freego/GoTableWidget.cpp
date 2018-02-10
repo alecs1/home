@@ -22,6 +22,7 @@
 #include "BusyDialog.h"
 #include "Utils.h"
 #include "Logger.h"
+#include "AIThread.h"
 //likely temporary
 #include "SettingsWidget.h"
 
@@ -138,7 +139,7 @@ void GoTableWidget::launchGamePressed(SGameSettings newSettings) {
     if (state == GameState::Resumed) {
         state = GameState::Started;
         if(players[crtPlayer] == PlayerType::AI) {
-            QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
+            AIPlayNextMove();
         }
     }
     else if (state == GameState::Initial || state == GameState::Stopped) {

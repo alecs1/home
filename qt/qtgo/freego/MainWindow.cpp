@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QToolButton>
 #include <QJsonDocument>
+#include <QThread>
 
 #include "DrawAreaWidget.h"
 #include "GoTableWidget.h"

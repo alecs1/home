@@ -1,6 +1,3 @@
-//#include <QBackingStore>
-//#include <QResizeEvent>
-//#include <QPainter>
 #include <QCoreApplication>
 #include <QTimer>
 #include <QTime>
@@ -15,15 +12,8 @@ extern "C" {
 #include "engine/board.h" //should probably restrict to the public interface
 #include "engine/gnugo.h"
 #include "engine/liberty.h"
-//void init_gnugo(float memory, unsigned int seed);
-//void compute_scores(int use_chinese_rules);
-//float gnugo_estimate_score(float *upper, float *lower);
 void value_moves(int color, float pure_threat_value, float our_score,
             int use_thrashing_dragon_heuristics);
-}
-
-extern "C" {
-//int get_sgfmove(SGFProperty *property);
 }
 
 
@@ -34,8 +24,8 @@ extern "C" {
 #include "SaveFile.h"
 #include "Utils.h"
 #include "Logger.h"
-//likely temporary
-#include "SettingsWidget.h"
+
+#include "AIThread.h"
 
 
 //From play_test.c
@@ -175,13 +165,13 @@ GoTable::GoTable()
     auxInfo.comment = "test save";
     auxInfo.freeGoVersion = "1000";
     auxInfo.gameDate = "2015-02-19T00:31";
-    delete internal_state;
 }
 
 
 GoTable::~GoTable() {
     Logger::log(QString("%1 - Implement destructor!").arg(__func__));
     delete gnuGoMutex;
+    delete internal_state;
 }
 
 //This code is outside the constructor because this is executed after the signals of this object are connected
@@ -670,7 +660,7 @@ bool GoTable::AIPlayNextMove() {
     if (crtPlayer == WHITE) {
         AIStrength = gameSettings.whiteAIStrength;
     }
-    aiThread->run_genmove(crtPlayer, AIStrength);
+    aiThread->run_genmove(internal_state, crtPlayer, AIStrength);
 
     updateLogic();
 
@@ -679,92 +669,14 @@ bool GoTable::AIPlayNextMove() {
 
 //When we're waiting for a result coming from a different thread we need to check the result from the other thread
 void GoTable::updateLogic() {
-    //Logger::log(QString("%1").arg(__func__), Logger::DBG);
+    Logger::log(QString("%1").arg(__func__), Logger::DBG);
 
     if (aiThread->mutex->tryLock()) {
             Logger::log(QString("%1 - the AIThread is done!").arg(__func__), Logger::DBG);
-        }
+    }
     else {
         Logger::log(QString("%1 - the AIThread is still computing.").arg(__func__), Logger::DBG);
         std::function<void(void)> f = std::bind(&GoTable::updateLogic, this);
         QTimer::singleShot(1, f);
     }
-}
-
-AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
-
-}
-
-bool AIThread::run_genmove(int color, int AIStrength) {
-    mutex->lock();
-    printf("%s - color=%d\n", __func__, color);
-    if(running)
-        return false;
-
-    running = true;
-    p.operation = OpType::do_genmove;
-    p.color = color;
-    p.strength = AIStrength;
-    p.value = 0;
-    p.resign = 0;
-    p.result = 0;
-    start();
-    return true;
-}
-
-bool AIThread::run_gnugo_estimate_score() {
-    mutex->lock();
-    if(running)
-        return false;
-    running = true;
-    p.operation = OpType::gnugo_estimate_score;
-    start();
-    return true;
-}
-
-void AIThread::run_value_moves(board_lib_state_struct* internal_state, int colour) {
-//    if (mutex->tryLock() == false) {
-//        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
-//        mutex->lock();
-//    }
-
-    //value_moves(internal_state, colour, 0.0, 0.0, 1);
-    //run genmove to fill in best_move_values
-    this->internal_state = internal_state;
-    set_level(2);
-    int val = genmove(internal_state, colour, NULL, NULL);
-    Q_UNUSED(val);
-    mutex->unlock();;
-}
-
-void AIThread::run() {
-    printf("%s - running on thread %p\n", __func__, QThread::currentThreadId());
-
-//    if (mutex->tryLock() == false) {
-//        printf("%s - avoided crash with mutex, but there's a logical error\n", __func__);
-//        mutex->lock();
-//    }
-    set_level(p.strength);
-    p.result = genmove(internal_state, p.color, &p.move_value, &p.resign);
-    mutex->unlock();
-
-    int move = p.result;
-    if (p.resign) {
-        Logger::log(QString("%1 - AI has decided to resign, will compute finals scores.").arg(__func__));
-        float score = gnugo_estimate_score(internal_state, NULL, NULL);
-        if (score > 0) {
-            printf("%s - estimates: white winning by %f\n", __func__, score);
-        }
-        else {
-            printf("%s - estimates: black winning by %f\n", __func__, -score);
-        }
-        //emit AIQuitsGame(true);
-    }
-    else {
-        QPoint point = GoTable::fromGnuGoPos(move);
-        printf("%s - AI has finished, move of value=%f, at %d, %d\n", __func__, p.move_value, point.y(), point.x());
-        //emit AIThreadPlaceStone(point.y(), point.x());
-    }
-
-    running = false;
 }

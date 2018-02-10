@@ -79,7 +79,7 @@ private:
     ConfirmMoveDialog* confirmMoveDialog = nullptr;
     Ui::MainWindow *ui;
     DrawAreaWidget* drawArea;
-    GoTableWidget* table;
+    GoTableWidget* table = nullptr;
     RoundInfo* roundInfo = nullptr;
     QTimer mainLoopTimer;
     QFontDatabase fontDatabase;

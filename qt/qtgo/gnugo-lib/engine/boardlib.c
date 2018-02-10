@@ -56,7 +56,7 @@ void init_board_lib_state_struct(board_lib_state_struct* board_lib_state) {
     /* Hashing of positions. */
     //Hash_data board_hash;
 
-    //int stackp;             /* stack pointer */
+    board_lib_state->stackp = 0;             /* stack pointer */
     //int position_number;    /* position number */
 
     /* Some statistics gathered partly in board.c and hash.c */
@@ -65,4 +65,5 @@ void init_board_lib_state_struct(board_lib_state_struct* board_lib_state) {
     /* Variation tracking in SGF trees: */
     board_lib_state->count_variations  = 0;
     board_lib_state->sgf_dumptree = NULL;
+    board_lib_state->position_number = 0;
 }

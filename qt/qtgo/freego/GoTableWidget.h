@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QWidget>
+
 #include "GoTable.h"
 
 class GoTableWidget : public QWidget, public GoTable {

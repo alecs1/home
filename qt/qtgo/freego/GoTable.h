@@ -1,59 +1,16 @@
 #pragma once
 
-#include <QWidget>
-#include <QThread>
-
 #include "Global.h"
 #include "GameStruct.h"
 #include "Settings.h"
 
 #include <sgf/sgftree.h>
-//#include "engine/structures.h"
 
 struct board_lib_state_struct;
 
+//TODO - this is here just for compilation; remove
+class AIThread;
 class QMutex;
-
-class AIThread : public QThread {
-    void run() override;
-
-public:
-    AIThread(QMutex* mutex);
-    bool run_genmove(int color, int AIStrength);
-    bool run_gnugo_estimate_score();
-    void run_value_moves(board_lib_state_struct* internal_state, int colour);
-
-public:
-    QMutex* mutex = nullptr;
-
-signals:
-    //void AIThreadPlaceStone(int row, int col);
-    //void AIQuitsGame(bool accurate);
-
-private:
-    bool running = false;
-    enum class OpType:uint8_t {
-        //keep the operation names in sync with the corresponding functions
-        do_genmove = 1,
-        gnugo_estimate_score
-    };
-
-    board_lib_state_struct* internal_state;
-
-    struct Parameters {
-        OpType operation;
-
-        //params for do_genmove
-        int strength;
-        int color;
-        float move_value;
-        float value;
-        int resign;
-        int result;
-    };
-    Parameters p;
-};
-
 
 class GoTable {
 public:
