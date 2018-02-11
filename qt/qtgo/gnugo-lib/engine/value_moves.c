@@ -3379,38 +3379,38 @@ print_top_moves(board_lib_state_struct *internal_state)
   float tval;
   
   for (k = 0; k < 10; k++) {
-    best_moves[k] = NO_MOVE;
-    best_move_values[k] = 0.0;
+    internal_state->best_moves[k] = NO_MOVE;
+    internal_state->best_move_values[k] = 0.0;
   }
   for (pos = BOARDMIN; pos < BOARDMAX; pos++) {
     if (!ON_BOARD(internal_state, pos) || move[pos].final_value <= 0.0)
       continue;
       
     tval = move[pos].final_value;
-    record_top_move(pos, tval);
+    record_top_move(internal_state, pos, tval);
   }
   
   if (verbose > 0 || (debug & DEBUG_TOP_MOVES)) {
     gprintf(internal_state, "\nTop moves:\n");
-    for (k = 0; k < 10 && best_move_values[k] > 0.0; k++)
-      gprintf(internal_state, "%d. %1M %f\n", k+1, best_moves[k], best_move_values[k]);
+    for (k = 0; k < 10 && internal_state->best_move_values[k] > 0.0; k++)
+      gprintf(internal_state, "%d. %1M %f\n", k+1, internal_state->best_moves[k], internal_state->best_move_values[k]);
   }
 }
 
 /* Add a move to the list of top moves (if it is among the top ten) */
 
 void
-record_top_move(int pos, float val)
+record_top_move(board_lib_state_struct *internal_state, int pos, float val)
 {
   int k;
   for (k = 9; k >= 0; k--)
-    if (val > best_move_values[k]) {
+    if (val > internal_state->best_move_values[k]) {
       if (k < 9) {
-	best_move_values[k+1] = best_move_values[k];
-	best_moves[k+1] = best_moves[k];
+        internal_state->best_move_values[k+1] = internal_state->best_move_values[k];
+        internal_state->best_moves[k+1] = internal_state->best_moves[k];
       }
-      best_move_values[k] = val;
-      best_moves[k] = pos;
+      internal_state->best_move_values[k] = val;
+      internal_state->best_moves[k] = pos;
     }
 
   move[pos].final_value = val;
@@ -3419,18 +3419,18 @@ record_top_move(int pos, float val)
 /* remove a rejected move from the list of top moves */
 
 void
-remove_top_move(int move)
+remove_top_move(board_lib_state_struct *internal_state, int move)
 {
   int k;
   for (k = 0; k < 10; k++) {
-    if (best_moves[k] == move) {
+    if (internal_state->best_moves[k] == move) {
       int l;
       for (l = k; l < 9; l++) {
-	best_moves[l] = best_moves[l+1];
-	best_move_values[l] = best_move_values[l+1];
+        internal_state->best_moves[l] = internal_state->best_moves[l+1];
+        internal_state->best_move_values[l] = internal_state->best_move_values[l+1];
       }
-      best_moves[9] = NO_MOVE;
-      best_move_values[9] = 0.0;
+      internal_state->best_moves[9] = NO_MOVE;
+      internal_state->best_move_values[9] = 0.0;
     }
   }
 }
@@ -3728,7 +3728,7 @@ find_best_move(board_lib_state_struct *internal_state,
 	}
 	else {
       TRACE(internal_state, "Move at %1m would be suicide.\n", pos);
-	  remove_top_move(pos);
+      remove_top_move(internal_state, pos);
 	  move[pos].value = 0.0;
 	  move[pos].final_value = 0.0;
 	}
@@ -3745,7 +3745,7 @@ find_best_move(board_lib_state_struct *internal_state,
       reevaluate_ko_threats(internal_state, best_move, color, best_value);
       redistribute_points(internal_state);
       time_report(internal_state, 2, "  reevaluate_ko_threats", NO_MOVE, 1.0);
-      remove_top_move(best_move);
+      remove_top_move(internal_state, best_move);
       move[best_move].value = 0.0;
       move[best_move].final_value = 0.0;
       print_top_moves(internal_state);
@@ -3761,12 +3761,12 @@ find_best_move(board_lib_state_struct *internal_state,
 	if (blunder_size > 0.0) {
       TRACE(internal_state, "Move at %1m is a blunder, subtracting %f.\n", best_move,
 		blunder_size);
-	  remove_top_move(best_move);
+      remove_top_move(internal_state, best_move);
 	  move[best_move].value -= blunder_size;
 	  move[best_move].final_value -= blunder_size;
       TRACE(internal_state, "Move at %1m is now valued %f.\n", best_move,
 		move[best_move].final_value);
-	  record_top_move(best_move, move[best_move].final_value);
+      record_top_move(internal_state, best_move, move[best_move].final_value);
 	  good_move_found = 0;
 	  blunder_tested[best_move] = 1;
 	}

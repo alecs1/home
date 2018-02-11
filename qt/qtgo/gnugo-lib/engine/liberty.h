@@ -516,8 +516,10 @@ int list_move_reasons(board_lib_state_struct *internal_state,
                       FILE *out, int pos);
 void print_all_move_values(board_lib_state_struct *internal_state,
                            FILE *output);
-void record_top_move(int move, float val);
-void remove_top_move(int move);
+void record_top_move(board_lib_state_struct *internal_state,
+                     int move, float val);
+void remove_top_move(board_lib_state_struct *internal_state,
+                     int move);
 void scale_randomness(int pos, float scaling);
 void compute_move_probabilities(board_lib_state_struct *internal_state,
                                 float probabilities[BOARDMAX]);
@@ -957,8 +959,8 @@ extern int connection_node_limit;
 extern int breakin_depth;
 extern int breakin_node_limit;
 extern int semeai_variations;   /* max variations considered reading semeai */
-extern float best_move_values[10];
-extern int best_moves[10];
+//extern float best_move_values[10];
+//extern int best_moves[10];
 
 extern int experimental_owl_ext;     /* use experimental owl (GAIN/LOSS) */
 extern int experimental_semeai;      /* use experimental semeai module */

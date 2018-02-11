@@ -16,7 +16,7 @@ AIThread::AIThread(QMutex *mutex) : mutex(mutex) {
 
 bool AIThread::run_genmove(board_lib_state_struct *internal_state, int color, int AIStrength) {
     mutex->lock();
-    printf("%s - color=%d\n", __func__, color);
+    Logger::log(QString("%1 - color=%2").arg(__func__).arg(color));
     if(running)
         return false;
 

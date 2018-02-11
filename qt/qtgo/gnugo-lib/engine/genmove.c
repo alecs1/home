@@ -597,7 +597,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
     if (!allowed_moves || allowed_moves[move]) {
       *value = 1.0;
       TRACE(internal_state, "Filling a liberty at %1m\n", move);
-      record_top_move(move, *value);
+      record_top_move(internal_state, move, *value);
       move_considered(move, *value);
       time_report(internal_state, 1, "fill liberty", NO_MOVE, 1.0);
     }
@@ -619,7 +619,7 @@ do_genmove(struct board_lib_state_struct *internal_state,
       ASSERT1(internal_state, is_legal(internal_state, move, color), move);
       *value = 1.0;
       TRACE(internal_state, "Aftermath move at %1m\n", move);
-      record_top_move(move, *value);
+      record_top_move(internal_state, move, *value);
       move_considered(move, *value);
       time_report(internal_state, 1, "aftermath_genmove", NO_MOVE, 1.0);
     }

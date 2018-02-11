@@ -1,12 +1,11 @@
 #include "GoTableWidget.h"
 
+extern "C" {
+#include "engine/structures.h" //should probably restrict to the public interface
+}
+
 #include <QPainter>
 #include <QSvgRenderer>
-
-extern "C" {
-extern int best_moves[10];
-extern float best_move_values[10];
-}
 
 #include "Utils.h"
 
@@ -97,11 +96,11 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     //hints, the last move must be painted over the hints
     if (showHints) {
         for(int i = 0; i < 10; i++) {
-            QPoint move = GoTable::fromGnuGoPos(best_moves[i]);
+            QPoint move = GoTable::fromGnuGoPos(goTable.internal_state->best_moves[i]);
             if (move.x() < 0)
                 continue;
 
-            float val = best_move_values[i];
+            float val = goTable.internal_state->best_move_values[i];
             QPointF moveHintPos(dist + move.x()*dist, dist + move.y()*dist);
             const float drawDiameter = 0.9 * dist;
             QRectF textRect(moveHintPos.x() - drawDiameter/2, moveHintPos.y() - drawDiameter/2,

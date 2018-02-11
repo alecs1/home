@@ -136,8 +136,8 @@ int mc_games_per_level = 8000;  /* By default, use 8000 times the current
 				 * move generation is enabled.
 				 */
 
-float best_move_values[10];
-int   best_moves[10];
+//float best_move_values[10];
+//int   best_moves[10];
 float white_score;
 float black_score;
 
