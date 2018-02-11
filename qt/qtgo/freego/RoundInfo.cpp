@@ -34,7 +34,7 @@ RoundInfo::RoundInfo(QWidget *parent) :
     }
 
 
-    printf("%s - default font:%s, %d\n", __func__, defaultFont.toUtf8().constData(), defaultFontSize);
+    Logger::log(QString("%1 - default font:%2, %3").arg(__func__).arg(defaultFont.toUtf8().constData()).arg(defaultFontSize), Logger::DBG);
     const float STONE_SCALE= 5;
     diameter = STONE_SCALE * defaultFontSize;
     ui->colourLabel->resize(diameter, diameter);
@@ -42,8 +42,8 @@ RoundInfo::RoundInfo(QWidget *parent) :
 
     setMinimumHeight(diameter);
 
-    printf("%s - colourLabel resize to:%dx%d\n", __func__, ui->colourLabel->width(), ui->colourLabel->height());
-    printf("%s - size:%dx%d\n", __func__, width(), height());
+    Logger::log(QString("%1 - colourLabel resize to:%2x%3").arg(__func__).arg(ui->colourLabel->width()).arg(ui->colourLabel->height()), Logger::DBG);
+    Logger::log(QString("%1 - size:%2x%3").arg(__func__).arg(width()).arg(height()), Logger::DBG);
 
     blackStone = new QPixmap(diameter, diameter);
     blackStone->fill(Qt::transparent);
@@ -97,19 +97,24 @@ RoundInfo::RoundInfo(QWidget *parent) :
     setCurrentPlayer(BLACK, PlayerType::LocalHuman, PlayerType::AI);
     setAttribute(Qt::WA_TranslucentBackground);
     QList<QWidget*> children = findChildren<QWidget*>();
-    foreach(QWidget* child, children) {
+    for(QWidget* child : children) {
         child->setAttribute(Qt::WA_TranslucentBackground);
     }
 
-    printf("%s - final sizes: widget:%dx%d, colourLabel:%dx%d, playerTypeLabel:%dx%d\n",
-           __func__, width(), height(), ui->colourLabel->width(), ui->colourLabel->height(),
-           ui->playerTypeLabel->width(), ui->playerTypeLabel->height());
+    Logger::log(QString("%1 - final sizes: widget:%2x%3, colourLabel:%4x%5, playerTypeLabel:%6x%7").arg(__func__).arg(width()).arg(height()).arg(ui->colourLabel->width()).arg(ui->colourLabel->height()).arg(ui->playerTypeLabel->width()).arg(ui->playerTypeLabel->height()), Logger::DBG);
 
 }
 
 RoundInfo::~RoundInfo()
 {
     delete ui;
+    delete blackStone;
+    delete whiteStone;
+    delete crtStoneRotated;
+
+    delete playerAI;
+    delete playerHuman;
+    delete playerNetwork;
 }
 
 
@@ -130,7 +135,7 @@ void RoundInfo::setCurrentPlayer(int aPlayer, PlayerType aType, PlayerType oppon
         crtPlayerPixmap = playerAI;
         playerTypeString = "Computer's\n turn";
         angle = 0;
-        printf("%s - starting animation\n", __func__);
+        Logger::log(QString("%1 - starting animation").arg(__func__), Logger::DBG);
         if (animationChains == 0) {
             animationChains = 1;
             animationStep();

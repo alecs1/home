@@ -1,17 +1,18 @@
+#include "GameControlWidget.h"
+#include "ui_GameControlWidget.h"
+
 #include <QSvgRenderer>
 #include <QPainter>
 #include <QMenu>
 #include <QMessageBox>
 #include <cmath>
 
-#include "GameControlWidget.h"
-#include "ui_GameControlWidget.h"
-
 #include "PlayerWidget.h"
 #include "GameStruct.h"
 #include "ConfirmMoveDialog.h"
 #include "RoundInfo.h"
 #include "HandicapDialog.h"
+#include "Logger.h"
 
 GameControlWidget::GameControlWidget(QWidget *parent):
     QWidget(parent),
@@ -33,7 +34,7 @@ GameControlWidget::GameControlWidget(QWidget *parent):
     int diameter = SCALE * defaultFontSize;
     resize(diameter, diameter);
 
-    printf("%s - defaultFontSize=%d, diameter=%d\n", __func__, defaultFontSize, diameter);
+    Logger::log(QString("%1 - defaultFontSize=%2, diameter=%3").arg(__func__).arg(defaultFontSize).arg(diameter), Logger::DBG);
 
     QPixmap blackStone(diameter, diameter);
     blackStone.fill(Qt::transparent);
@@ -99,8 +100,7 @@ GameControlWidget::GameControlWidget(QWidget *parent):
     ui->roundInfoLayout->insertWidget(0, roundInfo);
     roundInfoVisible = false;
     roundInfo->hide();
-    printf("%s - roundInfo:%dx%d\n",
-           __func__, roundInfo->width(), roundInfo->height());
+    //Logger::log(QString("%1 - roundInfo:%2x%3").arg(__func__).arg(roundInfo->width()).arg(roundInfo->height()), Logger::DBG);
 
 
     ui->hintButton->hide();
@@ -120,8 +120,6 @@ GameControlWidget::GameControlWidget(QWidget *parent):
     ui->menuLauncher1->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
     ui->menuLauncher2->setMinimumSize(MENU_SCALE * defaultFontSize, MENU_SCALE * defaultFontSize);
     ui->menuLauncher1->hide();
-
-    printf("%s - end\n", __func__);
 }
 
 GameControlWidget::~GameControlWidget() {
@@ -304,8 +302,6 @@ void GameControlWidget::setShowScoreEstimate(bool show) {
 }
 
 void GameControlWidget::showMenu() {
-    printf("%s\n", __func__);
-
     if (true) {
         //typically the menu fonts are too small, so we copy the size of a font know to be decent.
         //this is however ignored by Qt.
@@ -394,7 +390,7 @@ bool operator==(const SGameSettings& s1, const SGameSettings& s2) {
 }
 
 void GameControlWidget::populateSettings() {
-    printf("%s\n", __func__);
+    Logger::log(QString("%1").arg(__func__));
     SGameSettings newSettings;
     newSettings.size = 19;
     if (ui->button9x9->isChecked())
@@ -420,7 +416,7 @@ void GameControlWidget::populateSettings() {
 }
 
 void GameControlWidget::receiveSettings(SGameSettings newSettings) {
-    printf("%s\n", __func__);
+    Logger::log(QString("%1").arg(__func__));
     switch (newSettings.size) {
         case 9:
             ui->button9x9->setChecked(true);

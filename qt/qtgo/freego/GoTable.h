@@ -10,7 +10,6 @@
 
 struct board_lib_state_struct;
 
-//TODO - this is here just for compilation; remove
 class AIThread;
 class QMutex;
 

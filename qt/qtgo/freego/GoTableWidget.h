@@ -34,6 +34,7 @@ public slots:
     void userConfirmedMove(int confirmed);
     void showPlayHints();
     void insertDefaultHandicap(int handicap);
+    void onCrtPlayerChanged();
 
 private slots:
     bool AIPlayNextMove();

@@ -56,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     int narrowFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraCondensed-Regular.ttf");
     int wideFontId = fontDatabase.addApplicationFont(":/resources/fonts/StintUltraExpanded-Regular.ttf");
-    printf("%s - font ids: %d, %d\n", __func__, narrowFontId, wideFontId);
+    Logger::log(QString("%1 - font ids: %2, %3").arg(__func__).arg(narrowFontId).arg(wideFontId), Logger::DBG);
 
     Settings::setMessageSender(this);
     SProgramSettings* programSettings = Settings::getProgramSettings();
@@ -146,7 +146,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     double mainLoopInterval = 1000.0 / 60;
     Logger::log(QString("mainLoopInterval: %1").arg(mainLoopInterval));
-    printf("mainLoopInterval: %g\n", mainLoopInterval);
     mainLoopTimer.setInterval(mainLoopInterval);
     mainLoopTimer.start();
     connect(&mainLoopTimer, SIGNAL(timeout()), this, SLOT(mainLoop()));
@@ -154,7 +153,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow() {
     Logger::setViewer(nullptr); //TODO - this is such a crappy solution to avoid crashes, use smart pointers
-    printf("%s - TODO - fully implement this!\n", __func__);
     SaveFile::writeSettings(SaveFile::getDefSettingsFName(), Settings::getProgramSettings());
     delete ui;
 }

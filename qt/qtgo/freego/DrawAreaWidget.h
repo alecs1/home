@@ -16,6 +16,7 @@ class DrawAreaWidget: public QWidget
 Q_OBJECT
 public:
     explicit DrawAreaWidget(QWidget* parent = 0);
+    ~DrawAreaWidget();
     void setChildTable(GoTableWidget* aTable);
 
     void paintEvent(QPaintEvent *);

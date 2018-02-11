@@ -129,7 +129,7 @@ void GoTable::replay_node(SGFNode *node, int color_to_replay, float *replay_scor
 
     /* Finally, do play the move from the file. */
     QPoint point = GoTable::fromGnuGoPos(old_move);
-    printf("%s - move=%d (%d:%d), color=%d\n", __func__, old_move, point.y(), point.x(), color);
+    Logger::log(QString("%1 - move=%2 (%3:%4), color=%5").arg(__func__).arg(old_move).arg(point.y()).arg(point.x()).arg(color));
     play_move(internal_state, old_move, color);
     sgftreeAddPlay(outTree, color, point.y(), point.x());
     lastMoveRow = point.y();
@@ -169,9 +169,10 @@ GoTable::GoTable()
 
 
 GoTable::~GoTable() {
-    Logger::log(QString("%1 - Implement destructor!").arg(__func__));
     delete gnuGoMutex;
     delete internal_state;
+    delete aiThread;
+    free(sgfTree);
 }
 
 //This code is outside the constructor because this is executed after the signals of this object are connected

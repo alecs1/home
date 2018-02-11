@@ -58,6 +58,7 @@ GoTableWidget::GoTableWidget(QWidget *parent) :
 
     connect(&goTable, SIGNAL(gameStateChanged(GameState)), this, SIGNAL(gameStateChanged(GameState)));
     connect(&goTable, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), this, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)));
+    connect(&goTable, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), this, SLOT(onCrtPlayerChanged()));
     //emit movePlayed(row, col);
 
     buildPixmaps(10);
@@ -69,6 +70,12 @@ GoTableWidget::GoTableWidget(QWidget *parent) :
 
 GoTableWidget::~GoTableWidget() {
     Logger::log(QString("%1 - Implement destructor!").arg(__func__));
+    delete blackCursor;
+    delete whiteCursor;
+    delete redCursor;
+    delete blackStonePixmap;
+    delete whiteStonePixmap;
+    delete redStonePixmap;
 }
 
 //This code is outside the constructor because this is executed after the signals of this object are connected
@@ -175,7 +182,7 @@ void GoTableWidget::mouseMoveEvent(QMouseEvent* ev) {
 
 void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
     if (goTable.players[goTable.crtPlayer] != PlayerType::LocalHuman) {
-        printf("%s - return because crtPlayer is not localHuman\n", __func__);
+        Logger::log(QString("%1 - return because crtPlayer is not localHuman.").arg(__func__), Logger::DBG);
         return;
     }
 
@@ -199,7 +206,7 @@ void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
 
 void GoTableWidget::mouseReleaseEvent(QMouseEvent* ev) {
     if (goTable.players[goTable.crtPlayer] != PlayerType::LocalHuman) {
-        printf("%s - return because crtPlayer is not localHuman\n", __func__);
+        Logger::log(QString("%1 - return because crtPlayer is not localHuman").arg(__func__), Logger::DBG);
         return;
     }
 
@@ -294,6 +301,7 @@ bool GoTableWidget::playMove(const int row, const int col) {
     }
 
     cursorBlocked = false;
+    showHints = false;
     updateCursor();
     update();
 
@@ -507,7 +515,7 @@ void GoTableWidget::activateEstimatingScore(bool estimate) {
 
 //Move confirmed by pressing the "Confirm" button
 void GoTableWidget::userConfirmedMove(int confirmed) {
-    printf("%s - confirmed=%d\n", __func__, confirmed);
+    Logger::log(QString("%1 - confirmed=%2").arg(__func__).arg(confirmed));
     const int QTDIALOG_CONFIRMED_CODE = 1;
     if (confirmed == QTDIALOG_CONFIRMED_CODE) {
         playMove(unconfirmedStoneRow, unconfirmedStoneCol);
@@ -531,6 +539,10 @@ void GoTableWidget::insertDefaultHandicap(int newHandicap) {
         emit pushGameSettings(goTable.gameSettings);
     }
     update();
+}
+
+void GoTableWidget::onCrtPlayerChanged() {
+    updateCursor();
 }
 
 //#include <QElapsedTimer>

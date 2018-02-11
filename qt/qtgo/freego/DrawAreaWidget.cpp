@@ -20,6 +20,10 @@ DrawAreaWidget::DrawAreaWidget(QWidget *parent) : QWidget(parent)
     setMinimumHeight(300);
 }
 
+DrawAreaWidget::~DrawAreaWidget() {
+    delete gameSettings;
+}
+
 void DrawAreaWidget::setChildTable(GoTableWidget *aTable) {
     tableW = aTable;
     QObject::connect(tableW, SIGNAL(highlightChanged(int,int)), this, SLOT(changeHighlight(int, int)));

@@ -61,14 +61,13 @@ void PlayerWidget::setPlayerTypeInt(int type) {
 }
 
 void PlayerWidget::setPlayerType(PlayerType type) {
-    //printf("%s - type=%d\n", __func__, type);
     ui->playerComboBox->setCurrentIndex((int)type);
     ui->playerSettingsButton->show();
     return;
 }
 
 void PlayerWidget::setPixmap(QPixmap aPixmap) {
-    printf("%s - set pixmap size:%d, %d\n", __func__, aPixmap.size().width(), aPixmap.size().height());
+    //Logger::log(QString("%1 - set pixmap size:%2, %3").arg(__func__).arg(aPixmap.size().width()).arg(aPixmap.size().height()));
     pixmap = aPixmap;
 
     ui->playerSettingsButton->setMinimumSize(pixmap.size());
