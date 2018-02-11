@@ -4,7 +4,7 @@
 
 #include "GoTable.h"
 
-class GoTableWidget : public QWidget, public GoTable {
+class GoTableWidget : public QWidget{
 Q_OBJECT
 public:
     explicit GoTableWidget(QWidget* parent = 0);
@@ -37,7 +37,6 @@ public slots:
 
 private slots:
     bool AIPlayNextMove();
-    void computeScoreAndUpdate();
 
 
 signals:
@@ -64,6 +63,7 @@ private:
     void updateSizes();
     void launchGame(bool resetTable = true);
     bool loadSaveGameFile(QString fileName);
+    void computeScoreAndUpdate();
 
 private:
     QCursor* blackCursor = nullptr;
@@ -98,4 +98,7 @@ private:
     //TODO: here or in the base?
     bool estimateScore = false;
     bool computing = false;
+
+public:
+    GoTable goTable;
 };

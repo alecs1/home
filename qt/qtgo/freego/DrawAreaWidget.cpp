@@ -25,7 +25,7 @@ void DrawAreaWidget::setChildTable(GoTableWidget *aTable) {
     QObject::connect(tableW, SIGNAL(highlightChanged(int,int)), this, SLOT(changeHighlight(int, int)));
     delete gameSettings;
     //TODO - we actually need a signal when this changes
-    gameSettings = new SGameSettings(*tableW->getGameSettingsPointer());
+    gameSettings = new SGameSettings(*tableW->goTable.getGameSettingsPointer());
     setMinimumSize(computeMinSize());
 }
 

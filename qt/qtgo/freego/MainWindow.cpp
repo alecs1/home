@@ -176,7 +176,7 @@ void MainWindow::saveGame() {
     if (fileName != "") {
         if (!fileName.endsWith(".save"))
             fileName += ".save";
-        result = table->saveGame(fileName);
+        result = table->goTable.saveGame(fileName);
     }
     printf("%s, fileName=%s, result=%d\n", __func__, fileName.toUtf8().constData(), result);
 }
@@ -221,7 +221,7 @@ void MainWindow::setMinimalInterface() {
         connect(miniGameControlWidget, SIGNAL(undoMove()), table, SLOT(undoMove()));
     }
 
-    if (table->getGameState() != GameState::Started)
+    if (table->goTable.getGameState() != GameState::Started)
         return;
 
     QPropertyAnimation *panelAnim = new QPropertyAnimation(gameControlWidget, "geometry");
@@ -410,7 +410,7 @@ void MainWindow::onMovePlayed(int row, int col) {
     Logger::log(QString("%1: %2 %3").arg(__func__).arg(row).arg(col));
     int crtPlayer, oppPlayer;
     PlayerType crtType, oppType;
-    table->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
+    table->goTable.getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
     Logger::log(QString("crtPlayer: %1 crtType: %2 oppType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(crtType)).arg(playerTypeMap.left.at(oppType)));
     if (crtType == PlayerType::Network) {
         ProtoJson::Msg msg;
@@ -508,7 +508,7 @@ void MainWindow::onConnStateChanged(ConnMan::ConnState state, bool initiator, Co
             ProtoJson::Msg msg;
             msg.type = ProtoJson::ResumeGame;
             QJsonObject tableSetupJson;
-            table->saveGameForRemote(tableSetupJson);
+            table->goTable.saveGameForRemote(tableSetupJson);
             msg.json["gameSetup"] = tableSetupJson;
             connMan->sendMessage(msg);
             activeMessage = msg;
@@ -565,7 +565,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
         dialog.setGridImageWidget(auxBackground);
         int crtPlayer, oppPlayer;
         PlayerType crtType, oppType;
-        aux->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
+        aux->goTable.getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
         Logger::log(QString("Players state: %1 %2 %3 %4").arg(crtPlayer).arg(crtType).arg(oppPlayer).arg(oppType));
         if (crtType == PlayerType::LocalHuman) {
             dialog.setColour((colors)crtPlayer);
@@ -602,7 +602,7 @@ void MainWindow::onRemoteMessage(const ProtoJson::Msg& msg) {
     else if (msg.type == ProtoJson::MsgType::PlayMove) {
         int crtPlayer, oppPlayer;
         PlayerType crtType, oppType;
-        table->getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
+        table->goTable.getPlayersState(crtPlayer, crtType, oppPlayer, oppType);
 
         if (crtType == PlayerType::Network) {
             QJsonObject json = msg.json[ProtoJson::ProtoKw::Request].toObject();

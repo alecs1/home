@@ -15,14 +15,6 @@ public:
     void run_value_moves(board_lib_state_struct* internal_state, int colour);
 
 public:
-    QMutex* mutex = nullptr;
-
-signals:
-    //void AIThreadPlaceStone(int row, int col);
-    //void AIQuitsGame(bool accurate);
-
-private:
-    bool running = false;
     enum class OpType:uint8_t {
         //keep the operation names in sync with the corresponding functions
         do_genmove = 1,
@@ -41,5 +33,11 @@ private:
         int resign;
         int result;
     };
+
+public:
+    QMutex* mutex = nullptr;
     Parameters p;
+
+private:
+    bool running = false;
 };

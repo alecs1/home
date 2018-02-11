@@ -423,12 +423,11 @@ bool GoTable::playMove(const int row, const int col) {
     crtPlayer = otherColour(crtPlayer);
 
     if (state == GameState::Initial) {
-        printf("%s - we just automatically started a new game!\n", __func__);
+        Logger::log(QString("%1 - we automatically started a new game.").arg(__func__), Logger::DBG);
         state = GameState::Started;
         launchGame(false);
     }
     else {
-
         if (state == GameState::Resumed) {
             state = GameState::Started;
         }
@@ -445,13 +444,13 @@ bool GoTable::playMove(const int row, const int col) {
         lastMoveCol = col;
     }
 
-    if (estimateScore) {
-        //hack to give GUI time to update
-        //QTimer::singleShot(20, this, SLOT(computeScoreAndUpdate()));
-    }
-
     Logger::log(QString("movePlayed: %1 %2").arg(row).arg(col));
     Logger::log(QString("Turn changed to: crtPlayer: %1, crtType: %2, otherType: %3").arg(crtPlayer).arg(playerTypeMap.left.at(players[crtPlayer])).arg(players[otherColour(crtPlayer)]));
+
+    emit gameStateChanged(state);
+    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    emit movePlayed(row, col);
+
     return retVal;
 }
 
@@ -655,6 +654,7 @@ int GoTable::insertDefaultHandicap(int newHandicap) {
     return internal_state->handicap;
 }
 
+//TODO - this needs to make many checks before continuing
 bool GoTable::AIPlayNextMove() {
     int AIStrength = gameSettings.blackAIStrength;
     if (crtPlayer == WHITE) {
@@ -663,16 +663,32 @@ bool GoTable::AIPlayNextMove() {
     aiThread->run_genmove(internal_state, crtPlayer, AIStrength);
 
     updateLogic();
-
     return false;
 }
 
-//When we're waiting for a result coming from a different thread we need to check the result from the other thread
 void GoTable::updateLogic() {
-    Logger::log(QString("%1").arg(__func__), Logger::DBG);
-
     if (aiThread->mutex->tryLock()) {
-            Logger::log(QString("%1 - the AIThread is done!").arg(__func__), Logger::DBG);
+        Logger::log(QString("%1 - the AIThread is done!").arg(__func__), Logger::DBG);
+
+        AIThread::Parameters p = aiThread->p;
+        int move = p.result;
+        if (p.resign) {
+            Logger::log(QString("%1 - AI has decided to resign, will compute finals scores.").arg(__func__));
+            bool success = false;
+            float score = wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
+            if (score > 0) {
+                Logger::log(QString("%1 - estimates: white winning by %2").arg(__func__).arg(score));
+            }
+            else {
+                Logger::log(QString("%1 - estimates: black winning by %2").arg(__func__).arg(-score));
+            }
+        }
+        else {
+            QPoint point = fromGnuGoPos(move);
+            Logger::log(QString("%1 - AI has finished, move of value=%2, at (%3, %4)").arg(__func__).arg(p.move_value).arg(point.y()).arg(point.x()), Logger::DBG);
+            playMove(point.y(), point.x());
+        }
+        aiThread->mutex->unlock();
     }
     else {
         Logger::log(QString("%1 - the AIThread is still computing.").arg(__func__), Logger::DBG);

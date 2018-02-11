@@ -179,7 +179,7 @@ void RoundInfo::setLayoutDirection(bool horizontal) {
 }
 
 void RoundInfo::animationStep() {
-    printf("%s - angle=%g, animationChains=%d\n", __func__, angle, animationChains);
+    //printf("%s - angle=%g, animationChains=%d\n", __func__, angle, animationChains);
     if (playerType != PlayerType::AI) {
         animationChains -= 1;
         return;

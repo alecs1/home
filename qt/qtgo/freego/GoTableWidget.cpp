@@ -53,8 +53,12 @@ GoTableWidget::GoTableWidget(QWidget *parent) :
     askPlayConfirmation = true;
     #endif
 
-    game.size = gameSettings.size;
-    changeGameSettings(gameSettings); //an idiotic move of copying gameSettings over gameSettings :D
+    goTable.game.size = goTable.gameSettings.size;
+    changeGameSettings(goTable.gameSettings); //an idiotic move of copying gameSettings over gameSettings :D
+
+    connect(&goTable, SIGNAL(gameStateChanged(GameState)), this, SIGNAL(gameStateChanged(GameState)));
+    connect(&goTable, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)), this, SIGNAL(crtPlayerChanged(int, PlayerType, PlayerType)));
+    //emit movePlayed(row, col);
 
     buildPixmaps(10);
     setCursor(*blackCursor);
@@ -69,10 +73,10 @@ GoTableWidget::~GoTableWidget() {
 
 //This code is outside the constructor because this is executed after the signals of this object are connected
 void GoTableWidget::checkForResumeGame() {
-    GoTable::checkForResumeGame();
+    goTable.checkForResumeGame();
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-    emit gameStateChanged(state);
+    emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
+    emit gameStateChanged(goTable.state);
 }
 
 /**
@@ -80,13 +84,13 @@ void GoTableWidget::checkForResumeGame() {
  */
 void GoTableWidget::setSecondPlayerToNetwork() {
     Logger::log(QString("%1").arg(__func__));
-    if (gameSettings.white == PlayerType::LocalHuman) {
-        gameSettings.black = PlayerType::Network;
+    if (goTable.gameSettings.white == PlayerType::LocalHuman) {
+        goTable.gameSettings.black = PlayerType::Network;
     }
-    else if (gameSettings.black == PlayerType::LocalHuman) {
-        gameSettings.white = PlayerType::Network;
+    else if (goTable.gameSettings.black == PlayerType::LocalHuman) {
+        goTable.gameSettings.white = PlayerType::Network;
     }
-    emit pushGameSettings(gameSettings);
+    emit pushGameSettings(goTable.gameSettings);
     update();
 }
 
@@ -115,45 +119,43 @@ void GoTableWidget::changeProgramSettings() {
 }
 
 bool GoTableWidget::loadGameAndStart(const QString fileName) {
-    bool success = loadGame(fileName);
+    bool success = goTable.loadGame(fileName);
     if (success) {
-        state = GameState::Resumed;
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-        emit gameStateChanged(state);
+        goTable.state = GameState::Resumed;
+        emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
+        emit gameStateChanged(goTable.state);
     }
     return success;
 }
 
 bool GoTableWidget::loadGameFromRemote(const QJsonObject &json) {
-    bool success = GoTable::loadGameFromRemote(json);
+    bool success = goTable.loadGameFromRemote(json);
     if (success) {
-        emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
-        emit gameStateChanged(state);
+        emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
+        emit gameStateChanged(goTable.state);
     }
     return success;
 }
 
 void GoTableWidget::launchGamePressed(SGameSettings newSettings) {
-    printf("%s\n", __func__);
-
-    if (state == GameState::Resumed) {
-        state = GameState::Started;
-        if(players[crtPlayer] == PlayerType::AI) {
+    if (goTable.state == GameState::Resumed) {
+        goTable.state = GameState::Started;
+        if(goTable.players[goTable.crtPlayer] == PlayerType::AI) {
             AIPlayNextMove();
         }
     }
-    else if (state == GameState::Initial || state == GameState::Stopped) {
+    else if (goTable.state == GameState::Initial || goTable.state == GameState::Stopped) {
         changeGameSettings(newSettings);
         launchGame();
-        state = GameState::Started;
+        goTable.state = GameState::Started;
     }
 
     updateCursor();
-    emit gameStateChanged(state);
+    emit gameStateChanged(goTable.state);
 }
 
 void GoTableWidget::changeGameSettings(const SGameSettings& newSettings) {
-    GoTable::changeGameSettings(newSettings);
+    goTable.changeGameSettings(newSettings);
     updateSizes();
     update();
 }
@@ -172,7 +174,7 @@ void GoTableWidget::mouseMoveEvent(QMouseEvent* ev) {
 }
 
 void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
-    if (players[crtPlayer] != PlayerType::LocalHuman) {
+    if (goTable.players[goTable.crtPlayer] != PlayerType::LocalHuman) {
         printf("%s - return because crtPlayer is not localHuman\n", __func__);
         return;
     }
@@ -182,7 +184,7 @@ void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
     highlightCol = pos.x();
     emit highlightChanged(highlightRow, highlightCol);
 
-    if (GameCanPlaceStone(&game, pos.y(), pos.x(), crtPlayer)) {
+    if (GameCanPlaceStone(&goTable.game, pos.y(), pos.x(), goTable.crtPlayer)) {
         newStoneRow = pos.y();
         newStoneCol = pos.x();
         if (newStoneRow != unconfirmedStoneRow || newStoneCol != unconfirmedStoneCol) {
@@ -196,7 +198,7 @@ void GoTableWidget::mousePressEvent(QMouseEvent* ev) {
 }
 
 void GoTableWidget::mouseReleaseEvent(QMouseEvent* ev) {
-    if (players[crtPlayer] != PlayerType::LocalHuman) {
+    if (goTable.players[goTable.crtPlayer] != PlayerType::LocalHuman) {
         printf("%s - return because crtPlayer is not localHuman\n", __func__);
         return;
     }
@@ -219,7 +221,7 @@ void GoTableWidget::mouseReleaseEvent(QMouseEvent* ev) {
                 unconfirmedStoneCol = newStoneCol;
                 newStoneRow = -1;
                 newStoneCol = -1;
-                emit askUserConfirmation(true, crtPlayer);
+                emit askUserConfirmation(true, goTable.crtPlayer);
             }
         }
         else {
@@ -245,7 +247,7 @@ QPoint GoTableWidget::mouseToGameCoordinates(QMouseEvent* ev) {
     //compute the closest intersection
     int row = localPos.ry() / dist - 0.5;
     int col = localPos.rx() / dist - 0.5;
-    if ( row >= 0 && row < game.size && col >= 0 && col < game.size)
+    if ( row >= 0 && row < goTable.game.size && col >= 0 && col < goTable.game.size)
         return QPoint(col, row);
     else
         return QPoint(-1, -1);
@@ -261,7 +263,7 @@ void GoTableWidget::updateSizes() {
     int tableSize = width(); //compute and enforce correctly
     if (height() < tableSize)
         tableSize = height();
-    dist = gridDist(tableSize, game.size);
+    dist = gridDist(tableSize, goTable.game.size);
     diameter = dist * stoneDiameter();
 
     buildPixmaps(diameter);
@@ -283,7 +285,7 @@ float GoTableWidget::stoneDiameter() {
  */
 bool GoTableWidget::playMove(const int row, const int col) {
     cursorBlocked = true;
-    bool retVal = GoTable::playMove(row, col);
+    bool retVal = goTable.playMove(row, col);
 
     if (retVal) {
         if (programSettings->soundsVolume > 0) {
@@ -295,29 +297,29 @@ bool GoTableWidget::playMove(const int row, const int col) {
     updateCursor();
     update();
 
-    emit gameStateChanged(state);
+    emit gameStateChanged(goTable.state);
 
     if (estimateScore) {
         //hack to give GUI time to update
         QTimer::singleShot(20, this, SLOT(computeScoreAndUpdate()));
     }
 
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
     emit movePlayed(row, col);
     return retVal;
 }
 
 bool GoTableWidget::passMove() {
     //should insert some logic for counting
-    GoTable::passMove();
+    goTable.passMove();
     unconfirmedStoneRow = FREEGO_PASS_MOVE;
-    emit askUserConfirmation(true, crtPlayer);
+    emit askUserConfirmation(true, goTable.crtPlayer);
     return true;
 }
 
 bool GoTableWidget::undoMove() {
-    bool retVal = GoTable::undoMove();
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    bool retVal = goTable.undoMove();
+    emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
     updateCursor();
     update();
     return retVal;
@@ -328,9 +330,9 @@ void GoTableWidget::updateCursor() {
     if (!interactable) {
         unsetCursor();
     }
-    else if ( (state == GameState::Stopped) || cursorBlocked)
+    else if ( (goTable.state == GameState::Stopped) || cursorBlocked)
         setCursor(*redCursor);
-    else if (crtPlayer == BLACK)
+    else if (goTable.crtPlayer == BLACK)
         setCursor(*blackCursor);
     else
         setCursor(*whiteCursor);
@@ -341,7 +343,7 @@ void GoTableWidget::computeScoreAndUpdate() {
     static int tries = 0;
     const int maxTries = 100;
     bool success = true;
-    float score = GoTable::wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
+    float score = goTable.wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
     if (success) {
         emit estimateScoreChanged(score);
         tries = 0;
@@ -360,41 +362,42 @@ void GoTableWidget::computeScoreAndUpdate() {
  * @param resetTable - the table won't be cleaned-up, this allow launching a game with a stone move.
  */
 void GoTableWidget::launchGame(bool resetTable) {
-    GoTable::launchGame(resetTable);
-    emit crtPlayerChanged(crtPlayer, players[crtPlayer], players[otherColour(crtPlayer)]);
+    goTable.launchGame(resetTable);
+    emit crtPlayerChanged(goTable.crtPlayer, goTable.players[goTable.crtPlayer], goTable.players[otherColour(goTable.crtPlayer)]);
     updateSizes();
     update();
-    if (players[crtPlayer] == PlayerType::AI) {
+    if (goTable.players[goTable.crtPlayer] == PlayerType::AI) {
         QTimer::singleShot(2, this, SLOT(AIPlayNextMove()));
     }
 }
 
 
 bool GoTableWidget::AIPlayNextMove() {
-    GoTable::AIPlayNextMove();
+    goTable.AIPlayNextMove();
     update();
     return false;
 }
+
 
 void GoTableWidget::finish(bool finishByResign) {
     bool showEstimateScore = false;
     float approximateZero = 0.001;
 
     //if the game was played quite a bit before quitting, we show the winner but also a score estimate
-    int stoneCount = countStones(&game);
-    if (stoneCount  > game.size * game.size / 2) {
+    int stoneCount = countStones(&goTable.game);
+    if (stoneCount  > goTable.game.size * goTable.game.size / 2) {
         showEstimateScore = true;
         Logger::log(QString("%1 - stoneCount=%2, will force estimating a score").arg(__func__).arg(stoneCount), Logger::DBG);
     }
 
 
     BusyDialog busyDialog(this);
-    float score = GoTable::finish(finishByResign);
+    float score = goTable.finish(finishByResign);
 
     //TODO - find the GnuGo fancy end computations
     int winner = EMPTY;
     if (finishByResign) {
-        winner = otherColour(crtPlayer);
+        winner = otherColour(goTable.crtPlayer);
     }
     else {
         winner = WHITE;
@@ -412,16 +415,16 @@ void GoTableWidget::finish(bool finishByResign) {
         busyDialog.setText("Computing final score");
         busyDialog.show();
         qApp->processEvents();
-        score = wrapper_aftermath_compute_score();
+        score = goTable.wrapper_aftermath_compute_score();
     }
     else if (showEstimateScore){
         printf("%s - finished by resign. Estimating a score.\n", __func__);
-        busyDialog.setText(colourName(otherColour(crtPlayer)) + " won by " +
-                           colourName(crtPlayer) + "'s resignation.\n Computing a score estimate.");
+        busyDialog.setText(colourName(otherColour(goTable.crtPlayer)) + " won by " +
+                           colourName(goTable.crtPlayer) + "'s resignation.\n Computing a score estimate.");
         busyDialog.show();
         qApp->processEvents();
         bool success = false;
-        score = wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
+        score = goTable.wrapper_gnugo_estimate_score(NULL, NULL, false, &success);
     }
     busyDialog.hide();
 
@@ -479,7 +482,7 @@ void GoTableWidget::finish(bool finishByResign) {
 
     QPainter bPainter(&winnerPixmap);
     svgR.render(&bPainter);
-    crtPlayer = EMPTY;
+    goTable.crtPlayer = EMPTY;
     showHints = false;
     update();
 
@@ -491,8 +494,8 @@ void GoTableWidget::finish(bool finishByResign) {
     endDialog.setModal(true);
     endDialog.exec();
 
-    state = GameState::Stopped;
-    emit gameStateChanged(state);
+    goTable.state = GameState::Stopped;
+    emit gameStateChanged(goTable.state);
 }
 
 void GoTableWidget::activateEstimatingScore(bool estimate) {
@@ -517,15 +520,15 @@ void GoTableWidget::userConfirmedMove(int confirmed) {
 void GoTableWidget::showPlayHints() {
     showHints = !showHints;
     if (showHints) {
-        aiThread->run_value_moves(internal_state, crtPlayer);
+        goTable.aiThread->run_value_moves(goTable.internal_state, goTable.crtPlayer);
     }
     update();
 }
 
 void GoTableWidget::insertDefaultHandicap(int newHandicap) {
-    int computedHandicap = GoTable::insertDefaultHandicap(newHandicap);
+    int computedHandicap = goTable.insertDefaultHandicap(newHandicap);
     if (computedHandicap != newHandicap) {
-        emit pushGameSettings(gameSettings);
+        emit pushGameSettings(goTable.gameSettings);
     }
     update();
 }

@@ -24,7 +24,7 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     //TODO - move these to a common place for both table and DrawArea
     QColor mainColor(0, 0, 0);
     QColor highlightPosColour = colourMoveAllowed;
-    if (players[crtPlayer] != PlayerType::LocalHuman) {
+    if (goTable.players[goTable.crtPlayer] != PlayerType::LocalHuman) {
         highlightPosColour = colourMoveDenied;
     }
     highlightPosColour.setAlpha(150);
@@ -48,18 +48,18 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     lineHighlightPen.setWidthF(aux);
 
     //Horizontal lines y is resolved to an int, lines will have exactly same width without AA
-    for(int i = 0; i < game.size; i++) {
+    for(int i = 0; i < goTable.game.size; i++) {
         if (i == highlightRow)
             continue;
         int y = dist + i * dist;
-        painter.drawLine(QLineF(dist, y, game.size*dist, y));
+        painter.drawLine(QLineF(dist, y, goTable.game.size*dist, y));
     }
     //Vertical x resolved to an int...
-    for (int i = 0; i < game.size; i++) {
+    for (int i = 0; i < goTable.game.size; i++) {
         if (i == highlightCol)
             continue;
         int x = dist + i * dist;
-        painter.drawLine(QLineF(x, dist, x, game.size*dist));
+        painter.drawLine(QLineF(x, dist, x, goTable.game.size*dist));
     }
 
 
@@ -67,9 +67,9 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     if (highlightRow != - 1) {
         painter.setPen(lineHighlightPen);
         painter.drawLine(QLineF(dist, dist + highlightRow*dist,
-                                 game.size*dist, dist + highlightRow*dist));
+                                 goTable.game.size*dist, dist + highlightRow*dist));
         painter.drawLine(QLineF(dist + highlightCol*dist, dist,
-                                dist + highlightCol*dist, game.size*dist));
+                                dist + highlightCol*dist, goTable.game.size*dist));
 
         QPointF highlightPos(dist + highlightCol * dist, dist + highlightRow * dist);
         float RADIUS_SCALE = 1.3;
@@ -83,8 +83,8 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     }
 
     //higlight last move
-    if (lastMoveRow > -1) {
-        QPointF lastMovePos(dist + lastMoveCol * dist, dist + lastMoveRow * dist);
+    if (goTable.lastMoveRow > -1) {
+        QPointF lastMovePos(dist + goTable.lastMoveCol * dist, dist + goTable.lastMoveRow * dist);
         float RADIUS_SCALE = 2;
         float highlightRadius = dist / RADIUS_SCALE;
         pen.setColor(QColor(0, 170, 0, 150));
@@ -97,7 +97,7 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     //hints, the last move must be painted over the hints
     if (showHints) {
         for(int i = 0; i < 10; i++) {
-            QPoint move = fromGnuGoPos(best_moves[i]);
+            QPoint move = GoTable::fromGnuGoPos(best_moves[i]);
             if (move.x() < 0)
                 continue;
 
@@ -148,31 +148,31 @@ void GoTableWidget::paint(QPaintDevice* target) const {
     }
 
     //new stone, mouse button pressed/tapped
-    if ((newStoneCol != -1) && (state != GameState::Stopped)){
+    if ((newStoneCol != -1) && (goTable.state != GameState::Stopped)){
         QPointF newStonePos(dist + newStoneCol * dist - blackStonePixmap->width()/2, dist + newStoneRow * dist - blackStonePixmap->width()/2);
         //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        if (crtPlayer == BLACK)
+        if (goTable.crtPlayer == BLACK)
             painter.drawPixmap(newStonePos, *blackStonePixmap);
-        else if (crtPlayer == WHITE)
+        else if (goTable.crtPlayer == WHITE)
             painter.drawPixmap(newStonePos, *whiteStonePixmap);
     }
 
-    if ((unconfirmedStoneCol != -1) && (state != GameState::Stopped)){
+    if ((unconfirmedStoneCol != -1) && (goTable.state != GameState::Stopped)){
         QPointF unconfirmedStonePos(dist + unconfirmedStoneCol * dist - blackStonePixmap->width()/2, dist + unconfirmedStoneRow * dist - blackStonePixmap->width()/2);
         //printf("%s - highlight at: %f, %f\n", __func__, newStonePos.rx(), newStonePos.ry());
-        if (crtPlayer == BLACK)
+        if (goTable.crtPlayer == BLACK)
             painter.drawPixmap(unconfirmedStonePos, *blackStonePixmap);
-        else if (crtPlayer == WHITE)
+        else if (goTable.crtPlayer == WHITE)
             painter.drawPixmap(unconfirmedStonePos, *whiteStonePixmap);
     }
 
     //all stones already on the table
-    for(int i = 0; i < game.size; i++) {
-        for(int j = 0; j < game.size; j++) {
-            if (game.state[i][j] > 0) {
+    for(int i = 0; i < goTable.game.size; i++) {
+        for(int j = 0; j < goTable.game.size; j++) {
+            if (goTable.game.state[i][j] > 0) {
                 QPointF stonePos(dist + j*dist - blackStonePixmap->width()/2, dist + i*dist - blackStonePixmap->width()/2);
                 int colour = 0;
-                colour = game.state[i][j];
+                colour = goTable.game.state[i][j];
 
                 if (colour == BLACK)
                     painter.drawPixmap(stonePos, *blackStonePixmap);

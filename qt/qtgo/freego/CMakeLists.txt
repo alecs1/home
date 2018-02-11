@@ -44,6 +44,7 @@ qt5_wrap_ui(UI_HEADERS MainWindow.ui GameControlWidget.ui PlayerWidget.ui GameEn
 qt5_wrap_cpp(HEADER_MOC
     MainWindow.h
     DrawAreaWidget.h
+    GoTable.h
     GoTableWidget.h
     GameControlWidget.h
     MiniGameControlWidget.h

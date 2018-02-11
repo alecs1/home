@@ -65,7 +65,6 @@ void AIThread::run() {
 //    }
     set_level(p.strength);
     p.result = genmove(p.internal_state, p.color, &p.move_value, &p.resign);
-    mutex->unlock();
 
     int move = p.result;
     if (p.resign) {
@@ -86,4 +85,5 @@ void AIThread::run() {
     }
 
     running = false;
+    mutex->unlock();
 }
