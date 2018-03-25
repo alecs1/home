@@ -1,7 +1,7 @@
 #nice documentation: https://qt-project.org/quarterly/view/using_cmake_to_build_qt_projects
 
-project(FreeGo)
-cmake_minimum_required(VERSION 3.1)
+#project(FreeGo)
+#cmake_minimum_required(VERSION 3.1)
 
 set (CMAKE_VERBOSE_MAKEFILE true)
 
