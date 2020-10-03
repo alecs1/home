@@ -543,6 +543,7 @@ void GoTableWidget::insertDefaultHandicap(int newHandicap) {
 
 void GoTableWidget::onCrtPlayerChanged() {
     updateCursor();
+    update();
 }
 
 //#include <QElapsedTimer>

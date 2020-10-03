@@ -98,13 +98,19 @@ TARGET_LINK_LIBRARIES(compress_fuseki)
 #GET_TARGET_PROPERTY(MKMCPAT_EXE mkmcpat LOCATION)
 #GET_TARGET_PROPERTY(UNCOMPRESS_FUSEKI_EXE uncompress_fuseki LOCATION)
 
+#TODO: joseki, mkpat, mkeye, mkmpat and uncompress_fuseki are programs that generate code and need to be run during build
+#https://cmake.org/Wiki/CMake_Cross_Compiling#Using_executables_in_the_build_created_during_the_build
+#For now I:
+#1. run copy-pc-executables.sh
+#2. hardcode the executable paths in this file
+
 SET(JOSEKI_INPUTS "")
 SET(JOSEKI_NAMES "")
 SET(GG_BUILT_SOURCES "")
 MACRO(BUILD_JOSEKI NAME PREFIX)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.db
-        COMMAND joseki ${PREFIX}
+        COMMAND "./joseki" ${PREFIX}
 	        ${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.sgf
                 > ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.db
         DEPENDS joseki ${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.sgf
@@ -126,7 +132,7 @@ BUILD_JOSEKI(takamoku JT)
 MACRO(RUN_MKPAT OPTIONS1 OPTIONS2 PATNAME DBNAME CNAME)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CNAME}
-        COMMAND mkpat ${OPTIONS1} ${OPTIONS2} ${PATNAME}
+        COMMAND "./mkpat" ${OPTIONS1} ${OPTIONS2} ${PATNAME}
                              -i ${CMAKE_CURRENT_SOURCE_DIR}/${DBNAME}
                              -o ${CMAKE_CURRENT_BINARY_DIR}/${CNAME}
         DEPENDS mkpat ${CMAKE_CURRENT_SOURCE_DIR}/${DBNAME}
@@ -139,7 +145,7 @@ SET(DFAFLAGS -D -m)
 MACRO(RUN_MKPAT_DFA OPTIONS PATNAME DTRNAME DBNAME CNAME)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${CNAME}
-        COMMAND mkpat ${DFAFLAGS} ${OPTIONS}
+        COMMAND "./mkpat" ${DFAFLAGS} ${OPTIONS}
                              -t ${CMAKE_CURRENT_SOURCE_DIR}/${DTRNAME} ${PATNAME}
                              -i ${CMAKE_CURRENT_SOURCE_DIR}/${DBNAME}
                              -o ${CMAKE_CURRENT_BINARY_DIR}/${CNAME}
@@ -152,7 +158,7 @@ ENDMACRO(RUN_MKPAT_DFA)
 MACRO(RUN_UNCOMPRESS_FUSEKI BOARDSIZE)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fuseki${BOARDSIZE}.c
-        COMMAND uncompress_fuseki ${BOARDSIZE}
+        COMMAND "./uncompress_fuseki" ${BOARDSIZE}
                              ${CMAKE_CURRENT_SOURCE_DIR}/fuseki${BOARDSIZE}.dbz
                              c > ${CMAKE_CURRENT_BINARY_DIR}/fuseki${BOARDSIZE}.c
         DEPENDS uncompress_fuseki
@@ -185,7 +191,7 @@ RUN_UNCOMPRESS_FUSEKI(19)
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/josekidb.c
-   COMMAND mkpat -C joseki ${JOSEKI_INPUTS}
+   COMMAND "./mkpat" -C joseki ${JOSEKI_INPUTS}
                         -o ${CMAKE_CURRENT_BINARY_DIR}/josekidb.c
    DEPENDS mkpat ${JOSEKI_NAMES}
    )
@@ -194,7 +200,7 @@ SET(GG_BUILT_SOURCES ${GG_BUILT_SOURCES}
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/patterns.c
-   COMMAND mkpat -b pat -i ${CMAKE_CURRENT_SOURCE_DIR}/patterns.db
+   COMMAND "./mkpat" -b pat -i ${CMAKE_CURRENT_SOURCE_DIR}/patterns.db
                                -i ${CMAKE_CURRENT_SOURCE_DIR}/patterns2.db
                                -o ${CMAKE_CURRENT_BINARY_DIR}/patterns.c
    DEPENDS mkpat ${CMAKE_CURRENT_SOURCE_DIR}/patterns.db
@@ -205,7 +211,7 @@ SET(GG_BUILT_SOURCES ${GG_BUILT_SOURCES}
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/eyes.c
-   COMMAND mkeyes < ${CMAKE_CURRENT_SOURCE_DIR}/eyes.db
+   COMMAND "./mkeyes" < ${CMAKE_CURRENT_SOURCE_DIR}/eyes.db
                          > ${CMAKE_CURRENT_BINARY_DIR}/eyes.c
    DEPENDS mkeyes ${CMAKE_CURRENT_SOURCE_DIR}/eyes.db
    )
@@ -213,7 +219,7 @@ SET(GG_BUILT_SOURCES ${GG_BUILT_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/eyes.c)
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mcpat.c
-   COMMAND mkmcpat ${CMAKE_CURRENT_SOURCE_DIR}/mc_montegnu_classic.db
+   COMMAND "./mkmcpat" ${CMAKE_CURRENT_SOURCE_DIR}/mc_montegnu_classic.db
                           ${CMAKE_CURRENT_SOURCE_DIR}/mc_mogo_classic.db
                           ${CMAKE_CURRENT_SOURCE_DIR}/mc_uniform.db
 			  > ${CMAKE_CURRENT_BINARY_DIR}/mcpat.c

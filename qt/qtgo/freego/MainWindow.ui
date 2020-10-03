@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>827</width>
-    <height>509</height>
+    <width>825</width>
+    <height>507</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -69,10 +69,28 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>827</width>
-     <height>22</height>
+     <width>825</width>
+     <height>24</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave_Game"/>
+    <addaction name="actionOpen_Saved_Game"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionHelp"/>
+    <addaction name="actionAbout"/>
+    <addaction name="actionDebug_BT"/>
+    <addaction name="actionShow_Log_Viewer"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="iconSize">
@@ -101,7 +119,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidget">
    <property name="windowTitle">
-    <string>Log viewer</string>
+    <string>&amp;Log viewer</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>8</number>

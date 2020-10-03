@@ -14,6 +14,10 @@ ip route add 130.89.148.0/24 via 192.168.42.129 dev usb0
 
 route -n
 
+#network tools instead of ifupdown
+sudo ip link set eth0 down
+sudo ip link set eth0 up
+
 
 Utilities:
 find . \( -iname <name1> -o -iname <name2> \) -print0 | xargs -0 grep -i "<expression1>\|<expression2>"
@@ -37,6 +41,16 @@ shutdown: qdbus org.kde.ksmserver /KSMServer logout 0 0 0
 1    No confirmation (0), await confirmation (1)
 2    Logout (0), Don't know (1), Shutdown (2)
 3    This is the "when" parameter, but it isn't clear what the impact is.
+
+Recover kwin and plasma:
+For KWin on X: kwin_x11 --replace
+For KWin on Wayland: It is the session, basically, there's no way to recover.
+For Plasmashell: plasmashell --replace¹
+¹) This is new in Plasma 5.13, previously you had to do kquitapp5 plasmashell followed by plasmashell and please do not use killall (kquitapp5 tells plasmashell on DBus to gracefully quit)
+
+
+
+
 
 Curl
 curl --dump-header - http://localhost/ | head -
